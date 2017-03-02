@@ -179,10 +179,34 @@ PetscErrorCode PermonExcapeLoadData(MPI_Comm comm, const char *data_file_name, M
 #define __FUNCT__ "PermonExcapeDataToQP"
 PetscErrorCode PermonExcapeDataToQP(Mat Xt, Vec y, QP *qp_new)
 {
+  MPI_Comm comm;
   QP qp;
+  Mat X,XtX;
+  Vec e;
+  Mat BEt;
+  PetscInt n;
 
   PetscFunctionBeginI;
-  TRY( QPCreate(PetscObjectComm((PetscObject)Xt),&qp) );
+  TRY( PetscObjectGetComm((PetscObject)Xt, &comm) );
+  TRY( QPCreate(comm,&qp) );
+
+  TRY( FllopMatTranspose(Xt,MAT_TRANSPOSE_CHEAPEST,&X) );
+  TRY( MatCreateNormal(X,&XtX) );
+  TRY( MatDiagonalScale(XtX,y,y) );
+  TRY( QPSetOperator(qp,XtX) );
+  TRY( MatDestroy(&X) );
+  TRY( MatDestroy(&XtX) );
+
+  TRY( VecDuplicate(y,&e) );
+  TRY( VecSet(e,1.0) );
+  TRY( QPSetRhs(qp, e) );
+  TRY( VecDestroy(&e) );
+
+  //TODO BEt: new shell matrix for dot product y'*x
+
+  //TODO get from user lambda or C = 1/(2*lambda*n)
+
+  //TODO box constraints  0 <= c <= C
 
   *qp_new = qp;
   PetscFunctionReturnI(0);
