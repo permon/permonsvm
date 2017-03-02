@@ -77,22 +77,29 @@ bool ParseSourceFileLine(std::string &line, std::vector<T> &cols) {
 }
 
 template<typename T=int>
-bool GetMatrixStructure(const std::string &filename, std::vector<T> &nnz_per_row, T &num_cols) {
+bool GetMatrixStructure(const std::string &filename, std::vector<T> &nnz_per_row, T &nnz_max, T &num_cols) {
     using namespace std;
 
     ifstream fl_hldr;
     string tmp_line; vector<T> tmp_vec;
+    T tmp_cols, nnz;
 
     fl_hldr.open(filename.c_str());
 
     num_cols = 0;
+    nnz_max = 0;
     if (fl_hldr.good()) {
         while (getline(fl_hldr, tmp_line)) {
             ParseSourceFileLine(tmp_line, tmp_vec);
-            if (tmp_vec.back() > num_cols) {
-                num_cols = tmp_vec.back();
+            tmp_cols = tmp_vec.back();
+            if (tmp_cols > num_cols) {
+                num_cols = tmp_cols;
             }
-            nnz_per_row.push_back(tmp_vec.size());
+            nnz = tmp_vec.size();
+            if (nnz > nnz_max) {
+              nnz_max = nnz;
+            }
+            nnz_per_row.push_back(nnz);
         }
     } else {
         return (false);
@@ -108,15 +115,16 @@ static PetscErrorCode PermonExcapeLoadData(MPI_Comm comm,const char *data_file_n
   using namespace std;
   vector<int> y;
   vector<int> nnz_per_row;
-  int num_cols;
+  int num_cols, nnz_max;
 
   PetscFunctionBeginI;
-  TRY( !GetMatrixStructure(string(data_file_name), nnz_per_row, num_cols) );
+  TRY( !GetMatrixStructure(string(data_file_name), nnz_per_row, nnz_max, num_cols) );
 
   cout << endl << "nnz_per_row:" << endl;
   for (auto i = nnz_per_row.begin(); i != nnz_per_row.end(); ++i)
     std::cout << *i << ' ';
   cout << endl << "num_cols: " << num_cols << endl;
+  cout << "nnz_max: " << nnz_max << endl;
   PetscFunctionReturnI(0);
 }
 
