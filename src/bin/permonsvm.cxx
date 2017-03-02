@@ -142,7 +142,8 @@ PetscErrorCode testQPS_files()
   TRY( PetscLogStagePush(loadStage) );
   {
     TRY( QPCreate(comm,&qp) );
-    TRY( PermonExcapeLoadData(comm,"gene_GSK3B_level6_1000_1_1_1_train.txt",qp) );
+    //TRY( PermonExcapeLoadData(comm,"gene_GSK3B_level6_1000_1_1_1_train.txt",qp) );
+    TRY( PermonExcapeLoadData(comm,"dummy.txt",qp) );
   }
   TRY( PetscLogStagePop() );
 
