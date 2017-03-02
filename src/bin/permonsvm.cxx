@@ -110,7 +110,7 @@ bool GetMatrixStructure(const std::string &filename, std::vector<T> &nnz_per_row
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SetValues"
+#define __FUNCT__ "PermonExcapeSetValues"
 PetscErrorCode PermonExcapeSetValues(Mat Xt, Vec y, PetscInt nnz_max, const std::string &filename) {
     using namespace std;
 
