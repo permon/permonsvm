@@ -236,6 +236,8 @@ int main(int argc, char** argv)
   TRY( MPI_Comm_rank(comm, &rank) );
   TRY( MPI_Comm_size(comm, &commsize) );
 
+  FLLOP_ASSERT(commsize==1,"currently only sequential");
+
   TRY( FllopSetTrace(PETSC_TRUE) );
   TRY( FllopSetDebug(PETSC_TRUE) );
   TRY( FllopSetObjectInfo(PETSC_TRUE) );
