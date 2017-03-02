@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <vector>
 #include <string>
 #include <iostream>
@@ -106,6 +107,39 @@ bool GetMatrixStructure(const std::string &filename, std::vector<T> &nnz_per_row
     }
 
     return (true);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SetValues"
+PetscErrorCode PermonExcapeSetValues(Mat Xt, Vec y, PetscInt nnz_max, const std::string &filename) {
+    using namespace std;
+
+    ifstream fl_hldr;
+    string tmp_line; vector<PetscInt> idxn;
+    PetscInt yi, n_cols;
+    PetscScalar ones[nnz_max];
+
+    PetscFunctionBeginUser;
+    TRY( MatGetSize(Xt, NULL, &n_cols) );
+    fl_hldr.open(filename.c_str());
+    TRY( fl_hldr.fail() );
+
+    std::fill_n(ones, nnz_max, 1.0);
+
+    PetscInt i = 0;
+    while (getline(fl_hldr, tmp_line)) {
+      ParseSourceFileLine(tmp_line, idxn, yi);
+      std::transform(idxn.begin(), idxn.end(), idxn.begin(), [](PetscInt a) { return a-1; });  // decrement 1-based values of idxn to be 0-based
+      TRY( MatSetValues(Xt, 1, &i, idxn.size(), &idxn[0], ones, INSERT_VALUES) );
+      TRY( VecSetValue(y,i,yi,INSERT_VALUES) );
+      i++;
+    }
+
+    TRY( MatAssemblyBegin(Xt, MAT_FINAL_ASSEMBLY) );
+    TRY( MatAssemblyEnd(Xt, MAT_FINAL_ASSEMBLY) );
+    TRY( VecAssemblyBegin(y) );
+    TRY( VecAssemblyEnd(y) );
+    PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
