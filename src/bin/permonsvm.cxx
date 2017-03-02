@@ -30,6 +30,7 @@ bool ParseSourceFileLine(std::string &line, std::vector<T> &cols, T &yi) {
 
     yi = boost::lexical_cast<T>(parsed_values[0]);
 
+    cols.clear();
     for (int i = 1; i < parsed_values.size(); i += 2) {
         try {
             col = boost::lexical_cast<T>(parsed_values[i]);
@@ -58,6 +59,7 @@ bool ParseSourceFileLine(std::string &line, std::vector<T> &cols) {
 
     algorithm::split_regex(parsed_values, line, r);
 
+    cols.clear();
     for (int i = 1; i < parsed_values.size(); i += 2) {
         try {
             col = boost::lexical_cast<T>(parsed_values[i]);
@@ -91,7 +93,6 @@ bool GetMatrixStructure(const std::string &filename, std::vector<T> &nnz_per_row
                 num_cols = tmp_vec.back();
             }
             nnz_per_row.push_back(tmp_vec.size());
-            tmp_vec.clear();
         }
     } else {
         return (false);
