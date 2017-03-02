@@ -169,7 +169,7 @@ PetscErrorCode testQPS_files()
   QP             qp  = NULL;
   QPS            qps = NULL;
   const QPSType  qpstype;
-  
+
   PetscFunctionBeginI;
   /* ------------------------------------------------------------------------ */
   TRY( PetscLogStageRegister("load data", &loadStage) );
@@ -213,13 +213,13 @@ PetscErrorCode testQPS_files()
     TRY( QPSPostSolve(qps) );
   }
   TRY( PetscLogStagePop() );
-  
+
   /* ------------------------------------------------------------------------ */  
   TRY( PetscLogStageRegister("save data", &saveStage) );
   TRY( PetscLogStagePush(saveStage) );
   //
-  TRY( PetscLogStagePop() );  
-  
+  TRY( PetscLogStagePop() );
+
   TRY( QPSDestroy(&qps) );
   TRY( QPDestroy(&qp) );
   PetscFunctionReturnI(0);
