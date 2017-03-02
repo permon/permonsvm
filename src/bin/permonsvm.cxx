@@ -147,18 +147,34 @@ PetscErrorCode PermonExcapeSetValues(Mat Xt, Vec y, PetscInt nnz_max, const std:
 static PetscErrorCode PermonExcapeLoadData(MPI_Comm comm,const char *data_file_name,QP qp)
 {
   using namespace std;
-  vector<int> y;
-  vector<int> nnz_per_row;
-  int num_cols, nnz_max;
+  vector<PetscInt> nnz_per_row;
+  PetscInt n_examples, n_attributes, nnz_max;
+  Mat Xt;
+  Vec y;
 
   PetscFunctionBeginI;
-  TRY( !GetMatrixStructure(string(data_file_name), nnz_per_row, nnz_max, num_cols) );
+  TRY( !GetMatrixStructure(string(data_file_name), nnz_per_row, nnz_max, n_attributes) );
+  n_examples = nnz_per_row.size();
 
-  cout << endl << "nnz_per_row:" << endl;
-  for (auto i = nnz_per_row.begin(); i != nnz_per_row.end(); ++i)
-    std::cout << *i << ' ';
-  cout << endl << "num_cols: " << num_cols << endl;
-  cout << "nnz_max: " << nnz_max << endl;
+  TRY( MatCreate(comm, &Xt) );
+  TRY( MatSetSizes(Xt, n_examples, n_attributes, PETSC_DECIDE, PETSC_DECIDE) );
+  TRY( MatSetOptionsPrefix(Xt, "Xt_") );
+  TRY( MatSetFromOptions(Xt) );
+  TRY( MatSeqAIJSetPreallocation(Xt, -1, &nnz_per_row[0]) );
+  //TODO MatMPIAIJSetPreallocation
+
+  TRY( VecCreate(comm,&y) );
+  TRY( VecSetSizes(y, n_examples, PETSC_DECIDE) );
+  TRY( VecSetOptionsPrefix(y, "y_") );
+  TRY( VecSetFromOptions(y) );
+
+  TRY( PermonExcapeSetValues(Xt, y, nnz_max, data_file_name) );
+
+  TRY( MatView(Xt,PETSC_VIEWER_STDOUT_WORLD) );
+  TRY( VecView(y,PETSC_VIEWER_STDOUT_WORLD) );
+
+  TRY( MatDestroy(&Xt) );
+  TRY( VecDestroy(&y) );
   PetscFunctionReturnI(0);
 }
 
