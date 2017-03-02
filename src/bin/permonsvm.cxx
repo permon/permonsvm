@@ -144,7 +144,7 @@ PetscErrorCode PermonExcapeSetValues(Mat Xt, Vec y, PetscInt nnz_max, const std:
 
 #undef __FUNCT__
 #define __FUNCT__ "PermonExcapeLoadData"
-static PetscErrorCode PermonExcapeLoadData(MPI_Comm comm, const char *data_file_name, Mat *Xt_new, Vec *y_new)
+PetscErrorCode PermonExcapeLoadData(MPI_Comm comm, const char *data_file_name, Mat *Xt_new, Vec *y_new)
 {
   using namespace std;
   vector<PetscInt> nnz_per_row;
@@ -176,6 +176,19 @@ static PetscErrorCode PermonExcapeLoadData(MPI_Comm comm, const char *data_file_
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "PermonExcapeDataToQP"
+PetscErrorCode PermonExcapeDataToQP(Mat Xt, Vec y, QP *qp_new)
+{
+  QP qp;
+
+  PetscFunctionBeginI;
+  TRY( QPCreate(PetscObjectComm((PetscObject)Xt),&qp) );
+
+  *qp_new = qp;
+  PetscFunctionReturnI(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "testQPS_files"
 PetscErrorCode testQPS_files()
 {
@@ -190,9 +203,11 @@ PetscErrorCode testQPS_files()
   TRY( PetscLogStageRegister("load data", &loadStage) );
   TRY( PetscLogStagePush(loadStage) );
   {
-    TRY( QPCreate(comm,&qp) );
-    //TRY( PermonExcapeLoadData(comm,"gene_GSK3B_level6_1000_1_1_1_train.txt",&Xt,&y) );
-    TRY( PermonExcapeLoadData(comm,"dummy.txt",&Xt,&y) );
+    //TRY( PermonExcapeLoadData(comm,"gene_GSK3B_level6_1000_1_1_1_train.txt", &Xt, &y) );
+    TRY( PermonExcapeLoadData(comm,"dummy.txt", &Xt, &y) );
+    TRY( PermonExcapeDataToQP(Xt, y, &qp) );
+    TRY( MatDestroy(&Xt) );
+    TRY( VecDestroy(&y) );
   }
   TRY( PetscLogStagePop() );
 
