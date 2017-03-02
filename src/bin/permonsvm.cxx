@@ -17,19 +17,18 @@ static PetscMPIInt  rank, commsize;
 static PetscLogStage loadStage, prepStage, solvStage, postStage, saveStage;
 
 template<typename T=int>
-bool ParseSourceFileLine(std::string &line, std::vector<T> &cols, std::vector<T> &y) {
+bool ParseSourceFileLine(std::string &line, std::vector<T> &cols, T &yi) {
     using namespace std;
     using namespace boost;
 
     regex r("\\s+|:");
 
     vector<string> parsed_values;
-    int col, tmp;
+    int col;
 
     algorithm::split_regex(parsed_values, line, r);
 
-    tmp = boost::lexical_cast<T>(parsed_values[0]);
-    y.push_back(tmp);
+    yi = boost::lexical_cast<T>(parsed_values[0]);
 
     for (int i = 1; i < parsed_values.size(); i += 2) {
         try {
