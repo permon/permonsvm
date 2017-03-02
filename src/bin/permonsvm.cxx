@@ -185,7 +185,7 @@ PetscErrorCode testQPS_files()
   TRY( PetscLogStageRegister("preprocessing", &prepStage) );
   TRY( PetscLogStagePush(prepStage) );
   {
-    TRY( QPTFromOptions(qp) );
+    //TRY( QPTFromOptions(qp) );
 
     TRY( QPSCreate(comm, &qps) );
     TRY( QPSSetQP(qps, qp) );
