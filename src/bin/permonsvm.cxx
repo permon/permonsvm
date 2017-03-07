@@ -119,7 +119,7 @@ PetscErrorCode PermonExcapeSetValues(Mat Xt, Vec y, PetscInt nnz_max, const std:
     PetscInt yi, n_cols;
     PetscScalar ones[nnz_max];
 
-    PetscFunctionBeginUser;
+    PetscFunctionBeginI;
     TRY( MatGetSize(Xt, NULL, &n_cols) );
     fl_hldr.open(filename.c_str());
     TRY( fl_hldr.fail() );
@@ -139,7 +139,7 @@ PetscErrorCode PermonExcapeSetValues(Mat Xt, Vec y, PetscInt nnz_max, const std:
     TRY( MatAssemblyEnd(Xt, MAT_FINAL_ASSEMBLY) );
     TRY( VecAssemblyBegin(y) );
     TRY( VecAssemblyEnd(y) );
-    PetscFunctionReturn(0);
+    PetscFunctionReturnI(0);
 }
 
 #undef __FUNCT__
@@ -183,8 +183,7 @@ PetscErrorCode PermonExcapeDataToQP(Mat Xt, Vec y, QP *qp_new)
   QP qp;
   Mat X,XtX;
   Vec e;
-  Mat BEt;
-  PetscInt n;
+  Mat BE;
 
   PetscFunctionBeginI;
   TRY( PetscObjectGetComm((PetscObject)Xt, &comm) );
@@ -202,7 +201,7 @@ PetscErrorCode PermonExcapeDataToQP(Mat Xt, Vec y, QP *qp_new)
   TRY( QPSetRhs(qp, e) );
   TRY( VecDestroy(&e) );
 
-  //TODO BEt: new shell matrix for dot product y'*x
+  TRY( MatCreateOneRow(y,&BE) );
 
   //TODO get from user lambda or C = 1/(2*lambda*n)
 
