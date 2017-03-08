@@ -16,6 +16,7 @@ extern char Fllop_input_dir[FLLOP_MAX_PATH_LEN], Fllop_output_dir[FLLOP_MAX_PATH
 static MPI_Comm     comm;
 static PetscMPIInt  rank, commsize;
 static PetscLogStage loadStage, prepStage, solvStage, postStage, saveStage;
+static PetscReal C = 1.0;
 
 template<typename T=int>
 bool ParseSourceFileLine(std::string &line, std::vector<T> &cols, T &yi) {
@@ -213,6 +214,15 @@ PetscErrorCode PermonExcapeDataToQP(Mat Xt, Vec y, QP *qp_new)
 
   *qp_new = qp;
   PetscFunctionReturnI(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "PermonSVMSetC"
+PetscErrorCode PermonSVMSetC(PetscReal C_)
+{
+  PetscFunctionBegin;
+  C = C_;
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
