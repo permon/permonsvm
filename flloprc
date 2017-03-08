@@ -1,0 +1,8 @@
+-options_table
+-qps_smalxe_monitor
+-qps_view_convergence
+-qp_chain_view_kkt
+-qps_smalxe_M1 1
+-qps_smalxe_rho 1
+-qp_O_normalize
+-smalxe_qps_mpgp_alpha_adaptivity_type 3
