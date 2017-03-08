@@ -195,13 +195,10 @@ PetscErrorCode PermonExcapeDataToQP(Mat Xt, Vec y, QP *qp_new)
   TRY( MatCreateNormal(X,&XtX) );
   TRY( MatDiagonalScale(XtX,y,y) );
   TRY( QPSetOperator(qp,XtX) );
-  TRY( MatDestroy(&X) );
-  TRY( MatDestroy(&XtX) );
 
   TRY( VecDuplicate(y,&e) );
   TRY( VecSet(e,1.0) );
   TRY( QPSetRhs(qp, e) );
-  TRY( VecDestroy(&e) );
 
   TRY( MatCreateOneRow(y,&BE) );
   TRY( VecNorm(y, NORM_2, &norm) );
@@ -210,8 +207,10 @@ PetscErrorCode PermonExcapeDataToQP(Mat Xt, Vec y, QP *qp_new)
 
   //TODO get from user lambda or C = 1/(2*lambda*n)
 
-  //TODO box constraints  0 <= c <= C
-
+  TRY( MatDestroy(&X) );
+  TRY( MatDestroy(&XtX) );
+  TRY( VecDestroy(&e) );
+  TRY( MatDestroy(&BE) );
   *qp_new = qp;
   PetscFunctionReturnI(0);
 }
