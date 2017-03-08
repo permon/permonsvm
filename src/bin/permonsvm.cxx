@@ -238,7 +238,8 @@ PetscErrorCode testQPS_files()
   QPS            qps = NULL;
   const QPSType  qpstype;
   Mat            Xt;
-  Vec            y;
+  Vec            y, z, w, Xtw;
+  PetscScalar    b;
 
   PetscFunctionBeginI;
   /* ------------------------------------------------------------------------ */
@@ -248,8 +249,6 @@ PetscErrorCode testQPS_files()
     //TRY( PermonExcapeLoadData(comm,"gene_GSK3B_level6_1000_1_1_1_train.txt", &Xt, &y) );
     TRY( PermonExcapeLoadData(comm,"dummy.txt", &Xt, &y) );
     TRY( PermonExcapeDataToQP(Xt, y, &qp) );
-    TRY( MatDestroy(&Xt) );
-    TRY( VecDestroy(&y) );
   }
   TRY( PetscLogStagePop() );
 
@@ -257,7 +256,7 @@ PetscErrorCode testQPS_files()
   TRY( PetscLogStageRegister("preprocessing", &prepStage) );
   TRY( PetscLogStagePush(prepStage) );
   {
-    //TRY( QPTFromOptions(qp) );
+    TRY( QPTFromOptions(qp) );
 
     TRY( QPSCreate(comm, &qps) );
     TRY( QPSSetQP(qps, qp) );
@@ -283,6 +282,80 @@ PetscErrorCode testQPS_files()
   TRY( PetscLogStagePush(postStage) );
   {
     TRY( QPSPostSolve(qps) );
+
+    /* reconstruct w from dual solution z */
+    {
+      Vec Yz;
+
+      TRY( QPGetSolutionVector(qp, &z) );
+      TRY( VecDuplicate(z, &Yz));
+
+      TRY( VecPointwiseMult(Yz, y, z) );
+      TRY( MatCreateVecs(Xt, &w, NULL) );
+      TRY( MatMultTranspose(Xt, Yz, w) );
+
+      TRY( VecDestroy(&Yz) );
+    }
+
+    /* reconstruct b from dual solution z */
+    {
+      IS is_sv;
+      Vec o, y_sv, Xtw_sv, t;
+      PetscInt len_sv;
+
+      TRY( VecDuplicate(z, &o) );
+      TRY( VecZeroEntries(o) );
+      TRY( MatCreateVecs(Xt, NULL, &Xtw));
+
+      TRY( VecWhichGreaterThan(z, o, &is_sv) );
+      TRY( ISGetSize(is_sv, &len_sv) );
+      TRY( MatMult(Xt, w, Xtw) );
+      TRY( VecGetSubVector(y, is_sv, &y_sv) );
+      TRY( VecGetSubVector(Xtw, is_sv, &Xtw_sv) );
+      TRY( VecDuplicate(y_sv, &t) );
+      TRY( VecWAXPY(t, -1.0, Xtw_sv, y_sv) );
+      TRY( VecRestoreSubVector(y, is_sv, &y_sv) );
+      TRY( VecRestoreSubVector(Xtw, is_sv, &Xtw_sv) );
+      TRY( VecSum(t, &b) );
+      b /= len_sv;
+
+      TRY( ISDestroy(&is_sv) );
+      TRY( VecDestroy(&o) );
+      TRY( VecDestroy(&t) );
+    }
+
+    /* test */
+    {
+      Vec my_y;
+      PetscInt i,m;
+      const PetscScalar *Xtw_arr;
+      PetscScalar *my_y_arr;
+      PetscReal norm;
+
+      TRY( VecDuplicate(Xtw, &my_y) );
+      TRY( VecGetLocalSize(Xtw, &m) );
+
+      TRY( VecGetArrayRead(Xtw, &Xtw_arr) );
+      TRY( VecGetArray(my_y, &my_y_arr) );
+      for (i=0; i<m; i++) {
+        if (Xtw_arr[i] + b > 0) {
+          my_y_arr[i] = 1.0;
+        } else {
+          my_y_arr[i] = -1.0;
+        }
+      }
+      TRY( VecRestoreArrayRead(Xtw, &Xtw_arr) );
+      TRY( VecRestoreArray(my_y, &my_y_arr) );
+
+      TRY( VecView(my_y,PETSC_VIEWER_STDOUT_WORLD) );
+      TRY( VecView(y,PETSC_VIEWER_STDOUT_WORLD) );
+
+      TRY( VecAXPY(my_y,-1.0,y) );
+      TRY( VecNorm(my_y,NORM_2,&norm) );
+      TRY( PetscPrintf(comm, "||y - my_y|| = %f\n",norm) );
+
+      TRY( VecDestroy(&my_y) );
+    }
   }
   TRY( PetscLogStagePop() );
 
@@ -292,6 +365,10 @@ PetscErrorCode testQPS_files()
   //
   TRY( PetscLogStagePop() );
 
+  TRY( MatDestroy(&Xt) );
+  TRY( VecDestroy(&y) );
+  TRY( VecDestroy(&w) );
+  TRY( VecDestroy(&Xtw) );
   TRY( QPSDestroy(&qps) );
   TRY( QPDestroy(&qp) );
   PetscFunctionReturnI(0);
@@ -309,10 +386,6 @@ int main(int argc, char** argv)
   TRY( MPI_Comm_size(comm, &commsize) );
 
   FLLOP_ASSERT(commsize==1,"currently only sequential");
-
-  TRY( FllopSetTrace(PETSC_TRUE) );
-  TRY( FllopSetDebug(PETSC_TRUE) );
-  TRY( FllopSetObjectInfo(PETSC_TRUE) );
 
   TRY( PetscPrintf(comm, "PETSC_DIR:\t" PETSC_DIR "\n") );
   TRY( PetscPrintf(comm, "PETSC_ARCH:\t" PETSC_ARCH "\n") );
