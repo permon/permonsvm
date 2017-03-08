@@ -184,6 +184,7 @@ PetscErrorCode PermonExcapeDataToQP(Mat Xt, Vec y, QP *qp_new)
   Mat X,XtX;
   Vec e;
   Mat BE;
+  PetscReal norm;
 
   PetscFunctionBeginI;
   TRY( PetscObjectGetComm((PetscObject)Xt, &comm) );
@@ -202,6 +203,9 @@ PetscErrorCode PermonExcapeDataToQP(Mat Xt, Vec y, QP *qp_new)
   TRY( VecDestroy(&e) );
 
   TRY( MatCreateOneRow(y,&BE) );
+  TRY( VecNorm(y, NORM_2, &norm) );
+  TRY( MatScale(BE,1.0/norm) );
+  TRY( QPSetEq(qp, BE, NULL));
 
   //TODO get from user lambda or C = 1/(2*lambda*n)
 
