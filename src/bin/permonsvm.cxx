@@ -30,7 +30,7 @@ bool ParseSourceFileLine(std::string &line, std::vector<T> &cols, T &yi) {
 
     algorithm::split_regex(parsed_values, line, r);
 
-    yi = boost::lexical_cast<T>(parsed_values[0]);
+    yi = boost::lexical_cast<T>(parsed_values[0]) ? 1 : -1;
 
     cols.clear();
     for (int i = 1; i < parsed_values.size(); i += 2) {
