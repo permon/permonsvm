@@ -79,17 +79,19 @@ bool ParseSourceFileLine(std::string &line, std::vector<T> &cols) {
 }
 
 template<typename T=int>
-bool GetMatrixStructure(const std::string &filename, std::vector<T> &nnz_per_row, T &nnz_max, T &num_cols) {
+bool GetMatrixStructure(const std::string &filename, std::vector<T> &nnz_per_row, T &nnz_max, T &num_cols, int n_examples=-1) {
     using namespace std;
 
     ifstream fl_hldr;
     string tmp_line; vector<T> tmp_vec;
     T tmp_cols, nnz;
+    int i;
 
     fl_hldr.open(filename.c_str());
 
     num_cols = 0;
     nnz_max = 0;
+    i = 0;
     if (fl_hldr.good()) {
         while (getline(fl_hldr, tmp_line)) {
             ParseSourceFileLine(tmp_line, tmp_vec);
@@ -102,6 +104,8 @@ bool GetMatrixStructure(const std::string &filename, std::vector<T> &nnz_per_row
               nnz_max = nnz;
             }
             nnz_per_row.push_back(nnz);
+            i++;
+            if (n_examples != -1 && i == n_examples) break;
         }
     } else {
         return (false);
@@ -117,18 +121,18 @@ PetscErrorCode PermonExcapeSetValues(Mat Xt, Vec y, PetscInt nnz_max, const std:
 
     ifstream fl_hldr;
     string tmp_line; vector<PetscInt> idxn;
-    PetscInt yi, n_cols;
+    PetscInt yi, m;
     PetscScalar ones[nnz_max];
 
     PetscFunctionBeginI;
-    TRY( MatGetSize(Xt, NULL, &n_cols) );
+    TRY( MatGetLocalSize(Xt, &m, NULL) );
     fl_hldr.open(filename.c_str());
     TRY( fl_hldr.fail() );
 
     std::fill_n(ones, nnz_max, 1.0);
 
     PetscInt i = 0;
-    while (getline(fl_hldr, tmp_line)) {
+    while (getline(fl_hldr, tmp_line) && i < m) {
       ParseSourceFileLine(tmp_line, idxn, yi);
       std::transform(idxn.begin(), idxn.end(), idxn.begin(), [](PetscInt a) { return a-1; });  // decrement 1-based values of idxn to be 0-based
       TRY( MatSetValues(Xt, 1, &i, idxn.size(), &idxn[0], ones, INSERT_VALUES) );
@@ -145,17 +149,17 @@ PetscErrorCode PermonExcapeSetValues(Mat Xt, Vec y, PetscInt nnz_max, const std:
 
 #undef __FUNCT__
 #define __FUNCT__ "PermonExcapeLoadData"
-PetscErrorCode PermonExcapeLoadData(MPI_Comm comm, const char *data_file_name, Mat *Xt_new, Vec *y_new)
+PetscErrorCode PermonExcapeLoadData(MPI_Comm comm, const char *data_file_name, PetscInt n_examples, Mat *Xt_new, Vec *y_new)
 {
   using namespace std;
   vector<PetscInt> nnz_per_row;
-  PetscInt n_examples, n_attributes, nnz_max;
+  PetscInt n_attributes, nnz_max;
   Mat Xt;
   Vec y;
 
   PetscFunctionBeginI;
-  TRY( !GetMatrixStructure(string(data_file_name), nnz_per_row, nnz_max, n_attributes) );
-  n_examples = nnz_per_row.size();
+  TRY( !GetMatrixStructure(string(data_file_name), nnz_per_row, nnz_max, n_attributes, n_examples) );
+  if (n_examples == -1) n_examples = nnz_per_row.size();
 
   TRY( MatCreate(comm, &Xt) );
   TRY( MatSetSizes(Xt, n_examples, n_attributes, PETSC_DECIDE, PETSC_DECIDE) );
@@ -240,14 +244,18 @@ PetscErrorCode testQPS_files()
   Mat            Xt;
   Vec            y, z, w, Xtw;
   PetscScalar    b;
+  char           filename[PETSC_MAX_PATH_LEN] = "dummy.txt";
+  PetscInt       n_examples = -1;  /* -1 means all */
 
   PetscFunctionBeginI;
+  TRY( PetscOptionsGetString(NULL,NULL,"-f",filename,sizeof(filename),NULL) );
+  TRY( PetscOptionsGetInt(NULL,NULL,"-n_examples",&n_examples,NULL));
+
   /* ------------------------------------------------------------------------ */
   TRY( PetscLogStageRegister("load data", &loadStage) );
   TRY( PetscLogStagePush(loadStage) );
   {
-    //TRY( PermonExcapeLoadData(comm,"gene_GSK3B_level6_1000_1_1_1_train.txt", &Xt, &y) );
-    TRY( PermonExcapeLoadData(comm,"dummy.txt", &Xt, &y) );
+    TRY( PermonExcapeLoadData(comm, filename, n_examples, &Xt, &y) );
     TRY( PermonExcapeDataToQP(Xt, y, &qp) );
   }
   TRY( PetscLogStagePop() );
@@ -347,8 +355,8 @@ PetscErrorCode testQPS_files()
       TRY( VecRestoreArrayRead(Xtw, &Xtw_arr) );
       TRY( VecRestoreArray(my_y, &my_y_arr) );
 
-      TRY( VecView(my_y,PETSC_VIEWER_STDOUT_WORLD) );
-      TRY( VecView(y,PETSC_VIEWER_STDOUT_WORLD) );
+      //TRY( VecView(my_y,PETSC_VIEWER_STDOUT_WORLD) );
+      //TRY( VecView(y,PETSC_VIEWER_STDOUT_WORLD) );
 
       TRY( VecAXPY(my_y,-1.0,y) );
       TRY( VecNorm(my_y,NORM_2,&norm) );
