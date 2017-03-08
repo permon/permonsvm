@@ -182,7 +182,7 @@ PetscErrorCode PermonExcapeDataToQP(Mat Xt, Vec y, QP *qp_new)
 {
   MPI_Comm comm;
   QP qp;
-  Mat X,XtX;
+  Mat X,H;
   Vec e,lb,ub;
   Mat BE;
   PetscReal norm;
@@ -192,9 +192,9 @@ PetscErrorCode PermonExcapeDataToQP(Mat Xt, Vec y, QP *qp_new)
   TRY( QPCreate(comm,&qp) );
 
   TRY( FllopMatTranspose(Xt,MAT_TRANSPOSE_CHEAPEST,&X) );
-  TRY( MatCreateNormal(X,&XtX) );
-  TRY( MatDiagonalScale(XtX,y,y) );
-  TRY( QPSetOperator(qp,XtX) );
+  TRY( MatCreateNormal(X,&H) );
+  TRY( MatDiagonalScale(H,y,y) );
+  TRY( QPSetOperator(qp,H) );
 
   TRY( VecDuplicate(y,&e) );
   TRY( VecSet(e,1.0) );
@@ -212,7 +212,7 @@ PetscErrorCode PermonExcapeDataToQP(Mat Xt, Vec y, QP *qp_new)
   TRY( QPSetBox(qp, lb, ub) );
 
   TRY( MatDestroy(&X) );
-  TRY( MatDestroy(&XtX) );
+  TRY( MatDestroy(&H) );
   TRY( VecDestroy(&e) );
   TRY( MatDestroy(&BE) );
   TRY( VecDestroy(&lb) );
