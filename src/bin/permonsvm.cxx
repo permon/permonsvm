@@ -255,7 +255,10 @@ PetscErrorCode testQPS_files()
   TRY( PetscLogStageRegister("load data", &loadStage) );
   TRY( PetscLogStagePush(loadStage) );
   {
+    PetscInt M,N;
     TRY( PermonExcapeLoadData(comm, filename, n_examples, &Xt, &y) );
+    TRY( MatGetSize(Xt, &M, &N));
+    TRY( PetscPrintf(comm, "\n\n#### LOADED %d EXAMPLES WITH %d ATTRIBUTES FROM FILE %s\n\n",M,N,filename));
     TRY( PermonExcapeDataToQP(Xt, y, &qp) );
   }
   TRY( PetscLogStagePop() );
