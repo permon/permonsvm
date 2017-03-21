@@ -18,13 +18,16 @@ PetscErrorCode testSVM_files()
     PermonSVM svm;
     PetscReal C, C_min, C_max, C_step;
     PetscInt N_all, N_eq, M, N, nfolds;
-    Mat Xt;
-    Vec y;
+    Mat Xt, Xt_test;
+    Vec y, y_test;
     char           filename[PETSC_MAX_PATH_LEN] = "dummy.txt";
-    PetscInt       n_examples = -1;  /* -1 means all */
+    char           filename_test[PETSC_MAX_PATH_LEN] = "";
+    PetscInt       n_examples = PETSC_DEFAULT;  /* PETSC_DEFAULT or PETSC_DECIDE means all */
+    PetscBool      filename_test_set = PETSC_FALSE;
     
     PetscFunctionBeginI;
     TRY( PetscOptionsGetString(NULL,NULL,"-f",filename,sizeof(filename),NULL) );
+    TRY( PetscOptionsGetString(NULL,NULL,"-f_test",filename_test,sizeof(filename_test),&filename_test_set) );
     TRY( PetscOptionsGetInt(NULL,NULL,"-n_examples",&n_examples,NULL));
     
     nfolds = 4;
@@ -36,13 +39,10 @@ PetscErrorCode testSVM_files()
     TRY( parser.GetData(comm, n_examples, &Xt, &y) );
     
     TRY( MatGetSize(Xt, &M, &N));
-    TRY( PetscPrintf(comm, "\n\n#### LOADED %d EXAMPLES WITH %d ATTRIBUTES FROM FILE %s\n\n",M,N,filename));
+    TRY( PetscPrintf(comm, "\n\n### PermonSVM: loaded %d examples with %d attributes from file %s\n\n",M,N,filename));
     
     /* ------------------------------------------------------------------------ */
-    {
-        TRY( PermonSVMCreate(comm, &svm) );
-    }
-    
+    TRY( PermonSVMCreate(comm, &svm) );
     TRY( PermonSVMSetTrainingSamples(svm, Xt, y) );
     TRY( PermonSVMSetPenaltyMin(svm,C_min) );
     TRY( PermonSVMSetPenaltyMax(svm,C_max) );
@@ -52,8 +52,18 @@ PetscErrorCode testSVM_files()
     TRY( PermonSVMTrain(svm) );
     TRY( PermonSVMTest(svm, Xt, y, &N_all, &N_eq) );
     TRY( PermonSVMGetPenalty(svm, &C) );
-    
-    TRY( PetscPrintf(comm, "\n#### %d OF %d EXAMPLES CLASSIFIED CORRECTLY (%.2f%) WITH C = %1.1e\n", N_eq, N_all, ((PetscReal)N_eq)/((PetscReal)N_all)*100.0, C) );
+    TRY( PetscPrintf(comm, "\n### PermonSVM: %8d of %8d training examples classified correctly (%.2f%) with C = %1.1e\n", N_eq, N_all, ((PetscReal)N_eq)/((PetscReal)N_all)*100.0, C) );
+
+    /* ------------------------------------------------------------------------ */ 
+    if (filename_test_set) {
+      parser.SetInputFileName(filename_test);
+      TRY( parser.GetData(comm, PETSC_DEFAULT, &Xt_test, &y_test) );
+      TRY( PermonSVMTest(svm, Xt_test, y_test, &N_all, &N_eq) );
+      TRY( PermonSVMGetPenalty(svm, &C) );
+      TRY( PetscPrintf(comm, "### PermonSVM: %8d of %8d  testing examples classified correctly (%.2f%) with C = %1.1e\n", N_eq, N_all, ((PetscReal)N_eq)/((PetscReal)N_all)*100.0, C) );
+      TRY( MatDestroy(&Xt_test) );
+      TRY( VecDestroy(&y_test) );
+    }
     
     /* ------------------------------------------------------------------------ */ 
     TRY( PermonSVMDestroy(&svm) );
