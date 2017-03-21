@@ -32,7 +32,7 @@ FLLOP_EXTERN PetscErrorCode PermonSVMTrain(PermonSVM svm);
 FLLOP_EXTERN PetscErrorCode PermonSVMPostTrain(PermonSVM svm);
 FLLOP_EXTERN PetscErrorCode PermonSVMGetSepparatingHyperplane(PermonSVM svm, Vec *w, PetscReal *b);
 FLLOP_EXTERN PetscErrorCode PermonSVMClassify(PermonSVM svm, Mat Xt_test, Vec *y_out);
-FLLOP_EXTERN PetscErrorCode PermonSVMTest(PermonSVM svm, Mat Xt_test, Vec y_known, PetscInt *N);
+FLLOP_EXTERN PetscErrorCode PermonSVMTest(PermonSVM svm, Mat Xt_test, Vec y_known, PetscInt *N_all, PetscInt *N_eq);
 FLLOP_EXTERN PetscErrorCode PermonSVMCrossValidate(PermonSVM svm);
 
 #endif

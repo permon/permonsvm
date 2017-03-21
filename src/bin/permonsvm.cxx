@@ -17,7 +17,7 @@ PetscErrorCode testSVM_files()
     excape::DataParser parser;
     PermonSVM svm;
     PetscReal C, C_min, C_max, C_step;
-    PetscInt N_eq, M, N, nfolds;
+    PetscInt N_all, N_eq, M, N, nfolds;
     Mat Xt;
     Vec y;
     char           filename[PETSC_MAX_PATH_LEN] = "dummy.txt";
@@ -51,10 +51,10 @@ PetscErrorCode testSVM_files()
     TRY( PermonSVMSetFromOptions(svm) );
     TRY( PermonSVMCrossValidate(svm) );
     TRY( PermonSVMTrain(svm) );
-    TRY( PermonSVMTest(svm, Xt, y, &N_eq) );
+    TRY( PermonSVMTest(svm, Xt, y, &N_all, &N_eq) );
     TRY( PermonSVMGetPenalty(svm, &C) );
     
-    TRY( PetscPrintf(comm, "\n#### %d OF %d EXAMPLES CLASSIFIED CORRECTLY (%.2f%) WITH C = %1.1e\n", N_eq, M, ((PetscReal)N_eq)/((PetscReal)M)*100.0, C) );
+    TRY( PetscPrintf(comm, "\n#### %d OF %d EXAMPLES CLASSIFIED CORRECTLY (%.2f%) WITH C = %1.1e\n", N_eq, N_all, ((PetscReal)N_eq)/((PetscReal)N_all)*100.0, C) );
     
     /* ------------------------------------------------------------------------ */ 
     TRY( PermonSVMDestroy(&svm) );

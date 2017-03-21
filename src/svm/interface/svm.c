@@ -714,17 +714,16 @@ PetscErrorCode PermonSVMClassify(PermonSVM svm, Mat Xt_test, Vec *y_out)
    Output Parameter:    
 .
 @*/
-PetscErrorCode PermonSVMTest(PermonSVM svm, Mat Xt_test, Vec y_known, PetscInt *N) 
+PetscErrorCode PermonSVMTest(PermonSVM svm, Mat Xt_test, Vec y_known, PetscInt *N_all, PetscInt *N_eq)
 {
   Vec y;
   IS is_eq;
-  PetscInt N_eq;
   
   PetscFunctionBeginI; 
   TRY( PermonSVMClassify(svm, Xt_test, &y) );
   TRY( VecWhichEqual(y,y_known,&is_eq) );
-  TRY( ISGetSize(is_eq,&N_eq) );
-  *N = N_eq;
+  TRY( VecGetSize(y,N_all) );
+  TRY( ISGetSize(is_eq,N_eq) );
   TRY( VecDestroy(&y) );
   TRY( ISDestroy(&is_eq) );
   PetscFunctionReturnI(0);
@@ -746,7 +745,7 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
   PetscInt i, j;
   PetscInt nfolds, first, step, n;
   PetscInt lo, hi, N, max;
-  PetscInt N_eq, c_count;
+  PetscInt N_all, N_eq, c_count;
   PetscReal C, C_min, C_step, C_max, C_i;
   PetscReal *array_rate = NULL, rate_max, rate;
   Mat Xt, Xt_test, Xt_train;
@@ -797,7 +796,8 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
       TRY( PermonSVMSetUp(cross_svm) );
       TRY( PermonSVMSetFromOptions(cross_svm) );
       TRY( PermonSVMTrain(cross_svm) );
-      TRY( PermonSVMTest(cross_svm,Xt_test,y_test,&N_eq) );
+      TRY( PermonSVMTest(cross_svm,Xt_test,y_test,&N_all,&N_eq) );
+      FLLOP_ASSERT(N_all==N,"N_all==N");
       array_rate[j] += ((PetscReal)N_eq) / ((PetscReal)N);
       PetscPrintf(PETSC_COMM_WORLD, "N_eq = %d, rate = %f, rate_acc = %f\n", N_eq, ((PetscReal)N_eq) / ((PetscReal)N), array_rate[j]);
     }
