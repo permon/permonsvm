@@ -169,7 +169,7 @@ namespace excape {
 
         PetscFunctionBeginI;
         TRY( !this->GetMatrixStructure(nnz_per_row, nnz_max, n_attributes, n_examples) );
-        if (n_examples == -1) n_examples = nnz_per_row.size();
+        if (n_examples < 0) n_examples = nnz_per_row.size();
 
         TRY( MatCreate(comm, &Xt) );
         TRY( MatSetSizes(Xt, n_examples, n_attributes, PETSC_DECIDE, PETSC_DECIDE) );
