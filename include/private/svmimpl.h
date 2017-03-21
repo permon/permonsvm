@@ -8,6 +8,7 @@ struct _p_PermonSVM {
     PETSCHEADER(int);
     PetscBool autoPostSolve;
     PetscBool setupcalled;
+    PetscBool setfromoptionscalled;
     
     PetscReal C, C_min, C_max, C_step;
     PetscInt nfolds;

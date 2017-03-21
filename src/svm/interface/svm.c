@@ -25,6 +25,7 @@ PetscErrorCode PermonSVMCreate(MPI_Comm comm, PermonSVM *svm_out)
   TRY( PetscHeaderCreate(svm, SVM_CLASSID, "SVM", "SVM Classifier", "SVM", comm, PermonSVMDestroy, PermonSVMView) );
 
   svm->setupcalled = PETSC_FALSE;
+  svm->setfromoptionscalled = PETSC_FALSE;
   svm->autoPostSolve = PETSC_TRUE;
   svm->qps = NULL;
 
@@ -480,6 +481,12 @@ PetscErrorCode PermonSVMSetUp(PermonSVM svm)
   TRY( QPSetBox(qp, lb, ub) ); //set box constraints to QP problem
   
   TRY( QPTFromOptions(qp) ); //transform QP problem e.g. scaling
+
+  //setup solver
+  if (svm->setfromoptionscalled) {
+    TRY( PermonSVMGetQPS(svm, &qps) );
+    TRY( QPSSetFromOptions(qps) );
+  }
   TRY( QPSSetUp(qps) );
 
   //decreasing reference counts
@@ -618,7 +625,6 @@ PetscErrorCode PermonSVMSetFromOptions(PermonSVM svm)
   PetscReal C, C_min, C_max, C_step;
   PetscInt nfolds;
   PetscBool flg;
-  QPS qps;
 
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
@@ -633,8 +639,7 @@ PetscErrorCode PermonSVMSetFromOptions(PermonSVM svm)
   if (flg) TRY( PermonSVMSetPenaltyStep(svm, C_step) );
   TRY( PetscOptionsInt("-svm_nfolds","Set number of folds (nfolds).","PermonSVMSetNfolds",svm->nfolds,&nfolds,&flg) );
   if (flg) TRY( PermonSVMSetNfolds(svm, nfolds) );
-  TRY( PermonSVMGetQPS(svm, &qps) );
-  TRY( QPSSetFromOptions(qps) );
+  svm->setfromoptionscalled = PETSC_TRUE;
   _fllop_ierr = PetscOptionsEnd();CHKERRQ(_fllop_ierr);
   PetscFunctionReturnI(0);
 }
