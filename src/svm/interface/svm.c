@@ -54,7 +54,6 @@ PetscErrorCode PermonSVMCreate(MPI_Comm comm, PermonSVM *svm_out)
 PetscErrorCode PermonSVMReset(PermonSVM svm) 
 {
   PetscFunctionBeginI;
-
   TRY( QPSDestroy(&svm->qps) );
   TRY( MatDestroy(&svm->Xt) );
   TRY( VecDestroy(&svm->y) );
@@ -745,39 +744,51 @@ PetscErrorCode PermonSVMTest(PermonSVM svm, Mat Xt_test, Vec y_known, PetscInt *
 @*/
 PetscErrorCode PermonSVMCrossValidate(PermonSVM svm) 
 {
+  MPI_Comm comm;
   PermonSVM cross_svm;
   IS is_test, is_train;
-  PetscInt i, j;
-  PetscInt nfolds, first, step, n;
-  PetscInt lo, hi, N, max;
+  PetscInt i, j, i_max;
+  PetscInt nfolds, first, n;
+  PetscInt lo, hi, N;
   PetscInt N_all, N_eq, c_count;
   PetscReal C, C_min, C_step, C_max, C_i;
   PetscReal *array_rate = NULL, rate_max, rate;
+  PetscReal *array_C = NULL;
   Mat Xt, Xt_test, Xt_train;
   Vec y, y_test, y_train;
   
   PetscFunctionBeginI;
+  TRY( PetscObjectGetComm((PetscObject)svm,&comm) );
   TRY( PermonSVMGetTrainingSamples(svm,&Xt,&y) );
   TRY( MatGetOwnershipRange(Xt,&lo,&hi) );
   TRY( PermonSVMGetPenaltyMin(svm, &C_min) );
   TRY( PermonSVMGetPenaltyStep(svm, &C_step) );
   TRY( PermonSVMGetPenaltyMax(svm, &C_max) );
   TRY( PermonSVMGetNfolds(svm, &nfolds) );
-  step = nfolds;
-  max = hi - 1;
-  /*c_count = (PetscInt)(C_max - C_min) / C_step + 1;*/
+
   c_count = 0;
-  for (C_i = C_min; C_i < C_max; C_i*=C_step) c_count = c_count + 1;
+  for (C_i = C_min; C_i <= C_max; C_i*=C_step) c_count++;
+  if (!c_count) FLLOP_SETERRQ(comm,PETSC_ERR_ARG_INCOMP,"PenaltyMin must be less than PenaltyMax");
+
+  TRY( PetscMalloc1(c_count,&array_rate) );
+  TRY( PetscMalloc1(c_count,&array_C) );
+  TRY( PetscMemzero(array_rate,c_count*sizeof(PetscReal)) );
+  array_C[0] = C_min;
+  for (i = 1; i < c_count; i++) {
+    array_C[i] = array_C[i-1] * C_step;
+  }
+  TRY( PetscPrintf(comm, "### PermonSVM: following values of penalty C will be tested:\n") );
+  TRY( PetscRealView(c_count,array_C,PETSC_VIEWER_STDOUT_(comm)) );
+
   TRY( ISCreate(PetscObjectComm((PetscObject)svm),&is_test) );
   TRY( ISSetType(is_test,ISSTRIDE) );
-  TRY( PetscMalloc1(c_count,&array_rate) );
-  TRY( PetscMemzero(array_rate,c_count*sizeof(PetscReal)) );
-  
+
   for (i = 0; i < nfolds; ++i) {
+    TRY( PetscPrintf(comm, "fold %d of %d\n",i+1,nfolds) );
     first = i + lo;
-    n = (PetscInt)((max - first) / step + 1);
+    n = (PetscInt)((hi - 1 - first) / nfolds + 1);
     
-    TRY( ISStrideSetStride(is_test,n,first,step) );
+    TRY( ISStrideSetStride(is_test,n,first,nfolds) );
     TRY( MatGetSubMatrix(Xt,is_test,NULL,MAT_INITIAL_MATRIX,&Xt_test) );
     TRY( VecGetSubVector(y,is_test,&y_test) );
     TRY( ISComplement(is_test,lo,hi,&is_train) );
@@ -789,22 +800,22 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
     TRY( PermonSVMSetTrainingSamples(cross_svm,Xt_train,y_train) );
     TRY( PermonSVMSetFromOptions(cross_svm) );
     for (j = 0; j < c_count; ++j) {
-      C_i = C_min * PetscPowScalar(C_step, j);
-      PetscPrintf(PETSC_COMM_WORLD, "C_min = %f, C_%d = %f\n", C_min, j, C_i);
+      TRY( PetscPrintf(comm, "  C[%d] = %.2e\n", j, array_C[j]) );
       {
         //TODO this is just hotfix
         TRY( PermonSVMReset(cross_svm) );
         TRY( PermonSVMSetTrainingSamples(cross_svm,Xt_train,y_train) );
         TRY( PermonSVMSetFromOptions(cross_svm) );
       }
-      TRY( PermonSVMSetPenalty(cross_svm,C_i) );
+      TRY( PermonSVMSetPenalty(cross_svm,array_C[j]) );
       TRY( PermonSVMSetUp(cross_svm) );
       TRY( PermonSVMSetFromOptions(cross_svm) );
       TRY( PermonSVMTrain(cross_svm) );
       TRY( PermonSVMTest(cross_svm,Xt_test,y_test,&N_all,&N_eq) );
       FLLOP_ASSERT(N_all==N,"N_all==N");
-      array_rate[j] += ((PetscReal)N_eq) / ((PetscReal)N);
-      PetscPrintf(PETSC_COMM_WORLD, "N_eq = %d, rate = %f, rate_acc = %f\n", N_eq, ((PetscReal)N_eq) / ((PetscReal)N), array_rate[j]);
+      rate = ((PetscReal)N_eq) / ((PetscReal)N_all);
+      array_rate[j] += rate;
+      TRY( PetscPrintf(comm, "    N_all = %d, N_eq = %d, rate = %f, rate_acc = %f\n", N_all, N_eq, rate, array_rate[j]) );
     }
     TRY( PermonSVMDestroy(&cross_svm) );
     TRY( MatDestroy(&Xt_test) );
@@ -814,16 +825,19 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
     TRY( ISDestroy(&is_train) );
   }
   
-  rate_max = 0.;
-  for(i = 0; i < c_count; ++i) {
-    rate = (PetscReal)(array_rate[i] / nfolds);
-    if (rate > rate_max) {
-      rate_max = rate;
-      C = C_min * PetscPowScalar(C_step, i);
+  i_max = 0;
+  for(i = 1; i < c_count; ++i) {
+    if (array_rate[i] > array_rate[i_max]) {
+      i_max = i;
     }
   }
+  rate_max = array_rate[i_max] / nfolds;
+  C = array_C[i_max];
+  TRY( PetscPrintf(comm,"### PermonSVM: selecting C = %.2e with accumulated rate %f and average rate %f based on cross-validation with %d folds\n",C,array_rate[i_max],rate_max,nfolds) );
   TRY( PermonSVMSetPenalty(svm, C) );
+
   TRY( ISDestroy(&is_test) );
   TRY( PetscFree(array_rate) );
+  TRY( PetscFree(array_C) );
   PetscFunctionReturnI(0);
 } 
