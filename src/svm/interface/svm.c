@@ -28,7 +28,7 @@ PetscErrorCode PermonSVMCreate(MPI_Comm comm, PermonSVM *svm_out)
   svm->autoPostSolve = PETSC_TRUE;
   svm->qps = NULL;
 
-  svm->C = 0.;
+  svm->C = PETSC_DECIDE;
   svm->C_min = 1e-3;
   svm->C_step = 1e1;
   svm->C_max = 1e3;
@@ -443,6 +443,11 @@ PetscErrorCode PermonSVMSetUp(PermonSVM svm)
   TRY( QPSGetQP(qps, &qp) );
   TRY( PermonSVMGetPenalty(svm, &C) );
   TRY( PermonSVMGetTrainingSamples(svm, &Xt, &y) );
+
+  if (C == PETSC_DECIDE) {
+    TRY( PermonSVMCrossValidate(svm) );
+    TRY( PermonSVMGetPenalty(svm, &C) );
+  }
 
   TRY( FllopMatTranspose(Xt,MAT_TRANSPOSE_CHEAPEST,&X) );
   TRY( MatCreateNormal(X,&H) ); //H = X^t * X

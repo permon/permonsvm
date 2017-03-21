@@ -49,7 +49,6 @@ PetscErrorCode testSVM_files()
     TRY( PermonSVMSetPenaltyStep(svm,C_step) );
     TRY( PermonSVMSetNfolds(svm, nfolds) );
     TRY( PermonSVMSetFromOptions(svm) );
-    TRY( PermonSVMCrossValidate(svm) );
     TRY( PermonSVMTrain(svm) );
     TRY( PermonSVMTest(svm, Xt, y, &N_all, &N_eq) );
     TRY( PermonSVMGetPenalty(svm, &C) );
