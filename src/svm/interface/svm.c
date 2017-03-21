@@ -520,6 +520,48 @@ PetscErrorCode PermonSVMSetAutoPostTrain(PermonSVM svm, PetscBool flg)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "PermonSVMSetOptionsPrefix"
+PetscErrorCode PermonSVMSetOptionsPrefix(PermonSVM svm,const char prefix[])
+{
+  QPS qps;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( PetscObjectSetOptionsPrefix((PetscObject)svm,prefix) );
+  TRY( PermonSVMGetQPS(svm,&qps) );
+  TRY( QPSSetOptionsPrefix(qps,prefix) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "PermonSVMAppendOptionsPrefix"
+PetscErrorCode PermonSVMAppendOptionsPrefix(PermonSVM svm,const char prefix[])
+{
+  QPS qps;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( PetscObjectAppendOptionsPrefix((PetscObject)svm,prefix) );
+  TRY( PermonSVMGetQPS(svm,&qps) );
+  TRY( QPSAppendOptionsPrefix(qps,prefix) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "PermonSVMGetOptionsPrefix"
+PetscErrorCode PermonSVMGetOptionsPrefix(PermonSVM svm,const char *prefix[])
+{
+  QPS qps;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( PetscObjectGetOptionsPrefix((PetscObject)svm,prefix) );
+  TRY( PermonSVMGetQPS(svm,&qps) );
+  TRY( QPSGetOptionsPrefix(qps,prefix) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "PermonSVMTrain"
 /*@
    PermonSVMTrain - 
