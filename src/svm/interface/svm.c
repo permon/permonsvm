@@ -29,9 +29,9 @@ PetscErrorCode PermonSVMCreate(MPI_Comm comm, PermonSVM *svm_out)
   svm->qps = NULL;
 
   svm->C = 0.;
-  svm->C_min = 0.;
-  svm->C_step = 0.;
-  svm->C_max = 0.;
+  svm->C_min = 1e-3;
+  svm->C_step = 1e1;
+  svm->C_max = 1e3;
   svm->Xt = NULL;
   svm->y = NULL;
   svm->w = NULL;
