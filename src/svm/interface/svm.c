@@ -20,9 +20,9 @@ PetscErrorCode PermonSVMCreate(MPI_Comm comm, PermonSVM *svm_out)
   PetscValidPointer(svm_out, 2);
 
 #if !defined(PETSC_USE_DYNAMIC_LIBRARIES)
-  TRY(PermonSVMInitializePackage());
+  TRY( PermonSVMInitializePackage() );
 #endif
-  TRY(PetscHeaderCreate(svm, SVM_CLASSID, "SVM", "SVM Classifier", "SVM", comm, PermonSVMDestroy, PermonSVMView));
+  TRY( PetscHeaderCreate(svm, SVM_CLASSID, "SVM", "SVM Classifier", "SVM", comm, PermonSVMDestroy, PermonSVMView) );
 
   svm->setupcalled = PETSC_FALSE;
   svm->autoPostSolve = PETSC_TRUE;
@@ -55,9 +55,9 @@ PetscErrorCode PermonSVMReset(PermonSVM svm)
 {
   PetscFunctionBeginI;
 
-  TRY(QPSDestroy(&svm->qps));
-  TRY(MatDestroy(&svm->Xt));
-  TRY(VecDestroy(&svm->y));
+  TRY( QPSDestroy(&svm->qps) );
+  TRY( MatDestroy(&svm->Xt) );
+  TRY( VecDestroy(&svm->y) );
   PetscFunctionReturnI(0);
 }
 
@@ -83,8 +83,8 @@ PetscErrorCode PermonSVMDestroy(PermonSVM *svm)
       PetscFunctionReturn(0);
   }
 
-  TRY(PermonSVMReset(*svm));
-  TRY(PetscHeaderDestroy(svm));
+  TRY( PermonSVMReset(*svm) );
+  TRY( PetscHeaderDestroy(svm) );
   PetscFunctionReturnI(0);
 }
 
@@ -327,13 +327,13 @@ PetscErrorCode PermonSVMSetTrainingSamples(PermonSVM svm, Mat Xt, Vec y)
   PetscValidHeaderSpecific(y, VEC_CLASSID, 3);
   PetscCheckSameComm(svm, 1, y, 3);
 
-  TRY(MatDestroy(&svm->Xt));
+  TRY( MatDestroy(&svm->Xt) );
   svm->Xt = Xt;
-  TRY(PetscObjectReference((PetscObject) Xt));
+  TRY( PetscObjectReference((PetscObject) Xt) );
 
-  TRY(VecDestroy(&svm->y));
+  TRY( VecDestroy(&svm->y) );
   svm->y = y;
-  TRY(PetscObjectReference((PetscObject) y));
+  TRY( PetscObjectReference((PetscObject) y) );
 
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturnI(0);
@@ -381,9 +381,9 @@ PetscErrorCode PermonSVMSetQPS(PermonSVM svm, QPS qps)
   PetscValidHeaderSpecific(qps, QPS_CLASSID, 2);
   PetscCheckSameComm(svm, 1, qps, 2);
 
-  TRY(QPSDestroy(&svm->qps));
+  TRY( QPSDestroy(&svm->qps) );
   svm->qps = qps;
-  TRY(PetscObjectReference((PetscObject) qps));
+  TRY( PetscObjectReference((PetscObject) qps) );
   PetscFunctionReturnI(0);
 }
 
@@ -406,10 +406,10 @@ PetscErrorCode PermonSVMGetQPS(PermonSVM svm, QPS *qps)
 
   if (!svm->qps) {
     QP qp;
-    TRY(QPSCreate(PetscObjectComm((PetscObject)svm), &svm->qps));
-    TRY(QPCreate(PetscObjectComm((PetscObject)svm), &qp));
-    QPSSetQP(svm->qps, qp);
-    QPDestroy(&qp);
+    TRY( QPSCreate(PetscObjectComm((PetscObject)svm), &svm->qps) );
+    TRY( QPCreate(PetscObjectComm((PetscObject)svm), &qp) );
+    TRY( QPSSetQP(svm->qps, qp) );
+    TRY( QPDestroy(&qp) );
   }
   *qps = svm->qps;
   PetscFunctionReturnI(0);
@@ -463,7 +463,7 @@ PetscErrorCode PermonSVMSetUp(PermonSVM svm)
   TRY( MatCreateOneRow(y,&BE) ); //Be = y^t
   TRY( VecNorm(y, NORM_2, &norm) );
   TRY( MatScale(BE,1.0/norm) ); //||Be|| = 1
-  TRY( QPSetEq(qp, BE, NULL)); //set equality constraint to QP problem
+  TRY( QPSetEq(qp, BE, NULL) ); //set equality constraint to QP problem
   
   {
     PetscInt m;
@@ -564,7 +564,7 @@ PetscErrorCode PermonSVMPostTrain(PermonSVM svm)
   /* reconstruct w from dual solution z */
   {
     TRY( QPGetSolutionVector(qp, &z) );
-    TRY( VecDuplicate(z, &Yz));
+    TRY( VecDuplicate(z, &Yz) );
 
     TRY( VecPointwiseMult(Yz, y, z) ); // YZ = Y*z = y.*z
     TRY( MatCreateVecs(Xt, &w, NULL) ); // create vector w such that Xt*w works
@@ -580,7 +580,7 @@ PetscErrorCode PermonSVMPostTrain(PermonSVM svm)
   {
     TRY( VecDuplicate(z, &o) );
     TRY( VecZeroEntries(o) );
-    TRY( MatCreateVecs(Xt, NULL, &Xtw));
+    TRY( MatCreateVecs(Xt, NULL, &Xtw) );
 
     TRY( VecWhichGreaterThan(z, o, &is_sv) );
     TRY( ISGetSize(is_sv, &len_sv) );
