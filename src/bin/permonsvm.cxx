@@ -16,8 +16,8 @@ PetscErrorCode testSVM_files()
 {
     excape::DataParser parser;
     PermonSVM svm;
-    PetscReal C, C_min, C_max, C_step;
-    PetscInt N_all, N_eq, M, N, nfolds;
+    PetscReal C;
+    PetscInt N_all, N_eq, M, N;
     Mat Xt, Xt_test;
     Vec y, y_test;
     char           filename[PETSC_MAX_PATH_LEN] = "dummy.txt";
@@ -30,11 +30,6 @@ PetscErrorCode testSVM_files()
     TRY( PetscOptionsGetString(NULL,NULL,"-f_test",filename_test,sizeof(filename_test),&filename_test_set) );
     TRY( PetscOptionsGetInt(NULL,NULL,"-n_examples",&n_examples,NULL));
     
-    nfolds = 4;
-    C_min = 1e-4;
-    C_step = 10;
-    C_max = 1e4;
-    
     parser.SetInputFileName(filename);
     TRY( parser.GetData(comm, n_examples, &Xt, &y) );
     
@@ -44,10 +39,6 @@ PetscErrorCode testSVM_files()
     /* ------------------------------------------------------------------------ */
     TRY( PermonSVMCreate(comm, &svm) );
     TRY( PermonSVMSetTrainingSamples(svm, Xt, y) );
-    TRY( PermonSVMSetPenaltyMin(svm,C_min) );
-    TRY( PermonSVMSetPenaltyMax(svm,C_max) );
-    TRY( PermonSVMSetPenaltyStep(svm,C_step) );
-    TRY( PermonSVMSetNfolds(svm, nfolds) );
     TRY( PermonSVMSetFromOptions(svm) );
     TRY( PermonSVMTrain(svm) );
     TRY( PermonSVMTest(svm, Xt, y, &N_all, &N_eq) );
