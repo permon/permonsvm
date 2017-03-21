@@ -815,8 +815,6 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
         TRY( PermonSVMSetFromOptions(cross_svm) );
       }
       TRY( PermonSVMSetPenalty(cross_svm,array_C[j]) );
-      TRY( PermonSVMSetUp(cross_svm) );
-      TRY( PermonSVMSetFromOptions(cross_svm) );
       TRY( PermonSVMTrain(cross_svm) );
       TRY( PermonSVMTest(cross_svm,Xt_test,y_test,&N_all,&N_eq) );
       FLLOP_ASSERT(N_all==N,"N_all==N");
