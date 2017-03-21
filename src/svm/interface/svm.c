@@ -32,10 +32,12 @@ PetscErrorCode PermonSVMCreate(MPI_Comm comm, PermonSVM *svm_out)
   svm->C_min = 1e-3;
   svm->C_step = 1e1;
   svm->C_max = 1e3;
+  svm->nfolds = 4;
+
   svm->Xt = NULL;
   svm->y = NULL;
   svm->w = NULL;
-  svm->b = 0.;
+  svm->b = PETSC_INFINITY;
 
   *svm_out = svm;
   PetscFunctionReturnI(0);
