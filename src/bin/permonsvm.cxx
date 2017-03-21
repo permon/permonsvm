@@ -57,7 +57,8 @@ PetscErrorCode testSVM_files()
     
     /* ------------------------------------------------------------------------ */ 
     TRY( PermonSVMDestroy(&svm) );
-    
+    TRY( MatDestroy(&Xt) );
+    TRY( VecDestroy(&y) );
     PetscFunctionReturnI(0);
 }
 
