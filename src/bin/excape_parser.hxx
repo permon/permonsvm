@@ -121,6 +121,8 @@ namespace excape {
         return (true);
     }
     
+#undef __FUNCT__
+#define __FUNCT__ "SetValues"
     template<typename T>
     PetscErrorCode DataParser_<T>::SetValues(Mat Xt, Vec y, PetscInt nnz_max) {
         using namespace std;
@@ -158,6 +160,8 @@ namespace excape {
         this->filename = filename;
     }
     
+#undef __FUNCT__
+#define __FUNCT__ "GetData"
     template<typename T>
     PetscErrorCode DataParser_<T>::GetData(MPI_Comm comm, PetscInt n_examples, Mat *Xt_new, Vec *y_new)
     {
