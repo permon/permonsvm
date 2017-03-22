@@ -18,7 +18,9 @@ PetscErrorCode testSVM_load_data_from_file(const char *filename, PetscInt n_exam
   Mat Xt_seq=NULL, Xt=NULL;
   Vec y_seq=NULL, y=NULL;
   PetscViewer viewer=NULL;
-  VecScatter scatter=NULL;
+  char filename_Xt_bin[PETSC_MAX_PATH_LEN];
+  char filename_y_bin[PETSC_MAX_PATH_LEN];
+  PetscBool Xt_bin, y_bin;
     
   PetscFunctionBeginI;
   parser.SetInputFileName(filename);
@@ -26,29 +28,44 @@ PetscErrorCode testSVM_load_data_from_file(const char *filename, PetscInt n_exam
   
   //TODO workaround until parser works in parallel
   //TODO try to use MatDistribute_MPIAIJ
-  if (!rank) {
-    TRY( parser.GetData(PETSC_COMM_SELF, n_examples, &Xt_seq, &y_seq) );
-    TRY( PetscViewerBinaryOpen(PETSC_COMM_SELF, "mat_Xt_tmp.bin", FILE_MODE_WRITE, &viewer) );
-    TRY( MatView(Xt_seq, viewer) );
-    TRY( PetscViewerDestroy(&viewer) );
-    TRY( MatDestroy(&Xt_seq) );
+  TRY( PetscStrcpy(filename_Xt_bin,filename) );
+  TRY( PetscStrcat(filename_Xt_bin, "_Xt.bin") );
+  TRY( PetscTestFile(filename_Xt_bin, 'r', &Xt_bin) );
+
+  TRY( PetscStrcpy(filename_y_bin,filename) );
+  TRY( PetscStrcat(filename_y_bin, "_y.bin") );
+  TRY( PetscTestFile(filename_y_bin, 'r', &y_bin) );
+
+  if (!Xt_bin || !y_bin) {
+    if (!rank) {
+      TRY( PetscPrintf(PETSC_COMM_SELF, "### PermonSVM: converting input data into PETSc binary format\n") );
+      TRY( parser.GetData(PETSC_COMM_SELF, n_examples, &Xt_seq, &y_seq) );
+      
+      TRY( PetscViewerBinaryOpen(PETSC_COMM_SELF, filename_Xt_bin, FILE_MODE_WRITE, &viewer) );
+      TRY( MatView(Xt_seq, viewer) );
+      TRY( PetscViewerDestroy(&viewer) );
+      TRY( MatDestroy(&Xt_seq) );
+      
+      TRY( PetscViewerBinaryOpen(PETSC_COMM_SELF, filename_y_bin, FILE_MODE_WRITE, &viewer) );
+      TRY( VecView(y_seq, viewer) );
+      TRY( PetscViewerDestroy(&viewer) );
+      TRY( VecDestroy(&y_seq) );
+    }
   } else {
-    TRY( VecCreateSeq(PETSC_COMM_SELF, 0, &y_seq) );
+    TRY( PetscPrintf(PETSC_COMM_WORLD, "### PermonSVM: reusing input data in PETSc binary format\n") );
   }
   
-  TRY( PetscViewerBinaryOpen(comm, "mat_Xt_tmp.bin", FILE_MODE_READ, &viewer) );
+  TRY( PetscViewerBinaryOpen(comm, filename_Xt_bin, FILE_MODE_READ, &viewer) );
   TRY( MatCreate(comm, &Xt) );
   TRY( MatSetType(Xt, MATAIJ) );
   TRY( MatLoad(Xt, viewer) );
   TRY( PetscViewerDestroy(&viewer) );
   
+  TRY( PetscViewerBinaryOpen(comm, filename_y_bin, FILE_MODE_READ, &viewer) );
   TRY( MatCreateVecs(Xt, NULL, &y) );
-  TRY( VecScatterCreateToZero(y,&scatter,NULL) );
-  TRY( VecScatterBegin(scatter,y_seq,y,INSERT_VALUES,SCATTER_REVERSE) );
-  TRY( VecScatterEnd(  scatter,y_seq,y,INSERT_VALUES,SCATTER_REVERSE) );
-  TRY( VecScatterDestroy(&scatter) );
-  TRY( VecDestroy(&y_seq) );
-
+  TRY( VecLoad(y, viewer) );
+  TRY( PetscViewerDestroy(&viewer) );
+  
   *Xt_new = Xt;
   *y_new = y;
   PetscFunctionReturnI(0);
