@@ -798,7 +798,7 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
   IS is_test, is_train;
   PetscInt i, j, i_max;
   PetscInt nfolds, first, n;
-  PetscInt lo, hi, N;
+  PetscInt lo, hi;
   PetscInt N_all, N_eq, c_count;
   PetscReal C, C_min, C_step, C_max, C_i;
   PetscReal *array_rate = NULL, rate_max, rate;
@@ -844,7 +844,6 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
     TRY( MatGetSubMatrix(Xt,is_train,NULL,MAT_INITIAL_MATRIX,&Xt_train) );
     TRY( VecGetSubVector(y,is_train,&y_train) );
     
-    TRY( MatGetSize(Xt_test,&N,NULL) );
     TRY( PermonSVMCreate(PetscObjectComm((PetscObject)svm),&cross_svm) );
     TRY( PermonSVMSetTrainingSamples(cross_svm,Xt_train,y_train) );
     TRY( PermonSVMSetFromOptions(cross_svm) );
@@ -859,7 +858,6 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
       TRY( PermonSVMSetPenalty(cross_svm,array_C[j]) );
       TRY( PermonSVMTrain(cross_svm) );
       TRY( PermonSVMTest(cross_svm,Xt_test,y_test,&N_all,&N_eq) );
-      FLLOP_ASSERT(N_all==N,"N_all==N");
       rate = ((PetscReal)N_eq) / ((PetscReal)N_all);
       array_rate[j] += rate;
       TRY( PetscPrintf(comm, "    N_all = %d, N_eq = %d, rate = %f, rate_acc = %f\n", N_all, N_eq, rate, array_rate[j]) );
