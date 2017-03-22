@@ -662,7 +662,7 @@ PetscErrorCode PermonSVMPostTrain(PermonSVM svm)
 #undef __FUNCT__
 #define __FUNCT__ "PermonSVMSetFromOptions"
 /*@
-   PermonSVMPostTrain - 
+   PermonSVMSetFromOptions - 
 
    Input Parameter:
 .  svm - the SVM
@@ -692,23 +692,27 @@ PetscErrorCode PermonSVMSetFromOptions(PermonSVM svm)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "PermonSVMGetSepparatingHyperplane"
+#define __FUNCT__ "PermonSVMGetSeparatingHyperplane"
 /*@
-   PermonSVMPostTrain - 
+   PermonSVMGetSeparatingHyperplane - Return the classifier (separator) w*x - b = 0 computed by PermonSVMTrain()
+
+   Not Collective
 
    Input Parameter:
-+  svm - the SVM
--  Xt_test
+.  svm - the PermonSVM context
 
-   Output Parameter:    
-.  
+   Output Parameters:    
++  w - the normal vector to the separating hyperplane
+-  b - the offset of the hyperplane is given by b/||w||
+
+ .seealso: PermonSVMTrain(), PermonSVMClassify(), PermonSVMTest()
 @*/
-PetscErrorCode PermonSVMGetSepparatingHyperplane(PermonSVM svm, Vec *w, PetscReal *b)
+PetscErrorCode PermonSVMGetSeparatingHyperplane(PermonSVM svm, Vec *w, PetscReal *b)
 {
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidPointer(w,2);
-  PetscValidPointer(b,2);
+  PetscValidRealPointer(b,3);
   *w = svm->w;
   *b = svm->b;
   PetscFunctionReturnI(0);
@@ -736,7 +740,7 @@ PetscErrorCode PermonSVMClassify(PermonSVM svm, Mat Xt_test, Vec *y_out)
   PetscScalar *y_arr;
   
   PetscFunctionBeginI;
-  TRY( PermonSVMGetSepparatingHyperplane(svm, &w, &b) );
+  TRY( PermonSVMGetSeparatingHyperplane(svm, &w, &b) );
   TRY( MatCreateVecs(Xt_test,NULL,&Xtw_test) );
   TRY( MatMult(Xt_test,w,Xtw_test) );
   

@@ -1,6 +1,15 @@
 #if !defined(__PERMONSVM_H)
 #define __PERMONSVM_H
 
+/*S
+  PermonSVM - PERMON class for Support Vector Machines (SVM) classification on top of PermonQP solvers (QPS)
+
+  Level: beginner
+
+  Concepts: SVM classification
+
+.seealso:  PermonSVMCreate(), PermonSVMDestroy(), QP, QPS
+ S*/
 typedef struct _p_PermonSVM* PermonSVM;
 
 FLLOP_EXTERN PetscClassId SVM_CLASSID;
@@ -33,7 +42,7 @@ FLLOP_EXTERN PetscErrorCode PermonSVMSetAutoPostTrain(PermonSVM svm, PetscBool f
 FLLOP_EXTERN PetscErrorCode PermonSVMSetFromOptions(PermonSVM svm);
 FLLOP_EXTERN PetscErrorCode PermonSVMTrain(PermonSVM svm);
 FLLOP_EXTERN PetscErrorCode PermonSVMPostTrain(PermonSVM svm);
-FLLOP_EXTERN PetscErrorCode PermonSVMGetSepparatingHyperplane(PermonSVM svm, Vec *w, PetscReal *b);
+FLLOP_EXTERN PetscErrorCode PermonSVMGetSeparatingHyperplane(PermonSVM svm, Vec *w, PetscReal *b);
 FLLOP_EXTERN PetscErrorCode PermonSVMClassify(PermonSVM svm, Mat Xt_test, Vec *y_out);
 FLLOP_EXTERN PetscErrorCode PermonSVMTest(PermonSVM svm, Mat Xt_test, Vec y_known, PetscInt *N_all, PetscInt *N_eq);
 FLLOP_EXTERN PetscErrorCode PermonSVMCrossValidate(PermonSVM svm);
