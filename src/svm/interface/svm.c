@@ -856,8 +856,9 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
       TRY( PetscPrintf(comm, "  C[%d] = %.2e\n", j, array_C[j]) );
       {
         //TODO this is just hotfix
-        TRY( PermonSVMReset(cross_svm) );
-        TRY( PermonSVMSetTrainingSamples(cross_svm,Xt_train,y_train) );
+        TRY( QPSDestroy(&cross_svm->qps) );
+        TRY( PermonSVMSetOptionsPrefix(cross_svm,prefix) );
+        TRY( PermonSVMAppendOptionsPrefix(cross_svm,"cross_") );
         TRY( PermonSVMSetFromOptions(cross_svm) );
       }
       TRY( PermonSVMSetPenalty(cross_svm,array_C[j]) );
