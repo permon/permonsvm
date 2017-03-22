@@ -123,7 +123,11 @@ PetscErrorCode PermonSVMSetPenalty(PermonSVM svm, PetscReal C)
 
   if (C <= 0) FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
   svm->C = C;
-  svm->setupcalled = PETSC_FALSE;
+  if (svm->setupcalled) {
+    Vec ub;
+    TRY( QPGetBox(svm->qps->solQP, NULL, &ub) );
+    TRY( VecSet(ub, C) );
+  }
   PetscFunctionReturnI(0);
 }
 
@@ -854,13 +858,6 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
     TRY( PermonSVMSetFromOptions(cross_svm) );
     for (j = 0; j < c_count; ++j) {
       TRY( PetscPrintf(comm, "  C[%d] = %.2e\n", j, array_C[j]) );
-      {
-        //TODO this is just hotfix
-        TRY( QPSDestroy(&cross_svm->qps) );
-        TRY( PermonSVMSetOptionsPrefix(cross_svm,prefix) );
-        TRY( PermonSVMAppendOptionsPrefix(cross_svm,"cross_") );
-        TRY( PermonSVMSetFromOptions(cross_svm) );
-      }
       TRY( PermonSVMSetPenalty(cross_svm,array_C[j]) );
       TRY( PermonSVMTrain(cross_svm) );
       TRY( PermonSVMTest(cross_svm,Xt_test,y_test,&N_all,&N_eq) );
