@@ -57,7 +57,7 @@ PetscErrorCode PermonSVMCreate(MPI_Comm comm, PermonSVM *svm_out)
 PetscErrorCode PermonSVMReset(PermonSVM svm) 
 {
   PetscFunctionBeginI;
-  TRY( QPSDestroy(&svm->qps) );
+  TRY( QPSReset(svm->qps) );
   TRY( MatDestroy(&svm->Xt) );
   TRY( VecDestroy(&svm->y) );
   PetscFunctionReturnI(0);
@@ -86,6 +86,7 @@ PetscErrorCode PermonSVMDestroy(PermonSVM *svm)
   }
 
   TRY( PermonSVMReset(*svm) );
+  TRY( QPSDestroy(&(*svm)->qps) );
   TRY( PetscHeaderDestroy(svm) );
   PetscFunctionReturnI(0);
 }
