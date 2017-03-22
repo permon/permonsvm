@@ -806,6 +806,7 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
   PetscReal *array_C = NULL;
   Mat Xt, Xt_test, Xt_train;
   Vec y, y_test, y_train;
+  const char *prefix;
   
   PetscFunctionBeginI;
   TRY( PetscObjectGetComm((PetscObject)svm,&comm) );
@@ -815,6 +816,7 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
   TRY( PermonSVMGetPenaltyStep(svm, &C_step) );
   TRY( PermonSVMGetPenaltyMax(svm, &C_max) );
   TRY( PermonSVMGetNfolds(svm, &nfolds) );
+  TRY( PermonSVMGetOptionsPrefix(svm, &prefix) );
 
   c_count = 0;
   for (C_i = C_min; C_i <= C_max; C_i*=C_step) c_count++;
@@ -846,6 +848,8 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
     TRY( VecGetSubVector(y,is_train,&y_train) );
     
     TRY( PermonSVMCreate(PetscObjectComm((PetscObject)svm),&cross_svm) );
+    TRY( PermonSVMSetOptionsPrefix(cross_svm,prefix) );
+    TRY( PermonSVMAppendOptionsPrefix(cross_svm,"cross_") );
     TRY( PermonSVMSetTrainingSamples(cross_svm,Xt_train,y_train) );
     TRY( PermonSVMSetFromOptions(cross_svm) );
     for (j = 0; j < c_count; ++j) {
