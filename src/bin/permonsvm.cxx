@@ -3,7 +3,7 @@
 #include <fllopqps.h>
 #include <permonsvm.h>
 
-#include "excape_parser.hxx"
+#include "parser.hxx"
 
 extern char Fllop_input_dir[FLLOP_MAX_PATH_LEN], Fllop_output_dir[FLLOP_MAX_PATH_LEN];
 
@@ -12,7 +12,7 @@ static PetscMPIInt  rank, commsize;
 
 #undef __FUNCT__
 #define __FUNCT__ "testSVM_load_data_from_file"
-PetscErrorCode testSVM_load_data_from_file(const char *filename, PetscInt n_examples, Mat *Xt_new, Vec *y_new)
+PetscErrorCode testSVM_load_data_from_file(const char *filename, PetscInt n_examples, PetscInt numbering_base, Mat *Xt_new, Vec *y_new)
 {
   excape::DataParser parser;
   Mat Xt_seq=NULL, Xt=NULL;
@@ -24,7 +24,7 @@ PetscErrorCode testSVM_load_data_from_file(const char *filename, PetscInt n_exam
     
   PetscFunctionBeginI;
   parser.SetInputFileName(filename);
-  //TRY( parser.GetData(comm, n_examples, &Xt, &y) );
+  parser.SetNumberingBase(numbering_base);
   
   //TODO workaround until parser works in parallel
   //TODO try to use MatDistribute_MPIAIJ
@@ -79,19 +79,21 @@ PetscErrorCode testSVM_load_data(Mat *Xt, Vec *y, Mat *Xt_test, Vec *y_test)
   char           filename[PETSC_MAX_PATH_LEN] = "dummy.txt";
   char           filename_test[PETSC_MAX_PATH_LEN] = "";
   PetscInt       n_examples = PETSC_DEFAULT;  /* PETSC_DEFAULT or PETSC_DECIDE means all */
+  PetscInt       numbering_base;
   PetscBool      filename_test_set = PETSC_FALSE;
 
   PetscFunctionBeginI;
   TRY( PetscOptionsGetString(NULL,NULL,"-f",filename,sizeof(filename),NULL) );
   TRY( PetscOptionsGetString(NULL,NULL,"-f_test",filename_test,sizeof(filename_test),&filename_test_set) );
   TRY( PetscOptionsGetInt(NULL,NULL,"-n_examples",&n_examples,NULL));
+  TRY( PetscOptionsGetInt(NULL,NULL,"-numbering_base",&numbering_base, NULL));
 
-  TRY( testSVM_load_data_from_file(filename, n_examples, Xt, y) );
+  TRY( testSVM_load_data_from_file(filename, n_examples, numbering_base, Xt, y) );
   TRY( MatGetSize(*Xt, &M, &N));
   TRY( PetscPrintf(comm, "\n\n### PermonSVM: loaded %d training examples with %d attributes from file %s\n",M,N,filename));
 
   if (filename_test_set) {
-    TRY( testSVM_load_data_from_file(filename_test, PETSC_DECIDE, Xt_test, y_test) );
+    TRY( testSVM_load_data_from_file(filename_test, PETSC_DECIDE, numbering_base, Xt_test, y_test) );
     TRY( MatGetSize(*Xt_test, &M, &N));
     TRY( PetscPrintf(comm, "### PermonSVM: loaded %d testing examples with %d attributes from file %s\n",M,N,filename_test));
   } else {
