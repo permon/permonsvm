@@ -11,31 +11,31 @@
 
 
 namespace excape {
-    template<typename T1=int, typename T2=PetscScalar>
+    template<typename T1=PetscInt, typename T2=PetscScalar>
     class DataParser_ {
         private:
             std::string filename;
-            bool numbering_base;
+            T1 numbering_base;
             
             bool ParseSourceFileLine(std::string &, std::vector<T1> &, std::vector<T2> &, T1 &);
             bool ParseSourceFileLine(std::string &, std::vector<T1> &);
-            bool GetMatrixStructure(std::vector<T1> &, T1 &, T1 &, int n_examples=-1);
+            bool GetMatrixStructure(std::vector<T1> &, T1 &, T1 &, T1 n_examples=-1);
             PetscErrorCode SetValues(Mat Xt, Vec y, PetscInt nnz_max);
         public:
             void SetInputFileName(const std::string &);
             PetscErrorCode GetData(MPI_Comm, PetscInt, Mat *, Vec *);
-            void SetNumberingBase(bool incides_from_zero = false);
+            void SetNumberingBase(T1 incides_from_zero = 0);
             
             DataParser_(void);
     };
     
     template<typename T1, typename T2>
     DataParser_<T1, T2>::DataParser_(void) {
-        this->numbering_base = false;
+        SetNumberingBase();
     }
     
     template<typename T1, typename T2>
-    void DataParser_<T1, T2>::SetNumberingBase(bool numbering_base) {
+    void DataParser_<T1, T2>::SetNumberingBase(T1 numbering_base) {
         this->numbering_base = numbering_base;
     }
     
@@ -81,7 +81,7 @@ namespace excape {
         regex r("\\s+|:");
 
         vector<string> parsed_values;
-        int col;
+        T1 col;
 
         algorithm::split_regex(parsed_values, line, r);
 
@@ -105,13 +105,13 @@ namespace excape {
 #undef __FUNCT__
 #define __FUNCT__ "GetMatrixStructure"
     template<typename T1, typename T2>
-    bool DataParser_<T1, T2>::GetMatrixStructure(std::vector<T1> &nnz_per_row, T1 &nnz_max, T1 &num_cols, int n_examples) {
+    bool DataParser_<T1, T2>::GetMatrixStructure(std::vector<T1> &nnz_per_row, T1 &nnz_max, T1 &num_cols, T1 n_examples) {
         using namespace std;
 
         ifstream fl_hldr;
         string tmp_line; vector<T1> tmp_vec;
         T1 tmp_cols, nnz;
-        int i;
+        T1 i;
 
         fl_hldr.open(this->filename.c_str());
 
