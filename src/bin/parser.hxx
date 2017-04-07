@@ -149,6 +149,7 @@ namespace excape {
         ifstream fl_hldr;
         string tmp_line; vector<PetscInt> idxn; vector<PetscScalar> vals;
         PetscInt yi, m;
+        PetscInt nb = this->numbering_base;
 
         PetscFunctionBeginI;
         TRY( MatGetLocalSize(Xt, &m, NULL) );
@@ -158,7 +159,7 @@ namespace excape {
         PetscInt i = 0;
         while (getline(fl_hldr, tmp_line) && i < m) {
           ParseSourceFileLine(tmp_line, idxn, vals, yi);
-          std::transform(idxn.begin(), idxn.end(), idxn.begin(), [](PetscInt a) { return a-this->numbering_base; });  // decrement 1-based values of idxn to be 0-based
+          std::transform(idxn.begin(), idxn.end(), idxn.begin(), [nb](PetscInt a) { return a-nb; });  // decrement 1-based values of idxn to be 0-based
           TRY( MatSetValues(Xt, 1, &i, idxn.size(), &idxn[0], &vals[0], INSERT_VALUES) );
           TRY( VecSetValue(y,i,yi,INSERT_VALUES) );
           i++;
