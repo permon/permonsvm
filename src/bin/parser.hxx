@@ -123,7 +123,7 @@ namespace excape {
                 ParseSourceFileLine(tmp_line, tmp_vec);
                 tmp_cols = tmp_vec.back();
                 if (tmp_cols > num_cols) {
-                   num_cols = tmp_cols - this->numbering_base + 1;
+                   num_cols = tmp_cols;
                 }
                 nnz = tmp_vec.size();
                 if (nnz > nnz_max) {
@@ -133,6 +133,7 @@ namespace excape {
                 i++;
                 if (n_examples != -1 && i == n_examples) break;
             }
+            num_cols = num_cols - numbering_base + 1;
         } else {
             return (false);
         }
