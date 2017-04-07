@@ -466,6 +466,8 @@ PetscErrorCode PermonSVMSetUp(PermonSVM svm)
   if (min == -1.0 && max == 1.0) {
     svm->y_inner = y;
     TRY( PetscObjectReference((PetscObject)y) );
+    svm->y_map[0] = -1.0;
+    svm->y_map[1] = 1.0;
   } else {
     const PetscScalar *y_arr;
     PetscScalar *y_inner_arr;
