@@ -134,6 +134,11 @@ namespace excape {
                 if (n_examples > 0 && i == n_examples) break;
             }
             num_cols = num_cols - numbering_base + 1;
+            if (n_examples > i) {
+              FLLOP_SETERRQ2(PETSC_COMM_WORLD,PETSC_ERR_ARG_OUTOFRANGE,"specified n_examples %d is greater than number of rows in data file %d!\n",n_examples,i);
+            } else if (n_examples >= 0) {
+              FLLOP_ASSERT2(n_examples == i, "n_examples == i (%d != %d)",n_examples,i);
+            }
         } else {
             return (false);
         }
