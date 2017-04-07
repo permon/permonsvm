@@ -90,10 +90,12 @@ PetscErrorCode testSVM_load_data(Mat *Xt, Vec *y, Mat *Xt_test, Vec *y_test)
 
   TRY( testSVM_load_data_from_file(filename, n_examples, numbering_base, Xt, y) );
   TRY( MatGetSize(*Xt, &M, &N));
+  FLLOP_ASSERT(n_examples == PETSC_DECIDE || n_examples == PETSC_DEFAULT || (n_examples >= 0 && n_examples == M),
+              "n_examples == PETSC_DECIDE || n_examples == PETSC_DEFAULT || (n_examples >= 0 && n_examples == M)");
   TRY( PetscPrintf(comm, "\n\n### PermonSVM: loaded %d training examples with %d attributes from file %s\n",M,N,filename));
 
   if (filename_test_set) {
-    TRY( testSVM_load_data_from_file(filename_test, PETSC_DECIDE, numbering_base, Xt_test, y_test) );
+    TRY( testSVM_load_data_from_file(filename_test, PETSC_DEFAULT, numbering_base, Xt_test, y_test) );
     TRY( MatGetSize(*Xt_test, &M, &N));
     TRY( PetscPrintf(comm, "### PermonSVM: loaded %d testing examples with %d attributes from file %s\n",M,N,filename_test));
   } else {

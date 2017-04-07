@@ -131,7 +131,7 @@ namespace excape {
                 }
                 nnz_per_row.push_back(nnz);
                 i++;
-                if (n_examples != -1 && i == n_examples) break;
+                if (n_examples > 0 && i == n_examples) break;
             }
             num_cols = num_cols - numbering_base + 1;
         } else {
@@ -191,7 +191,13 @@ namespace excape {
 
         PetscFunctionBeginI;
         TRY( !this->GetMatrixStructure(nnz_per_row, nnz_max, n_attributes, n_examples) );
-        if (n_examples == -1) n_examples = nnz_per_row.size();
+        if (n_examples == PETSC_DECIDE || n_examples == PETSC_DEFAULT) {
+          n_examples = nnz_per_row.size();
+        } else if (n_examples < 0) {
+          FLLOP_SETERRQ(comm,PETSC_ERR_ARG_OUTOFRANGE,"n_examples must be nonnegative");
+        }
+
+        TRY( PetscPrintf(comm,"### PermonSVM: GetData %d attributes, %d examples\n", n_attributes, n_examples) );
 
         TRY( MatCreate(comm, &Xt) );
         TRY( MatSetSizes(Xt, n_examples, n_attributes, PETSC_DECIDE, PETSC_DECIDE) );
