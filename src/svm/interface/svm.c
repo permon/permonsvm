@@ -37,8 +37,11 @@ PetscErrorCode PermonSVMCreate(MPI_Comm comm, PermonSVM *svm_out)
 
   svm->Xt = NULL;
   svm->y = NULL;
+  svm->y_inner = NULL;
   svm->w = NULL;
   svm->b = PETSC_INFINITY;
+
+  TRY( PetscMemzero(svm->y_map,2*sizeof(PetscScalar)) );
 
   *svm_out = svm;
   PetscFunctionReturnI(0);
@@ -60,6 +63,8 @@ PetscErrorCode PermonSVMReset(PermonSVM svm)
   TRY( QPSReset(svm->qps) );
   TRY( MatDestroy(&svm->Xt) );
   TRY( VecDestroy(&svm->y) );
+  TRY( VecDestroy(&svm->y_inner) );
+  TRY( PetscMemzero(svm->y_map,2*sizeof(PetscScalar)) );
   PetscFunctionReturnI(0);
 }
 
@@ -362,11 +367,14 @@ PetscErrorCode PermonSVMGetTrainingSamples(PermonSVM svm, Mat *Xt, Vec *y)
 {
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidPointer(Xt, 2);
-  PetscValidPointer(y, 3);
-
-  *Xt = svm->Xt;
-  *y = svm->y;
+  if (Xt) {
+    PetscValidPointer(Xt, 2);
+    *Xt = svm->Xt;
+  }
+  if (y) {
+    PetscValidPointer(y, 3);
+    *y = svm->y;
+  }
   PetscFunctionReturnI(0);
 }
 
@@ -441,6 +449,7 @@ PetscErrorCode PermonSVMSetUp(PermonSVM svm)
   Vec e,lb,ub;
   Mat BE;
   PetscReal norm;
+  PetscScalar min,max;
 
   FllopTracedFunctionBegin;
   if (svm->setupcalled) PetscFunctionReturn(0);
@@ -451,10 +460,41 @@ PetscErrorCode PermonSVMSetUp(PermonSVM svm)
   TRY( PermonSVMGetPenalty(svm, &C) );
   TRY( PermonSVMGetTrainingSamples(svm, &Xt, &y) );
 
+  /* map y to -1,1 values if needed */
+  TRY( VecMin(y,NULL,&min) );
+  TRY( VecMax(y,NULL,&max) );
+  if (min == -1.0 && max == 1.0) {
+    svm->y_inner = y;
+    TRY( PetscObjectReference((PetscObject)y) );
+  } else {
+    const PetscScalar *y_arr;
+    PetscScalar *y_inner_arr;
+    PetscInt i,n;
+    TRY( VecGetLocalSize(y,&n) );
+    TRY( VecDuplicate(y, &svm->y_inner) );
+    TRY( VecGetArrayRead(y,&y_arr) );
+    TRY( VecGetArray(svm->y_inner,&y_inner_arr) );
+    for (i=0; i<n; i++) {
+      if (y_arr[i]==min) {
+        y_inner_arr[i] = -1.0;
+      } else if (y_arr[i]==max) {
+        y_inner_arr[i] = 1.0;
+      } else {
+        FLLOP_SETERRQ4(PetscObjectComm((PetscObject)svm),PETSC_ERR_ARG_OUTOFRANGE,"index %d: value %.1f is between max %.1f and min %.1f",i,y_arr[i],min,max);
+      }
+    }
+    TRY( VecRestoreArrayRead(y,&y_arr) );
+    TRY( VecRestoreArray(svm->y_inner,&y_inner_arr) );
+    svm->y_map[0] = min;
+    svm->y_map[1] = max;
+  }
+
   if (C == PETSC_DECIDE) {
     TRY( PermonSVMCrossValidate(svm) );
     TRY( PermonSVMGetPenalty(svm, &C) );
   }
+
+  y = svm->y_inner;
 
   TRY( FllopMatTranspose(Xt,MAT_TRANSPOSE_CHEAPEST,&X) );
   TRY( MatCreateNormal(X,&H) ); //H = X^t * X
@@ -614,7 +654,8 @@ PetscErrorCode PermonSVMPostTrain(PermonSVM svm)
   TRY( PermonSVMGetQPS(svm, &qps) );
   TRY( QPSPostSolve(qps) );
   TRY( QPSGetQP(qps, &qp) );
-  TRY( PermonSVMGetTrainingSamples(svm, &Xt, &y) );
+  TRY( PermonSVMGetTrainingSamples(svm, &Xt, NULL) );
+  y = svm->y_inner;
   
   /* reconstruct w from dual solution z */
   {
@@ -751,9 +792,9 @@ PetscErrorCode PermonSVMClassify(PermonSVM svm, Mat Xt_test, Vec *y_out)
   TRY( VecGetArray(y, &y_arr) );
   for (i=0; i<m; i++) {
     if (Xtw_arr[i] + b > 0) {
-      y_arr[i] = 1.0;
+      y_arr[i] = svm->y_map[1];
     } else {
-      y_arr[i] = -1.0;
+      y_arr[i] = svm->y_map[0];
     }
   }
   TRY( VecRestoreArrayRead(Xtw_test, &Xtw_arr) );

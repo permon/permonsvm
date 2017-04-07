@@ -14,6 +14,8 @@ struct _p_PermonSVM {
     PetscInt nfolds;
     Mat Xt;
     Vec y;
+    Vec y_inner;
+    PetscScalar y_map[2];
     
     Vec w;
     PetscScalar b;
