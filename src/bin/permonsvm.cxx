@@ -11,50 +11,46 @@ static MPI_Comm     comm;
 static PetscMPIInt  rank, commsize;
 
 #undef __FUNCT__
-#define __FUNCT__ "testSVM_load_data_from_file"
-PetscErrorCode testSVM_load_data_from_file(const char *filename, PetscInt n_examples, PetscInt numbering_base, Mat *Xt_new, Vec *y_new)
+#define __FUNCT__ "testSVM_convert_data_file"
+//TODO workaround until parser works in parallel
+//TODO try to use MatDistribute_MPIAIJ
+PetscErrorCode testSVM_convert_data_file(const char filename[], const char filename_Xt_bin[], const char filename_y_bin[], PetscInt n_examples, PetscInt numbering_base)
 {
   excape::DataParser parser;
-  Mat Xt_seq=NULL, Xt=NULL;
-  Vec y_seq=NULL, y=NULL;
   PetscViewer viewer=NULL;
-  char filename_Xt_bin[PETSC_MAX_PATH_LEN];
-  char filename_y_bin[PETSC_MAX_PATH_LEN];
-  PetscBool Xt_bin, y_bin;
-    
-  PetscFunctionBeginI;
+  Mat Xt_seq=NULL;
+  Vec y_seq=NULL;
+
+  PetscFunctionBegin;
+  if (rank) PetscFunctionReturn(0);
+
   parser.SetInputFileName(filename);
   parser.SetNumberingBase(numbering_base);
-  
-  //TODO workaround until parser works in parallel
-  //TODO try to use MatDistribute_MPIAIJ
-  TRY( PetscStrcpy(filename_Xt_bin,filename) );
-  TRY( PetscStrcat(filename_Xt_bin, "_Xt.bin") );
-  TRY( PetscTestFile(filename_Xt_bin, 'r', &Xt_bin) );
 
-  TRY( PetscStrcpy(filename_y_bin,filename) );
-  TRY( PetscStrcat(filename_y_bin, "_y.bin") );
-  TRY( PetscTestFile(filename_y_bin, 'r', &y_bin) );
-
-  if (!Xt_bin || !y_bin) {
-    if (!rank) {
-      TRY( PetscPrintf(PETSC_COMM_SELF, "### PermonSVM: converting input data into PETSc binary format\n") );
-      TRY( parser.GetData(PETSC_COMM_SELF, n_examples, &Xt_seq, &y_seq) );
-      
-      TRY( PetscViewerBinaryOpen(PETSC_COMM_SELF, filename_Xt_bin, FILE_MODE_WRITE, &viewer) );
-      TRY( MatView(Xt_seq, viewer) );
-      TRY( PetscViewerDestroy(&viewer) );
-      TRY( MatDestroy(&Xt_seq) );
-      
-      TRY( PetscViewerBinaryOpen(PETSC_COMM_SELF, filename_y_bin, FILE_MODE_WRITE, &viewer) );
-      TRY( VecView(y_seq, viewer) );
-      TRY( PetscViewerDestroy(&viewer) );
-      TRY( VecDestroy(&y_seq) );
-    }
-  } else {
-    TRY( PetscPrintf(PETSC_COMM_WORLD, "### PermonSVM: reusing input data in PETSc binary format\n") );
-  }
+  TRY( PetscPrintf(PETSC_COMM_SELF, "### PermonSVM: converting input data into PETSc binary format\n") );
+  TRY( parser.GetData(PETSC_COMM_SELF, n_examples, &Xt_seq, &y_seq) );
   
+  TRY( PetscViewerBinaryOpen(PETSC_COMM_SELF, filename_Xt_bin, FILE_MODE_WRITE, &viewer) );
+  TRY( MatView(Xt_seq, viewer) );
+  TRY( PetscViewerDestroy(&viewer) );
+  TRY( MatDestroy(&Xt_seq) );
+  
+  TRY( PetscViewerBinaryOpen(PETSC_COMM_SELF, filename_y_bin, FILE_MODE_WRITE, &viewer) );
+  TRY( VecView(y_seq, viewer) );
+  TRY( PetscViewerDestroy(&viewer) );
+  TRY( VecDestroy(&y_seq) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "testSVM_load_binary"
+PetscErrorCode testSVM_load_binary(const char filename_Xt_bin[], const char filename_y_bin[], Mat *Xt_new, Vec *y_new)
+{
+  Mat Xt=NULL;
+  Vec y=NULL;
+  PetscViewer viewer=NULL;
+
+  PetscFunctionBegin;
   TRY( PetscViewerBinaryOpen(comm, filename_Xt_bin, FILE_MODE_READ, &viewer) );
   TRY( MatCreate(comm, &Xt) );
   TRY( MatSetType(Xt, MATAIJ) );
@@ -65,6 +61,46 @@ PetscErrorCode testSVM_load_data_from_file(const char *filename, PetscInt n_exam
   TRY( MatCreateVecs(Xt, NULL, &y) );
   TRY( VecLoad(y, viewer) );
   TRY( PetscViewerDestroy(&viewer) );
+
+  *Xt_new = Xt;
+  *y_new = y;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "testSVM_load_data_from_file"
+PetscErrorCode testSVM_load_data_from_file(const char filename[], PetscInt n_examples, PetscInt numbering_base, Mat *Xt_new, Vec *y_new)
+{
+  Mat Xt=NULL;
+  Vec y=NULL;
+  char filename_Xt_bin[PETSC_MAX_PATH_LEN];
+  char filename_y_bin[PETSC_MAX_PATH_LEN];
+  PetscBool Xt_bin, y_bin;
+    
+  PetscFunctionBeginI;
+  TRY( PetscStrcpy(filename_Xt_bin,filename) );
+  TRY( PetscStrcat(filename_Xt_bin, "_Xt.bin") );
+  TRY( PetscTestFile(filename_Xt_bin, 'r', &Xt_bin) );
+
+  TRY( PetscStrcpy(filename_y_bin,filename) );
+  TRY( PetscStrcat(filename_y_bin, "_y.bin") );
+  TRY( PetscTestFile(filename_y_bin, 'r', &y_bin) );
+
+  if (!Xt_bin || !y_bin) {
+    TRY( testSVM_convert_data_file(filename, filename_Xt_bin, filename_y_bin, n_examples, numbering_base) );
+    TRY( testSVM_load_binary(filename_Xt_bin, filename_y_bin, &Xt, &y) );
+  } else {
+    PetscInt M;
+    TRY( testSVM_load_binary(filename_Xt_bin, filename_y_bin, &Xt, &y) );
+    TRY( MatGetSize(Xt,&M,NULL) );
+    if (M != n_examples) {
+      TRY( PetscPrintf(PETSC_COMM_WORLD, "### PermonSVM: input data in PETSc binary format have different size than n_examples, reconverting\n") );
+      TRY( testSVM_convert_data_file(filename, filename_Xt_bin, filename_y_bin, n_examples, numbering_base) );
+      TRY( testSVM_load_binary(filename_Xt_bin, filename_y_bin, &Xt, &y) );
+    } else {
+      TRY( PetscPrintf(PETSC_COMM_WORLD, "### PermonSVM: reusing input data in PETSc binary format\n") );
+    }
+  }
   
   *Xt_new = Xt;
   *y_new = y;
