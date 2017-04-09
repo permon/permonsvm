@@ -1,5 +1,5 @@
 
-#include <private/svmimpl.h>
+#include <permon/private/svmimpl.h>
 
 static PetscBool SVMPackageInitialized = PETSC_FALSE;
 

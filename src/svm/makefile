@@ -1,7 +1,7 @@
 
 ALL: lib
 
-SOURCEH  = ../../include/private/svmimpl.h ../../include/permonsvm.h
+SOURCEH  = ../../include/permon/private/svmimpl.h ../../include/permonsvm.h
 DIRS     = interface 
 LOCDIR   = src/svm/
 MANSEC   = SVM

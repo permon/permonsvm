@@ -1,5 +1,5 @@
 
-#include <private/svmimpl.h>
+#include <permon/private/svmimpl.h>
 
 PetscClassId SVM_CLASSID;
 
