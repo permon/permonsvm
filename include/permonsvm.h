@@ -1,6 +1,8 @@
 #if !defined(__PERMONSVM_H)
 #define __PERMONSVM_H
 
+#include <permonqps.h>
+
 /*S
   PermonSVM - PERMON class for Support Vector Machines (SVM) classification on top of PermonQP solvers (QPS)
 
