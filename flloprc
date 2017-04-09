@@ -1,7 +1,7 @@
--options_table
--qps_smalxe_monitor
--qps_view_convergence
--qp_chain_view_kkt
+#-options_table
+#-qps_smalxe_monitor
+#-qps_view_convergence
+#-qp_chain_view_kkt
 -qps_smalxe_M1 1
 -qps_smalxe_rho 1
 -qp_O_normalize_hessian

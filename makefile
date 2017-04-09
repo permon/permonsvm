@@ -16,9 +16,9 @@ permonsvm:  ${PERMON_SVM_DIR}/${PETSC_ARCH}/bin/permonsvm
 src/bin/permonsvm.o: src/bin/permonsvm.cxx
 	${PETSC_CXXCOMPILE_SINGLE} -std=c++11 `pwd`/$<
 
-${PERMON_SVM_DIR}/${PETSC_ARCH}/bin/permonsvm: src/bin/permonsvm.o ${PERMON_LIB_DIR}/lib*
+${PERMON_SVM_DIR}/${PETSC_ARCH}/bin/permonsvm: src/bin/permonsvm.o ${PERMON_SVM_LIB_DIR}/lib*
 	@${MKDIR} $(dir $@)
-	@${CLINKER} -o $@ $< -lboost_regex ${PERMON_LIB}
+	@${CLINKER} -o $@ $< -lboost_regex ${PERMON_SVM_LIB}
 	-@${RM} $<
 	-@echo executable $@ created
 	-@echo "========================================="
