@@ -1,6 +1,6 @@
 #include <mpi.h>
 #include <petscksp.h>
-#include <fllopqps.h>
+#include <permonqps.h>
 #include <permonsvm.h>
 
 #include "parser.hxx"

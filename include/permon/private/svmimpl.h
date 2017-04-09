@@ -1,7 +1,7 @@
 #if !defined(__SVMIMPL_H)
 #define	__SVMIMPL_H
 
-#include <private/qpsimpl.h>
+#include <permon/private/qpsimpl.h>
 #include <permonsvm.h>
 
 struct _p_PermonSVM {
