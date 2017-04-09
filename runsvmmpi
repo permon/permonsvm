@@ -1,0 +1,60 @@
+#! /bin/bash
+# Convenience script for running PermonSVM
+# By vaclav.hapla@vsb.cz
+#
+# parameters:
+# -vg0 run with valgrind
+# -vg1 run with valgrind, perform leak check
+# -vg2 run with valgrind, perform more detailed leak check
+# -nc  don't compile
+
+MPIRUN=mpirun
+COMPILE=false
+EXEC="$PERMON_SVM_DIR/$PETSC_ARCH/bin/permonsvmfile"
+
+NPROC=$1
+if ! [[ $NPROC =~ ^[0-9]+$ ]]; then NPROC=1; else shift; fi
+if [ -z "$PERMON_DIR" ]; then echo -e "\nWARNING: PERMON_DIR env. var. not set, using PWD=$PWD\n"; export PERMON_DIR=$PWD; fi
+
+for arg in $@
+do
+  case "$arg" in
+    "-vg0")
+      VALGRIND="valgrind --suppressions=$PERMON_DIR/fllop_valgrind_suppress --log-file=vg.log" ;;
+    "-vg1")
+      VALGRIND="valgrind --suppressions=$PERMON_DIR/fllop_valgrind_suppress --log-file=vg.log --leak-check=full" ;;
+    "-vg2")
+      VALGRIND="valgrind --suppressions=$PERMON_DIR/fllop_valgrind_suppress --log-file=vg.log --leak-check=full --track-origins=yes --show-leak-kinds=all" ;;
+    "-nc")
+      COMPILE=false ;;
+    *)
+      PERMON_ARGS+="$arg "
+  esac
+done
+
+echo "========================================================================"
+echo "number of processes:  $NPROC"
+echo "compile:              $COMPILE"
+
+if [[ -n $VALGRIND ]]; then
+echo "valgrind:             $VALGRIND"
+fi
+
+echo "PERMON arguments:     $PERMON_ARGS"
+
+echo "========================================================================"
+echo
+
+if $COMPILE; then
+  ORIGDIR=$PWD
+  cd $PERMON_DIR
+  make all permonsvmfile
+  ERR=$?
+  cd $ORIGDIR
+  if [ "$ERR" != 0 ]; then exit $ERR; fi
+fi
+
+echo
+echo
+set -x
+$MPIRUN -n $NPROC $VALGRIND $EXEC $PERMON_ARGS
