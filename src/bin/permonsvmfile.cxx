@@ -163,13 +163,13 @@ PetscErrorCode RunSVM()
     TRY( PermonSVMTrain(svm) );
     TRY( PermonSVMTest(svm, Xt, y, &N_all, &N_eq) );
     TRY( PermonSVMGetPenalty(svm, &C) );
-    TRY( PetscPrintf(comm, "\n### PermonSVM: %8d of %8d training examples classified correctly (%.2f%) with C = %1.1e\n", N_eq, N_all, ((PetscReal)N_eq)/((PetscReal)N_all)*100.0, C) );
+    TRY( PetscPrintf(comm, "\n### PermonSVM: %8d of %8d training examples classified correctly (%.2f%%) with C = %1.1e\n", N_eq, N_all, ((PetscReal)N_eq)/((PetscReal)N_all)*100.0, C) );
 
     /* ------------------------------------------------------------------------ */ 
     if (Xt_test) {
       TRY( PermonSVMTest(svm, Xt_test, y_test, &N_all, &N_eq) );
       TRY( PermonSVMGetPenalty(svm, &C) );
-      TRY( PetscPrintf(comm, "### PermonSVM: %8d of %8d  testing examples classified correctly (%.2f%) with C = %1.1e\n", N_eq, N_all, ((PetscReal)N_eq)/((PetscReal)N_all)*100.0, C) );
+      TRY( PetscPrintf(comm, "### PermonSVM: %8d of %8d  testing examples classified correctly (%.2f%%) with C = %1.1e\n", N_eq, N_all, ((PetscReal)N_eq)/((PetscReal)N_all)*100.0, C) );
       TRY( MatDestroy(&Xt_test) );
       TRY( VecDestroy(&y_test) );
     }
