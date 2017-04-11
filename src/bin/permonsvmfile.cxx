@@ -115,6 +115,7 @@ PetscErrorCode testSVM_load_data(Mat *Xt, Vec *y, Mat *Xt_test, Vec *y_test)
   char           filename[PETSC_MAX_PATH_LEN] = "dummy.txt";
   char           filename_test[PETSC_MAX_PATH_LEN] = "";
   PetscInt       n_examples = PETSC_DEFAULT;  /* PETSC_DEFAULT or PETSC_DECIDE means all */
+  PetscInt       n_test_examples = PETSC_DEFAULT;
   PetscInt       numbering_base;
   PetscBool      filename_test_set = PETSC_FALSE;
 
@@ -122,6 +123,7 @@ PetscErrorCode testSVM_load_data(Mat *Xt, Vec *y, Mat *Xt_test, Vec *y_test)
   TRY( PetscOptionsGetString(NULL,NULL,"-f",filename,sizeof(filename),NULL) );
   TRY( PetscOptionsGetString(NULL,NULL,"-f_test",filename_test,sizeof(filename_test),&filename_test_set) );
   TRY( PetscOptionsGetInt(NULL,NULL,"-n_examples",&n_examples,NULL));
+  TRY( PetscOptionsGetInt(NULL,NULL,"-n_test_examples",&n_test_examples,NULL));
   TRY( PetscOptionsGetInt(NULL,NULL,"-numbering_base",&numbering_base, NULL));
 
   TRY( testSVM_load_data_from_file(filename, n_examples, numbering_base, Xt, y) );
@@ -131,7 +133,7 @@ PetscErrorCode testSVM_load_data(Mat *Xt, Vec *y, Mat *Xt_test, Vec *y_test)
   TRY( PetscPrintf(comm, "\n\n### PermonSVM: loaded %d training examples with %d attributes from file %s\n",M,N,filename));
 
   if (filename_test_set) {
-    TRY( testSVM_load_data_from_file(filename_test, PETSC_DEFAULT, numbering_base, Xt_test, y_test) );
+    TRY( testSVM_load_data_from_file(filename_test, n_test_examples, numbering_base, Xt_test, y_test) );
     TRY( MatGetSize(*Xt_test, &M, &N));
     TRY( PetscPrintf(comm, "### PermonSVM: loaded %d testing examples with %d attributes from file %s\n",M,N,filename_test));
   } else {
