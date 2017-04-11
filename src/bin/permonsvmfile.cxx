@@ -144,8 +144,8 @@ PetscErrorCode testSVM_load_data(Mat *Xt, Vec *y, Mat *Xt_test, Vec *y_test)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "testSVM_files"
-PetscErrorCode testSVM_files()
+#define __FUNCT__ "RunSVM"
+PetscErrorCode RunSVM()
 {
     PermonSVM svm;
     PetscReal C;
@@ -204,7 +204,7 @@ int main(int argc, char** argv)
   TRY( PetscPrintf(comm,"Input dir:\t%s\n", Fllop_input_dir) );
   TRY( PetscPrintf(comm,"Output dir:\t%s\n", Fllop_output_dir) );
 
-  TRY( testSVM_files() );
+  TRY( RunSVM() );
   TRY( FllopFinalize() );
   PetscFunctionReturn(0);
 }
