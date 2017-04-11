@@ -892,9 +892,11 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
 
   for (i = 0; i < nfolds; ++i) {
     TRY( PetscPrintf(comm, "fold %d of %d\n",i+1,nfolds) );
-    first = i + lo;
-    n = (PetscInt)((hi - 1 - first) / nfolds + 1);
-    
+
+    first = (lo-1)/nfolds*nfolds + i;
+    if (first < lo) first += nfolds;
+    n = (hi + nfolds - first - 1)/nfolds;
+
     TRY( ISStrideSetStride(is_test,n,first,nfolds) );
     TRY( MatGetSubMatrix(Xt,is_test,NULL,MAT_INITIAL_MATRIX,&Xt_test) );
     TRY( VecGetSubVector(y,is_test,&y_test) );
