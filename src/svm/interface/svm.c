@@ -848,6 +848,7 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
   MPI_Comm comm;
   PermonSVM cross_svm;
   IS is_test, is_train;
+  PetscInt n_examples, n_attributes;  /* PETSC_DEFAULT or PETSC_DECIDE means all */
   PetscInt i, j, i_max;
   PetscInt nfolds, first, n;
   PetscInt lo, hi;
@@ -862,12 +863,15 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
   PetscFunctionBeginI;
   TRY( PetscObjectGetComm((PetscObject)svm,&comm) );
   TRY( PermonSVMGetTrainingSamples(svm,&Xt,&y) );
+  TRY( MatGetSize(Xt,&n_examples,&n_attributes) );
   TRY( MatGetOwnershipRange(Xt,&lo,&hi) );
   TRY( PermonSVMGetPenaltyMin(svm, &C_min) );
   TRY( PermonSVMGetPenaltyStep(svm, &C_step) );
   TRY( PermonSVMGetPenaltyMax(svm, &C_max) );
   TRY( PermonSVMGetNfolds(svm, &nfolds) );
   TRY( PermonSVMGetOptionsPrefix(svm, &prefix) );
+
+  if (nfolds > n_examples) FLLOP_SETERRQ2(comm,PETSC_ERR_ARG_OUTOFRANGE,"number of folds must not be greater than number of examples but %d > %d",nfolds,n_examples);
 
   c_count = 0;
   for (C_i = C_min; C_i <= C_max; C_i*=C_step) c_count++;
