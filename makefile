@@ -3,6 +3,7 @@
 #
 
 ALL: permonsvm-all
+all: permonsvm-all
 LOCDIR = .
 DIRS   = src include
 
