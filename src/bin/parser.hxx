@@ -1,14 +1,11 @@
 #ifndef PARSER_HXX
 #define PARSER_HXX
 #include <algorithm>
-#include <vector>
-#include <string>
-#include <iostream>
 #include <fstream>
-#include <boost/lexical_cast.hpp>
-#include <boost/regex.hpp>
-#include <boost/algorithm/string/regex.hpp>
-
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
 
 namespace excape {
     template<typename T1=PetscInt, typename T2=PetscScalar>
@@ -42,61 +39,43 @@ namespace excape {
     template<typename T1, typename T2>
     bool DataParser_<T1, T2>::ParseSourceFileLine(std::string &line, std::vector<T1> &cols, std::vector<T2> &vals, T1 &yi) {
         using namespace std;
-        using namespace boost;
+        string l, pair, k, v;
+        string delimiter(":");
+        istringstream stream(line.c_str());
 
-        regex r("\\s+|:");
-
-        vector<string> parsed_values;
-        T1 col;
-        T2 val;
-        
-        algorithm::split_regex(parsed_values, line, r);        
-        yi = boost::lexical_cast<T1>(parsed_values[0]); //? 1 : -1;
+        stream >> l;
+        yi = std::atoi(l.c_str());
 
         cols.clear();
         vals.clear();
-        for (unsigned int i = 1; i < parsed_values.size(); i += 2) {
-            try {
-                col = boost::lexical_cast<T1>(parsed_values[i]);
-                val = boost::lexical_cast<T2>(parsed_values[i+1]);
-            } catch (bad_lexical_cast &e) {
-                cout << "Caught bad lexical cast with error " << e.what() << endl;
-                return (false);
-            } catch (...) {
-                cout << "Unknown exception caught!" << endl;
-                return (false);
-            }
-            cols.push_back(col);
-            vals.push_back(val);
-        }
+        while (stream >> pair) {
+          size_t pos = pair.find(delimiter);
 
+          k = pair.substr(0, pos);
+          v = pair.substr(pos + 1, string::npos);
+
+          cols.push_back((T1) std::atoi(k.c_str()));
+          vals.push_back((T2) std::strtod(v.c_str(), NULL));
+        }
+        
         return (true);
     }
     
     template<typename T1, typename T2>
     bool DataParser_<T1, T2>::ParseSourceFileLine(std::string &line, std::vector<T1> &cols) {
         using namespace std;
-        using namespace boost;
+        string l, pair, k, v;
+        string delimiter(":");
+        stringstream stream(line.c_str());
 
-        regex r("\\s+|:");
-
-        vector<string> parsed_values;
-        T1 col;
-
-        algorithm::split_regex(parsed_values, line, r);
+        stream >> l;
 
         cols.clear();
-        for (unsigned int i = 1; i < parsed_values.size(); i += 2) {
-            try {
-                col = boost::lexical_cast<T1>(parsed_values[i]);
-            } catch (bad_lexical_cast &e) {
-                cout << "Caught bad lexical cast with error " << e.what() << endl;
-                return (false);
-            } catch (...) {
-                cout << "Unknown exception caught!" << endl;
-                return (false);
-            }
-            cols.push_back(col);
+        while (stream >> pair) {
+          size_t pos = pair.find(delimiter);
+
+          k = pair.substr(0, pos);
+          cols.push_back((T1) std::atoi(k.c_str()));
         }
 
         return (true);

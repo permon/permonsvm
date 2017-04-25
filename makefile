@@ -21,13 +21,13 @@ src/bin/permonsvmfile.o: src/bin/permonsvmfile.cxx
 
 ${PERMON_SVM_DIR}/${PETSC_ARCH}/bin/permonsvmfile: src/bin/permonsvmfile.o ${PERMON_SVM_LIB_DIR}/lib*
 	@${MKDIR} $(dir $@)
-	@${CLINKER} -o $@ $< -lboost_regex ${PERMON_SVM_LIB}
+	@${CLINKER} -o $@ $< ${PERMON_SVM_LIB}
 	-@${RM} $<
 	-@echo executable $@ created
 	-@echo "========================================="
 
-cleanbin:                          
-	-@${RM} ${PERMON_SVM_DIR}/${PETSC_ARCH}/bin/*      
+cleanbin:
+	-@${RM} ${PERMON_SVM_DIR}/${PETSC_ARCH}/bin/*
 
 clean:: allclean
 
