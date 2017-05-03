@@ -14,7 +14,7 @@ static PetscMPIInt  rank, commsize;
 #define __FUNCT__ "testSVM_convert_data_file"
 //TODO workaround until parser works in parallel
 //TODO try to use MatDistribute_MPIAIJ
-PetscErrorCode testSVM_convert_data_file(const char filename[], const char filename_Xt_bin[], const char filename_y_bin[], PetscInt n_examples, PetscInt numbering_base)
+PetscErrorCode testSVM_convert_data_file(const char filename[], const char filename_Xt_bin[], const char filename_y_bin[], PetscInt n_examples, PetscInt n_attributes, PetscInt numbering_base)
 {
   excape::DataParser parser;
   PetscViewer viewer=NULL;
@@ -28,7 +28,7 @@ PetscErrorCode testSVM_convert_data_file(const char filename[], const char filen
   parser.SetNumberingBase(numbering_base);
 
   TRY( PetscPrintf(PETSC_COMM_SELF, "### PermonSVM: converting input data into PETSc binary format\n") );
-  TRY( parser.GetData(PETSC_COMM_SELF, n_examples, &Xt_seq, &y_seq) );
+  TRY( parser.GetData(PETSC_COMM_SELF, n_examples, n_attributes, &Xt_seq, &y_seq) );
   
   TRY( PetscViewerBinaryOpen(PETSC_COMM_SELF, filename_Xt_bin, FILE_MODE_WRITE, &viewer) );
   TRY( MatView(Xt_seq, viewer) );
@@ -69,7 +69,7 @@ PetscErrorCode testSVM_load_binary(const char filename_Xt_bin[], const char file
 
 #undef __FUNCT__
 #define __FUNCT__ "testSVM_load_data_from_file"
-PetscErrorCode testSVM_load_data_from_file(const char filename[], PetscInt n_examples, PetscInt numbering_base, Mat *Xt_new, Vec *y_new)
+PetscErrorCode testSVM_load_data_from_file(const char filename[], PetscInt n_examples, PetscInt n_attributes, PetscInt numbering_base, Mat *Xt_new, Vec *y_new)
 {
   Mat Xt=NULL;
   Vec y=NULL;
@@ -87,7 +87,7 @@ PetscErrorCode testSVM_load_data_from_file(const char filename[], PetscInt n_exa
   TRY( PetscTestFile(filename_y_bin, 'r', &y_bin) );
 
   if (!Xt_bin || !y_bin) {
-    TRY( testSVM_convert_data_file(filename, filename_Xt_bin, filename_y_bin, n_examples, numbering_base) );
+    TRY( testSVM_convert_data_file(filename, filename_Xt_bin, filename_y_bin, n_examples, n_attributes, numbering_base) );
     TRY( testSVM_load_binary(filename_Xt_bin, filename_y_bin, &Xt, &y) );
   } else {
     PetscInt M;
@@ -95,7 +95,7 @@ PetscErrorCode testSVM_load_data_from_file(const char filename[], PetscInt n_exa
     TRY( MatGetSize(Xt,&M,NULL) );
     if (M != n_examples) {
       TRY( PetscPrintf(PETSC_COMM_WORLD, "### PermonSVM: input data in PETSc binary format have different size than n_examples, reconverting\n") );
-      TRY( testSVM_convert_data_file(filename, filename_Xt_bin, filename_y_bin, n_examples, numbering_base) );
+      TRY( testSVM_convert_data_file(filename, filename_Xt_bin, filename_y_bin, n_examples, n_attributes, numbering_base) );
       TRY( testSVM_load_binary(filename_Xt_bin, filename_y_bin, &Xt, &y) );
     } else {
       TRY( PetscPrintf(PETSC_COMM_WORLD, "### PermonSVM: reusing input data in PETSc binary format\n") );
@@ -126,14 +126,14 @@ PetscErrorCode testSVM_load_data(Mat *Xt, Vec *y, Mat *Xt_test, Vec *y_test)
   TRY( PetscOptionsGetInt(NULL,NULL,"-n_test_examples",&n_test_examples,NULL));
   TRY( PetscOptionsGetInt(NULL,NULL,"-numbering_base",&numbering_base, NULL));
 
-  TRY( testSVM_load_data_from_file(filename, n_examples, numbering_base, Xt, y) );
+  TRY( testSVM_load_data_from_file(filename, n_examples, PETSC_DECIDE, numbering_base, Xt, y) );
   TRY( MatGetSize(*Xt, &M, &N));
   FLLOP_ASSERT(n_examples == PETSC_DECIDE || n_examples == PETSC_DEFAULT || (n_examples >= 0 && n_examples == M),
               "n_examples == PETSC_DECIDE || n_examples == PETSC_DEFAULT || (n_examples >= 0 && n_examples == M)");
   TRY( PetscPrintf(comm, "\n\n### PermonSVM: loaded %d training examples with %d attributes from file %s\n",M,N,filename));
 
   if (filename_test_set) {
-    TRY( testSVM_load_data_from_file(filename_test, n_test_examples, numbering_base, Xt_test, y_test) );
+    TRY( testSVM_load_data_from_file(filename_test, n_test_examples, N, numbering_base, Xt_test, y_test) );
     TRY( MatGetSize(*Xt_test, &M, &N));
     TRY( PetscPrintf(comm, "### PermonSVM: loaded %d testing examples with %d attributes from file %s\n",M,N,filename_test));
   } else {

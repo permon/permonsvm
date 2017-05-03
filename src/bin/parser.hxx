@@ -20,7 +20,7 @@ namespace excape {
             PetscErrorCode SetValues(Mat Xt, Vec y, PetscInt nnz_max);
         public:
             void SetInputFileName(const std::string &);
-            PetscErrorCode GetData(MPI_Comm, PetscInt, Mat *, Vec *);
+            PetscErrorCode GetData(MPI_Comm, PetscInt, PetscInt, Mat *, Vec *);
             void SetNumberingBase(T1 incides_from_zero = 0);
             
             DataParser_(void);
@@ -165,16 +165,19 @@ namespace excape {
 #undef __FUNCT__
 #define __FUNCT__ "GetData"
     template<typename T1, typename T2>
-    PetscErrorCode DataParser_<T1, T2>::GetData(MPI_Comm comm, PetscInt n_examples, Mat *Xt_new, Vec *y_new)
+    PetscErrorCode DataParser_<T1, T2>::GetData(MPI_Comm comm, PetscInt n_examples, PetscInt n_attributes, Mat *Xt_new, Vec *y_new)
     {
         using namespace std;
         vector<PetscInt> nnz_per_row;
-        PetscInt n_attributes, nnz_max;
+        PetscInt n_attributes_detected, nnz_max;
         Mat Xt;
         Vec y;
 
         PetscFunctionBeginI;
-        TRY( !this->GetMatrixStructure(nnz_per_row, nnz_max, n_attributes, n_examples) );
+        TRY( !this->GetMatrixStructure(nnz_per_row, nnz_max, n_attributes_detected, n_examples) );
+        if (n_attributes == PETSC_DECIDE || n_attributes == PETSC_DEFAULT) {
+          n_attributes = n_attributes_detected;
+        }
         if (n_examples == PETSC_DECIDE || n_examples == PETSC_DEFAULT) {
           n_examples = nnz_per_row.size();
         } else if (n_examples < 0) {
