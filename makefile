@@ -20,7 +20,7 @@ permonsvmfile:  ${PERMON_SVM_DIR}/${PETSC_ARCH}/bin/permonsvmfile
 src/bin/permonsvmfile.o: src/bin/permonsvmfile.cxx
 	${PETSC_CXXCOMPILE_SINGLE} -std=c++11 `pwd`/$<
 
-${PERMON_SVM_DIR}/${PETSC_ARCH}/bin/permonsvmfile: src/bin/permonsvmfile.o ${PERMON_SVM_LIB_DIR}/lib*
+${PERMON_SVM_DIR}/${PETSC_ARCH}/bin/permonsvmfile: src/bin/permonsvmfile.o
 	@${MKDIR} $(dir $@)
 	@${CLINKER} -o $@ $< ${PERMON_SVM_LIB}
 	-@${RM} $<
