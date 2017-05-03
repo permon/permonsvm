@@ -5,7 +5,7 @@
 -project
 -proj_qp_O_normalize
 #-qp_O_normalize
--qps_rtol 1e-3
+-qps_rtol 1e-1
 -qps_smalxe_M1 1
 -qps_smalxe_rho 1
 -smalxe_qps_mpgp_alpha_adaptivity_type 3
