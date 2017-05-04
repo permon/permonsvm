@@ -1,1 +1,1 @@
-make alldoc LOC=${PERMON_DUMMY_DIR}
+make alldoc LOC=${PERMON_SVM_DIR}
