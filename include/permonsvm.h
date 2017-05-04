@@ -17,6 +17,32 @@ typedef struct _p_PermonSVM* PermonSVM;
 FLLOP_EXTERN PetscClassId SVM_CLASSID;
 #define SVM_CLASS_NAME  "svm"
 
+/*E
+  PermonSVMLossType - Determines the loss function for soft-margin SVM (non-separable samples).
+
+  Level: beginner
+
+.seealso: PermonSVMSetLossType, PermonSVMGetLossType()
+E*/
+typedef enum {PERMON_SVM_L1, PERMON_SVM_L2} PermonSVMLossType;
+FLLOP_EXTERN const char *const PermonSVMLossTypes[];
+
+/*MC
+     PERMON_SVM_L1 - L1 type of loss function, \xi = max(0, 1 - y_i * w' * x_i)
+
+   Level: beginner
+
+.seealso: PermonSVMLossType, PERMON_SVM_L2, PermonSVMGetLossType(), PermonSVMSetLossType()
+M*/
+
+/*MC
+     PERMON_SVM_L2 - L2 type of loss function, \xi = max(0, 1 - y_i * w' * x_i)^2
+
+   Level: beginner
+
+.seealso: PermonSVMLossType, PERMON_SVM_L1, PermonSVMGetLossType(), PermonSVMSetLossType()
+M*/
+
 FLLOP_EXTERN PetscErrorCode PermonSVMInitializePackage();
 FLLOP_EXTERN PetscErrorCode PermonSVMCreate(MPI_Comm comm, PermonSVM *svm_out);
 FLLOP_EXTERN PetscErrorCode PermonSVMReset(PermonSVM svm);
@@ -32,6 +58,8 @@ FLLOP_EXTERN PetscErrorCode PermonSVMSetPenaltyStep(PermonSVM svm, PetscReal C_s
 FLLOP_EXTERN PetscErrorCode PermonSVMGetPenaltyStep(PermonSVM svm, PetscReal *C_step);
 FLLOP_EXTERN PetscErrorCode PermonSVMSetTrainingSamples(PermonSVM svm, Mat Xt, Vec y);
 FLLOP_EXTERN PetscErrorCode PermonSVMGetTrainingSamples(PermonSVM svm, Mat *Xt, Vec *y);
+FLLOP_EXTERN PetscErrorCode PermonSVMSetLossType(PermonSVM svm, PermonSVMLossType type);
+FLLOP_EXTERN PetscErrorCode PermonSVMGetLossType(PermonSVM svm, PermonSVMLossType *type);
 FLLOP_EXTERN PetscErrorCode PermonSVMSetNfolds(PermonSVM svm, PetscInt nfolds);
 FLLOP_EXTERN PetscErrorCode PermonSVMGetNfolds(PermonSVM svm, PetscInt *nfolds);
 FLLOP_EXTERN PetscErrorCode PermonSVMSetQPS(PermonSVM svm, QPS qps);

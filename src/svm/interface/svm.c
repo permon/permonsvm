@@ -3,6 +3,8 @@
 
 PetscClassId SVM_CLASSID;
 
+const char *const PermonSVMLossTypes[]={"L1","L2","PermonSVMLossType","PERMON_SVM_",0};
+
 #undef __FUNCT__
 #define __FUNCT__ "PermonSVMCreate"
 /*@
@@ -34,6 +36,7 @@ PetscErrorCode PermonSVMCreate(MPI_Comm comm, PermonSVM *svm_out)
   svm->C_step = 1e1;
   svm->C_max = 1e3;
   svm->nfolds = 4;
+  svm->loss_type = PERMON_SVM_L1;
 
   svm->Xt = NULL;
   svm->y = NULL;
@@ -379,6 +382,59 @@ PetscErrorCode PermonSVMGetTrainingSamples(PermonSVM svm, Mat *Xt, Vec *y)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "PermonSVMSetLossType"
+/*@
+   PermonSVMSetLossType - Sets the type of the loss function.
+
+   Logically Collective on PermonSVM
+
+   Input Parameters:
++  svm - the SVM
+-  type - type of loss function
+
+   Level: beginner
+
+.seealso PermonSVMType, PermonSVMGetLossType()
+@*/
+PetscErrorCode PermonSVMSetLossType(PermonSVM svm, PermonSVMLossType type)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidLogicalCollectiveEnum(svm, type, 2);
+  if (type != svm->loss_type) {
+    svm->loss_type = type;
+    svm->setupcalled = PETSC_FALSE;
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "PermonSVMGetLossType"
+/*@
+   PermonSVMGetLossType - Gets the type of the loss function.
+
+   Not Collective
+
+   Input Parameter:
+.  svm - the SVM
+
+   Output Parameter:
+.  type - type of loss function
+
+   Level: beginner
+
+.seealso PermonSVMType, PermonSVMSetLossType()
+@*/
+PetscErrorCode PermonSVMGetLossType(PermonSVM svm, PermonSVMLossType *type)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidPointer(type, 2);
+  *type = svm->loss_type;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "PermonSVMSetQPS"
 /*@
    PermonSVMSetQPS - Sets the QPS.
@@ -715,6 +771,7 @@ PetscErrorCode PermonSVMSetFromOptions(PermonSVM svm)
   PetscReal C, C_min, C_max, C_step;
   PetscInt nfolds;
   PetscBool flg;
+  PermonSVMLossType loss_type;
 
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
@@ -729,6 +786,8 @@ PetscErrorCode PermonSVMSetFromOptions(PermonSVM svm)
   if (flg) TRY( PermonSVMSetPenaltyStep(svm, C_step) );
   TRY( PetscOptionsInt("-svm_nfolds","Set number of folds (nfolds).","PermonSVMSetNfolds",svm->nfolds,&nfolds,&flg) );
   if (flg) TRY( PermonSVMSetNfolds(svm, nfolds) );
+  TRY( PetscOptionsEnum("-svm_loss_type","Specify the loss function for soft-margin SVM (non-separable samples).","PermonSVMSetNfolds",PermonSVMLossTypes,(PetscEnum)svm->loss_type,(PetscEnum*)&loss_type,&flg) );
+  if (flg) TRY( PermonSVMSetLossType(svm, loss_type) );
   svm->setfromoptionscalled = PETSC_TRUE;
   _fllop_ierr = PetscOptionsEnd();CHKERRQ(_fllop_ierr);
   PetscFunctionReturnI(0);

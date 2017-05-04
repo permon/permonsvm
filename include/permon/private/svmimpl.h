@@ -12,6 +12,8 @@ struct _p_PermonSVM {
     
     PetscReal C, C_min, C_max, C_step;
     PetscInt nfolds;
+    PermonSVMLossType loss_type;
+
     Mat Xt;
     Vec y;
     Vec y_inner;
