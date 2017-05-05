@@ -554,9 +554,25 @@ PetscErrorCode PermonSVMSetUp(PermonSVM svm)
 
   y = svm->y_inner;
 
+  //creating Hessian
   TRY( FllopMatTranspose(Xt,MAT_TRANSPOSE_CHEAPEST,&X) );
   TRY( MatCreateNormal(X,&H) ); //H = X^t * X
   TRY( MatDiagonalScale(H,y,y) ); //H = diag(y)*H*diag(y)
+  if (svm->loss_type == PERMON_SVM_L2) {
+    PetscInt m,n,N;
+    Mat E, mats[2], HpE;
+    //TODO use MatShift(H,0.5*C) once implemented
+    TRY( MatGetLocalSize(H,&m,&n) );
+    TRY( MatGetSize(H,&N,NULL) );
+    TRY( MatCreateIdentity(PetscObjectComm((PetscObject)svm),m,n,N,&E) );
+    TRY( MatScale(E,0.5*C) );
+    mats[1] = H; mats[0] = E;
+    TRY( MatCreateSum(PetscObjectComm((PetscObject)svm),2,mats,&HpE) );
+    TRY( MatDestroy(&H) );
+    H = HpE;
+  } else {
+    FLLOP_ASSERT(svm->loss_type==PERMON_SVM_L1,"svm->loss_type==PERMON_SVM_L1");
+  }
   TRY( QPSetOperator(qp,H) ); //set Hessian of QP problem
 
   //creating linear term
@@ -578,9 +594,13 @@ PetscErrorCode PermonSVMSetUp(PermonSVM svm)
 
   //creating box constraints
   TRY( VecDuplicate(y,&lb) ); //create lower bound constraint vector
-  TRY( VecDuplicate(y,&ub) ); //create upper bound constraint vector
   TRY( VecSet(lb, 0.0) );
-  TRY( VecSet(ub, C) );
+  if (svm->loss_type == PERMON_SVM_L1) {
+    TRY( VecDuplicate(y,&ub) ); //create upper bound constraint vector
+    TRY( VecSet(ub, C) );
+  } else {
+    ub = NULL;
+  }
   TRY( QPSetBox(qp, lb, ub) ); //set box constraints to QP problem
   
   TRY( QPTFromOptions(qp) ); //transform QP problem e.g. scaling
