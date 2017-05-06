@@ -53,12 +53,15 @@ PetscErrorCode testSVM_load_binary(const char filename_Xt_bin[], const char file
   PetscFunctionBegin;
   TRY( PetscViewerBinaryOpen(comm, filename_Xt_bin, FILE_MODE_READ, &viewer) );
   TRY( MatCreate(comm, &Xt) );
-  TRY( MatSetType(Xt, MATAIJ) );
+  TRY( MatSetOptionsPrefix(Xt, "Xt_") );
+  TRY( MatSetFromOptions(Xt) );
   TRY( MatLoad(Xt, viewer) );
   TRY( PetscViewerDestroy(&viewer) );
   
   TRY( PetscViewerBinaryOpen(comm, filename_y_bin, FILE_MODE_READ, &viewer) );
   TRY( MatCreateVecs(Xt, NULL, &y) );
+  TRY( VecSetOptionsPrefix(y, "y_") );
+  TRY( VecSetFromOptions(y) );
   TRY( VecLoad(y, viewer) );
   TRY( PetscViewerDestroy(&viewer) );
 
