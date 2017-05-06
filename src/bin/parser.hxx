@@ -192,6 +192,7 @@ namespace excape {
         TRY( MatSetFromOptions(Xt) );
         TRY( MatSeqAIJSetPreallocation(Xt, -1, &nnz_per_row[0]) );
         //TODO MatMPIAIJSetPreallocation
+        TRY( MatSetUp(Xt) );
 
         TRY( VecCreate(comm,&y) );
         TRY( VecSetSizes(y, n_examples, PETSC_DECIDE) );
