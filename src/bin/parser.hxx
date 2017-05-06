@@ -16,7 +16,7 @@ namespace excape {
             
             bool ParseSourceFileLine(std::string &, std::vector<T1> &, std::vector<T2> &, T1 &);
             bool ParseSourceFileLine(std::string &, std::vector<T1> &);
-            bool GetMatrixStructure(T1, T1, std::vector<T1> &, std::vector<T1> &, T1 &, T1 &, T1 n_examples=-1);
+            bool GetMatrixStructure(std::vector<T1> &, T1 &, T1 &, T1 n_examples=-1);
             PetscErrorCode SetValues(Mat Xt, Vec y, PetscInt nnz_max);
         public:
             void SetInputFileName(const std::string &);
@@ -84,12 +84,12 @@ namespace excape {
 #undef __FUNCT__
 #define __FUNCT__ "GetMatrixStructure"
     template<typename T1, typename T2>
-    bool DataParser_<T1, T2>::GetMatrixStructure(T1 lo, T1 hi, std::vector<T1> &nnz_diag_per_row, std::vector<T1> &nnz_off_diag_per_row, T1 &nnz_max, T1 &num_cols, T1 n_examples) {
+    bool DataParser_<T1, T2>::GetMatrixStructure(std::vector<T1> &nnz_per_row, T1 &nnz_max, T1 &num_cols, T1 n_examples) {
         using namespace std;
 
         ifstream fl_hldr;
         string tmp_line; vector<T1> tmp_vec;
-        T1 tmp_cols, nnz, nnz_diag, nnz_off_diag;
+        T1 tmp_cols, nnz;
         T1 i;
 
         fl_hldr.open(this->filename.c_str());
@@ -108,14 +108,7 @@ namespace excape {
                 if (nnz > nnz_max) {
                   nnz_max = nnz;
                 }
-                for (T1 i : tmp_vec) {
-                  if (i >= lo && i < hi)
-                    nnz_diag++;
-                  else
-                    nnz_off_diag++;
-                }
-                nnz_diag_per_row.push_back(nnz_diag);
-                nnz_off_diag_per_row.push_back(nnz_off_diag);
+                nnz_per_row.push_back(nnz);
                 i++;
                 if (n_examples > 0 && i == n_examples) break;
             }
@@ -175,33 +168,30 @@ namespace excape {
     PetscErrorCode DataParser_<T1, T2>::GetData(MPI_Comm comm, PetscInt n_examples, PetscInt n_attributes, Mat *Xt_new, Vec *y_new)
     {
         using namespace std;
-        vector<PetscInt> d_nnz, o_nnz;
-        PetscInt n_attributes_detected, nnz_max, clo, chi;
+        vector<PetscInt> nnz_per_row;
+        PetscInt n_attributes_detected, nnz_max;
         Mat Xt;
         Vec y;
 
         PetscFunctionBeginI;
-        TRY( MatCreate(comm, &Xt) );
-        TRY( MatSetSizes(Xt, n_examples, n_attributes, PETSC_DECIDE, PETSC_DECIDE) );
-        TRY( MatSetOptionsPrefix(Xt, "Xt_") );
-        TRY( MatSetFromOptions(Xt) );
-        TRY( MatGetOwnershipRangeColumn(Xt, &clo, &chi) );
-
-        TRY( !this->GetMatrixStructure(clo, chi, d_nnz, o_nnz, nnz_max, n_attributes_detected, n_examples) );
-
+        TRY( !this->GetMatrixStructure(nnz_per_row, nnz_max, n_attributes_detected, n_examples) );
         if (n_attributes == PETSC_DECIDE || n_attributes == PETSC_DEFAULT) {
           n_attributes = n_attributes_detected;
         }
         if (n_examples == PETSC_DECIDE || n_examples == PETSC_DEFAULT) {
-          n_examples = d_nnz.size();
+          n_examples = nnz_per_row.size();
         } else if (n_examples < 0) {
           FLLOP_SETERRQ(comm,PETSC_ERR_ARG_OUTOFRANGE,"n_examples must be nonnegative");
         }
 
         TRY( PetscPrintf(comm,"### PermonSVM: GetData %d attributes, %d examples\n", n_attributes, n_examples) );
 
-        TRY( MatSeqAIJSetPreallocation(Xt, -1, &d_nnz[0]) );
-        TRY( MatMPIAIJSetPreallocation(Xt, -1, &d_nnz[0], -1, &o_nnz[0]) );
+        TRY( MatCreate(comm, &Xt) );
+        TRY( MatSetSizes(Xt, n_examples, n_attributes, PETSC_DECIDE, PETSC_DECIDE) );
+        TRY( MatSetOptionsPrefix(Xt, "Xt_") );
+        TRY( MatSetFromOptions(Xt) );
+        TRY( MatSeqAIJSetPreallocation(Xt, -1, &nnz_per_row[0]) );
+        //TODO MatMPIAIJSetPreallocation
 
         TRY( VecCreate(comm,&y) );
         TRY( VecSetSizes(y, n_examples, PETSC_DECIDE) );
