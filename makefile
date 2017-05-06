@@ -2,8 +2,8 @@
 # This is the makefile for installing PermonDummy, the PERMON template package <http://permon.it4i.cz/>.
 #
 
-ALL: permonsvm-all
-all: permonsvm-all
+ALL: all
+all: permonsvm-all permonsvmfile
 LOCDIR = .
 DIRS   = src include
 

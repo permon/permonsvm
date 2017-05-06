@@ -110,7 +110,7 @@ PetscErrorCode PermonSVMDestroy(PermonSVM *svm)
 @*/
 PetscErrorCode PermonSVMView(PermonSVM svm, PetscViewer v) 
 {
-
+  PetscFunctionBegin;
   PetscFunctionReturn(0);
 }
 
@@ -604,6 +604,17 @@ PetscErrorCode PermonSVMSetUp(PermonSVM svm)
   TRY( QPSetBox(qp, lb, ub) ); //set box constraints to QP problem
   
   TRY( QPTFromOptions(qp) ); //transform QP problem e.g. scaling
+
+  {
+    QP last;
+    Vec x;
+    PetscInt lo,hi,m;
+    TRY( QPChainGetLast(qp,&last) );
+    TRY( QPGetSolutionVector(last, &x) );
+    TRY( VecGetOwnershipRange(x,&lo,&hi) );
+    TRY( VecGetLocalSize(x,&m) );
+    TRY( PetscPrintf(PETSC_COMM_WORLD, "$$$$ lo=%d hi=%d m=%d\n\n",lo,hi,m) );
+  }
 
   //setup solver
   if (svm->setfromoptionscalled) {
