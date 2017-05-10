@@ -115,15 +115,15 @@ PetscErrorCode PermonSVMView(PermonSVM svm, PetscViewer v)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "PermonSVMSetPenalty"
+#define __FUNCT__ "PermonSVMSetC"
 /*@
-   PermonSVMSetPenalty - Sets the penalty parameter.
+   PermonSVMSetC - Sets the C parameter.
 
    Input Parameter:
 +  svm - the SVM
--  C - penalty parameter
+-  C - C parameter
 @*/
-PetscErrorCode PermonSVMSetPenalty(PermonSVM svm, PetscReal C) 
+PetscErrorCode PermonSVMSetC(PermonSVM svm, PetscReal C) 
 {
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
@@ -140,17 +140,17 @@ PetscErrorCode PermonSVMSetPenalty(PermonSVM svm, PetscReal C)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "PermonSVMGetPenalty"
+#define __FUNCT__ "PermonSVMGetC"
 /*@
-   PermonSVMGetPenalty - Gets the penalty parameter.
+   PermonSVMGetC - Gets the C parameter.
 
    Input Parameter:
 .  svm - the SVM
  
    Output Parameter: 
-.  C - penalty parameter
+.  C - C parameter
 @*/
-PetscErrorCode PermonSVMGetPenalty(PermonSVM svm, PetscReal *C) 
+PetscErrorCode PermonSVMGetC(PermonSVM svm, PetscReal *C) 
 {
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
@@ -160,15 +160,15 @@ PetscErrorCode PermonSVMGetPenalty(PermonSVM svm, PetscReal *C)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "PermonSVMSetPenaltyMin"
+#define __FUNCT__ "PermonSVMSetCMin"
 /*@
-   PermonSVMSetPenalty - Sets the minimal penalty parameter value.
+   PermonSVMSetC - Sets the minimal C parameter value.
 
    Input Parameter:
 +  svm - the SVM
--  C_min - minimal penalty parameter value 
+-  C_min - minimal C parameter value 
 @*/
-PetscErrorCode PermonSVMSetPenaltyMin(PermonSVM svm, PetscReal C_min) 
+PetscErrorCode PermonSVMSetCMin(PermonSVM svm, PetscReal C_min) 
 {
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
@@ -181,17 +181,17 @@ PetscErrorCode PermonSVMSetPenaltyMin(PermonSVM svm, PetscReal C_min)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "PermonSVMGetPenaltyMin"
+#define __FUNCT__ "PermonSVMGetCMin"
 /*@
-   PermonSVMGetPenalty - Gets the minimal penalty parameter value.
+   PermonSVMGetC - Gets the minimal C parameter value.
 
    Input Parameter:
 .  svm - the SVM
  
    Output Parameter: 
-.  C_min - minimal penalty parameter value 
+.  C_min - minimal C parameter value 
 @*/
-PetscErrorCode PermonSVMGetPenaltyMin(PermonSVM svm, PetscReal *C_min) 
+PetscErrorCode PermonSVMGetCMin(PermonSVM svm, PetscReal *C_min) 
 {
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
@@ -201,15 +201,15 @@ PetscErrorCode PermonSVMGetPenaltyMin(PermonSVM svm, PetscReal *C_min)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "PermonSVMSetPenaltyStep"
+#define __FUNCT__ "PermonSVMSetCStep"
 /*@
-   PermonSVMSetPenalty - Sets the step penalty value.
+   PermonSVMSetC - Sets the step C value.
 
    Input Parameter:
 +  svm - the SVM
--  C_step - step penalty value
+-  C_step - step C value
 @*/
-PetscErrorCode PermonSVMSetPenaltyStep(PermonSVM svm, PetscReal C_step) 
+PetscErrorCode PermonSVMSetCStep(PermonSVM svm, PetscReal C_step) 
 {
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
@@ -222,17 +222,17 @@ PetscErrorCode PermonSVMSetPenaltyStep(PermonSVM svm, PetscReal C_step)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "PermonSVMGetPenaltyStep"
+#define __FUNCT__ "PermonSVMGetCStep"
 /*@
-   PermonSVMGetPenalty - Gets the step penalty value.
+   PermonSVMGetC - Gets the step C value.
 
    Input Parameter:
 .  svm - the SVM
  
    Output Parameter: 
-.  C_step - step penalty value 
+.  C_step - step C value 
 @*/
-PetscErrorCode PermonSVMGetPenaltyStep(PermonSVM svm, PetscReal *C_step) 
+PetscErrorCode PermonSVMGetCStep(PermonSVM svm, PetscReal *C_step) 
 {
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
@@ -242,15 +242,15 @@ PetscErrorCode PermonSVMGetPenaltyStep(PermonSVM svm, PetscReal *C_step)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "PermonSVMSetPenaltyMax"
+#define __FUNCT__ "PermonSVMSetCMax"
 /*@
-   PermonSVMSetPenaltyMax - Sets the max penalty parameter value.
+   PermonSVMSetCMax - Sets the max C parameter value.
 
    Input Parameter:
 +  svm - the SVM
--  C_max - max penalty parameter value
+-  C_max - max C parameter value
 @*/
-PetscErrorCode PermonSVMSetPenaltyMax(PermonSVM svm, PetscReal C_max) 
+PetscErrorCode PermonSVMSetCMax(PermonSVM svm, PetscReal C_max) 
 {
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
@@ -263,17 +263,17 @@ PetscErrorCode PermonSVMSetPenaltyMax(PermonSVM svm, PetscReal C_max)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "PermonSVMGetPenaltyMax"
+#define __FUNCT__ "PermonSVMGetCMax"
 /*@
-   PermonSVMGetPenaltyMax - Gets the max penalty parameter value.
+   PermonSVMGetCMax - Gets the max C parameter value.
 
    Input Parameter:
 .  svm - the SVM
  
    Output Parameter: 
-.  C_max - maximal penalty parameter value 
+.  C_max - maximal C parameter value 
 @*/
-PetscErrorCode PermonSVMGetPenaltyMax(PermonSVM svm, PetscReal *C_max) 
+PetscErrorCode PermonSVMGetCMax(PermonSVM svm, PetscReal *C_max) 
 {
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
@@ -285,11 +285,11 @@ PetscErrorCode PermonSVMGetPenaltyMax(PermonSVM svm, PetscReal *C_max)
 #undef __FUNCT__
 #define __FUNCT__ "PermonSVMSetNfolds"
 /*@
-   PermonSVMSetPenalty - Sets the penalty parameter.
+   PermonSVMSetC - Sets the C parameter.
 
    Input Parameter:
 +  svm - the SVM
--  C - penalty parameter
+-  C - C parameter
 @*/
 PetscErrorCode PermonSVMSetNfolds(PermonSVM svm, PetscInt nfolds) 
 {
@@ -513,7 +513,7 @@ PetscErrorCode PermonSVMSetUp(PermonSVM svm)
   FllopTraceBegin;
   TRY( PermonSVMGetQPS(svm, &qps) );
   TRY( QPSGetQP(qps, &qp) );
-  TRY( PermonSVMGetPenalty(svm, &C) );
+  TRY( PermonSVMGetC(svm, &C) );
   TRY( PermonSVMGetTrainingSamples(svm, &Xt, &y) );
 
   /* map y to -1,1 values if needed */
@@ -549,7 +549,7 @@ PetscErrorCode PermonSVMSetUp(PermonSVM svm)
 
   if (C == PETSC_DECIDE) {
     TRY( PermonSVMCrossValidate(svm) );
-    TRY( PermonSVMGetPenalty(svm, &C) );
+    TRY( PermonSVMGetC(svm, &C) );
   }
 
   y = svm->y_inner;
@@ -796,14 +796,14 @@ PetscErrorCode PermonSVMSetFromOptions(PermonSVM svm)
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   _fllop_ierr = PetscObjectOptionsBegin((PetscObject)svm);CHKERRQ(_fllop_ierr);
-  TRY( PetscOptionsReal("-svm_penalty","Set SVM penalty (C).","PermonSVMSetPenalty",svm->C,&C,&flg) );
-  if (flg) TRY( PermonSVMSetPenalty(svm, C) );
-  TRY( PetscOptionsReal("-svm_penalty_min","Set SVM minimal penalty value (C_min).","PermonSVMSetPenaltyMin",svm->C_min,&C_min,&flg) );
-  if (flg) TRY( PermonSVMSetPenaltyMin(svm, C_min) );
-  TRY( PetscOptionsReal("-svm_penalty_max","Set SVM maximal penalty value (C_max).","PermonSVMSetPenaltyMax",svm->C_max,&C_max,&flg) );
-  if (flg) TRY( PermonSVMSetPenaltyMax(svm, C_max) );
-  TRY( PetscOptionsReal("-svm_penalty_step","Set SVM step penalty value (C_step).","PermonSVMSetPenaltyStep",svm->C_step,&C_step,&flg) );
-  if (flg) TRY( PermonSVMSetPenaltyStep(svm, C_step) );
+  TRY( PetscOptionsReal("-svm_C","Set SVM C (C).","PermonSVMSetC",svm->C,&C,&flg) );
+  if (flg) TRY( PermonSVMSetC(svm, C) );
+  TRY( PetscOptionsReal("-svm_C_min","Set SVM minimal C value (C_min).","PermonSVMSetCMin",svm->C_min,&C_min,&flg) );
+  if (flg) TRY( PermonSVMSetCMin(svm, C_min) );
+  TRY( PetscOptionsReal("-svm_C_max","Set SVM maximal C value (C_max).","PermonSVMSetCMax",svm->C_max,&C_max,&flg) );
+  if (flg) TRY( PermonSVMSetCMax(svm, C_max) );
+  TRY( PetscOptionsReal("-svm_C_step","Set SVM step C value (C_step).","PermonSVMSetCStep",svm->C_step,&C_step,&flg) );
+  if (flg) TRY( PermonSVMSetCStep(svm, C_step) );
   TRY( PetscOptionsInt("-svm_nfolds","Set number of folds (nfolds).","PermonSVMSetNfolds",svm->nfolds,&nfolds,&flg) );
   if (flg) TRY( PermonSVMSetNfolds(svm, nfolds) );
   TRY( PetscOptionsEnum("-svm_loss_type","Specify the loss function for soft-margin SVM (non-separable samples).","PermonSVMSetNfolds",PermonSVMLossTypes,(PetscEnum)svm->loss_type,(PetscEnum*)&loss_type,&flg) );

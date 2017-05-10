@@ -32,9 +32,9 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
   TRY( PermonSVMGetTrainingSamples(svm,&Xt,&y) );
   TRY( MatGetSize(Xt,&n_examples,&n_attributes) );
   TRY( MatGetOwnershipRange(Xt,&lo,&hi) );
-  TRY( PermonSVMGetPenaltyMin(svm, &C_min) );
-  TRY( PermonSVMGetPenaltyStep(svm, &C_step) );
-  TRY( PermonSVMGetPenaltyMax(svm, &C_max) );
+  TRY( PermonSVMGetCMin(svm, &C_min) );
+  TRY( PermonSVMGetCStep(svm, &C_step) );
+  TRY( PermonSVMGetCMax(svm, &C_max) );
   TRY( PermonSVMGetNfolds(svm, &nfolds) );
   TRY( PermonSVMGetOptionsPrefix(svm, &prefix) );
 
@@ -42,7 +42,7 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
 
   c_count = 0;
   for (C_i = C_min; C_i <= C_max; C_i*=C_step) c_count++;
-  if (!c_count) FLLOP_SETERRQ(comm,PETSC_ERR_ARG_INCOMP,"PenaltyMin must be less than PenaltyMax");
+  if (!c_count) FLLOP_SETERRQ(comm,PETSC_ERR_ARG_INCOMP,"CMin must be less than CMax");
 
   TRY( PetscMalloc1(c_count,&array_rate) );
   TRY( PetscMalloc1(c_count,&array_C) );
@@ -51,7 +51,7 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
   for (i = 1; i < c_count; i++) {
     array_C[i] = array_C[i-1] * C_step;
   }
-  TRY( PetscPrintf(comm, "### PermonSVM: following values of penalty C will be tested:\n") );
+  TRY( PetscPrintf(comm, "### PermonSVM: following values of C will be tested:\n") );
   TRY( PetscRealView(c_count,array_C,PETSC_VIEWER_STDOUT_(comm)) );
 
   TRY( ISCreate(PetscObjectComm((PetscObject)svm),&is_test) );
@@ -78,7 +78,7 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
     TRY( PermonSVMSetFromOptions(cross_svm) );
     for (j = 0; j < c_count; ++j) {
       TRY( PetscPrintf(comm, "  C[%d] = %.2e\n", j, array_C[j]) );
-      TRY( PermonSVMSetPenalty(cross_svm,array_C[j]) );
+      TRY( PermonSVMSetC(cross_svm,array_C[j]) );
       TRY( PermonSVMTrain(cross_svm) );
       TRY( PermonSVMTest(cross_svm,Xt_test,y_test,&N_all,&N_eq) );
       rate = ((PetscReal)N_eq) / ((PetscReal)N_all);
@@ -102,7 +102,7 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
   rate_max = array_rate[i_max] / nfolds;
   C = array_C[i_max];
   TRY( PetscPrintf(comm,"### PermonSVM: selecting C = %.2e with accumulated rate %f and average rate %f based on cross-validation with %d folds\n",C,array_rate[i_max],rate_max,nfolds) );
-  TRY( PermonSVMSetPenalty(svm, C) );
+  TRY( PermonSVMSetC(svm, C) );
 
   TRY( ISDestroy(&is_test) );
   TRY( PetscFree(array_rate) );
