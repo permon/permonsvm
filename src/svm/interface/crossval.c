@@ -78,6 +78,7 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
     TRY( PermonSVMSetOptionsPrefix(cross_svm,prefix) );
     TRY( PermonSVMAppendOptionsPrefix(cross_svm,"cross_") );
     TRY( PermonSVMSetTrainingSamples(cross_svm,Xt_train,y_train) );
+    TRY( PermonSVMSetLossType(cross_svm,svm->loss_type) );
     TRY( PermonSVMSetFromOptions(cross_svm) );
     for (j = 0; j < c_count; ++j) {
       TRY( PetscPrintf(comm, "  C[%d] = %.2e\n", j, array_C[j]) );
