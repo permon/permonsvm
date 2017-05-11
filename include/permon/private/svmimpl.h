@@ -10,7 +10,7 @@ struct _p_PermonSVM {
     PetscBool setupcalled;
     PetscBool setfromoptionscalled;
     
-    PetscReal C, C_min, C_max, C_step;
+    PetscReal C, LogCMin, LogCMax, LogCBase;
     PetscInt nfolds;
     PermonSVMLossType loss_type;
 

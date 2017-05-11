@@ -32,10 +32,10 @@ PetscErrorCode PermonSVMCreate(MPI_Comm comm, PermonSVM *svm_out)
   svm->qps = NULL;
 
   svm->C = PETSC_DECIDE;
-  svm->C_min = 1e-3;
-  svm->C_step = 1e1;
-  svm->C_max = 1e3;
-  svm->nfolds = 4;
+  svm->LogCMin = -3.0;
+  svm->LogCBase = 2.0;
+  svm->LogCMax = 10.0;
+  svm->nfolds = 5;
   svm->loss_type = PERMON_SVM_L1;
 
   svm->Xt = NULL;
@@ -160,28 +160,28 @@ PetscErrorCode PermonSVMGetC(PermonSVM svm, PetscReal *C)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "PermonSVMSetCMin"
+#define __FUNCT__ "PermonSVMSetLogCMin"
 /*@
    PermonSVMSetC - Sets the minimal C parameter value.
 
    Input Parameter:
 +  svm - the SVM
--  C_min - minimal C parameter value 
+-  LogCMin - minimal C parameter value 
 @*/
-PetscErrorCode PermonSVMSetCMin(PermonSVM svm, PetscReal C_min) 
+PetscErrorCode PermonSVMSetLogCMin(PermonSVM svm, PetscReal LogCMin) 
 {
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidLogicalCollectiveReal(svm, C_min, 2);
+  PetscValidLogicalCollectiveReal(svm, LogCMin, 2);
 
-  if (C_min <= 0) FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
-  svm->C_min = C_min;
+  if (LogCMin <= 0) FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
+  svm->LogCMin = LogCMin;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturnI(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "PermonSVMGetCMin"
+#define __FUNCT__ "PermonSVMGetLogCMin"
 /*@
    PermonSVMGetC - Gets the minimal C parameter value.
 
@@ -189,40 +189,40 @@ PetscErrorCode PermonSVMSetCMin(PermonSVM svm, PetscReal C_min)
 .  svm - the SVM
  
    Output Parameter: 
-.  C_min - minimal C parameter value 
+.  LogCMin - minimal C parameter value 
 @*/
-PetscErrorCode PermonSVMGetCMin(PermonSVM svm, PetscReal *C_min) 
+PetscErrorCode PermonSVMGetLogCMin(PermonSVM svm, PetscReal *LogCMin) 
 {
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidRealPointer(C_min, 2);
-  *C_min = svm->C_min;
+  PetscValidRealPointer(LogCMin, 2);
+  *LogCMin = svm->LogCMin;
   PetscFunctionReturnI(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "PermonSVMSetCStep"
+#define __FUNCT__ "PermonSVMSetLogCBase"
 /*@
-   PermonSVMSetC - Sets the step C value.
+   PermonSVMSetLogCBase - Sets the step C value.
 
    Input Parameter:
 +  svm - the SVM
--  C_step - step C value
+-  LogCBase - step C value
 @*/
-PetscErrorCode PermonSVMSetCStep(PermonSVM svm, PetscReal C_step) 
+PetscErrorCode PermonSVMSetLogCBase(PermonSVM svm, PetscReal LogCBase) 
 {
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidLogicalCollectiveReal(svm, C_step, 2);
+  PetscValidLogicalCollectiveReal(svm, LogCBase, 2);
 
-  if (C_step <= 0) FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
-  svm->C_step = C_step;
+  if (LogCBase <= 0) FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
+  svm->LogCBase = LogCBase;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturnI(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "PermonSVMGetCStep"
+#define __FUNCT__ "PermonSVMGetLogCBase"
 /*@
    PermonSVMGetC - Gets the step C value.
 
@@ -230,55 +230,55 @@ PetscErrorCode PermonSVMSetCStep(PermonSVM svm, PetscReal C_step)
 .  svm - the SVM
  
    Output Parameter: 
-.  C_step - step C value 
+.  LogCBase - step C value 
 @*/
-PetscErrorCode PermonSVMGetCStep(PermonSVM svm, PetscReal *C_step) 
+PetscErrorCode PermonSVMGetLogCBase(PermonSVM svm, PetscReal *LogCBase) 
 {
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidRealPointer(C_step, 2);
-  *C_step = svm->C_step;
+  PetscValidRealPointer(LogCBase, 2);
+  *LogCBase = svm->LogCBase;
   PetscFunctionReturnI(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "PermonSVMSetCMax"
+#define __FUNCT__ "PermonSVMSetLogCMax"
 /*@
-   PermonSVMSetCMax - Sets the max C parameter value.
+   PermonSVMSetLogCMax - Sets the max C parameter value.
 
    Input Parameter:
 +  svm - the SVM
--  C_max - max C parameter value
+-  LogCMax - max C parameter value
 @*/
-PetscErrorCode PermonSVMSetCMax(PermonSVM svm, PetscReal C_max) 
+PetscErrorCode PermonSVMSetLogCMax(PermonSVM svm, PetscReal LogCMax) 
 {
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidLogicalCollectiveReal(svm, C_max, 2);
+  PetscValidLogicalCollectiveReal(svm, LogCMax, 2);
 
-  if (C_max <= 0) FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
-  svm->C_max = C_max;
+  if (LogCMax <= 0) FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
+  svm->LogCMax = LogCMax;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturnI(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "PermonSVMGetCMax"
+#define __FUNCT__ "PermonSVMGetLogCMax"
 /*@
-   PermonSVMGetCMax - Gets the max C parameter value.
+   PermonSVMGetLogCMax - Gets the max C parameter value.
 
    Input Parameter:
 .  svm - the SVM
  
    Output Parameter: 
-.  C_max - maximal C parameter value 
+.  LogCMax - maximal C parameter value 
 @*/
-PetscErrorCode PermonSVMGetCMax(PermonSVM svm, PetscReal *C_max) 
+PetscErrorCode PermonSVMGetLogCMax(PermonSVM svm, PetscReal *LogCMax) 
 {
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidRealPointer(C_max, 2);
-  *C_max = svm->C_max;
+  PetscValidRealPointer(LogCMax, 2);
+  *LogCMax = svm->LogCMax;
   PetscFunctionReturnI(0);
 }
 
@@ -790,7 +790,7 @@ PetscErrorCode PermonSVMPostTrain(PermonSVM svm)
 @*/
 PetscErrorCode PermonSVMSetFromOptions(PermonSVM svm) 
 {
-  PetscReal C, C_min, C_max, C_step;
+  PetscReal C, LogCMin, LogCMax, LogCBase;
   PetscInt nfolds;
   PetscBool flg;
   PermonSVMLossType loss_type;
@@ -800,12 +800,12 @@ PetscErrorCode PermonSVMSetFromOptions(PermonSVM svm)
   _fllop_ierr = PetscObjectOptionsBegin((PetscObject)svm);CHKERRQ(_fllop_ierr);
   TRY( PetscOptionsReal("-svm_C","Set SVM C (C).","PermonSVMSetC",svm->C,&C,&flg) );
   if (flg) TRY( PermonSVMSetC(svm, C) );
-  TRY( PetscOptionsReal("-svm_C_min","Set SVM minimal C value (C_min).","PermonSVMSetCMin",svm->C_min,&C_min,&flg) );
-  if (flg) TRY( PermonSVMSetCMin(svm, C_min) );
-  TRY( PetscOptionsReal("-svm_C_max","Set SVM maximal C value (C_max).","PermonSVMSetCMax",svm->C_max,&C_max,&flg) );
-  if (flg) TRY( PermonSVMSetCMax(svm, C_max) );
-  TRY( PetscOptionsReal("-svm_C_step","Set SVM step C value (C_step).","PermonSVMSetCStep",svm->C_step,&C_step,&flg) );
-  if (flg) TRY( PermonSVMSetCStep(svm, C_step) );
+  TRY( PetscOptionsReal("-svm_logC_min","Set SVM minimal C value (LogCMin).","PermonSVMSetLogCMin",svm->LogCMin,&LogCMin,&flg) );
+  if (flg) TRY( PermonSVMSetLogCMin(svm, LogCMin) );
+  TRY( PetscOptionsReal("-svm_logC_max","Set SVM maximal C value (LogCMax).","PermonSVMSetLogCMax",svm->LogCMax,&LogCMax,&flg) );
+  if (flg) TRY( PermonSVMSetLogCMax(svm, LogCMax) );
+  TRY( PetscOptionsReal("-svm_logC_base","Set power base of SVM parameter C (LogCBase).","PermonSVMSetLogCBase",svm->LogCBase,&LogCBase,&flg) );
+  if (flg) TRY( PermonSVMSetLogCBase(svm, LogCBase) );
   TRY( PetscOptionsInt("-svm_nfolds","Set number of folds (nfolds).","PermonSVMSetNfolds",svm->nfolds,&nfolds,&flg) );
   if (flg) TRY( PermonSVMSetNfolds(svm, nfolds) );
   TRY( PetscOptionsEnum("-svm_loss_type","Specify the loss function for soft-margin SVM (non-separable samples).","PermonSVMSetNfolds",PermonSVMLossTypes,(PetscEnum)svm->loss_type,(PetscEnum*)&loss_type,&flg) );

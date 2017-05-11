@@ -13,6 +13,7 @@
 PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
 {
   MPI_Comm comm;
+  PetscMPIInt rank;
   PermonSVM cross_svm;
   IS is_test, is_train;
   PetscInt n_examples, n_attributes;  /* PETSC_DEFAULT or PETSC_DECIDE means all */
@@ -20,7 +21,7 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
   PetscInt nfolds, first, n;
   PetscInt lo, hi;
   PetscInt N_all, N_eq, c_count;
-  PetscReal C, C_min, C_step, C_max, C_i;
+  PetscReal C, LogCMin, LogCBase, LogCMax, C_min;
   PetscReal *array_rate = NULL, rate_max, rate;
   PetscReal *array_C = NULL;
   Mat Xt, Xt_test, Xt_train;
@@ -29,30 +30,32 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
 
   PetscFunctionBeginI;
   TRY( PetscObjectGetComm((PetscObject)svm,&comm) );
+  TRY( MPI_Comm_rank(comm, &rank) );
   TRY( PermonSVMGetTrainingSamples(svm,&Xt,&y) );
   TRY( MatGetSize(Xt,&n_examples,&n_attributes) );
   TRY( MatGetOwnershipRange(Xt,&lo,&hi) );
-  TRY( PermonSVMGetCMin(svm, &C_min) );
-  TRY( PermonSVMGetCStep(svm, &C_step) );
-  TRY( PermonSVMGetCMax(svm, &C_max) );
+  TRY( PermonSVMGetLogCMin(svm, &LogCMin) );
+  TRY( PermonSVMGetLogCBase(svm, &LogCBase) );
+  TRY( PermonSVMGetLogCMax(svm, &LogCMax) );
   TRY( PermonSVMGetNfolds(svm, &nfolds) );
   TRY( PermonSVMGetOptionsPrefix(svm, &prefix) );
 
   if (nfolds > n_examples) FLLOP_SETERRQ2(comm,PETSC_ERR_ARG_OUTOFRANGE,"number of folds must not be greater than number of examples but %d > %d",nfolds,n_examples);
 
-  c_count = 0;
-  for (C_i = C_min; C_i <= C_max; C_i*=C_step) c_count++;
-  if (!c_count) FLLOP_SETERRQ(comm,PETSC_ERR_ARG_INCOMP,"CMin must be less than CMax");
+  C_min = PetscPowReal(LogCBase,LogCMin);
+  c_count = LogCMax - LogCMin + 1;
+  i=0;
+  if (!c_count) FLLOP_SETERRQ(comm,PETSC_ERR_ARG_INCOMP,"LogCMin must be less than or equal to LogCMax");
 
   TRY( PetscMalloc1(c_count,&array_rate) );
   TRY( PetscMalloc1(c_count,&array_C) );
   TRY( PetscMemzero(array_rate,c_count*sizeof(PetscReal)) );
   array_C[0] = C_min;
   for (i = 1; i < c_count; i++) {
-    array_C[i] = array_C[i-1] * C_step;
+    array_C[i] = array_C[i-1] * LogCBase;
   }
   TRY( PetscPrintf(comm, "### PermonSVM: following values of C will be tested:\n") );
-  TRY( PetscRealView(c_count,array_C,PETSC_VIEWER_STDOUT_(comm)) );
+  if (!rank) TRY( PetscRealView(c_count,array_C,PETSC_VIEWER_STDOUT_SELF) );
 
   TRY( ISCreate(PetscObjectComm((PetscObject)svm),&is_test) );
   TRY( ISSetType(is_test,ISSTRIDE) );
