@@ -474,13 +474,8 @@ PetscErrorCode PermonSVMGetQPS(PermonSVM svm, QPS *qps)
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscValidPointer(qps,2);
-
   if (!svm->qps) {
-    QP qp;
     TRY( QPSCreate(PetscObjectComm((PetscObject)svm), &svm->qps) );
-    TRY( QPCreate(PetscObjectComm((PetscObject)svm), &qp) );
-    TRY( QPSSetQP(svm->qps, qp) );
-    TRY( QPDestroy(&qp) );
   }
   *qps = svm->qps;
   PetscFunctionReturnI(0);
