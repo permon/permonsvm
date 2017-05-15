@@ -61,7 +61,7 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
   TRY( ISSetType(is_test,ISSTRIDE) );
 
   for (i = 0; i < nfolds; ++i) {
-    TRY( PetscPrintf(comm, "fold %d of %d\n",i+1,nfolds) );
+    TRY( PetscPrintf(comm, "### PermonSVM: fold %d of %d\n",i+1,nfolds) );
 
     first = (lo-1)/nfolds*nfolds + i;
     if (first < lo) first += nfolds;
@@ -81,13 +81,12 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
     TRY( PermonSVMSetLossType(cross_svm,svm->loss_type) );
     TRY( PermonSVMSetFromOptions(cross_svm) );
     for (j = 0; j < c_count; ++j) {
-      TRY( PetscPrintf(comm, "  C[%d] = %.2e\n", j, array_C[j]) );
       TRY( PermonSVMSetC(cross_svm,array_C[j]) );
       TRY( PermonSVMTrain(cross_svm) );
       TRY( PermonSVMTest(cross_svm,Xt_test,y_test,&N_all,&N_eq) );
       rate = ((PetscReal)N_eq) / ((PetscReal)N_all);
       array_rate[j] += rate;
-      TRY( PetscPrintf(comm, "    N_all = %d, N_eq = %d, rate = %f, rate_acc = %f\n", N_all, N_eq, rate, array_rate[j]) );
+      TRY( PetscPrintf(comm, "### PermonSVM: %d of %d examples correctly classified (rate %.2f), accumulated rate for C=%.2e is %.2f\n", N_eq, N_all, rate, array_C[j], array_rate[j]) );
     }
     TRY( PermonSVMDestroy(&cross_svm) );
     TRY( MatDestroy(&Xt_test) );
