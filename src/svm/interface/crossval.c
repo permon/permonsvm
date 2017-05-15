@@ -44,11 +44,13 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
   PetscMPIInt rank;
   PermonSVM cross_svm;
   IS is_test, is_train;
+  PetscBool flg;
   PetscInt n_examples, n_attributes;  /* PETSC_DEFAULT or PETSC_DECIDE means all */
   PetscInt i, j, i_max;
   PetscInt nfolds, first, n;
   PetscInt lo, hi;
   PetscInt N_all, N_eq, c_count;
+  PetscInt its;
   PetscReal C, LogCMin, LogCBase, LogCMax, C_min;
   PetscReal *array_rate = NULL, rate_max, rate;
   PetscReal *array_C = NULL;
@@ -126,7 +128,16 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
       TRY( PermonSVMTest(cross_svm,Xt_test,y_test,&N_all,&N_eq) );
       rate = ((PetscReal)N_eq) / ((PetscReal)N_all);
       array_rate[j] += rate;
-      TRY( PetscPrintf(comm, "### PermonSVM: %d of %d examples correctly classified (rate %.2f), accumulated rate for C=%.2e is %.2f\n", N_eq, N_all, rate, array_C[j], array_rate[j]) );
+
+      TRY( PetscObjectTypeCompare((PetscObject)cross_svm->qps,QPSSMALXE,&flg) );
+      if (flg) {
+        QPS qps_inner;
+        TRY( QPSSMALXEGetInnerQPS(cross_svm->qps,&qps_inner) );
+        TRY( QPSGetAccumulatedIterationNumber(qps_inner,&its) );
+      } else {
+        TRY( QPSGetIterationNumber(cross_svm->qps,&its) );
+      }
+      TRY( PetscPrintf(comm, "### PermonSVM: %d of %d examples classified correctly (rate %.2f), accumulated rate for C=%.2e is %.2f, %d QPS iterations\n", N_eq, N_all, rate, array_C[j], array_rate[j], its) );
     }
     TRY( PermonSVMDestroy(&cross_svm) );
     TRY( MatDestroy(&Xt_test) );
