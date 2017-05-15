@@ -137,7 +137,7 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
       } else {
         TRY( QPSGetIterationNumber(cross_svm->qps,&its) );
       }
-      TRY( PetscPrintf(comm, "### PermonSVM: %d of %d examples classified correctly (rate %.2f), accumulated rate for C=%.2e is %.2f, %d QPS iterations\n", N_eq, N_all, rate, array_C[j], array_rate[j], its) );
+      TRY( PetscPrintf(comm, "### PermonSVM:     %d of %d examples classified correctly (rate %.2f), accumulated rate for C=%.2e is %.2f, %d QPS iterations\n", N_eq, N_all, rate, array_C[j], array_rate[j], its) );
     }
     TRY( PermonSVMDestroy(&cross_svm) );
     TRY( MatDestroy(&Xt_test) );
