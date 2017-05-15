@@ -2,6 +2,34 @@
 #include <permon/private/svmimpl.h>
 
 #undef __FUNCT__
+#define __FUNCT__ "PermonSVMSetWarmStart"
+/*@
+   PermonSVMSetWarmStart - Set flag specifying whether warm start is used in cross-validation.
+   It is set to PETSC_TRUE by default.
+
+   Logically Collective on PermonSVM
+
+   Input Parameters:
++  svm - the SVM
+-  flg - use warm start in cross-validation
+
+   Options Database Keys:
+.  -svm_warm_start - use warm start in cross-validation
+
+   Level: advanced
+
+.seealso PermonSVMType, PermonSVMGetLossType()
+@*/
+PetscErrorCode PermonSVMSetWarmStart(PermonSVM svm, PetscBool flg)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveBool(svm,flg,2);
+  svm->warm_start = flg;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "PermonSVMCrossValidate"
 /*@
    PermonSVMCrossValidate -
@@ -82,6 +110,17 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
     TRY( PermonSVMSetFromOptions(cross_svm) );
     for (j = 0; j < c_count; ++j) {
       TRY( PermonSVMSetC(cross_svm,array_C[j]) );
+
+      if (!svm->warm_start) {
+        QP qp;
+        Vec x;
+        TRY( QPSGetSolvedQP(cross_svm->qps,&qp) );
+        if (qp) {
+          TRY( QPGetSolutionVector(qp,&x) );
+          TRY( VecZeroEntries(x) );
+        }
+      }
+
       TRY( PermonSVMTrain(cross_svm) );
       TRY( PermonSVMTest(cross_svm,Xt_test,y_test,&N_all,&N_eq) );
       rate = ((PetscReal)N_eq) / ((PetscReal)N_all);

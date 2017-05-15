@@ -62,6 +62,7 @@ FLLOP_EXTERN PetscErrorCode PermonSVMSetLossType(PermonSVM svm, PermonSVMLossTyp
 FLLOP_EXTERN PetscErrorCode PermonSVMGetLossType(PermonSVM svm, PermonSVMLossType *type);
 FLLOP_EXTERN PetscErrorCode PermonSVMSetNfolds(PermonSVM svm, PetscInt nfolds);
 FLLOP_EXTERN PetscErrorCode PermonSVMGetNfolds(PermonSVM svm, PetscInt *nfolds);
+FLLOP_EXTERN PetscErrorCode PermonSVMSetWarmStart(PermonSVM svm, PetscBool flg);
 FLLOP_EXTERN PetscErrorCode PermonSVMSetQPS(PermonSVM svm, QPS qps);
 FLLOP_EXTERN PetscErrorCode PermonSVMGetQPS(PermonSVM svm, QPS *qps);
 FLLOP_EXTERN PetscErrorCode PermonSVMSetOptionsPrefix(PermonSVM svm,const char prefix[]);

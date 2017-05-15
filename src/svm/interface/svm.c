@@ -38,6 +38,8 @@ PetscErrorCode PermonSVMCreate(MPI_Comm comm, PermonSVM *svm_out)
   svm->nfolds = 5;
   svm->loss_type = PERMON_SVM_L1;
 
+  svm->warm_start = PETSC_TRUE;
+
   svm->Xt = NULL;
   svm->y = NULL;
   svm->y_inner = NULL;
@@ -791,7 +793,7 @@ PetscErrorCode PermonSVMSetFromOptions(PermonSVM svm)
 {
   PetscReal C, LogCMin, LogCMax, LogCBase;
   PetscInt nfolds;
-  PetscBool flg;
+  PetscBool flg, flg1;
   PermonSVMLossType loss_type;
 
   PetscFunctionBeginI;
@@ -809,6 +811,8 @@ PetscErrorCode PermonSVMSetFromOptions(PermonSVM svm)
   if (flg) TRY( PermonSVMSetNfolds(svm, nfolds) );
   TRY( PetscOptionsEnum("-svm_loss_type","Specify the loss function for soft-margin SVM (non-separable samples).","PermonSVMSetNfolds",PermonSVMLossTypes,(PetscEnum)svm->loss_type,(PetscEnum*)&loss_type,&flg) );
   if (flg) TRY( PermonSVMSetLossType(svm, loss_type) );
+  TRY( PetscOptionsBool("-svm_warm_start","Specify whether warm start is used in cross-validation.","PermonSVMSetWarmStart",svm->warm_start,&flg1,&flg) );
+  if (flg) TRY( PermonSVMSetWarmStart(svm, flg1) );
   svm->setfromoptionscalled = PETSC_TRUE;
   _fllop_ierr = PetscOptionsEnd();CHKERRQ(_fllop_ierr);
   PetscFunctionReturnI(0);

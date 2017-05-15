@@ -14,6 +14,8 @@ struct _p_PermonSVM {
     PetscInt nfolds;
     PermonSVMLossType loss_type;
 
+    PetscBool warm_start;
+
     Mat Xt;
     Vec y;
     Vec y_inner;
