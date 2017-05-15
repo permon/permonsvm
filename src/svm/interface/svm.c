@@ -699,6 +699,7 @@ PetscErrorCode PermonSVMTrain(PermonSVM svm)
 {
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  TRY( PetscPrintf(PetscObjectComm((PetscObject)svm),"### PermonSVM: train with loss_type %s, C = %.2e\n",PermonSVMLossTypes[svm->loss_type],svm->C) );
   TRY( PermonSVMSetUp(svm) );
   TRY( QPSSetAutoPostSolve(svm->qps, PETSC_FALSE) );
   TRY( QPSSolve(svm->qps) );
