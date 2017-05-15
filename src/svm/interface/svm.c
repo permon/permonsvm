@@ -179,8 +179,6 @@ PetscErrorCode PermonSVMSetLogCMin(PermonSVM svm, PetscReal LogCMin)
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscValidLogicalCollectiveReal(svm, LogCMin, 2);
-
-  if (LogCMin <= 0) FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
   svm->LogCMin = LogCMin;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturnI(0);
@@ -261,8 +259,6 @@ PetscErrorCode PermonSVMSetLogCMax(PermonSVM svm, PetscReal LogCMax)
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscValidLogicalCollectiveReal(svm, LogCMax, 2);
-
-  if (LogCMax <= 0) FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
   svm->LogCMax = LogCMax;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturnI(0);
