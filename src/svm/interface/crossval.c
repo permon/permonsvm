@@ -57,6 +57,7 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
   const char *prefix;
 
   PetscFunctionBeginI;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   TRY( PetscObjectGetComm((PetscObject)svm,&comm) );
   TRY( MPI_Comm_rank(comm, &rank) );
   TRY( PermonSVMGetTrainingSamples(svm,&Xt,&y) );
