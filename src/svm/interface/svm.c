@@ -41,6 +41,7 @@ PetscErrorCode PermonSVMCreate(MPI_Comm comm, PermonSVM *svm_out)
   svm->Xt = NULL;
   svm->y = NULL;
   svm->y_inner = NULL;
+  svm->D = NULL;
   svm->w = NULL;
   svm->b = PETSC_INFINITY;
 
@@ -67,6 +68,7 @@ PetscErrorCode PermonSVMReset(PermonSVM svm)
   TRY( MatDestroy(&svm->Xt) );
   TRY( VecDestroy(&svm->y) );
   TRY( VecDestroy(&svm->y_inner) );
+  TRY( MatDestroy(&svm->D) );
   TRY( PetscMemzero(svm->y_map,2*sizeof(PetscScalar)) );
   PetscFunctionReturnI(0);
 }
@@ -130,12 +132,16 @@ PetscErrorCode PermonSVMSetC(PermonSVM svm, PetscReal C)
   PetscValidLogicalCollectiveReal(svm, C, 2);
 
   if (C <= 0) FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
-  svm->C = C;
   if (svm->setupcalled) {
-    Vec ub;
-    TRY( QPGetBox(svm->qps->solQP, NULL, &ub) );
-    TRY( VecSet(ub, C) );
+    if (svm->loss_type == PERMON_SVM_L1) {
+      Vec ub;
+      TRY( QPGetBox(svm->qps->solQP, NULL, &ub) );
+      TRY( VecSet(ub, C) );
+    } else {
+      TRY( MatScale(svm->D,C/svm->C) );
+    }
   }
+  svm->C = C;
   PetscFunctionReturnI(0);
 }
 
@@ -555,15 +561,16 @@ PetscErrorCode PermonSVMSetUp(PermonSVM svm)
   TRY( FllopMatTranspose(Xt,MAT_TRANSPOSE_CHEAPEST,&X) );
   TRY( MatCreateNormal(X,&H) ); //H = X^t * X
   TRY( MatDiagonalScale(H,y,y) ); //H = diag(y)*H*diag(y)
+  TRY( MatDestroy(&svm->D) );
   if (svm->loss_type == PERMON_SVM_L2) {
     PetscInt m,n,N;
-    Mat E, mats[2], HpE;
+    Mat mats[2], HpE;
     //TODO use MatShift(H,0.5*C) once implemented
     TRY( MatGetLocalSize(H,&m,&n) );
     TRY( MatGetSize(H,&N,NULL) );
-    TRY( MatCreateIdentity(PetscObjectComm((PetscObject)svm),m,n,N,&E) );
-    TRY( MatScale(E,0.5*C) );
-    mats[1] = H; mats[0] = E;
+    TRY( MatCreateIdentity(PetscObjectComm((PetscObject)svm),m,n,N,&svm->D) );
+    TRY( MatScale(svm->D,0.5*C) );
+    mats[1] = H; mats[0] = svm->D;
     TRY( MatCreateSum(PetscObjectComm((PetscObject)svm),2,mats,&HpE) );
     TRY( MatDestroy(&H) );
     H = HpE;
