@@ -18,7 +18,7 @@ PetscErrorCode PermonSVMCreate(MPI_Comm comm, PermonSVM *svm_out)
 {
   PermonSVM svm;
 
-  PetscFunctionBeginI;
+  PetscFunctionBegin;
   PetscValidPointer(svm_out, 2);
 
 #if !defined(PETSC_USE_DYNAMIC_LIBRARIES)
@@ -50,7 +50,7 @@ PetscErrorCode PermonSVMCreate(MPI_Comm comm, PermonSVM *svm_out)
   TRY( PetscMemzero(svm->y_map,2*sizeof(PetscScalar)) );
 
   *svm_out = svm;
-  PetscFunctionReturnI(0);
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -65,14 +65,14 @@ PetscErrorCode PermonSVMCreate(MPI_Comm comm, PermonSVM *svm_out)
 @*/
 PetscErrorCode PermonSVMReset(PermonSVM svm) 
 {
-  PetscFunctionBeginI;
+  PetscFunctionBegin;
   TRY( QPSReset(svm->qps) );
   TRY( MatDestroy(&svm->Xt) );
   TRY( VecDestroy(&svm->y) );
   TRY( VecDestroy(&svm->y_inner) );
   TRY( MatDestroy(&svm->D) );
   TRY( PetscMemzero(svm->y_map,2*sizeof(PetscScalar)) );
-  PetscFunctionReturnI(0);
+  PetscFunctionReturn(0);
 }
 
 
@@ -88,8 +88,8 @@ PetscErrorCode PermonSVMReset(PermonSVM svm)
 @*/
 PetscErrorCode PermonSVMDestroy(PermonSVM *svm) 
 {
-  PetscFunctionBeginI;
-  if (!*svm) PetscFunctionReturnI(0);
+  PetscFunctionBegin;
+  if (!*svm) PetscFunctionReturn(0);
 
   PetscValidHeaderSpecific(*svm, SVM_CLASSID, 1);
   if (--((PetscObject) (*svm))->refct > 0) {
@@ -100,7 +100,7 @@ PetscErrorCode PermonSVMDestroy(PermonSVM *svm)
   TRY( PermonSVMReset(*svm) );
   TRY( QPSDestroy(&(*svm)->qps) );
   TRY( PetscHeaderDestroy(svm) );
-  PetscFunctionReturnI(0);
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -129,7 +129,7 @@ PetscErrorCode PermonSVMView(PermonSVM svm, PetscViewer v)
 @*/
 PetscErrorCode PermonSVMSetC(PermonSVM svm, PetscReal C) 
 {
-  PetscFunctionBeginI;
+  PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscValidLogicalCollectiveReal(svm, C, 2);
 
@@ -144,7 +144,7 @@ PetscErrorCode PermonSVMSetC(PermonSVM svm, PetscReal C)
     }
   }
   svm->C = C;
-  PetscFunctionReturnI(0);
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -160,11 +160,11 @@ PetscErrorCode PermonSVMSetC(PermonSVM svm, PetscReal C)
 @*/
 PetscErrorCode PermonSVMGetC(PermonSVM svm, PetscReal *C) 
 {
-  PetscFunctionBeginI;
+  PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscValidRealPointer(C, 2);
   *C = svm->C;
-  PetscFunctionReturnI(0);
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -178,12 +178,12 @@ PetscErrorCode PermonSVMGetC(PermonSVM svm, PetscReal *C)
 @*/
 PetscErrorCode PermonSVMSetLogCMin(PermonSVM svm, PetscReal LogCMin) 
 {
-  PetscFunctionBeginI;
+  PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscValidLogicalCollectiveReal(svm, LogCMin, 2);
   svm->LogCMin = LogCMin;
   svm->setupcalled = PETSC_FALSE;
-  PetscFunctionReturnI(0);
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -199,11 +199,11 @@ PetscErrorCode PermonSVMSetLogCMin(PermonSVM svm, PetscReal LogCMin)
 @*/
 PetscErrorCode PermonSVMGetLogCMin(PermonSVM svm, PetscReal *LogCMin) 
 {
-  PetscFunctionBeginI;
+  PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscValidRealPointer(LogCMin, 2);
   *LogCMin = svm->LogCMin;
-  PetscFunctionReturnI(0);
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -217,14 +217,14 @@ PetscErrorCode PermonSVMGetLogCMin(PermonSVM svm, PetscReal *LogCMin)
 @*/
 PetscErrorCode PermonSVMSetLogCBase(PermonSVM svm, PetscReal LogCBase) 
 {
-  PetscFunctionBeginI;
+  PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscValidLogicalCollectiveReal(svm, LogCBase, 2);
 
   if (LogCBase <= 0) FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
   svm->LogCBase = LogCBase;
   svm->setupcalled = PETSC_FALSE;
-  PetscFunctionReturnI(0);
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -240,11 +240,11 @@ PetscErrorCode PermonSVMSetLogCBase(PermonSVM svm, PetscReal LogCBase)
 @*/
 PetscErrorCode PermonSVMGetLogCBase(PermonSVM svm, PetscReal *LogCBase) 
 {
-  PetscFunctionBeginI;
+  PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscValidRealPointer(LogCBase, 2);
   *LogCBase = svm->LogCBase;
-  PetscFunctionReturnI(0);
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -258,12 +258,12 @@ PetscErrorCode PermonSVMGetLogCBase(PermonSVM svm, PetscReal *LogCBase)
 @*/
 PetscErrorCode PermonSVMSetLogCMax(PermonSVM svm, PetscReal LogCMax) 
 {
-  PetscFunctionBeginI;
+  PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscValidLogicalCollectiveReal(svm, LogCMax, 2);
   svm->LogCMax = LogCMax;
   svm->setupcalled = PETSC_FALSE;
-  PetscFunctionReturnI(0);
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -279,11 +279,11 @@ PetscErrorCode PermonSVMSetLogCMax(PermonSVM svm, PetscReal LogCMax)
 @*/
 PetscErrorCode PermonSVMGetLogCMax(PermonSVM svm, PetscReal *LogCMax) 
 {
-  PetscFunctionBeginI;
+  PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscValidRealPointer(LogCMax, 2);
   *LogCMax = svm->LogCMax;
-  PetscFunctionReturnI(0);
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -297,14 +297,14 @@ PetscErrorCode PermonSVMGetLogCMax(PermonSVM svm, PetscReal *LogCMax)
 @*/
 PetscErrorCode PermonSVMSetNfolds(PermonSVM svm, PetscInt nfolds) 
 {
-  PetscFunctionBeginI;
+  PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscValidLogicalCollectiveInt(svm, nfolds, 2);
 
   if (nfolds < 2) FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be greater than 1.");
   svm->nfolds = nfolds;
   svm->setupcalled = PETSC_FALSE;
-  PetscFunctionReturnI(0);
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -320,11 +320,11 @@ PetscErrorCode PermonSVMSetNfolds(PermonSVM svm, PetscInt nfolds)
 @*/
 PetscErrorCode PermonSVMGetNfolds(PermonSVM svm, PetscInt *nfolds) 
 {
-  PetscFunctionBeginI;
+  PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscValidRealPointer(nfolds, 2);
   *nfolds = svm->nfolds;
-  PetscFunctionReturnI(0);
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -339,7 +339,7 @@ PetscErrorCode PermonSVMGetNfolds(PermonSVM svm, PetscInt *nfolds)
 @*/
 PetscErrorCode PermonSVMSetTrainingSamples(PermonSVM svm, Mat Xt, Vec y) 
 {
-  PetscFunctionBeginI;
+  PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscValidHeaderSpecific(Xt, MAT_CLASSID, 2);
   PetscCheckSameComm(svm, 1, Xt, 2);
@@ -355,7 +355,7 @@ PetscErrorCode PermonSVMSetTrainingSamples(PermonSVM svm, Mat Xt, Vec y)
   TRY( PetscObjectReference((PetscObject) y) );
 
   svm->setupcalled = PETSC_FALSE;
-  PetscFunctionReturnI(0);
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -372,7 +372,7 @@ PetscErrorCode PermonSVMSetTrainingSamples(PermonSVM svm, Mat Xt, Vec y)
 @*/
 PetscErrorCode PermonSVMGetTrainingSamples(PermonSVM svm, Mat *Xt, Vec *y) 
 {
-  PetscFunctionBeginI;
+  PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   if (Xt) {
     PetscValidPointer(Xt, 2);
@@ -382,7 +382,7 @@ PetscErrorCode PermonSVMGetTrainingSamples(PermonSVM svm, Mat *Xt, Vec *y)
     PetscValidPointer(y, 3);
     *y = svm->y;
   }
-  PetscFunctionReturnI(0);
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -451,7 +451,7 @@ PetscErrorCode PermonSVMGetLossType(PermonSVM svm, PermonSVMLossType *type)
 @*/
 PetscErrorCode PermonSVMSetQPS(PermonSVM svm, QPS qps) 
 {
-  PetscFunctionBeginI;
+  PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscValidHeaderSpecific(qps, QPS_CLASSID, 2);
   PetscCheckSameComm(svm, 1, qps, 2);
@@ -459,7 +459,7 @@ PetscErrorCode PermonSVMSetQPS(PermonSVM svm, QPS qps)
   TRY( QPSDestroy(&svm->qps) );
   svm->qps = qps;
   TRY( PetscObjectReference((PetscObject) qps) );
-  PetscFunctionReturnI(0);
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -475,14 +475,14 @@ PetscErrorCode PermonSVMSetQPS(PermonSVM svm, QPS qps)
 @*/
 PetscErrorCode PermonSVMGetQPS(PermonSVM svm, QPS *qps) 
 {  
-  PetscFunctionBeginI;
+  PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscValidPointer(qps,2);
   if (!svm->qps) {
     TRY( QPSCreate(PetscObjectComm((PetscObject)svm), &svm->qps) );
   }
   *qps = svm->qps;
-  PetscFunctionReturnI(0);
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -638,10 +638,10 @@ PetscErrorCode PermonSVMSetUp(PermonSVM svm)
 @*/
 PetscErrorCode PermonSVMSetAutoPostTrain(PermonSVM svm, PetscBool flg) 
 {
-  PetscFunctionBeginI;
+  PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   svm->autoPostSolve = flg;
-  PetscFunctionReturnI(0);
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -777,7 +777,6 @@ PetscErrorCode PermonSVMPostTrain(PermonSVM svm)
     TRY( VecDestroy(&o) );
     TRY( VecDestroy(&t) );
   }
-  
   PetscFunctionReturnI(0);
 }
 
@@ -836,13 +835,13 @@ PetscErrorCode PermonSVMSetFromOptions(PermonSVM svm)
 @*/
 PetscErrorCode PermonSVMGetSeparatingHyperplane(PermonSVM svm, Vec *w, PetscReal *b)
 {
-  PetscFunctionBeginI;
+  PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidPointer(w,2);
   PetscValidRealPointer(b,3);
   *w = svm->w;
   *b = svm->b;
-  PetscFunctionReturnI(0);
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
