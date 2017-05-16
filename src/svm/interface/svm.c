@@ -38,7 +38,7 @@ PetscErrorCode PermonSVMCreate(MPI_Comm comm, PermonSVM *svm_out)
   svm->nfolds = 5;
   svm->loss_type = PERMON_SVM_L1;
 
-  svm->warm_start = PETSC_TRUE;
+  svm->warm_start = PETSC_FALSE;
 
   svm->Xt = NULL;
   svm->y = NULL;
