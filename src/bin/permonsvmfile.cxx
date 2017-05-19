@@ -176,7 +176,7 @@ PetscErrorCode PermonSVMLoadData(Mat *Xt, Vec *y, Mat *Xt_test, Vec *y_test)
   TRY( MatGetSize(*Xt, &M, &N));
   FLLOP_ASSERT(n_examples == PETSC_DECIDE || n_examples == PETSC_DEFAULT || (n_examples >= 0 && n_examples == M),
               "n_examples == PETSC_DECIDE || n_examples == PETSC_DEFAULT || (n_examples >= 0 && n_examples == M)");
-  TRY( PetscPrintf(comm, "\n\n### PermonSVM: loaded %d training examples with %d attributes from file %s\n",M,N,filename));
+  TRY( PetscPrintf(comm, "### PermonSVM: loaded %d training examples with %d attributes from file %s\n",M,N,filename));
 
   if (filename_test_set) {
     TRY( svm_file_load(filename_test, n_test_examples, N, numbering_base, Xt_test, y_test) );
