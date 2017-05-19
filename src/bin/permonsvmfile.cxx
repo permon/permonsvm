@@ -111,6 +111,47 @@ PetscErrorCode svm_file_load(const char filename[], PetscInt n_examples, PetscIn
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "PermonSVMRemoveZeroColumns"
+PetscErrorCode PermonSVMRemoveZeroColumns(Mat *Xt, Mat *Xt_test) 
+{
+  Mat X, X_sub, Xt_sub;
+  IS cis;
+
+  PetscFunctionBeginI;
+  TRY( FllopMatTranspose(*Xt,MAT_TRANSPOSE_EXPLICIT,&X) );
+  TRY( MatFindNonzeroRows(X,&cis) );
+  if (!cis) {
+    TRY( PetscPrintf(comm, "### PermonSVM: no zero columns found in Xt\n") );
+    PetscFunctionReturnI(0);
+  }
+
+  {
+    PetscInt n,nnz;
+    TRY( MatGetSize(*Xt,NULL,&n) );
+    TRY( ISGetSize(cis,&nnz) );
+    TRY( PetscPrintf(comm, "### PermonSVM: removing %d zero columns found in Xt\n", n-nnz) );
+  }
+
+  TRY( MatGetSubMatrix(X,cis,NULL,MAT_INITIAL_MATRIX,&X_sub) );
+  TRY( FllopMatTranspose(X_sub,MAT_TRANSPOSE_EXPLICIT,&Xt_sub) );
+  TRY( MatDestroy(&X) );
+  TRY( MatDestroy(&X_sub) );
+  TRY( MatDestroy(Xt) );
+  *Xt = Xt_sub;
+
+  if (Xt_test && *Xt_test) {
+    TRY( FllopMatTranspose(*Xt_test,MAT_TRANSPOSE_EXPLICIT,&X) );
+    TRY( MatGetSubMatrix(X,cis,NULL,MAT_INITIAL_MATRIX,&X_sub) );
+    TRY( FllopMatTranspose(X_sub,MAT_TRANSPOSE_EXPLICIT,&Xt_sub) );
+    TRY( MatDestroy(&X) );
+    TRY( MatDestroy(&X_sub) );
+    TRY( MatDestroy(Xt_test) );
+    *Xt_test = Xt_sub;
+  }
+  PetscFunctionReturnI(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "PermonSVMLoadData"
 PetscErrorCode PermonSVMLoadData(Mat *Xt, Vec *y, Mat *Xt_test, Vec *y_test)
 {
@@ -121,6 +162,7 @@ PetscErrorCode PermonSVMLoadData(Mat *Xt, Vec *y, Mat *Xt_test, Vec *y_test)
   PetscInt       n_test_examples = PETSC_DEFAULT;
   PetscInt       numbering_base = 1;
   PetscBool      filename_test_set = PETSC_FALSE;
+  PetscBool      remove_zero_columns = PETSC_FALSE;
 
   PetscFunctionBeginI;
   TRY( PetscOptionsGetString(NULL,NULL,"-f",filename,sizeof(filename),NULL) );
@@ -128,6 +170,7 @@ PetscErrorCode PermonSVMLoadData(Mat *Xt, Vec *y, Mat *Xt_test, Vec *y_test)
   TRY( PetscOptionsGetInt(NULL,NULL,"-n_examples",&n_examples,NULL));
   TRY( PetscOptionsGetInt(NULL,NULL,"-n_test_examples",&n_test_examples,NULL));
   TRY( PetscOptionsGetInt(NULL,NULL,"-numbering_base",&numbering_base, NULL));
+  TRY( PetscOptionsGetBool(NULL,NULL,"-remove_zero_columns",&remove_zero_columns, NULL));
 
   TRY( svm_file_load(filename, n_examples, PETSC_DECIDE, numbering_base, Xt, y) );
   TRY( MatGetSize(*Xt, &M, &N));
@@ -142,6 +185,10 @@ PetscErrorCode PermonSVMLoadData(Mat *Xt, Vec *y, Mat *Xt_test, Vec *y_test)
   } else {
     *Xt_test = NULL;
     *y_test = NULL;
+  }
+
+  if (remove_zero_columns) {
+    TRY( PermonSVMRemoveZeroColumns(Xt, Xt_test) );
   }
 
   TRY( PetscPrintf(comm, "\n") );
