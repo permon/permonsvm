@@ -191,6 +191,15 @@ PetscErrorCode PermonSVMLoadData(Mat *Xt, Vec *y, Mat *Xt_test, Vec *y_test)
     TRY( PermonSVMRemoveZeroColumns(Xt, Xt_test) );
   }
 
+  TRY( PetscObjectSetName((PetscObject)*Xt, "Xt") );
+  TRY( PetscObjectSetName((PetscObject)*y,  "y") );
+  if (*Xt_test) TRY( PetscObjectSetName((PetscObject)*Xt_test, "Xt_test") );
+  if (*y_test)  TRY( PetscObjectSetName((PetscObject)*y_test,  "y_test") );
+
+  TRY( MatPrintInfo(*Xt) );
+  TRY( VecPrintInfo(*y) );
+  if (*Xt_test) TRY( MatPrintInfo(*Xt_test) );
+  if (*y_test)  TRY( VecPrintInfo(*y_test) );
   TRY( PetscPrintf(comm, "\n") );
   PetscFunctionReturnI(0);
 }
