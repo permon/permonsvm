@@ -119,7 +119,7 @@ PetscErrorCode testSVM_load_data(Mat *Xt, Vec *y, Mat *Xt_test, Vec *y_test)
   char           filename_test[PETSC_MAX_PATH_LEN] = "";
   PetscInt       n_examples = PETSC_DEFAULT;  /* PETSC_DEFAULT or PETSC_DECIDE means all */
   PetscInt       n_test_examples = PETSC_DEFAULT;
-  PetscInt       numbering_base;
+  PetscInt       numbering_base = 1;
   PetscBool      filename_test_set = PETSC_FALSE;
 
   PetscFunctionBeginI;
