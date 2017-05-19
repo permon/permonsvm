@@ -11,10 +11,10 @@ static MPI_Comm     comm;
 static PetscMPIInt  rank, commsize;
 
 #undef __FUNCT__
-#define __FUNCT__ "testSVM_convert_data_file"
+#define __FUNCT__ "svm_file_convert"
 //TODO workaround until parser works in parallel
 //TODO try to use MatDistribute_MPIAIJ
-PetscErrorCode testSVM_convert_data_file(const char filename[], const char filename_Xt_bin[], const char filename_y_bin[], PetscInt n_examples, PetscInt n_attributes, PetscInt numbering_base)
+PetscErrorCode svm_file_convert(const char filename[], const char filename_Xt_bin[], const char filename_y_bin[], PetscInt n_examples, PetscInt n_attributes, PetscInt numbering_base)
 {
   excape::DataParser parser;
   PetscViewer viewer=NULL;
@@ -43,8 +43,8 @@ PetscErrorCode testSVM_convert_data_file(const char filename[], const char filen
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "testSVM_load_binary"
-PetscErrorCode testSVM_load_binary(const char filename_Xt_bin[], const char filename_y_bin[], Mat *Xt_new, Vec *y_new)
+#define __FUNCT__ "svm_file_load_binary"
+PetscErrorCode svm_file_load_binary(const char filename_Xt_bin[], const char filename_y_bin[], Mat *Xt_new, Vec *y_new)
 {
   Mat Xt=NULL;
   Vec y=NULL;
@@ -71,8 +71,8 @@ PetscErrorCode testSVM_load_binary(const char filename_Xt_bin[], const char file
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "testSVM_load_data_from_file"
-PetscErrorCode testSVM_load_data_from_file(const char filename[], PetscInt n_examples, PetscInt n_attributes, PetscInt numbering_base, Mat *Xt_new, Vec *y_new)
+#define __FUNCT__ "svm_file_load"
+PetscErrorCode svm_file_load(const char filename[], PetscInt n_examples, PetscInt n_attributes, PetscInt numbering_base, Mat *Xt_new, Vec *y_new)
 {
   Mat Xt=NULL;
   Vec y=NULL;
@@ -90,16 +90,16 @@ PetscErrorCode testSVM_load_data_from_file(const char filename[], PetscInt n_exa
   TRY( PetscTestFile(filename_y_bin, 'r', &y_bin) );
 
   if (!Xt_bin || !y_bin) {
-    TRY( testSVM_convert_data_file(filename, filename_Xt_bin, filename_y_bin, n_examples, n_attributes, numbering_base) );
-    TRY( testSVM_load_binary(filename_Xt_bin, filename_y_bin, &Xt, &y) );
+    TRY( svm_file_convert(filename, filename_Xt_bin, filename_y_bin, n_examples, n_attributes, numbering_base) );
+    TRY( svm_file_load_binary(filename_Xt_bin, filename_y_bin, &Xt, &y) );
   } else {
     PetscInt M;
-    TRY( testSVM_load_binary(filename_Xt_bin, filename_y_bin, &Xt, &y) );
+    TRY( svm_file_load_binary(filename_Xt_bin, filename_y_bin, &Xt, &y) );
     TRY( MatGetSize(Xt,&M,NULL) );
     if (M != n_examples) {
       TRY( PetscPrintf(PETSC_COMM_WORLD, "### PermonSVM: input data in PETSc binary format have different size than n_examples, reconverting\n") );
-      TRY( testSVM_convert_data_file(filename, filename_Xt_bin, filename_y_bin, n_examples, n_attributes, numbering_base) );
-      TRY( testSVM_load_binary(filename_Xt_bin, filename_y_bin, &Xt, &y) );
+      TRY( svm_file_convert(filename, filename_Xt_bin, filename_y_bin, n_examples, n_attributes, numbering_base) );
+      TRY( svm_file_load_binary(filename_Xt_bin, filename_y_bin, &Xt, &y) );
     } else {
       TRY( PetscPrintf(PETSC_COMM_WORLD, "### PermonSVM: reusing input data in PETSc binary format\n") );
     }
@@ -111,8 +111,8 @@ PetscErrorCode testSVM_load_data_from_file(const char filename[], PetscInt n_exa
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "testSVM_load_data"
-PetscErrorCode testSVM_load_data(Mat *Xt, Vec *y, Mat *Xt_test, Vec *y_test)
+#define __FUNCT__ "PermonSVMLoadData"
+PetscErrorCode PermonSVMLoadData(Mat *Xt, Vec *y, Mat *Xt_test, Vec *y_test)
 {
   PetscInt       M,N;
   char           filename[PETSC_MAX_PATH_LEN] = "dummy.txt";
@@ -129,14 +129,14 @@ PetscErrorCode testSVM_load_data(Mat *Xt, Vec *y, Mat *Xt_test, Vec *y_test)
   TRY( PetscOptionsGetInt(NULL,NULL,"-n_test_examples",&n_test_examples,NULL));
   TRY( PetscOptionsGetInt(NULL,NULL,"-numbering_base",&numbering_base, NULL));
 
-  TRY( testSVM_load_data_from_file(filename, n_examples, PETSC_DECIDE, numbering_base, Xt, y) );
+  TRY( svm_file_load(filename, n_examples, PETSC_DECIDE, numbering_base, Xt, y) );
   TRY( MatGetSize(*Xt, &M, &N));
   FLLOP_ASSERT(n_examples == PETSC_DECIDE || n_examples == PETSC_DEFAULT || (n_examples >= 0 && n_examples == M),
               "n_examples == PETSC_DECIDE || n_examples == PETSC_DEFAULT || (n_examples >= 0 && n_examples == M)");
   TRY( PetscPrintf(comm, "\n\n### PermonSVM: loaded %d training examples with %d attributes from file %s\n",M,N,filename));
 
   if (filename_test_set) {
-    TRY( testSVM_load_data_from_file(filename_test, n_test_examples, N, numbering_base, Xt_test, y_test) );
+    TRY( svm_file_load(filename_test, n_test_examples, N, numbering_base, Xt_test, y_test) );
     TRY( MatGetSize(*Xt_test, &M, &N));
     TRY( PetscPrintf(comm, "### PermonSVM: loaded %d testing examples with %d attributes from file %s\n",M,N,filename_test));
   } else {
@@ -149,8 +149,8 @@ PetscErrorCode testSVM_load_data(Mat *Xt, Vec *y, Mat *Xt_test, Vec *y_test)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "RunSVM"
-PetscErrorCode RunSVM()
+#define __FUNCT__ "PermonSVMRun"
+PetscErrorCode PermonSVMRun()
 {
     PermonSVM svm;
     PetscReal C;
@@ -159,7 +159,7 @@ PetscErrorCode RunSVM()
     Vec y, y_test;
     
     PetscFunctionBeginI;
-    TRY( testSVM_load_data(&Xt, &y, &Xt_test, &y_test) );
+    TRY( PermonSVMLoadData(&Xt, &y, &Xt_test, &y_test) );
     
     /* ------------------------------------------------------------------------ */
     TRY( PermonSVMCreate(comm, &svm) );
@@ -209,7 +209,7 @@ int main(int argc, char** argv)
   TRY( PetscPrintf(comm,"Input dir:\t%s\n", Fllop_input_dir) );
   TRY( PetscPrintf(comm,"Output dir:\t%s\n", Fllop_output_dir) );
 
-  TRY( RunSVM() );
+  TRY( PermonSVMRun() );
   TRY( FllopFinalize() );
   PetscFunctionReturn(0);
 }
