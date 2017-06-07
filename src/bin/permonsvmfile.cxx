@@ -5,8 +5,6 @@
 
 #include "parser.hxx"
 
-extern char Fllop_input_dir[FLLOP_MAX_PATH_LEN], Fllop_output_dir[FLLOP_MAX_PATH_LEN];
-
 static MPI_Comm     comm;
 static PetscMPIInt  rank, commsize;
 
@@ -262,8 +260,6 @@ int main(int argc, char** argv)
 #endif
   TRY( PetscPrintf(comm, "PETSc version:\t%d.%d.%d patch %d (%s)\n", PETSC_VERSION_MAJOR, PETSC_VERSION_MINOR, PETSC_VERSION_SUBMINOR, PETSC_VERSION_PATCH, DATE) );
 #undef DATE
-  TRY( PetscPrintf(comm,"Input dir:\t%s\n", Fllop_input_dir) );
-  TRY( PetscPrintf(comm,"Output dir:\t%s\n", Fllop_output_dir) );
 
   TRY( PermonSVMRun() );
   TRY( FllopFinalize() );
