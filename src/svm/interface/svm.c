@@ -479,7 +479,24 @@ PetscErrorCode PermonSVMGetQPS(PermonSVM svm, QPS *qps)
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscValidPointer(qps,2);
   if (!svm->qps) {
-    TRY( QPSCreate(PetscObjectComm((PetscObject)svm), &svm->qps) );
+    QPS qps, qps_inner;
+    Tao tao;
+
+    TRY( QPSCreate(PetscObjectComm((PetscObject)svm),&qps) );
+
+    //set default solver
+    TRY( QPSSetType(qps,QPSSMALXE) );
+    TRY( QPSSMALXEGetInnerQPS(qps,&qps_inner) );
+    TRY( QPSSetType(qps_inner,QPSTAO) );
+    TRY( QPSTaoGetTao(qps_inner,&tao) );
+    TRY( TaoSetType(tao,TAOBLMVM) );
+
+    //set default solver settings
+    TRY( QPSSetTolerances(qps,1e-1,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT) );
+    TRY( QPSSMALXESetM1Initial(qps,1.0,QPS_ARG_MULTIPLE) );
+    TRY( QPSSMALXESetRhoInitial(qps,1.0,QPS_ARG_MULTIPLE) );
+
+    svm->qps = qps;
   }
   *qps = svm->qps;
   PetscFunctionReturn(0);
@@ -603,13 +620,16 @@ PetscErrorCode PermonSVMSetUp(PermonSVM svm)
   }
   TRY( QPSetBox(qp, lb, ub) ); //set box constraints to QP problem
   
+  //permorm QP transforms
+  TRY( PetscOptionsInsertString(NULL,"-project -proj_qp_O_normalize") ); //TODO no better way to specify default transforms currently
   TRY( QPTFromOptions(qp) ); //transform QP problem e.g. scaling
 
-  //setup solver
+  //set solver settings from options if PermonSVMSetFromOptions has been called
   if (svm->setfromoptionscalled) {
-    TRY( PermonSVMGetQPS(svm, &qps) );
     TRY( QPSSetFromOptions(qps) );
   }
+
+  //setup solver
   TRY( QPSSetUp(qps) );
 
   //decreasing reference counts
