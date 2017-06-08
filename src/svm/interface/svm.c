@@ -31,7 +31,7 @@ PetscErrorCode PermonSVMCreate(MPI_Comm comm, PermonSVM *svm_out)
   svm->autoPostSolve = PETSC_TRUE;
   svm->qps = NULL;
 
-  svm->C = PETSC_DECIDE;
+  svm->C = 1e1;
   svm->LogCMin = -3.0;
   svm->LogCBase = 2.0;
   svm->LogCMax = 10.0;
