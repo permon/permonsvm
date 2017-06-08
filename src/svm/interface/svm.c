@@ -133,7 +133,7 @@ PetscErrorCode PermonSVMSetC(PermonSVM svm, PetscReal C)
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscValidLogicalCollectiveReal(svm, C, 2);
 
-  if (C <= 0) FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
+  if (C <= 0 && C != PETSC_DECIDE && C != PETSC_DEFAULT) FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
   if (svm->setupcalled) {
     if (svm->loss_type == PERMON_SVM_L1) {
       Vec ub;
@@ -548,7 +548,7 @@ PetscErrorCode PermonSVMSetUp(PermonSVM svm)
     svm->y_map[1] = max;
   }
 
-  if (C == PETSC_DECIDE) {
+  if (C == PETSC_DECIDE || C == PETSC_DEFAULT) {
     TRY( PermonSVMCrossValidate(svm) );
     TRY( PermonSVMGetC(svm, &C) );
   }
