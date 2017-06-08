@@ -512,8 +512,6 @@ PetscErrorCode PermonSVMSetUp(PermonSVM svm)
   FllopTraceBegin;
   TRY( PermonSVMGetQPS(svm, &qps) );
   TRY( QPSGetQP(qps, &qp) );
-  TRY( QPReset(qp) ); // get rid of previous QP chain
-  //TODO or QPSReset ?
   TRY( PermonSVMGetC(svm, &C) );
   TRY( PermonSVMGetTrainingSamples(svm, &Xt, &y) );
 
