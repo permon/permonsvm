@@ -503,36 +503,15 @@ PetscErrorCode PermonSVMGetQPS(PermonSVM svm, QPS *qps)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "PermonSVMSetUp"
-/*@
-   PermonSVMSetUp - 
-
-   Input Parameter:
-.  svm - the SVM
-@*/
-PetscErrorCode PermonSVMSetUp(PermonSVM svm) 
+#define __FUNCT__ "PermonSVMSetUp_Remapy_Private"
+/* map y to -1,1 values if needed */
+static PetscErrorCode PermonSVMSetUp_Remapy_Private(PermonSVM svm) 
 {
-  QPS qps;
-  QP qp;
-  PetscReal C;
-  Mat Xt;
   Vec y;
-  Mat X,H;
-  Vec e,lb,ub;
-  Mat BE;
-  PetscReal norm;
   PetscScalar min,max;
 
-  FllopTracedFunctionBegin;
-  if (svm->setupcalled) PetscFunctionReturn(0);
-
-  FllopTraceBegin;
-  TRY( PermonSVMGetQPS(svm, &qps) );
-  TRY( QPSGetQP(qps, &qp) );
-  TRY( PermonSVMGetC(svm, &C) );
-  TRY( PermonSVMGetTrainingSamples(svm, &Xt, &y) );
-
-  /* map y to -1,1 values if needed */
+  PetscFunctionBegin;
+  TRY( PermonSVMGetTrainingSamples(svm, NULL, &y) );
   TRY( VecMin(y,NULL,&min) );
   TRY( VecMax(y,NULL,&max) );
   if (min == -1.0 && max == 1.0) {
@@ -562,6 +541,40 @@ PetscErrorCode PermonSVMSetUp(PermonSVM svm)
     svm->y_map[0] = min;
     svm->y_map[1] = max;
   }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "PermonSVMSetUp"
+/*@
+   PermonSVMSetUp - 
+
+   Input Parameter:
+.  svm - the SVM
+@*/
+PetscErrorCode PermonSVMSetUp(PermonSVM svm) 
+{
+  QPS qps;
+  QP qp;
+  PetscReal C;
+  Mat Xt;
+  Vec y;
+  Mat X,H;
+  Vec e,lb,ub;
+  Mat BE;
+  PetscReal norm;
+
+  FllopTracedFunctionBegin;
+  if (svm->setupcalled) PetscFunctionReturn(0);
+
+  FllopTraceBegin;
+  TRY( PermonSVMGetQPS(svm, &qps) );
+  TRY( QPSGetQP(qps, &qp) );
+  TRY( PermonSVMGetC(svm, &C) );
+  TRY( PermonSVMGetTrainingSamples(svm, &Xt, &y) );
+
+  /* map y to -1,1 values if needed */
+  TRY( PermonSVMSetUp_Remapy_Private(svm) );
 
   if (C == PETSC_DECIDE || C == PETSC_DEFAULT) {
     TRY( PermonSVMCrossValidate(svm) );
