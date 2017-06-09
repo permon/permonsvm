@@ -484,14 +484,14 @@ PetscErrorCode PermonSVMGetQPS(PermonSVM svm, QPS *qps)
 
     TRY( QPSCreate(PetscObjectComm((PetscObject)svm),&qps) );
 
-    //set default solver
+    /* set default solver */
     TRY( QPSSetType(qps,QPSSMALXE) );
     TRY( QPSSMALXEGetInnerQPS(qps,&qps_inner) );
     TRY( QPSSetType(qps_inner,QPSTAO) );
     TRY( QPSTaoGetTao(qps_inner,&tao) );
     TRY( TaoSetType(tao,TAOBLMVM) );
 
-    //set default solver settings
+    /* set default solver settings */
     TRY( QPSSetTolerances(qps,1e-1,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT) );
     TRY( QPSSMALXESetM1Initial(qps,1.0,QPS_ARG_MULTIPLE) );
     TRY( QPSSMALXESetRhoInitial(qps,1.0,QPS_ARG_MULTIPLE) );
@@ -583,10 +583,10 @@ PetscErrorCode PermonSVMSetUp(PermonSVM svm)
 
   y = svm->y_inner;
 
-  //creating Hessian
+  /* creating Hessian */
   TRY( FllopMatTranspose(Xt,MAT_TRANSPOSE_CHEAPEST,&X) );
-  TRY( MatCreateNormal(X,&H) ); //H = X^t * X
-  TRY( MatDiagonalScale(H,y,y) ); //H = diag(y)*H*diag(y)
+  TRY( MatCreateNormal(X,&H) );                   /* H = X^t * X */
+  TRY( MatDiagonalScale(H,y,y) );                 /* H = diag(y)*H*diag(y) */
   TRY( MatDestroy(&svm->D) );
   if (svm->loss_type == PERMON_SVM_L2) {
     PetscInt m,n,N;
@@ -603,18 +603,18 @@ PetscErrorCode PermonSVMSetUp(PermonSVM svm)
   } else {
     FLLOP_ASSERT(svm->loss_type==PERMON_SVM_L1,"svm->loss_type==PERMON_SVM_L1");
   }
-  TRY( QPSetOperator(qp,H) ); //set Hessian of QP problem
+  TRY( QPSetOperator(qp,H) );                     /* set Hessian of QP problem */
 
-  //creating linear term
-  TRY( VecDuplicate(y,&e) ); //creating vector e same size and type as y
+  /* creating linear term */
+  TRY( VecDuplicate(y,&e) );                      /* creating vector e same size and type as y */
   TRY( VecSet(e,1.0) );
-  TRY( QPSetRhs(qp, e) ); //set linear term of QP problem
+  TRY( QPSetRhs(qp, e) );                         /* set linear term of QP problem */
 
-  //creating matrix of equality constraint
-  TRY( MatCreateOneRow(y,&BE) ); //Be = y^t
+  /* creating matrix of equality constraint */
+  TRY( MatCreateOneRow(y,&BE) );                  /* Be = y^t */
   TRY( VecNorm(y, NORM_2, &norm) );
-  TRY( MatScale(BE,1.0/norm) ); //||Be|| = 1
-  TRY( QPSetEq(qp, BE, NULL) ); //set equality constraint to QP problem
+  TRY( MatScale(BE,1.0/norm) );                   /* ||Be|| = 1 */
+  TRY( QPSetEq(qp, BE, NULL) );                   /* set equality constraint to QP problem */
   
   {
     PetscInt m;
@@ -622,30 +622,30 @@ PetscErrorCode PermonSVMSetUp(PermonSVM svm)
     FLLOP_ASSERT(m==1,"m==1");
   }
 
-  //creating box constraints
-  TRY( VecDuplicate(y,&lb) ); //create lower bound constraint vector
+  /* creating box constraints */
+  TRY( VecDuplicate(y,&lb) );                     /* create lower bound constraint vector */
   TRY( VecSet(lb, 0.0) );
   if (svm->loss_type == PERMON_SVM_L1) {
-    TRY( VecDuplicate(y,&ub) ); //create upper bound constraint vector
+    TRY( VecDuplicate(y,&ub) );                   /* create upper bound constraint vector */
     TRY( VecSet(ub, C) );
   } else {
     ub = NULL;
   }
-  TRY( QPSetBox(qp, lb, ub) ); //set box constraints to QP problem
+  TRY( QPSetBox(qp, lb, ub) );                    /* set box constraints to QP problem */
   
-  //permorm QP transforms
-  TRY( PetscOptionsInsertString(NULL,"-project -proj_qp_O_normalize") ); //TODO no better way to specify default transforms currently
-  TRY( QPTFromOptions(qp) ); //transform QP problem e.g. scaling
+  /* permorm QP transforms */
+  TRY( PetscOptionsInsertString(NULL,"-project -proj_qp_O_normalize") ); /* TODO no better way to specify default transforms currently */
+  TRY( QPTFromOptions(qp) );                      /* transform QP problem e.g. scaling */
 
-  //set solver settings from options if PermonSVMSetFromOptions has been called
+  /* set solver settings from options if PermonSVMSetFromOptions has been called */
   if (svm->setfromoptionscalled) {
     TRY( QPSSetFromOptions(qps) );
   }
 
-  //setup solver
+  /* setup solver */
   TRY( QPSSetUp(qps) );
 
-  //decreasing reference counts
+  /* decreasing reference counts */
   TRY( MatDestroy(&X) );
   TRY( MatDestroy(&H) );
   TRY( VecDestroy(&e) );
@@ -774,9 +774,9 @@ PetscErrorCode PermonSVMPostTrain(PermonSVM svm)
     TRY( QPGetSolutionVector(qp, &z) );
     TRY( VecDuplicate(z, &Yz) );
 
-    TRY( VecPointwiseMult(Yz, y, z) ); // YZ = Y*z = y.*z
-    TRY( MatCreateVecs(Xt, &w, NULL) ); // create vector w such that Xt*w works
-    TRY( MatMultTranspose(Xt, Yz, w) ); // Xt = X^t, w = Xt' * Yz = (X^t)^t * Yz = X * Yz
+    TRY( VecPointwiseMult(Yz, y, z) );            /* YZ = Y*z = y.*z */
+    TRY( MatCreateVecs(Xt, &w, NULL) );           /* create vector w such that Xt*w works */
+    TRY( MatMultTranspose(Xt, Yz, w) );           /* Xt = X^t, w = Xt' * Yz = (X^t)^t * Yz = X * Yz */
 
     svm->w = w;
     
@@ -784,7 +784,6 @@ PetscErrorCode PermonSVMPostTrain(PermonSVM svm)
   }
   
   /* reconstruct b from dual solution z */
-  //PDF p. 12 lecture_svm.pdf
   {
     TRY( VecDuplicate(z, &o) );
     TRY( VecZeroEntries(o) );
@@ -793,14 +792,14 @@ PetscErrorCode PermonSVMPostTrain(PermonSVM svm)
     TRY( VecWhichGreaterThan(z, o, &is_sv) );
     TRY( ISGetSize(is_sv, &len_sv) );
     TRY( MatMult(Xt, w, Xtw) );
-    TRY( VecGetSubVector(y, is_sv, &y_sv) );  // y_sv = y(is_sv)
-    TRY( VecGetSubVector(Xtw, is_sv, &Xtw_sv) );  // Xtw_sv = Xtw(is_sv)
+    TRY( VecGetSubVector(y, is_sv, &y_sv) );      /* y_sv = y(is_sv) */
+    TRY( VecGetSubVector(Xtw, is_sv, &Xtw_sv) );  /* Xtw_sv = Xtw(is_sv) */
     TRY( VecDuplicate(y_sv, &t) );
-    TRY( VecWAXPY(t, -1.0, Xtw_sv, y_sv) );  // t = y_sv - Xtw_sv
+    TRY( VecWAXPY(t, -1.0, Xtw_sv, y_sv) );       /* t = y_sv - Xtw_sv */
     TRY( VecRestoreSubVector(y, is_sv, &y_sv) );
     TRY( VecRestoreSubVector(Xtw, is_sv, &Xtw_sv) );
-    TRY( VecSum(t, &b) );  // b = sum(t)
-    b /= len_sv;  // b = b / length(is_sv)
+    TRY( VecSum(t, &b) );                         /* b = sum(t) */
+    b /= len_sv;                                  /* b = b / length(is_sv) */
     
     svm->b = b;
 
