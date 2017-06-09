@@ -12,8 +12,8 @@ Quick guide to PermonSVM installation
 
 1. install [PermonQP](https://github.com/It4innovations/permon)
 2. set `PERMON_SVM_DIR` variable pointing to the PermonSVM directory (probably this file's parent directory)
-3. build PermonSVM simply using makefile (makes use of PETSc buildsystem):
-`make`
+3. build PermonSVM simply using makefile (makes use of PETSc buildsystem):  
+   `make`
 4. if the build is successful, there is a new subdirectory named `$PETSC_ARCH` with the program library `$PETSC_ARCH/lib/libpermonsvm.{so,a}` and the executable `$PETSC_ARCH/bin/permonsvmfile`
    - shared library (.so) is built just if PETSc has been configured with option `--with-shared-libraries`
    - all compiler settings are inherited from PETSc
@@ -32,7 +32,7 @@ Example of PermonSVM usage
 5. running PermonSVM on 2 MPI processes with C = 0.01 and L1-norm loss function  
    `./runsvmmpi 2 -f examples/heart_scale -f_test examples/heart_scale.t -svm_loss_type L1 -svm_C 1e-2`
 
-The source of the files `examples/heart_scale` and `examples/heart_scale.t` is [LIBSVM dataset page](https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html#heart).
+The training dataset `examples/heart_scale` and testing dataset `examples/heart_scale.t` have been obtained by splitting the `heart_scale` dataset from the [LIBSVM dataset page](https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html#heart).
 
 Currently supported PETSc versions
 ----------------------------------
