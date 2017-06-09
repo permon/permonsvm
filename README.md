@@ -12,9 +12,9 @@ Quick guide to PermonSVM installation
 
 1. install [PermonQP](https://github.com/It4innovations/permon)
 2. set `PERMON_SVM_DIR` variable pointing to the PermonSVM directory (probably this file's parent directory)
-3. build PermonSVM simply using makefile (makes use of PETSc buildsystem): 
+3. build PermonSVM simply using makefile (makes use of PETSc buildsystem):
 `make`
-4. if the build is successful, there is a new subdirectory named `$PETSC_ARCH` with the program library `$PETSC_ARCH/lib/libpermonsvm.{so,a}` and the executable `$PETSC_ARCH/bin/permonsvm`
+4. if the build is successful, there is a new subdirectory named `$PETSC_ARCH` with the program library `$PETSC_ARCH/lib/libpermonsvm.{so,a}` and the executable `$PETSC_ARCH/bin/permonsvmfile`
    - shared library (.so) is built just if PETSc has been configured with option `--with-shared-libraries`
    - all compiler settings are inherited from PETSc
 
@@ -27,4 +27,3 @@ Currently supported PETSc versions
 ----------------------------------
 * 3.6.\*
 * 3.7.\*
-
