@@ -21,7 +21,18 @@ Quick guide to PermonSVM installation
 Example of PermonSVM usage
 --------------------------
 
+1. running PermonSVM on 2 MPI processes with default settings (L2-norm loss function, C = 10)
+`./runsvmmpi 2 -f examples/heart_scale`
+2. running PermonSVM on 2 MPI processes with grid search/cross-validation
+ `./runsvmmpi 2 -f examples/heart_scale -svm_C -1`
+3.  running PermonSVM on 2 MPI processes with grid search (C = {0.1, 1, 10, 100}) and cross-validation on 4 folds
+`./runsvmmpi 2 -f examples/heart_scale -svm_C -1 -svm_nfolds 4 -svm_logC_base 10 -svm_logC_min -1 -svm_logC_max 2`
+4. running PermonSVM on 2 MPI processes with C = 100  
+  `./runsvmmpi 2 -f examples/heart_scale -svm_C 100`
+5. running PermonSVM on 2 MPI processes with C = 0.01 and L1-norm loss function
+   `./runsvmmpi 2 -f examples/heart_scale -svm_loss_type L1 -svm_C 1e-2`
 
+The source of the file `examples/heart_scale` is [LIBSVM dataset page](https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html#heart).
 
 Currently supported PETSc versions
 ----------------------------------
