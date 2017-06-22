@@ -2,6 +2,8 @@
 
 -include ${PERMON_DIR}/lib/permon/conf/permon_variables
 
+PERMON_MAIN_HEADER          = include/permonsys.h
+
 PERMON_PKG_PREFIX         = PERMON_SVM
 PERMON_SVM_NAME           = permonsvm
 PERMON_SVM_MAIN_HEADER    = include/permonsvm.h
