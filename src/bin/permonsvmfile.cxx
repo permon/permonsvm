@@ -154,8 +154,8 @@ PetscErrorCode PermonSVMRemoveZeroColumns(Mat *Xt, Mat *Xt_test)
 PetscErrorCode PermonSVMLoadData(Mat *Xt, Vec *y, Mat *Xt_test, Vec *y_test)
 {
   PetscInt       M,N;
-  char           filename[PETSC_MAX_PATH_LEN] = "dummy.txt";
-  char           filename_test[PETSC_MAX_PATH_LEN] = "";
+  char           filename[PETSC_MAX_PATH_LEN] = "examples/heart_scale";
+  char           filename_test[PETSC_MAX_PATH_LEN] = "examples/heart_scale.t";
   PetscInt       n_examples = PETSC_DEFAULT;  /* PETSC_DEFAULT or PETSC_DECIDE means all */
   PetscInt       n_test_examples = PETSC_DEFAULT;
   PetscInt       numbering_base = 1;
