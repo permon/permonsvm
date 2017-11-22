@@ -108,7 +108,7 @@ PetscErrorCode svm_file_load(const char filename[], PetscInt n_examples, PetscIn
   PetscFunctionReturnI(0);
 }
 
-#undef __FUNCT__
+/*#undef __FUNCT__
 #define __FUNCT__ "PermonSVMRemoveZeroColumns"
 PetscErrorCode PermonSVMRemoveZeroColumns(Mat *Xt, Mat *Xt_test) 
 {
@@ -146,6 +146,70 @@ PetscErrorCode PermonSVMRemoveZeroColumns(Mat *Xt, Mat *Xt_test)
     TRY( MatDestroy(Xt_test) );
     *Xt_test = Xt_sub;
   }
+  PetscFunctionReturnI(0);
+}*/
+
+#undef __FUNCT__
+#define __FUNCT__ "PermonSVMRemoveZeroColumns"
+PetscErrorCode PermonSVMRemoveZeroColumns(Mat *Xt, Mat *Xt_test) 
+{
+  PetscInt    zero_columns;
+  Mat         X,  X_sub, Xt_sub, Xt_test_sub;
+  Vec         r, rnvec, zeros;
+  PetscRandom rctx;     /* random number generator context */
+  IS          cis, ris;
+
+  PetscFunctionBeginI;
+  
+  TRY( PetscRandomCreate(PETSC_COMM_WORLD,&rctx) );
+  TRY( PetscRandomSetFromOptions(rctx) );
+
+  TRY( MatCreateVecs(*Xt,&r,&rnvec) );
+  TRY( VecSetRandom(rnvec,rctx) );
+
+  TRY( VecDuplicate(r,&zeros) );
+  TRY( VecZeroEntries(zeros) );
+
+  TRY( VecSetRandom(rnvec,rctx) );
+  TRY( MatMultTranspose(*Xt, rnvec, r) );
+  TRY( VecAbs(r) );
+
+  TRY( VecWhichGreaterThan(r, zeros, &cis) );
+
+  if (!cis) {
+    TRY( PetscPrintf(comm, "### PermonSVM: no zero columns found in Xt\n") );
+    PetscFunctionReturnI(0);
+  }
+
+  {
+    PetscInt n,nnz;
+    TRY( MatGetSize(*Xt,NULL,&n) );
+    TRY( ISGetSize(cis,&nnz) );
+    TRY( PetscPrintf(comm, "### PermonSVM: removing %d zero columns found in Xt\n", n-nnz) );
+  }
+
+  TRY( MatGetOwnershipIS(*Xt, &ris, NULL) );
+  TRY( MatGetSubMatrix(*Xt,ris,cis,MAT_INITIAL_MATRIX,&Xt_sub) );
+
+  *Xt = Xt_sub;
+
+  ISDestroy(&ris);
+
+  if (Xt_test && *Xt_test) {
+    TRY( MatGetOwnershipIS(*Xt_test, &ris, NULL) );
+    TRY( MatGetSubMatrix(*Xt_test,ris,cis,MAT_INITIAL_MATRIX,&Xt_test_sub) );
+
+    *Xt_test = Xt_test_sub;
+  }
+
+  VecDestroy(&r);
+  VecDestroy(&rnvec);
+  VecDestroy(&zeros);
+  ISDestroy(&ris);
+  ISDestroy(&cis);
+
+  PetscRandomDestroy(&rctx);
+
   PetscFunctionReturnI(0);
 }
 
