@@ -194,8 +194,9 @@ namespace excape {
         //TODO MatMPIAIJSetPreallocation
         TRY( MatSetUp(Xt) );
 
-        TRY( VecCreate(comm,&y) );
-        TRY( VecSetSizes(y, n_examples, PETSC_DECIDE) );
+        TRY( MatCreateVecs(Xt, NULL, &y) );
+        //TRY( VecCreate(comm,&y) );
+        //TRY( VecSetSizes(y, n_examples, PETSC_DECIDE) );
         TRY( VecSetOptionsPrefix(y, "y_") );
         TRY( VecSetFromOptions(y) );
 

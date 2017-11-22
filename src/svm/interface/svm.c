@@ -143,6 +143,7 @@ PetscErrorCode PermonSVMSetC(PermonSVM svm, PetscReal C)
       Vec ub;
       TRY( QPGetBox(svm->qps->solQP, NULL, &ub) );
       TRY( VecSet(ub, C) );
+
     } else {
       TRY( MatScale(svm->D,C/svm->C) );
     }
@@ -483,22 +484,22 @@ PetscErrorCode PermonSVMGetQPS(PermonSVM svm, QPS *qps)
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscValidPointer(qps,2);
   if (!svm->qps) {
-    QPS qps, qps_inner;
-    Tao tao;
+    QPS qps; //qps_inner;
+    //Tao tao;
 
     TRY( QPSCreate(PetscObjectComm((PetscObject)svm),&qps) );
 
     /* set default solver */
-    TRY( QPSSetType(qps,QPSSMALXE) );
-    TRY( QPSSMALXEGetInnerQPS(qps,&qps_inner) );
-    TRY( QPSSetType(qps_inner,QPSTAO) );
-    TRY( QPSTaoGetTao(qps_inner,&tao) );
-    TRY( TaoSetType(tao,TAOBLMVM) );
+    TRY( QPSSetType(qps,QPSMPGP) );
+    //TRY( QPSSMALXEGetInnerQPS(qps,&qps_inner) );
+    //TRY( QPSSetType(qps_inner,QPSTAO) );
+    //TRY( QPSTaoGetTao(qps_inner,&tao) );
+    //TRY( TaoSetType(tao,TAOBLMVM) );
 
     /* set default solver settings */
     TRY( QPSSetTolerances(qps,1e-1,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT) );
-    TRY( QPSSMALXESetM1Initial(qps,1.0,QPS_ARG_MULTIPLE) );
-    TRY( QPSSMALXESetRhoInitial(qps,1.0,QPS_ARG_MULTIPLE) );
+    //TRY( QPSSMALXESetM1Initial(qps,1.0,QPS_ARG_MULTIPLE) );
+    //TRY( QPSSMALXESetRhoInitial(qps,1.0,QPS_ARG_MULTIPLE) );
 
     svm->qps = qps;
   }
@@ -567,7 +568,7 @@ PetscErrorCode PermonSVMSetUp(PermonSVM svm)
   Vec e,lb,ub;
   Mat BE;
   PetscReal norm;
-  Vec x_init;  
+  Vec x_init;
 
   FllopTracedFunctionBegin;
   if (svm->setupcalled) PetscFunctionReturn(0);
@@ -608,6 +609,7 @@ PetscErrorCode PermonSVMSetUp(PermonSVM svm)
   } else {
     FLLOP_ASSERT(svm->loss_type==PERMON_SVM_L1,"svm->loss_type==PERMON_SVM_L1");
   }
+
   TRY( QPSetOperator(qp,H) );                     /* set Hessian of QP problem */
 
   /* creating linear term */
@@ -615,12 +617,14 @@ PetscErrorCode PermonSVMSetUp(PermonSVM svm)
   TRY( VecSet(e,1.0) );
   TRY( QPSetRhs(qp, e) );                         /* set linear term of QP problem */
 
+  TRY( QPTNormalizeObjective(qp) );
+
   /* creating matrix of equality constraint */
   TRY( MatCreateOneRow(y,&BE) );                  /* Be = y^t */
   TRY( VecNorm(y, NORM_2, &norm) );
   TRY( MatScale(BE,1.0/norm) );                   /* ||Be|| = 1 */
   //TRY( QPSetEq(qp, BE, NULL) );                   /* set equality constraint to QP problem */
-  
+
   {
     PetscInt m;
     TRY( MatGetSize(BE,&m,NULL) );
@@ -647,7 +651,6 @@ PetscErrorCode PermonSVMSetUp(PermonSVM svm)
   }
   
   /* permorm QP transforms */
-  //TRY( PetscOptionsInsertString(NULL,"-project -proj_qp_O_normalize") ); /* TODO no better way to specify default transforms currently */
   TRY( QPTFromOptions(qp) );                      /* transform QP problem e.g. scaling */
 
   /* set solver settings from options if PermonSVMSetFromOptions has been called */
@@ -801,7 +804,7 @@ PetscErrorCode PermonSVMPostTrain(PermonSVM svm)
     TRY( MatMultTranspose(Xt, Yz, w) );           /* Xt = X^t, w = Xt' * Yz = (X^t)^t * Yz = X * Yz */
 
     svm->w = w;
-    
+
     TRY( VecDestroy(&Yz) );
   }
   

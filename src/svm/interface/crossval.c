@@ -129,14 +129,14 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
       rate = ((PetscReal)N_eq) / ((PetscReal)N_all);
       array_rate[j] += rate;
 
-      TRY( PetscObjectTypeCompare((PetscObject)cross_svm->qps,QPSSMALXE,&flg) );
-      if (flg) {
+      //TRY( PetscObjectTypeCompare((PetscObject)cross_svm->qps,QPSSMALXE,&flg) );
+      /*if (flg) {
         QPS qps_inner;
         TRY( QPSSMALXEGetInnerQPS(cross_svm->qps,&qps_inner) );
         TRY( QPSGetAccumulatedIterationNumber(qps_inner,&its) );
-      } else {
-        TRY( QPSGetIterationNumber(cross_svm->qps,&its) );
-      }
+      } else {*/
+      TRY( QPSGetIterationNumber(cross_svm->qps,&its) );
+      //}
       TRY( PetscPrintf(comm, "### PermonSVM:     %d of %d examples classified correctly (rate %.2f), accumulated rate for C=%.2e is %.2f, %d QPS iterations\n", N_eq, N_all, rate, array_C[j], array_rate[j], its) );
     }
     TRY( PermonSVMDestroy(&cross_svm) );

@@ -27,7 +27,7 @@ PetscErrorCode svm_file_convert(const char filename[], const char filename_Xt_bi
 
   TRY( PetscPrintf(PETSC_COMM_SELF, "### PermonSVM: converting input data into PETSc binary format\n") );
   TRY( parser.GetData(PETSC_COMM_SELF, n_examples, n_attributes, &Xt_seq, &y_seq) );
-  
+
   TRY( PetscViewerBinaryOpen(PETSC_COMM_SELF, filename_Xt_bin, FILE_MODE_WRITE, &viewer) );
   TRY( MatView(Xt_seq, viewer) );
   TRY( PetscViewerDestroy(&viewer) );
@@ -94,6 +94,7 @@ PetscErrorCode svm_file_load(const char filename[], PetscInt n_examples, PetscIn
     PetscInt M;
     TRY( svm_file_load_binary(filename_Xt_bin, filename_y_bin, &Xt, &y) );
     TRY( MatGetSize(Xt,&M,NULL) );
+    //if ((n_examples != PETSC_DECIDE && n_examples != PETSC_DEFAULT) && M != n_examples) {
     if (M != n_examples) {
       TRY( PetscPrintf(PETSC_COMM_WORLD, "### PermonSVM: input data in PETSc binary format have different size than n_examples, reconverting\n") );
       TRY( svm_file_convert(filename, filename_Xt_bin, filename_y_bin, n_examples, n_attributes, numbering_base) );
@@ -105,6 +106,7 @@ PetscErrorCode svm_file_load(const char filename[], PetscInt n_examples, PetscIn
   
   *Xt_new = Xt;
   *y_new = y;
+
   PetscFunctionReturnI(0);
 }
 
@@ -112,12 +114,29 @@ PetscErrorCode svm_file_load(const char filename[], PetscInt n_examples, PetscIn
 #define __FUNCT__ "PermonSVMRemoveZeroColumns"
 PetscErrorCode PermonSVMRemoveZeroColumns(Mat *Xt, Mat *Xt_test) 
 {
-  Mat X, X_sub, Xt_sub;
-  IS cis;
+  PetscInt    zero_columns;
+  Mat         X,  X_sub, Xt_sub, Xt_test_sub;
+  Vec         r, rnvec, zeros;
+  PetscRandom rctx;     /* random number generator context */
+  IS          cis, ris;
 
   PetscFunctionBeginI;
-  TRY( FllopMatTranspose(*Xt,MAT_TRANSPOSE_EXPLICIT,&X) );
-  TRY( MatFindNonzeroRows(X,&cis) );
+  
+  TRY( PetscRandomCreate(PETSC_COMM_WORLD,&rctx) );
+  TRY( PetscRandomSetFromOptions(rctx) );
+
+  TRY( MatCreateVecs(*Xt,&r,&rnvec) );
+  TRY( VecSetRandom(rnvec,rctx) );
+
+  TRY( VecDuplicate(r,&zeros) );
+  TRY( VecZeroEntries(zeros) );
+
+  TRY( VecSetRandom(rnvec,rctx) );
+  TRY( MatMultTranspose(*Xt, rnvec, r) );
+  TRY( VecAbs(r) );
+
+  TRY( VecWhichGreaterThan(r, zeros, &cis) );
+
   if (!cis) {
     TRY( PetscPrintf(comm, "### PermonSVM: no zero columns found in Xt\n") );
     PetscFunctionReturnI(0);
@@ -130,22 +149,28 @@ PetscErrorCode PermonSVMRemoveZeroColumns(Mat *Xt, Mat *Xt_test)
     TRY( PetscPrintf(comm, "### PermonSVM: removing %d zero columns found in Xt\n", n-nnz) );
   }
 
-  TRY( MatGetSubMatrix(X,cis,NULL,MAT_INITIAL_MATRIX,&X_sub) );
-  TRY( FllopMatTranspose(X_sub,MAT_TRANSPOSE_EXPLICIT,&Xt_sub) );
-  TRY( MatDestroy(&X) );
-  TRY( MatDestroy(&X_sub) );
-  TRY( MatDestroy(Xt) );
+  TRY( MatGetOwnershipIS(*Xt, &ris, NULL) );
+  TRY( MatGetSubMatrix(*Xt,ris,cis,MAT_INITIAL_MATRIX,&Xt_sub) );
+
   *Xt = Xt_sub;
 
+  ISDestroy(&ris);
+
   if (Xt_test && *Xt_test) {
-    TRY( FllopMatTranspose(*Xt_test,MAT_TRANSPOSE_EXPLICIT,&X) );
-    TRY( MatGetSubMatrix(X,cis,NULL,MAT_INITIAL_MATRIX,&X_sub) );
-    TRY( FllopMatTranspose(X_sub,MAT_TRANSPOSE_EXPLICIT,&Xt_sub) );
-    TRY( MatDestroy(&X) );
-    TRY( MatDestroy(&X_sub) );
-    TRY( MatDestroy(Xt_test) );
-    *Xt_test = Xt_sub;
+    TRY( MatGetOwnershipIS(*Xt_test, &ris, NULL) );
+    TRY( MatGetSubMatrix(*Xt_test,ris,cis,MAT_INITIAL_MATRIX,&Xt_test_sub) );
+
+    *Xt_test = Xt_test_sub;
   }
+
+  VecDestroy(&r);
+  VecDestroy(&rnvec);
+  VecDestroy(&zeros);
+  ISDestroy(&ris);
+  ISDestroy(&cis);
+
+  PetscRandomDestroy(&rctx);
+
   PetscFunctionReturnI(0);
 }*/
 
@@ -220,6 +245,7 @@ PetscErrorCode PermonSVMLoadData(Mat *Xt, Vec *y, Mat *Xt_test, Vec *y_test)
   PetscInt       M,N;
   char           filename[PETSC_MAX_PATH_LEN] = "examples/heart_scale";
   char           filename_test[PETSC_MAX_PATH_LEN] = "examples/heart_scale.t";
+  char           directory_tmp[PETSC_MAX_PATH_LEN] = "";
   PetscInt       n_examples = PETSC_DEFAULT;  /* PETSC_DEFAULT or PETSC_DECIDE means all */
   PetscInt       n_test_examples = PETSC_DEFAULT;
   PetscInt       numbering_base = 1;
@@ -257,12 +283,13 @@ PetscErrorCode PermonSVMLoadData(Mat *Xt, Vec *y, Mat *Xt_test, Vec *y_test)
   TRY( PetscObjectSetName((PetscObject)*y,  "y") );
   if (*Xt_test) TRY( PetscObjectSetName((PetscObject)*Xt_test, "Xt_test") );
   if (*y_test)  TRY( PetscObjectSetName((PetscObject)*y_test,  "y_test") );
-
+  
   TRY( MatPrintInfo(*Xt) );
   TRY( VecPrintInfo(*y) );
   if (*Xt_test) TRY( MatPrintInfo(*Xt_test) );
   if (*y_test)  TRY( VecPrintInfo(*y_test) );
   TRY( PetscPrintf(comm, "\n") );
+
   PetscFunctionReturnI(0);
 }
 
@@ -270,38 +297,42 @@ PetscErrorCode PermonSVMLoadData(Mat *Xt, Vec *y, Mat *Xt_test, Vec *y_test)
 #define __FUNCT__ "PermonSVMRun"
 PetscErrorCode PermonSVMRun()
 {
-    PermonSVM svm;
-    PetscReal C;
-    PetscInt N_all, N_eq;
-    Mat Xt, Xt_test;
-    Vec y, y_test;
+  PermonSVM svm;
+  PetscReal C;
+  PetscInt N_all, N_eq;
+  Mat Xt, Xt_test;
+  Vec y, y_test;
     
-    PetscFunctionBeginI;
-    TRY( PermonSVMLoadData(&Xt, &y, &Xt_test, &y_test) );
-    
-    /* ------------------------------------------------------------------------ */
-    TRY( PermonSVMCreate(comm, &svm) );
-    TRY( PermonSVMSetTrainingSamples(svm, Xt, y) );
-    TRY( PermonSVMSetFromOptions(svm) );
-    TRY( PermonSVMTrain(svm) );
-    TRY( PermonSVMTest(svm, Xt, y, &N_all, &N_eq) );
-    TRY( PermonSVMGetC(svm, &C) );
-    TRY( PetscPrintf(comm, "\n### PermonSVM: %8d of %8d training examples classified correctly (%.2f%%) with C = %1.1e\n", N_eq, N_all, ((PetscReal)N_eq)/((PetscReal)N_all)*100.0, C) );
+  PetscFunctionBeginI;
+  TRY( PermonSVMLoadData(&Xt, &y, &Xt_test, &y_test) );
 
-    /* ------------------------------------------------------------------------ */ 
-    if (Xt_test) {
-      TRY( PermonSVMTest(svm, Xt_test, y_test, &N_all, &N_eq) );
-      TRY( PermonSVMGetC(svm, &C) );
-      TRY( PetscPrintf(comm, "### PermonSVM: %8d of %8d  testing examples classified correctly (%.2f%%) with C = %1.1e\n", N_eq, N_all, ((PetscReal)N_eq)/((PetscReal)N_all)*100.0, C) );
-      TRY( MatDestroy(&Xt_test) );
-      TRY( VecDestroy(&y_test) );
-    }
+  /* ------------------------------------------------------------------------ */
+  TRY(PermonSVMCreate(comm, &svm));
+
+
+  TRY(PermonSVMSetTrainingSamples(svm, Xt, y));
+  TRY(PermonSVMSetFromOptions(svm));
+  TRY(PermonSVMTrain(svm));
+
+  TRY(PermonSVMTest(svm, Xt, y, &N_all, &N_eq));
+  TRY(PermonSVMGetC(svm, &C));
+  TRY(PetscPrintf(comm, "\n### PermonSVM: %8d of %8d training examples classified correctly (%.2f%%) with C = %1.1e\n",
+                  N_eq, N_all, ((PetscReal) N_eq) / ((PetscReal) N_all) * 100.0, C));
+
+  /* ------------------------------------------------------------------------ */
+  if (Xt_test) {
+    TRY( PermonSVMTest(svm, Xt_test, y_test, &N_all, &N_eq) );
+    TRY( PermonSVMGetC(svm, &C) );
+    TRY( PetscPrintf(comm, "### PermonSVM: %8d of %8d  testing examples classified correctly (%.2f%%) with C = %1.1e\n", N_eq, N_all, ((PetscReal)N_eq)/((PetscReal)N_all)*100.0, C) );
+    TRY( MatDestroy(&Xt_test) );
+    TRY( VecDestroy(&y_test) );
+  }
     
-    /* ------------------------------------------------------------------------ */ 
-    TRY( PermonSVMDestroy(&svm) );
-    TRY( MatDestroy(&Xt) );
-    TRY( VecDestroy(&y) );
-    PetscFunctionReturnI(0);
+  /* ------------------------------------------------------------------------ */
+  TRY( PermonSVMDestroy(&svm) );
+  TRY( MatDestroy(&Xt) );
+  TRY( VecDestroy(&y) );
+  PetscFunctionReturnI(0);
 }
 
 #undef __FUNCT__
@@ -310,12 +341,11 @@ int main(int argc, char** argv)
 { 
   PermonInitialize(&argc, &argv, (char*) 0, (char *) 0);
 
-  PetscFunctionBegin;
   comm = PETSC_COMM_WORLD;
   TRY( MPI_Comm_rank(comm, &rank) );
   TRY( MPI_Comm_size(comm, &commsize) );
 
-  TRY( PetscPrintf(comm, "PETSC_DIR:\t" PETSC_DIR "\n") );
+  TRY( PetscPrintf(comm, "PETSC_DIR: \t" PETSC_DIR "\n") );
   TRY( PetscPrintf(comm, "PETSC_ARCH:\t" PETSC_ARCH "\n") );
 #ifdef PETSC_RELEASE_DATE
 #define DATE PETSC_RELEASE_DATE
@@ -326,6 +356,6 @@ int main(int argc, char** argv)
 #undef DATE
 
   TRY( PermonSVMRun() );
+
   TRY( PermonFinalize() );
-  PetscFunctionReturn(0);
 }
