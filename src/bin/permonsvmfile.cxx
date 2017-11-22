@@ -308,7 +308,7 @@ PetscErrorCode PermonSVMRun()
 #define __FUNCT__ "main"
 int main(int argc, char** argv) 
 { 
-  FllopInitialize(&argc, &argv, (char*) 0);
+  PermonInitialize(&argc, &argv, (char*) 0, (char *) 0);
 
   PetscFunctionBegin;
   comm = PETSC_COMM_WORLD;
@@ -326,6 +326,6 @@ int main(int argc, char** argv)
 #undef DATE
 
   TRY( PermonSVMRun() );
-  TRY( FllopFinalize() );
+  TRY( PermonFinalize() );
   PetscFunctionReturn(0);
 }
