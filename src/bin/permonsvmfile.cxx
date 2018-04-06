@@ -114,8 +114,7 @@ PetscErrorCode svm_file_load(const char filename[], PetscInt n_examples, PetscIn
 #define __FUNCT__ "PermonSVMRemoveZeroColumns"
 PetscErrorCode PermonSVMRemoveZeroColumns(Mat *Xt, Mat *Xt_test) 
 {
-  PetscInt    zero_columns;
-  Mat         X,  X_sub, Xt_sub, Xt_test_sub;
+  Mat         Xt_sub, Xt_test_sub;
   Vec         r, rnvec, zeros;
   PetscRandom rctx;     /* random number generator context */
   IS          cis, ris;
@@ -181,7 +180,6 @@ PetscErrorCode PermonSVMLoadData(Mat *Xt, Vec *y, Mat *Xt_test, Vec *y_test)
   PetscInt       M,N;
   char           filename[PETSC_MAX_PATH_LEN] = "examples/heart_scale";
   char           filename_test[PETSC_MAX_PATH_LEN] = "examples/heart_scale.t";
-  char           directory_tmp[PETSC_MAX_PATH_LEN] = "";
   PetscInt       n_examples = PETSC_DEFAULT;  /* PETSC_DEFAULT or PETSC_DECIDE means all */
   PetscInt       n_test_examples = PETSC_DEFAULT;
   PetscInt       numbering_base = 1;

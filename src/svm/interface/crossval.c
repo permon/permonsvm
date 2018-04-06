@@ -44,7 +44,6 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
   PetscMPIInt rank;
   PermonSVM cross_svm;
   IS is_test, is_train;
-  PetscBool flg;
   PetscInt n_examples, n_attributes;  /* PETSC_DEFAULT or PETSC_DECIDE means all */
   PetscInt i, j, i_max;
   PetscInt nfolds, first, n;
