@@ -150,7 +150,7 @@ PetscErrorCode PermonSVMRemoveZeroColumns(Mat *Xt, Mat *Xt_test)
   }
 
   TRY( MatGetOwnershipIS(*Xt, &ris, NULL) );
-  TRY( MatGetSubMatrix(*Xt,ris,cis,MAT_INITIAL_MATRIX,&Xt_sub) );
+  TRY( MatCreateSubMatrix(*Xt,ris,cis,MAT_INITIAL_MATRIX,&Xt_sub) );
 
   *Xt = Xt_sub;
 
@@ -158,7 +158,7 @@ PetscErrorCode PermonSVMRemoveZeroColumns(Mat *Xt, Mat *Xt_test)
 
   if (Xt_test && *Xt_test) {
     TRY( MatGetOwnershipIS(*Xt_test, &ris, NULL) );
-    TRY( MatGetSubMatrix(*Xt_test,ris,cis,MAT_INITIAL_MATRIX,&Xt_test_sub) );
+    TRY( MatCreateSubMatrix(*Xt_test,ris,cis,MAT_INITIAL_MATRIX,&Xt_test_sub) );
 
     *Xt_test = Xt_test_sub;
   }
@@ -274,24 +274,24 @@ PetscErrorCode PermonSVMRun()
 #undef __FUNCT__
 #define __FUNCT__ "main"
 int main(int argc, char** argv) 
-{ 
-  PermonInitialize(&argc, &argv, (char*) 0, (char *) 0);
-
-  comm = PETSC_COMM_WORLD;
-  TRY( MPI_Comm_rank(comm, &rank) );
-  TRY( MPI_Comm_size(comm, &commsize) );
-
-  TRY( PetscPrintf(comm, "PETSC_DIR: \t" PETSC_DIR "\n") );
-  TRY( PetscPrintf(comm, "PETSC_ARCH:\t" PETSC_ARCH "\n") );
-#ifdef PETSC_RELEASE_DATE
-#define DATE PETSC_RELEASE_DATE
-#else
-#define DATE PETSC_VERSION_DATE
-#endif
-  TRY( PetscPrintf(comm, "PETSc version:\t%d.%d.%d patch %d (%s)\n", PETSC_VERSION_MAJOR, PETSC_VERSION_MINOR, PETSC_VERSION_SUBMINOR, PETSC_VERSION_PATCH, DATE) );
-#undef DATE
-
-  TRY( PermonSVMRun() );
-
+{  
+  PermonInitialize(&argc, &argv, (char*) 0, (char *) 0); 
+ 
+  comm = PETSC_COMM_WORLD; 
+  TRY( MPI_Comm_rank(comm, &rank) ); 
+  TRY( MPI_Comm_size(comm, &commsize) ); 
+ 
+  TRY( PetscPrintf(comm, "PETSC_DIR: \t" PETSC_DIR "\n") ); 
+  TRY( PetscPrintf(comm, "PETSC_ARCH:\t" PETSC_ARCH "\n") ); 
+#ifdef PETSC_RELEASE_DATE 
+#define DATE PETSC_RELEASE_DATE 
+#else 
+#define DATE PETSC_VERSION_DATE 
+#endif 
+  TRY( PetscPrintf(comm, "PETSc version:\t%d.%d.%d patch %d (%s)\n", PETSC_VERSION_MAJOR, PETSC_VERSION_MINOR, PETSC_VERSION_SUBMINOR, PETSC_VERSION_PATCH, DATE) ); 
+#undef DATE 
+ 
+  TRY( PermonSVMRun() ); 
+ 
   TRY( PermonFinalize() );
 }

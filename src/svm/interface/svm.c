@@ -590,7 +590,7 @@ PetscErrorCode PermonSVMSetUp(PermonSVM svm)
   y = svm->y_inner;
 
   /* creating Hessian */
-  TRY( FllopMatTranspose(Xt,MAT_TRANSPOSE_CHEAPEST,&X) );
+  TRY( PermonMatTranspose(Xt,MAT_TRANSPOSE_CHEAPEST,&X) );
   TRY( MatCreateNormal(X,&H) );                   /* H = X^t * X */
   TRY( MatDiagonalScale(H,y,y) );                 /* H = diag(y)*H*diag(y) */
   TRY( MatDestroy(&svm->D) );

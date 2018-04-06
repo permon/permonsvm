@@ -99,10 +99,10 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
     n = (hi + nfolds - first - 1)/nfolds;
 
     TRY( ISStrideSetStride(is_test,n,first,nfolds) );
-    TRY( MatGetSubMatrix(Xt,is_test,NULL,MAT_INITIAL_MATRIX,&Xt_test) );
+    TRY( MatCreateSubMatrix(Xt,is_test,NULL,MAT_INITIAL_MATRIX,&Xt_test) );
     TRY( VecGetSubVector(y,is_test,&y_test) );
     TRY( ISComplement(is_test,lo,hi,&is_train) );
-    TRY( MatGetSubMatrix(Xt,is_train,NULL,MAT_INITIAL_MATRIX,&Xt_train) );
+    TRY( MatCreateSubMatrix(Xt,is_train,NULL,MAT_INITIAL_MATRIX,&Xt_train) );
     TRY( VecGetSubVector(y,is_train,&y_train) );
 
     TRY( PermonSVMCreate(PetscObjectComm((PetscObject)svm),&cross_svm) );
