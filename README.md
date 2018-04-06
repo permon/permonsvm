@@ -34,7 +34,6 @@ Example of PermonSVM usage
 
 The training dataset `examples/heart_scale` and testing dataset `examples/heart_scale.t` have been obtained by splitting the `heart_scale` dataset from the [LIBSVM dataset page](https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html#heart).
 
-Currently supported PETSc versions
+Currently supported PERMON/PETSc versions
 ----------------------------------
-* 3.6.\*
-* 3.7.\*
+PERMON tries to support newest versions of PETSc as soon as possible. The [releases](https://github.com/It4innovations/permonsvm/releases) are tagged with major.minor.sub-minor numbers. The major.minor numbers correspond to the major.minor release numbers of the supported PERMON/PETSc version.
