@@ -15,18 +15,6 @@ MAKE_IS_GNUMAKE :=
 
 permonsvm-all: chk_permon_dir permon-all
 
-permonsvmfile:  ${PERMON_SVM_DIR}/${PETSC_ARCH}/bin/permonsvmfile
-
-src/bin/permonsvmfile.o: src/bin/permonsvmfile.cxx
-	${PETSC_CXXCOMPILE_SINGLE} -std=c++11 `pwd`/$<
-
-${PERMON_SVM_DIR}/${PETSC_ARCH}/bin/permonsvmfile: src/bin/permonsvmfile.o
-	@${MKDIR} $(dir $@)
-	@${CLINKER} -o $@ $< ${PERMON_SVM_LIB}
-	-@${RM} $<
-	-@echo executable $@ created
-	-@echo "========================================="
-
 cleanbin:
 	-@${RM} ${PERMON_SVM_DIR}/${PETSC_ARCH}/bin/*
 
