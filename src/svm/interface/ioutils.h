@@ -1,6 +1,8 @@
 #if !defined(__DYNARRAY_H)
 #define	__DYNARRAY_H
 
+#include <limits.h>
+
 #define PERMON_DARRAY_INIT_CAPACITY 4
 #define PERMON_DARRAY_GROW_FACTOR 2.0
 
@@ -32,5 +34,14 @@
   a.capacity = a.grow_factor * a.capacity; \
   TRY( PetscRealloc(a.capacity * sizeof(*(a.data)),&a.data) ); \
 
+#define CheckCastToInt(x) (             \
+  {                                     \
+    int ret = 0;                        \
+    if (x >= INT_MIN && x <= INT_MAX) { \
+      ret = 1;                          \
+    }                                   \
+    ret;                                \
+  }                                     \
+)
 
 #endif
