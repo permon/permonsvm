@@ -133,7 +133,11 @@ PetscErrorCode PermonSVMParseBuffer(MPI_Comm comm,char *buff,struct ArrInt *i,st
   PetscReal  array_grow_factor;
 
   char       *line = NULL,*word = NULL,*key = NULL,*v = NULL;
+#if (_POSIX_VERSION >= 200112L)
   char       *ptr_line = NULL,*ptr_word = NULL;
+#else
+  PetscToken token_line,token_word;
+#endif
 
   PetscInt   col,N_in;
   PetscReal  value,yi;
@@ -187,7 +191,42 @@ PetscErrorCode PermonSVMParseBuffer(MPI_Comm comm,char *buff,struct ArrInt *i,st
       line = strtok_r(NULL,"\n",&ptr_line);
     }
 #else
-    /*TODO implementation of parser in case of no POSIX API*/
+    TRY( PetscTokenCreate(buff,'\n',&token_line) );
+    while(PETSC_TRUE) {
+      TRY( PetscTokenFind(token_line,&line) );
+      if (line) {
+        TRY( PetscTokenCreate(line,' ',&token_word) );
+
+        TRY( PetscTokenFind(token_word,&word) );
+        yi = (PetscReal) atof(word);
+
+        PermonDynamicArrayPushBack(k_in,y_in.size);
+        PermonDynamicArrayPushBack(y_in,yi);
+
+        while (PETSC_TRUE) {
+          TRY( PetscTokenFind(token_word,&word) );
+          if (word) {
+            key = strtok(word,":");
+            col = (PetscInt) atoi(key);
+
+            if (col > N_in) N_in = col;
+            col -= 1; /*Column indices start from 1 in SVMLight format*/
+            PermonDynamicArrayPushBack(j_in,col);
+
+            v = strtok(NULL,":");
+            value = (PetscReal) atof(v);
+            PermonDynamicArrayPushBack(a_in,value);
+          } else {
+            break;
+          }
+        }
+      } else {
+        break;
+      }
+      PermonDynamicArrayPushBack(i_in,a_in.size);
+      TRY( PetscTokenDestroy(&token_word) );
+    }
+    TRY( PetscTokenDestroy(&token_line) );
 #endif
   } else {
     y_in.data = NULL;
@@ -203,6 +242,7 @@ PetscErrorCode PermonSVMParseBuffer(MPI_Comm comm,char *buff,struct ArrInt *i,st
   *a = a_in;
   *k = k_in;
   *y = y_in;
+  *N = N_in;
   PetscFunctionReturn(0);
 }
 
