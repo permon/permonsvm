@@ -2,6 +2,13 @@
 #include <permonsvmio.h>
 #include "ioutils.h"
 
+#if defined(PETSC_HAVE_UNISTD_H)
+#include <unistd.h>
+#endif
+
+struct ArrInt  PermonDynamicArray_(PetscInt);
+struct ArrReal PermonDynamicArray_(PetscReal);
+
 #undef __FUNCT__
 #define __FUNCT__ "PermonSVMLoadBuffer"
 PetscErrorCode PermonSVMReadBuffer(MPI_Comm comm,const char *filename,char **chunk_buff) {
@@ -117,6 +124,16 @@ PetscErrorCode PermonSVMReadBuffer(MPI_Comm comm,const char *filename,char **chu
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "PermonSVMPAsseblyMatVec"
+PetscErrorCode PermonSVMAsseblyMatVec(MPI_Comm comm,char *buff,Mat *Xt,Vec *labels) {
+
+  PetscFunctionBegin;
+  *Xt = NULL;
+  *labels = NULL;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "PermonSVMLoadData"
 PetscErrorCode PermonSVMLoadData(MPI_Comm comm,const char *filename,Mat *Xt,Vec *y) {
   char *chunk_buff = NULL;
@@ -126,9 +143,9 @@ PetscErrorCode PermonSVMLoadData(MPI_Comm comm,const char *filename,Mat *Xt,Vec 
   PetscValidPointer(y,4);
 
   TRY( PermonSVMReadBuffer(comm,filename,&chunk_buff) );
+  TRY( PermonSVMAsseblyMatVec(comm,chunk_buff,Xt,y) );
+
   if (chunk_buff) TRY( PetscFree(chunk_buff) );
 
-  *Xt = NULL;
-  *y = NULL;
   PetscFunctionReturnI(0);
 }
