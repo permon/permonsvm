@@ -19,7 +19,7 @@ PetscErrorCode PermonSVMRunBinaryClassification() {
   TRY( PermonSVMCreate(comm,&svm) );
   TRY( PermonSVMSetFromOptions(svm) );
 
-  TRY( PermonSVMLoadData(training_file,&Xt_training,&y_training) );
+  TRY( PermonSVMLoadData(comm,training_file,&Xt_training,&y_training) );
 
   if (Xt_training && y_training) {
     TRY( PermonSVMSetTrainingSamples(svm,Xt_training,y_training) );
