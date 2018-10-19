@@ -132,6 +132,12 @@ PetscErrorCode PermonSVMParseBuffer(MPI_Comm comm,char *buff,struct ArrInt *i,st
   PetscInt   array_init_capacity;
   PetscReal  array_grow_factor;
 
+  char       *line = NULL,*word = NULL,*key = NULL,*v = NULL;
+  char       *ptr_line = NULL,*ptr_word = NULL;
+
+  PetscInt   col,N_in;
+  PetscReal  value,yi;
+
   PetscFunctionBegin;
   array_init_capacity = PERMON_DARRAY_INIT_CAPACITY;
   array_grow_factor = PERMON_DARRAY_GROW_FACTOR;
@@ -151,6 +157,38 @@ PetscErrorCode PermonSVMParseBuffer(MPI_Comm comm,char *buff,struct ArrInt *i,st
 
     PermonDynamicArrayInit(j_in,array_init_capacity,array_grow_factor);
     PermonDynamicArrayInit(a_in,array_init_capacity,array_grow_factor);
+
+    N_in = 0;
+#if (_POSIX_VERSION >= 200112L)
+    line = strtok_r(buff,"\n",&ptr_line);
+
+    while (line) {
+      word = strtok_r(line," ",&ptr_word);
+      yi = (PetscReal) atoi(word);
+
+      PermonDynamicArrayPushBack(k_in,y_in.size);
+      PermonDynamicArrayPushBack(y_in,yi);
+
+      while ((word = strtok_r(NULL," ",&ptr_word))) {
+        key = strtok(word,":");
+        col = (PetscInt) atoi(key);
+
+        if (col > N_in) N_in = col;
+        col -= 1; /*Column indices start from 1 in SVMLight format*/
+
+        PermonDynamicArrayPushBack(j_in,col);
+
+        v = strtok(NULL,":");
+        value = (PetscReal) atof(v);
+        PermonDynamicArrayPushBack(a_in,value);
+      }
+      PermonDynamicArrayPushBack(i_in,a_in.size);
+
+      line = strtok_r(NULL,"\n",&ptr_line);
+    }
+#else
+    /*TODO implementation of parser in case of no POSIX API*/
+#endif
   } else {
     y_in.data = NULL;
     k_in.data = NULL;
