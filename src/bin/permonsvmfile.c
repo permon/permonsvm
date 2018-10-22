@@ -11,12 +11,15 @@ PetscErrorCode PermonSVMRunBinaryClassification() {
   PermonSVM svm;
   PetscReal C;
   PetscInt  N_all, N_eq;
-  Mat       Xt_training;
-  Vec       y_training;
+  Mat       Xt_training,Xt_test;
+  Vec       y_training,y_test;
   char      training_file[PETSC_MAX_PATH_LEN] = "dummy.txt";
+  char      test_file[PETSC_MAX_PATH_LEN] = "";
+  PetscBool test_file_set = PETSC_FALSE;
 
   PetscFunctionBeginI;
   TRY( PetscOptionsGetString(NULL,NULL,"-f_training",training_file,sizeof(training_file),NULL) );
+  TRY( PetscOptionsGetString(NULL,NULL,"-f_test",test_file,sizeof(test_file),&test_file_set) );
   
   TRY( PermonSVMCreate(comm,&svm) );
   TRY( PermonSVMSetFromOptions(svm) );
@@ -30,6 +33,16 @@ PetscErrorCode PermonSVMRunBinaryClassification() {
     TRY( PermonSVMGetC(svm,&C) );
     TRY( PetscPrintf(comm,"\n### PermonSVM: %8d of %8d training samples classified correctly (%.2f%%) with C = %1.1e\n",
                      N_eq,N_all,((PetscReal)N_eq)/((PetscReal)N_all)*100.0,C) );
+  }
+
+  if (test_file_set) {
+    TRY( PermonSVMLoadData(comm,test_file,&Xt_test,&y_test) );
+
+    TRY( PermonSVMTest(svm,Xt_test,y_test,&N_all,&N_eq) );
+    TRY( PetscPrintf(comm,"\n### PermonSVM: %8d of %8d test samples classified correctly (%.2f%%)\n",N_eq,N_all,((PetscReal)N_eq)/((PetscReal)N_all)*100.0) );
+
+    TRY( MatDestroy(&Xt_test) );
+    TRY( VecDestroy(&y_test) );
   }
 
   if (Xt_training) TRY( MatDestroy(&Xt_training) );
