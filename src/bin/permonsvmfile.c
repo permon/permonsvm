@@ -13,7 +13,7 @@ PetscErrorCode PermonSVMRunBinaryClassification() {
   PetscInt  N_all, N_eq,M,N;
   Mat       Xt_training,Xt_test;
   Vec       y_training,y_test;
-  char      training_file[PETSC_MAX_PATH_LEN] = "dummy.txt";
+  char      training_file[PETSC_MAX_PATH_LEN] = "examples/heart_scale";
   char      test_file[PETSC_MAX_PATH_LEN] = "";
   PetscBool test_file_set = PETSC_FALSE;
 
