@@ -252,19 +252,35 @@ PetscErrorCode PermonSVMAsseblyMatVec(MPI_Comm comm,char *buff,Mat *Xt,Vec *labe
   struct ArrInt  i,j,k;
   struct ArrReal a,y;
 
-  PetscInt N;
+  PetscInt offset,m,N;
 
   PetscFunctionBegin;
   TRY( PermonSVMParseBuffer(comm,buff,&i,&j,&a,&k,&y,&N) );
 
+  m = (buff) ? i.size - 1 : 0;
+  /*local to global: label vector indices*/
+  offset = (k.data) ? k.size : 0;
+  TRY( MPI_Scan(MPI_IN_PLACE,&offset,1,MPIU_INT,MPI_SUM,comm) );
+  if (k.data) {
+    offset -= k.size;
+    PermonDynamicArrayAddValue(k,offset);
+  }
+
+  TRY( MatCreateMPIAIJWithArrays(comm,m,PETSC_DETERMINE,PETSC_DETERMINE,N,i.data,j.data,a.data,Xt) );
+  TRY( MatAssemblyBegin(*Xt,MAT_FINAL_ASSEMBLY) );
+  TRY( MatAssemblyEnd(*Xt,MAT_FINAL_ASSEMBLY) );
+  
+  TRY( MatCreateVecs(*Xt,NULL,labels) );
+  if (y.data) TRY( VecSetValues(*labels,y.size,k.data,y.data,INSERT_VALUES) );
+  TRY( VecAssemblyBegin(*labels) );
+  TRY( VecAssemblyEnd(*labels) );
+  
   if (y.data) PermonDynamicArrayClear(y);
   if (k.data) PermonDynamicArrayClear(k);
   PermonDynamicArrayClear(i);
   if (j.data) PermonDynamicArrayClear(j);
   if (a.data) PermonDynamicArrayClear(a);
 
-  *Xt = NULL;
-  *labels = NULL;
   PetscFunctionReturn(0);
 }
 
