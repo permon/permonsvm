@@ -25,6 +25,8 @@ PetscErrorCode PermonSVMRunBinaryClassification() {
   TRY( PermonSVMSetFromOptions(svm) );
 
   TRY( PermonSVMLoadData(comm,training_file,&Xt_training,&y_training) );
+  TRY( PetscObjectSetName((PetscObject) Xt_training,"Xt_training") );
+  TRY( PetscObjectSetName((PetscObject) y_training,"y_training") );
   TRY( MatGetSize(Xt_training,&M,&N));
   TRY( PetscPrintf(comm,"### PermonSVM:\tloaded %8d training samples with %8d attributes from file %s\n",M,N,training_file) );
 
@@ -37,6 +39,8 @@ PetscErrorCode PermonSVMRunBinaryClassification() {
 
   if (test_file_set) {
     TRY( PermonSVMLoadData(comm,test_file,&Xt_test,&y_test) );
+    TRY( PetscObjectSetName((PetscObject) Xt_test,"Xt_test") );
+    TRY( PetscObjectSetName((PetscObject) y_test,"y_test") );
     TRY( MatGetSize(Xt_test,&M,&N) );
     TRY( PetscPrintf(comm,"### PermonSVM:\tloaded %8d test samples with %8d attributes from file %s\n",M,N,test_file) );
 
