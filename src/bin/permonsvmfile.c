@@ -16,6 +16,8 @@ PetscErrorCode PermonSVMRunBinaryClassification() {
   char      training_file[PETSC_MAX_PATH_LEN] = "dummy.txt";
 
   PetscFunctionBeginI;
+  TRY( PetscOptionsGetString(NULL,NULL,"-f_training",training_file,sizeof(training_file),NULL) );
+  
   TRY( PermonSVMCreate(comm,&svm) );
   TRY( PermonSVMSetFromOptions(svm) );
 
