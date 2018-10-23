@@ -124,10 +124,67 @@ PetscErrorCode PermonSVMReadBuffer(MPI_Comm comm,const char *filename,char **chu
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "PermonSVMPAsseblyMatVec"
-PetscErrorCode PermonSVMAsseblyMatVec(MPI_Comm comm,char *buff,Mat *Xt,Vec *labels) {
+#define __FUNCT__ "PermonSVMParseBuffer"
+PetscErrorCode PermonSVMParseBuffer(MPI_Comm comm,char *buff,struct ArrInt *i,struct ArrInt *j,struct ArrReal *a,struct ArrInt *k,struct ArrReal *y,PetscInt *N) {
+  struct ArrInt  i_in,j_in,k_in;
+  struct ArrReal a_in,y_in;
+
+  PetscInt   array_init_capacity;
+  PetscReal  array_grow_factor;
 
   PetscFunctionBegin;
+  array_init_capacity = PERMON_DARRAY_INIT_CAPACITY;
+  array_grow_factor = PERMON_DARRAY_GROW_FACTOR;
+
+  TRY( PetscOptionsGetInt(NULL,NULL,"-svm_io_darray_init_size",&array_init_capacity,NULL) );
+  if (array_init_capacity <= 0) FLLOP_SETERRQ(comm, PETSC_ERR_ARG_OUTOFRANGE, "Initial size of dynamic array must be greater than zero");
+
+  TRY( PetscOptionsGetReal(NULL,NULL,"-svm_io_darray_grow_factor",&array_grow_factor,NULL) );
+  if (array_grow_factor <= 1.) FLLOP_SETERRQ(comm, PETSC_ERR_ARG_OUTOFRANGE, "Grow factor of dynamic array must be greater than one");
+
+  PermonDynamicArrayInit(i_in,array_init_capacity,array_grow_factor);
+  PermonDynamicArrayPushBack(i_in,0);
+
+  if (buff) {
+    PermonDynamicArrayInit(y_in,array_init_capacity,array_grow_factor);
+    PermonDynamicArrayInit(k_in,array_init_capacity,array_grow_factor);
+
+    PermonDynamicArrayInit(j_in,array_init_capacity,array_grow_factor);
+    PermonDynamicArrayInit(a_in,array_init_capacity,array_grow_factor);
+  } else {
+    y_in.data = NULL;
+    k_in.data = NULL;
+    j_in.data = NULL;
+    a_in.data = NULL;
+  }
+
+  TRY( MPI_Allreduce(MPI_IN_PLACE,&N_in,1,MPIU_INT,MPI_MAX,comm) );
+
+  *i = i_in;
+  *j = j_in;
+  *a = a_in;
+  *k = k_in;
+  *y = y_in;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "PermonSVMPAsseblyMatVec"
+PetscErrorCode PermonSVMAsseblyMatVec(MPI_Comm comm,char *buff,Mat *Xt,Vec *labels) {
+  struct ArrInt  i,j,k;
+  struct ArrReal a,y;
+
+  PetscInt N;
+
+  PetscFunctionBegin;
+  TRY( PermonSVMParseBuffer(comm,buff,&i,&j,&a,&k,&y,&N) );
+
+  if (y.data) PermonDynamicArrayClear(y);
+  if (k.data) PermonDynamicArrayClear(k);
+  PermonDynamicArrayClear(i);
+  if (j.data) PermonDynamicArrayClear(j);
+  if (a.data) PermonDynamicArrayClear(a);
+
   *Xt = NULL;
   *labels = NULL;
   PetscFunctionReturn(0);
