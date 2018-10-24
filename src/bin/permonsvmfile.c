@@ -10,7 +10,7 @@ static PetscMPIInt comm_rank,comm_size;
 PetscErrorCode PermonSVMRunBinaryClassification() {
   PermonSVM svm;
   PetscReal C;
-  PetscInt  N_all, N_eq;
+  PetscInt  N_all, N_eq,M,N;
   Mat       Xt_training,Xt_test;
   Vec       y_training,y_test;
   char      training_file[PETSC_MAX_PATH_LEN] = "dummy.txt";
@@ -25,18 +25,20 @@ PetscErrorCode PermonSVMRunBinaryClassification() {
   TRY( PermonSVMSetFromOptions(svm) );
 
   TRY( PermonSVMLoadData(comm,training_file,&Xt_training,&y_training) );
+  TRY( MatGetSize(Xt_training,&M,&N));
+  TRY( PetscPrintf(comm,"### PermonSVM:\tloaded %8d training samples with %8d attributes from file %s\n",M,N,training_file) );
 
-  if (Xt_training && y_training) {
-    TRY( PermonSVMSetTrainingSamples(svm,Xt_training,y_training) );
-    TRY( PermonSVMTrain(svm) );
-    TRY( PermonSVMTest(svm,Xt_training,y_training,&N_all,&N_eq) );
-    TRY( PermonSVMGetC(svm,&C) );
-    TRY( PetscPrintf(comm,"\n### PermonSVM: %8d of %8d training samples classified correctly (%.2f%%) with C = %1.1e\n",
-                     N_eq,N_all,((PetscReal)N_eq)/((PetscReal)N_all)*100.0,C) );
-  }
+  TRY( PermonSVMSetTrainingSamples(svm,Xt_training,y_training) );
+  TRY( PermonSVMTrain(svm) );
+  TRY( PermonSVMTest(svm,Xt_training,y_training,&N_all,&N_eq) );
+  TRY( PermonSVMGetC(svm,&C) );
+  TRY( PetscPrintf(comm,"\n### PermonSVM: %8d of %8d training samples classified correctly (%.2f%%) with C = %1.1e\n",
+                   N_eq,N_all,((PetscReal)N_eq)/((PetscReal)N_all)*100.0,C) );
 
   if (test_file_set) {
     TRY( PermonSVMLoadData(comm,test_file,&Xt_test,&y_test) );
+    TRY( MatGetSize(Xt_test,&M,&N) );
+    TRY( PetscPrintf(comm,"### PermonSVM:\tloaded %8d test samples with %8d attributes from file %s\n",M,N,test_file) );
 
     TRY( PermonSVMTest(svm,Xt_test,y_test,&N_all,&N_eq) );
     TRY( PetscPrintf(comm,"\n### PermonSVM: %8d of %8d test samples classified correctly (%.2f%%)\n",N_eq,N_all,((PetscReal)N_eq)/((PetscReal)N_all)*100.0) );
@@ -45,8 +47,8 @@ PetscErrorCode PermonSVMRunBinaryClassification() {
     TRY( VecDestroy(&y_test) );
   }
 
-  if (Xt_training) TRY( MatDestroy(&Xt_training) );
-  if (y_training) TRY( VecDestroy(&y_training) );
+  TRY( MatDestroy(&Xt_training) );
+  TRY( VecDestroy(&y_training) );
   TRY( PermonSVMDestroy(&svm) );
   PetscFunctionReturnI(0);
 }
