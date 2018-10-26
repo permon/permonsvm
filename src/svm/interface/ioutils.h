@@ -34,6 +34,10 @@
   a.capacity = a.grow_factor * a.capacity; \
   TRY( PetscRealloc(a.capacity * sizeof(*(a.data)),&a.data) ); \
 
+#define PermonDynamicArrayAddValue(a,v) \
+  PetscInt i; \
+  for (i = 0; i < a.size; ++i) a.data[i] += v;
+
 #define CheckCastToInt(x) (             \
   {                                     \
     int ret = 0;                        \
