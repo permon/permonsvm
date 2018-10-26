@@ -17,8 +17,8 @@ permonsvm-all: chk_permon_dir permon-all
 
 permonsvmfile:  ${PERMON_SVM_DIR}/${PETSC_ARCH}/bin/permonsvmfile
 
-src/bin/permonsvmfile.o: src/bin/permonsvmfile.cxx
-	${PETSC_CXXCOMPILE_SINGLE} -std=c++11 `pwd`/$<
+src/bin/permonsvmfile.o: src/bin/permonsvmfile.c
+	${PETSC_COMPILE_SINGLE} `pwd`/$<
 
 ${PERMON_SVM_DIR}/${PETSC_ARCH}/bin/permonsvmfile: src/bin/permonsvmfile.o
 	@${MKDIR} $(dir $@)
