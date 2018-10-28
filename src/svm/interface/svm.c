@@ -15,10 +15,10 @@ static PetscErrorCode PermonSVMQPSConvergedTrainRate(QPS qps,QP qp,PetscInt it,P
 PermonSVMCreate - create instance of support vector machine classifier
 
 Parameters:
-+ comm - MPI comm 
-- svm_out - pointer to created SVM 
++ comm - MPI comm
+- svm_out - pointer to created SVM
 @*/
-PetscErrorCode PermonSVMCreate(MPI_Comm comm, PermonSVM *svm_out) 
+PetscErrorCode PermonSVMCreate(MPI_Comm comm, PermonSVM *svm_out)
 {
   PermonSVM svm;
 
@@ -67,7 +67,7 @@ PetscErrorCode PermonSVMCreate(MPI_Comm comm, PermonSVM *svm_out)
    Input Parameter:
 .  svm - the SVM
 @*/
-PetscErrorCode PermonSVMReset(PermonSVM svm) 
+PetscErrorCode PermonSVMReset(PermonSVM svm)
 {
   PetscFunctionBegin;
   TRY( QPSReset(svm->qps) );
@@ -90,7 +90,7 @@ PetscErrorCode PermonSVMReset(PermonSVM svm)
    Input Parameter:
 .  svm - SVM context
 @*/
-PetscErrorCode PermonSVMDestroy(PermonSVM *svm) 
+PetscErrorCode PermonSVMDestroy(PermonSVM *svm)
 {
   PetscFunctionBegin;
   if (!*svm) PetscFunctionReturn(0);
@@ -116,7 +116,7 @@ PetscErrorCode PermonSVMDestroy(PermonSVM *svm)
 +  svm - the SVM
 -  v - visualization context
 @*/
-PetscErrorCode PermonSVMView(PermonSVM svm, PetscViewer v) 
+PetscErrorCode PermonSVMView(PermonSVM svm, PetscViewer v)
 {
   PetscFunctionBegin;
   PetscFunctionReturn(0);
@@ -131,7 +131,7 @@ PetscErrorCode PermonSVMView(PermonSVM svm, PetscViewer v)
 +  svm - the SVM
 -  C - C parameter
 @*/
-PetscErrorCode PermonSVMSetC(PermonSVM svm, PetscReal C) 
+PetscErrorCode PermonSVMSetC(PermonSVM svm, PetscReal C)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
@@ -159,11 +159,11 @@ PetscErrorCode PermonSVMSetC(PermonSVM svm, PetscReal C)
 
    Input Parameter:
 .  svm - the SVM
- 
-   Output Parameter: 
+
+   Output Parameter:
 .  C - C parameter
 @*/
-PetscErrorCode PermonSVMGetC(PermonSVM svm, PetscReal *C) 
+PetscErrorCode PermonSVMGetC(PermonSVM svm, PetscReal *C)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
@@ -179,9 +179,9 @@ PetscErrorCode PermonSVMGetC(PermonSVM svm, PetscReal *C)
 
    Input Parameter:
 +  svm - the SVM
--  LogCMin - minimal C parameter value 
+-  LogCMin - minimal C parameter value
 @*/
-PetscErrorCode PermonSVMSetLogCMin(PermonSVM svm, PetscReal LogCMin) 
+PetscErrorCode PermonSVMSetLogCMin(PermonSVM svm, PetscReal LogCMin)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
@@ -198,11 +198,11 @@ PetscErrorCode PermonSVMSetLogCMin(PermonSVM svm, PetscReal LogCMin)
 
    Input Parameter:
 .  svm - the SVM
- 
-   Output Parameter: 
-.  LogCMin - minimal C parameter value 
+
+   Output Parameter:
+.  LogCMin - minimal C parameter value
 @*/
-PetscErrorCode PermonSVMGetLogCMin(PermonSVM svm, PetscReal *LogCMin) 
+PetscErrorCode PermonSVMGetLogCMin(PermonSVM svm, PetscReal *LogCMin)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
@@ -220,7 +220,7 @@ PetscErrorCode PermonSVMGetLogCMin(PermonSVM svm, PetscReal *LogCMin)
 +  svm - the SVM
 -  LogCBase - step C value
 @*/
-PetscErrorCode PermonSVMSetLogCBase(PermonSVM svm, PetscReal LogCBase) 
+PetscErrorCode PermonSVMSetLogCBase(PermonSVM svm, PetscReal LogCBase)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
@@ -239,11 +239,11 @@ PetscErrorCode PermonSVMSetLogCBase(PermonSVM svm, PetscReal LogCBase)
 
    Input Parameter:
 .  svm - the SVM
- 
-   Output Parameter: 
-.  LogCBase - step C value 
+
+   Output Parameter:
+.  LogCBase - step C value
 @*/
-PetscErrorCode PermonSVMGetLogCBase(PermonSVM svm, PetscReal *LogCBase) 
+PetscErrorCode PermonSVMGetLogCBase(PermonSVM svm, PetscReal *LogCBase)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
@@ -261,7 +261,7 @@ PetscErrorCode PermonSVMGetLogCBase(PermonSVM svm, PetscReal *LogCBase)
 +  svm - the SVM
 -  LogCMax - max C parameter value
 @*/
-PetscErrorCode PermonSVMSetLogCMax(PermonSVM svm, PetscReal LogCMax) 
+PetscErrorCode PermonSVMSetLogCMax(PermonSVM svm, PetscReal LogCMax)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
@@ -278,11 +278,11 @@ PetscErrorCode PermonSVMSetLogCMax(PermonSVM svm, PetscReal LogCMax)
 
    Input Parameter:
 .  svm - the SVM
- 
-   Output Parameter: 
-.  LogCMax - maximal C parameter value 
+
+   Output Parameter:
+.  LogCMax - maximal C parameter value
 @*/
-PetscErrorCode PermonSVMGetLogCMax(PermonSVM svm, PetscReal *LogCMax) 
+PetscErrorCode PermonSVMGetLogCMax(PermonSVM svm, PetscReal *LogCMax)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
@@ -300,7 +300,7 @@ PetscErrorCode PermonSVMGetLogCMax(PermonSVM svm, PetscReal *LogCMax)
 +  svm - the SVM
 -  C - C parameter
 @*/
-PetscErrorCode PermonSVMSetNfolds(PermonSVM svm, PetscInt nfolds) 
+PetscErrorCode PermonSVMSetNfolds(PermonSVM svm, PetscInt nfolds)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
@@ -319,11 +319,11 @@ PetscErrorCode PermonSVMSetNfolds(PermonSVM svm, PetscInt nfolds)
 
    Input Parameter:
 .  svm - the SVM
- 
-   Output Parameter: 
+
+   Output Parameter:
 .  nfolds - number of folds
 @*/
-PetscErrorCode PermonSVMGetNfolds(PermonSVM svm, PetscInt *nfolds) 
+PetscErrorCode PermonSVMGetNfolds(PermonSVM svm, PetscInt *nfolds)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
@@ -340,9 +340,9 @@ PetscErrorCode PermonSVMGetNfolds(PermonSVM svm, PetscInt *nfolds)
    Input Parameter:
 +  svm - the SVM
 .  Xt - samples data
--  y - 
+-  y -
 @*/
-PetscErrorCode PermonSVMSetTrainingSamples(PermonSVM svm, Mat Xt, Vec y) 
+PetscErrorCode PermonSVMSetTrainingSamples(PermonSVM svm, Mat Xt, Vec y)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
@@ -371,11 +371,11 @@ PetscErrorCode PermonSVMSetTrainingSamples(PermonSVM svm, Mat Xt, Vec y)
    Input Parameter:
 .  svm - the SVM
 
-   Output Parameter:    
+   Output Parameter:
 +  Xt - samples data
--  y - 
+-  y -
 @*/
-PetscErrorCode PermonSVMGetTrainingSamples(PermonSVM svm, Mat *Xt, Vec *y) 
+PetscErrorCode PermonSVMGetTrainingSamples(PermonSVM svm, Mat *Xt, Vec *y)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
@@ -451,10 +451,10 @@ PetscErrorCode PermonSVMGetLossType(PermonSVM svm, PermonSVMLossType *type)
    Input Parameter:
 .  svm - the SVM
 
-   Output Parameter:    
-.  qps -  
+   Output Parameter:
+.  qps -
 @*/
-PetscErrorCode PermonSVMSetQPS(PermonSVM svm, QPS qps) 
+PetscErrorCode PermonSVMSetQPS(PermonSVM svm, QPS qps)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
@@ -475,11 +475,11 @@ PetscErrorCode PermonSVMSetQPS(PermonSVM svm, QPS qps)
    Input Parameter:
 .  svm - the SVM
 
-   Output Parameter:    
-.  qps - 
+   Output Parameter:
+.  qps -
 @*/
-PetscErrorCode PermonSVMGetQPS(PermonSVM svm, QPS *qps) 
-{  
+PetscErrorCode PermonSVMGetQPS(PermonSVM svm, QPS *qps)
+{
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscValidPointer(qps,2);
@@ -510,7 +510,7 @@ PetscErrorCode PermonSVMGetQPS(PermonSVM svm, QPS *qps)
 #undef __FUNCT__
 #define __FUNCT__ "PermonSVMSetUp_Remapy_Private"
 /* map y to -1,1 values if needed */
-static PetscErrorCode PermonSVMSetUp_Remapy_Private(PermonSVM svm) 
+static PetscErrorCode PermonSVMSetUp_Remapy_Private(PermonSVM svm)
 {
   Vec y;
   PetscScalar min,max;
@@ -552,12 +552,12 @@ static PetscErrorCode PermonSVMSetUp_Remapy_Private(PermonSVM svm)
 #undef __FUNCT__
 #define __FUNCT__ "PermonSVMSetUp"
 /*@
-   PermonSVMSetUp - 
+   PermonSVMSetUp -
 
    Input Parameter:
 .  svm - the SVM
 @*/
-PetscErrorCode PermonSVMSetUp(PermonSVM svm) 
+PetscErrorCode PermonSVMSetUp(PermonSVM svm)
 {
   QPS qps;
   QP qp;
@@ -649,7 +649,7 @@ PetscErrorCode PermonSVMSetUp(PermonSVM svm)
     QPSetInitialVector(qp, x_init);
     VecDestroy(&x_init);
   }
-  
+
   /* permorm QP transforms */
   TRY( QPTFromOptions(qp) );                      /* transform QP problem e.g. scaling */
 
@@ -684,15 +684,15 @@ PetscErrorCode PermonSVMSetUp(PermonSVM svm)
 #undef __FUNCT__
 #define __FUNCT__ "PermonSVMSetAutoPostTrain"
 /*@
-   PermonSVMTrain - 
+   PermonSVMTrain -
 
    Input Parameter:
 .  svm - the SVM
 
-   Output Parameter:    
-.  qps - 
+   Output Parameter:
+.  qps -
 @*/
-PetscErrorCode PermonSVMSetAutoPostTrain(PermonSVM svm, PetscBool flg) 
+PetscErrorCode PermonSVMSetAutoPostTrain(PermonSVM svm, PetscBool flg)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
@@ -745,15 +745,15 @@ PetscErrorCode PermonSVMGetOptionsPrefix(PermonSVM svm,const char *prefix[])
 #undef __FUNCT__
 #define __FUNCT__ "PermonSVMTrain"
 /*@
-   PermonSVMTrain - 
+   PermonSVMTrain -
 
    Input Parameter:
 .  svm - the SVM
 
-   Output Parameter:    
-.  qps - 
+   Output Parameter:
+.  qps -
 @*/
-PetscErrorCode PermonSVMTrain(PermonSVM svm) 
+PetscErrorCode PermonSVMTrain(PermonSVM svm)
 {
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
@@ -768,25 +768,25 @@ PetscErrorCode PermonSVMTrain(PermonSVM svm)
 #undef __FUNCT__
 #define __FUNCT__ "PermonSVMPostTrain"
 /*@
-   PermonSVMPostTrain - 
+   PermonSVMPostTrain -
 
    Input Parameter:
 .  svm - the SVM
 
-   Output Parameter:    
-.  qps - 
+   Output Parameter:
+.  qps -
 @*/
-PetscErrorCode PermonSVMPostTrain(PermonSVM svm) 
+PetscErrorCode PermonSVMPostTrain(PermonSVM svm)
 {
   QPS qps;
   QP qp;
   IS is_sv;
-  Vec o, y_sv, Xtw, Xtw_sv, t;  
+  Vec o, y_sv, Xtw, Xtw_sv, t;
   PetscInt len_sv;
   Mat Xt;
   Vec Yz, y, z, w;
   PetscScalar b;
-      
+
   PetscFunctionBeginI;
   TRY( PermonSVMGetQPS(svm, &qps) );
   TRY( QPSPostSolve(qps) );
@@ -807,7 +807,7 @@ PetscErrorCode PermonSVMPostTrain(PermonSVM svm)
 
     TRY( VecDestroy(&Yz) );
   }
-  
+
   /* reconstruct b from dual solution z */
   {
     TRY( VecDuplicate(z, &o) );
@@ -825,7 +825,7 @@ PetscErrorCode PermonSVMPostTrain(PermonSVM svm)
     TRY( VecRestoreSubVector(Xtw, is_sv, &Xtw_sv) );
     TRY( VecSum(t, &b) );                         /* b = sum(t) */
     b /= len_sv;                                  /* b = b / length(is_sv) */
-    
+
     svm->b = b;
 
     TRY( ISDestroy(&is_sv) );
@@ -838,12 +838,12 @@ PetscErrorCode PermonSVMPostTrain(PermonSVM svm)
 #undef __FUNCT__
 #define __FUNCT__ "PermonSVMSetFromOptions"
 /*@
-   PermonSVMSetFromOptions - 
+   PermonSVMSetFromOptions -
 
    Input Parameter:
 .  svm - the SVM
 @*/
-PetscErrorCode PermonSVMSetFromOptions(PermonSVM svm) 
+PetscErrorCode PermonSVMSetFromOptions(PermonSVM svm)
 {
   PetscReal C, LogCMin, LogCMax, LogCBase;
   PetscInt nfolds;
@@ -882,7 +882,7 @@ PetscErrorCode PermonSVMSetFromOptions(PermonSVM svm)
    Input Parameter:
 .  svm - the PermonSVM context
 
-   Output Parameters:    
+   Output Parameters:
 +  w - the normal vector to the separating hyperplane
 -  b - the offset of the hyperplane is given by b/||w||
 
@@ -902,32 +902,32 @@ PetscErrorCode PermonSVMGetSeparatingHyperplane(PermonSVM svm, Vec *w, PetscReal
 #undef __FUNCT__
 #define __FUNCT__ "PermonSVMClassify"
 /*@
-   PermonSVMClassify - 
+   PermonSVMClassify -
 
    Input Parameter:
 +  svm - the SVM
 -  Xt_test
 
-   Output Parameter:    
+   Output Parameter:
 .  y - labels {-1, 1}
 @*/
-PetscErrorCode PermonSVMClassify(PermonSVM svm, Mat Xt_test, Vec *y_out) 
+PetscErrorCode PermonSVMClassify(PermonSVM svm, Mat Xt_test, Vec *y_out)
 {
   PetscInt i, m;
   Vec Xtw_test, y, w;
   PetscReal b;
-  
+
   const PetscScalar *Xtw_arr;
   PetscScalar *y_arr;
-  
+
   PetscFunctionBeginI;
   TRY( PermonSVMGetSeparatingHyperplane(svm, &w, &b) );
   TRY( MatCreateVecs(Xt_test,NULL,&Xtw_test) );
   TRY( MatMult(Xt_test,w,Xtw_test) );
-  
+
   TRY( VecDuplicate(Xtw_test, &y) );
   TRY( VecGetLocalSize(Xtw_test, &m) );
-  
+
   TRY( VecGetArrayRead(Xtw_test, &Xtw_arr) );
   TRY( VecGetArray(y, &y_arr) );
   for (i=0; i<m; i++) {
@@ -939,7 +939,7 @@ PetscErrorCode PermonSVMClassify(PermonSVM svm, Mat Xt_test, Vec *y_out)
   }
   TRY( VecRestoreArrayRead(Xtw_test, &Xtw_arr) );
   TRY( VecRestoreArray(y, &y_arr) );
-  
+
   *y_out = y;
   TRY( VecDestroy(&Xtw_test) );
   PetscFunctionReturnI(0);
@@ -948,21 +948,21 @@ PetscErrorCode PermonSVMClassify(PermonSVM svm, Mat Xt_test, Vec *y_out)
 #undef __FUNCT__
 #define __FUNCT__ "PermonSVMTest"
 /*@
-   PermonSVMTest - 
+   PermonSVMTest -
 
    Input Parameter:
 +  svm - the SVM
 -  Xt_test
 
-   Output Parameter:    
+   Output Parameter:
 .
 @*/
 PetscErrorCode PermonSVMTest(PermonSVM svm, Mat Xt_test, Vec y_known, PetscInt *N_all, PetscInt *N_eq)
 {
   Vec y;
   IS is_eq;
-  
-  PetscFunctionBeginI; 
+
+  PetscFunctionBeginI;
   TRY( PermonSVMClassify(svm, Xt_test, &y) );
   TRY( VecWhichEqual(y,y_known,&is_eq) );
   TRY( VecGetSize(y,N_all) );
@@ -984,7 +984,7 @@ static PetscErrorCode PermonSVMQPSConvergedTrainRateCreate(PermonSVM svm,void **
 {
   ConvergedTrainRateCtx *cctx;
 
-  PetscFunctionBegin; 
+  PetscFunctionBegin;
   PetscNew(&cctx);
   *ctx = cctx;
   cctx->svm = svm;
@@ -998,7 +998,7 @@ static PetscErrorCode PermonSVMQPSConvergedTrainRateDestroy(void *ctx)
 {
   ConvergedTrainRateCtx *cctx = (ConvergedTrainRateCtx*) ctx;
 
-  PetscFunctionBegin; 
+  PetscFunctionBegin;
   TRY( QPSConvergedDefaultDestroy(cctx->defaultCtx) );
   TRY( PetscFree(cctx) );
   PetscFunctionReturn(0);
@@ -1015,14 +1015,14 @@ static PetscErrorCode PermonSVMQPSConvergedTrainRate(QPS qps,QP qp,PetscInt it,P
   PetscInt N_all, N_eq;
   PetscReal rate,func,margin;
   IS is_sv;
-  Vec o, y_sv, Xtw, Xtw_sv, t;  
+  Vec o, y_sv, Xtw, Xtw_sv, t;
   PetscInt len_sv;
   Vec Yz, z, w;
   PetscScalar b;
   Vec grad,rhs;
 
 
-  PetscFunctionBegin; 
+  PetscFunctionBegin;
   TRY( PermonSVMGetTrainingSamples(svm, &Xt, &y_orig) );
   y = svm->y_inner;
 
@@ -1035,12 +1035,12 @@ static PetscErrorCode PermonSVMQPSConvergedTrainRate(QPS qps,QP qp,PetscInt it,P
     TRY( MatMultTranspose(Xt, Yz, w) );           /* Xt = X^t, w = Xt' * Yz = (X^t)^t * Yz = X * Yz */
 
     svm->w = w;
-    
+
     PetscScalar r;
     VecDot(z, y, &r);
     PetscPrintf(MPI_COMM_WORLD, "Be * y = %f\n", r);
   }
-  
+
   /* reconstruct b from dual solution z */
   {
     TRY( VecDuplicate(z, &o) );
@@ -1058,10 +1058,10 @@ static PetscErrorCode PermonSVMQPSConvergedTrainRate(QPS qps,QP qp,PetscInt it,P
     TRY( VecRestoreSubVector(Xtw, is_sv, &Xtw_sv) );
     TRY( VecSum(t, &b) );                         /* b = sum(t) */
     b /= len_sv;                                  /* b = b / length(is_sv) */
-    
+
     svm->b = b;
   }
-  
+
   TRY( PermonSVMTest(svm, Xt, y_orig, &N_all, &N_eq) );
   rate = ((PetscReal)N_eq)/((PetscReal)N_all);
 
