@@ -831,6 +831,7 @@ PetscErrorCode PermonSVMPostTrain(PermonSVM svm)
     TRY( ISDestroy(&is_sv) );
     TRY( VecDestroy(&o) );
     TRY( VecDestroy(&t) );
+    TRY( VecDestroy(&Xtw) );
   }
   PetscFunctionReturnI(0);
 }
