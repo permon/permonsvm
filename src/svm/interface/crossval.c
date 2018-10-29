@@ -2,12 +2,12 @@
 #include <permon/private/svmimpl.h>
 
 #undef __FUNCT__
-#define __FUNCT__ "PermonSVMSetWarmStart"
+#define __FUNCT__ "SVMSetWarmStart"
 /*@
-   PermonSVMSetWarmStart - Set flag specifying whether warm start is used in cross-validation.
+   SVMSetWarmStart - Set flag specifying whether warm start is used in cross-validation.
    It is set to PETSC_TRUE by default.
 
-   Logically Collective on PermonSVM
+   Logically Collective on SVM
 
    Input Parameters:
 +  svm - the SVM
@@ -18,9 +18,9 @@
 
    Level: advanced
 
-.seealso PermonSVMType, PermonSVMGetLossType()
+.seealso PermonSVMType, SVMGetLossType()
 @*/
-PetscErrorCode PermonSVMSetWarmStart(PermonSVM svm, PetscBool flg)
+PetscErrorCode SVMSetWarmStart(SVM svm, PetscBool flg)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
@@ -30,19 +30,19 @@ PetscErrorCode PermonSVMSetWarmStart(PermonSVM svm, PetscBool flg)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "PermonSVMCrossValidate"
+#define __FUNCT__ "SVMCrossValidate"
 /*@
-   PermonSVMCrossValidate -
+   SVMCrossValidate -
 
    Input Parameter:
 .  svm - the SVM
 
 @*/
-PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
+PetscErrorCode SVMCrossValidate(SVM svm)
 {
   MPI_Comm comm;
   PetscMPIInt rank;
-  PermonSVM cross_svm;
+  SVM cross_svm;
   IS is_test, is_train;
   PetscInt n_examples, n_attributes;  /* PETSC_DEFAULT or PETSC_DECIDE means all */
   PetscInt i, j, i_max;
@@ -61,14 +61,14 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   TRY( PetscObjectGetComm((PetscObject)svm,&comm) );
   TRY( MPI_Comm_rank(comm, &rank) );
-  TRY( PermonSVMGetTrainingSamples(svm,&Xt,&y) );
+  TRY( SVMGetTrainingSamples(svm,&Xt,&y) );
   TRY( MatGetSize(Xt,&n_examples,&n_attributes) );
   TRY( MatGetOwnershipRange(Xt,&lo,&hi) );
-  TRY( PermonSVMGetLogCMin(svm, &LogCMin) );
-  TRY( PermonSVMGetLogCBase(svm, &LogCBase) );
-  TRY( PermonSVMGetLogCMax(svm, &LogCMax) );
-  TRY( PermonSVMGetNfolds(svm, &nfolds) );
-  TRY( PermonSVMGetOptionsPrefix(svm, &prefix) );
+  TRY( SVMGetLogCMin(svm, &LogCMin) );
+  TRY( SVMGetLogCBase(svm, &LogCBase) );
+  TRY( SVMGetLogCMax(svm, &LogCMax) );
+  TRY( SVMGetNfolds(svm, &nfolds) );
+  TRY( SVMGetOptionsPrefix(svm, &prefix) );
 
   if (nfolds > n_examples) FLLOP_SETERRQ2(comm,PETSC_ERR_ARG_OUTOFRANGE,"number of folds must not be greater than number of examples but %d > %d",nfolds,n_examples);
 
@@ -104,14 +104,14 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
     TRY( MatCreateSubMatrix(Xt,is_train,NULL,MAT_INITIAL_MATRIX,&Xt_train) );
     TRY( VecGetSubVector(y,is_train,&y_train) );
 
-    TRY( PermonSVMCreate(PetscObjectComm((PetscObject)svm),&cross_svm) );
-    TRY( PermonSVMSetOptionsPrefix(cross_svm,prefix) );
-    TRY( PermonSVMAppendOptionsPrefix(cross_svm,"cross_") );
-    TRY( PermonSVMSetTrainingSamples(cross_svm,Xt_train,y_train) );
-    TRY( PermonSVMSetLossType(cross_svm,svm->loss_type) );
-    TRY( PermonSVMSetFromOptions(cross_svm) );
+    TRY( SVMCreate(PetscObjectComm((PetscObject)svm),&cross_svm) );
+    TRY( SVMSetOptionsPrefix(cross_svm,prefix) );
+    TRY( SVMAppendOptionsPrefix(cross_svm,"cross_") );
+    TRY( SVMSetTrainingSamples(cross_svm,Xt_train,y_train) );
+    TRY( SVMSetLossType(cross_svm,svm->loss_type) );
+    TRY( SVMSetFromOptions(cross_svm) );
     for (j = 0; j < c_count; ++j) {
-      TRY( PermonSVMSetC(cross_svm,array_C[j]) );
+      TRY( SVMSetC(cross_svm,array_C[j]) );
 
       if (!svm->warm_start) {
         QP qp;
@@ -123,8 +123,8 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
         }
       }
 
-      TRY( PermonSVMTrain(cross_svm) );
-      TRY( PermonSVMTest(cross_svm,Xt_test,y_test,&N_all,&N_eq) );
+      TRY( SVMTrain(cross_svm) );
+      TRY( SVMTest(cross_svm,Xt_test,y_test,&N_all,&N_eq) );
       rate = ((PetscReal)N_eq) / ((PetscReal)N_all);
       array_rate[j] += rate;
 
@@ -138,7 +138,7 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
       //}
       TRY( PetscPrintf(comm, "### PermonSVM:     %d of %d examples classified correctly (rate %.2f), accumulated rate for C=%.2e is %.2f, %d QPS iterations\n", N_eq, N_all, rate, array_C[j], array_rate[j], its) );
     }
-    TRY( PermonSVMDestroy(&cross_svm) );
+    TRY( SVMDestroy(&cross_svm) );
     TRY( MatDestroy(&Xt_test) );
     TRY( VecRestoreSubVector(y,is_test,&y_test) );
     TRY( MatDestroy(&Xt_train) );
@@ -155,7 +155,7 @@ PetscErrorCode PermonSVMCrossValidate(PermonSVM svm)
   rate_max = array_rate[i_max] / nfolds;
   C = array_C[i_max];
   TRY( PetscPrintf(comm,"### PermonSVM: selecting C = %.2e with accumulated rate %f and average rate %f based on cross-validation with %d folds\n",C,array_rate[i_max],rate_max,nfolds) );
-  TRY( PermonSVMSetC(svm, C) );
+  TRY( SVMSetC(svm, C) );
 
   TRY( ISDestroy(&is_test) );
   TRY( PetscFree(array_rate) );

@@ -6,10 +6,10 @@
 #include <unistd.h>
 #endif
 
-#define PERMON_DARRAY_INIT_CAPACITY 4
-#define PERMON_DARRAY_GROW_FACTOR 2.0
+#define DARRAY_INIT_CAPACITY 4
+#define DARRAY_GROW_FACTOR 2.0
 
-#define PermonDynamicArray_(type) \
+#define DynamicArray_(type) \
   {                               \
     type      *data;              \
     PetscInt  capacity;           \
@@ -17,36 +17,36 @@
     PetscReal grow_factor;        \
   }
 
-#define PermonDynamicArrayInit(a,_capacity_,_grow_factor_)      \
+#define DynamicArrayInit(a,_capacity_,_grow_factor_)      \
   TRY( PetscMalloc(_capacity_ * sizeof(*(a.data)),&(a.data)) ); \
   a.size = 0;                                                   \
   a.capacity = _capacity_;                                      \
   a.grow_factor = _grow_factor_;
 
-#define PermonDynamicArrayClear(a) \
-  TRY( PetscFree(a.data) );        \
-  a.capacity = 0;                  \
+#define DynamicArrayClear(a) \
+  TRY( PetscFree(a.data) ); \
+  a.capacity = 0;           \
   a.size = 0;
 
-#define PermonDynamicArrayPushBack(a,v)                         \
-  if (a.capacity == a.size) PermonDynamicArrayResize(a);        \
-  a.data[a.size] = v;                                       \
+#define DynamicArrayPushBack(a,v) \
+  if (a.capacity == a.size) DynamicArrayResize(a); \
+  a.data[a.size] = v;                              \
   ++a.size;
 
-#define PermonDynamicArrayResize(a) \
+#define DynamicArrayResize(a) \
   a.capacity = a.grow_factor * a.capacity; \
   TRY( PetscRealloc(a.capacity * sizeof(*(a.data)),&a.data) ); \
 
-#define PermonDynamicArrayAddValue(a,v) \
+#define DynamicArrayAddValue(a,v) \
   PetscInt i; \
   for (i = 0; i < a.size; ++i) a.data[i] += v;
 
-struct ArrInt  PermonDynamicArray_(PetscInt);
-struct ArrReal PermonDynamicArray_(PetscReal);
+struct ArrInt  DynamicArray_(PetscInt);
+struct ArrReal DynamicArray_(PetscReal);
 
 #undef __FUNCT__
-#define __FUNCT__ "PermonSVMLoadBuffer"
-PetscErrorCode PermonSVMReadBuffer(MPI_Comm comm,const char *filename,char **chunk_buff) {
+#define __FUNCT__ "SVMLoadBuffer"
+PetscErrorCode SVMReadBuffer(MPI_Comm comm,const char *filename,char **chunk_buff) {
   PetscMPIInt comm_size,comm_rank;
 
   MPI_File    fh;
@@ -159,8 +159,8 @@ PetscErrorCode PermonSVMReadBuffer(MPI_Comm comm,const char *filename,char **chu
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "PermonSVMParseBuffer"
-PetscErrorCode PermonSVMParseBuffer(MPI_Comm comm,char *buff,struct ArrInt *i,struct ArrInt *j,struct ArrReal *a,struct ArrInt *k,struct ArrReal *y,PetscInt *N) {
+#define __FUNCT__ "SVMParseBuffer"
+PetscErrorCode SVMParseBuffer(MPI_Comm comm,char *buff,struct ArrInt *i,struct ArrInt *j,struct ArrReal *a,struct ArrInt *k,struct ArrReal *y,PetscInt *N) {
   struct ArrInt  i_in,j_in,k_in;
   struct ArrReal a_in,y_in;
 
@@ -178,8 +178,8 @@ PetscErrorCode PermonSVMParseBuffer(MPI_Comm comm,char *buff,struct ArrInt *i,st
   PetscReal  value,yi;
 
   PetscFunctionBegin;
-  array_init_capacity = PERMON_DARRAY_INIT_CAPACITY;
-  array_grow_factor = PERMON_DARRAY_GROW_FACTOR;
+  array_init_capacity = DARRAY_INIT_CAPACITY;
+  array_grow_factor = DARRAY_GROW_FACTOR;
 
   TRY( PetscOptionsGetInt(NULL,NULL,"-svm_io_darray_init_size",&array_init_capacity,NULL) );
   if (array_init_capacity <= 0) FLLOP_SETERRQ(comm, PETSC_ERR_ARG_OUTOFRANGE, "Initial size of dynamic array must be greater than zero");
@@ -187,15 +187,15 @@ PetscErrorCode PermonSVMParseBuffer(MPI_Comm comm,char *buff,struct ArrInt *i,st
   TRY( PetscOptionsGetReal(NULL,NULL,"-svm_io_darray_grow_factor",&array_grow_factor,NULL) );
   if (array_grow_factor <= 1.) FLLOP_SETERRQ(comm, PETSC_ERR_ARG_OUTOFRANGE, "Grow factor of dynamic array must be greater than one");
 
-  PermonDynamicArrayInit(i_in,array_init_capacity,array_grow_factor);
-  PermonDynamicArrayPushBack(i_in,0);
+  DynamicArrayInit(i_in,array_init_capacity,array_grow_factor);
+  DynamicArrayPushBack(i_in,0);
 
   if (buff) {
-    PermonDynamicArrayInit(y_in,array_init_capacity,array_grow_factor);
-    PermonDynamicArrayInit(k_in,array_init_capacity,array_grow_factor);
+    DynamicArrayInit(y_in,array_init_capacity,array_grow_factor);
+    DynamicArrayInit(k_in,array_init_capacity,array_grow_factor);
 
-    PermonDynamicArrayInit(j_in,array_init_capacity,array_grow_factor);
-    PermonDynamicArrayInit(a_in,array_init_capacity,array_grow_factor);
+    DynamicArrayInit(j_in,array_init_capacity,array_grow_factor);
+    DynamicArrayInit(a_in,array_init_capacity,array_grow_factor);
 
     N_in = 0;
 #if (_POSIX_VERSION >= 200112L)
@@ -205,8 +205,8 @@ PetscErrorCode PermonSVMParseBuffer(MPI_Comm comm,char *buff,struct ArrInt *i,st
       word = strtok_r(line," ",&ptr_word);
       yi = (PetscReal) atoi(word);
 
-      PermonDynamicArrayPushBack(k_in,y_in.size);
-      PermonDynamicArrayPushBack(y_in,yi);
+      DynamicArrayPushBack(k_in,y_in.size);
+      DynamicArrayPushBack(y_in,yi);
 
       while ((word = strtok_r(NULL," ",&ptr_word))) {
         key = strtok(word,":");
@@ -215,13 +215,13 @@ PetscErrorCode PermonSVMParseBuffer(MPI_Comm comm,char *buff,struct ArrInt *i,st
         if (col > N_in) N_in = col;
         col -= 1; /*Column indices start from 1 in SVMLight format*/
 
-        PermonDynamicArrayPushBack(j_in,col);
+        DynamicArrayPushBack(j_in,col);
 
         v = strtok(NULL,":");
         value = (PetscReal) atof(v);
-        PermonDynamicArrayPushBack(a_in,value);
+        DynamicArrayPushBack(a_in,value);
       }
-      PermonDynamicArrayPushBack(i_in,a_in.size);
+      DynamicArrayPushBack(i_in,a_in.size);
 
       line = strtok_r(NULL,"\n",&ptr_line);
     }
@@ -282,15 +282,15 @@ PetscErrorCode PermonSVMParseBuffer(MPI_Comm comm,char *buff,struct ArrInt *i,st
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "PermonSVMPAsseblyMatVec"
-PetscErrorCode PermonSVMAsseblyMatVec(MPI_Comm comm,char *buff,Mat *Xt,Vec *labels) {
+#define __FUNCT__ "SVMPAsseblyMatVec"
+PetscErrorCode SVMAsseblyMatVec(MPI_Comm comm,char *buff,Mat *Xt,Vec *labels) {
   struct ArrInt  i,j,k;
   struct ArrReal a,y;
 
   PetscInt offset,m,N;
 
   PetscFunctionBegin;
-  TRY( PermonSVMParseBuffer(comm,buff,&i,&j,&a,&k,&y,&N) );
+  TRY( SVMParseBuffer(comm,buff,&i,&j,&a,&k,&y,&N) );
 
   m = (buff) ? i.size - 1 : 0;
   /*local to global: label vector indices*/
@@ -298,7 +298,7 @@ PetscErrorCode PermonSVMAsseblyMatVec(MPI_Comm comm,char *buff,Mat *Xt,Vec *labe
   TRY( MPI_Scan(MPI_IN_PLACE,&offset,1,MPIU_INT,MPI_SUM,comm) );
   if (k.data) {
     offset -= k.size;
-    PermonDynamicArrayAddValue(k,offset);
+    DynamicArrayAddValue(k,offset);
   }
 
   TRY( MatCreateMPIAIJWithArrays(comm,m,PETSC_DETERMINE,PETSC_DETERMINE,N,i.data,j.data,a.data,Xt) );
@@ -310,26 +310,26 @@ PetscErrorCode PermonSVMAsseblyMatVec(MPI_Comm comm,char *buff,Mat *Xt,Vec *labe
   TRY( VecAssemblyBegin(*labels) );
   TRY( VecAssemblyEnd(*labels) );
   
-  if (y.data) PermonDynamicArrayClear(y);
-  if (k.data) PermonDynamicArrayClear(k);
-  PermonDynamicArrayClear(i);
-  if (j.data) PermonDynamicArrayClear(j);
-  if (a.data) PermonDynamicArrayClear(a);
+  if (y.data) DynamicArrayClear(y);
+  if (k.data) DynamicArrayClear(k);
+  DynamicArrayClear(i);
+  if (j.data) DynamicArrayClear(j);
+  if (a.data) DynamicArrayClear(a);
 
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "PermonSVMLoadData"
-PetscErrorCode PermonSVMLoadData(MPI_Comm comm,const char *filename,Mat *Xt,Vec *y) {
+#define __FUNCT__ "SVMLoadData"
+PetscErrorCode SVMLoadData(MPI_Comm comm,const char *filename,Mat *Xt,Vec *y) {
   char *chunk_buff = NULL;
 
   PetscFunctionBeginI;
   PetscValidPointer(Xt,3);
   PetscValidPointer(y,4);
 
-  TRY( PermonSVMReadBuffer(comm,filename,&chunk_buff) );
-  TRY( PermonSVMAsseblyMatVec(comm,chunk_buff,Xt,y) );
+  TRY( SVMReadBuffer(comm,filename,&chunk_buff) );
+  TRY( SVMAsseblyMatVec(comm,chunk_buff,Xt,y) );
 
   if (chunk_buff) TRY( PetscFree(chunk_buff) );
 

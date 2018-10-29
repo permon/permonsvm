@@ -4,7 +4,7 @@
 #include <permon/private/qpsimpl.h>
 #include <permonsvm.h>
 
-struct _p_PermonSVM {
+struct _p_SVM {
     PETSCHEADER(int);
     PetscBool autoPostSolve;
     PetscBool setupcalled;
@@ -12,7 +12,7 @@ struct _p_PermonSVM {
     
     PetscReal C, LogCMin, LogCMax, LogCBase;
     PetscInt nfolds;
-    PermonSVMLossType loss_type;
+    SVMLossType loss_type;
 
     PetscBool warm_start;
 
