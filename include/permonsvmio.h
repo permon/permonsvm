@@ -3,6 +3,6 @@
 
 #include <permonsvm.h>
 
-FLLOP_EXTERN PetscErrorCode PermonSVMLoadData(MPI_Comm,const char *,Mat *,Vec *);
+FLLOP_EXTERN PetscErrorCode SVMLoadData(MPI_Comm,const char *,Mat *,Vec *);
 
 #endif //__PERMONSVMIO_H
