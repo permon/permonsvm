@@ -76,6 +76,13 @@ PetscErrorCode PermonSVMReset(PermonSVM svm)
   TRY( VecDestroy(&svm->y_inner) );
   TRY( MatDestroy(&svm->D) );
   TRY( PetscMemzero(svm->y_map,2*sizeof(PetscScalar)) );
+  TRY( VecDestroy(&svm->w) );
+
+  svm->Xt      = NULL;
+  svm->y       = NULL;
+  svm->y_inner = NULL;
+  svm->D = NULL;
+  svm->w = NULL;
   PetscFunctionReturn(0);
 }
 
@@ -831,6 +838,7 @@ PetscErrorCode PermonSVMPostTrain(PermonSVM svm)
     TRY( ISDestroy(&is_sv) );
     TRY( VecDestroy(&o) );
     TRY( VecDestroy(&t) );
+    TRY( VecDestroy(&Xtw) );
   }
   PetscFunctionReturnI(0);
 }
