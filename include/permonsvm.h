@@ -44,6 +44,10 @@ M*/
 M*/
 
 FLLOP_EXTERN PetscErrorCode SVMInitializePackage();
+
+FLLOP_EXTERN PetscErrorCode SVMRegisterAll();
+FLLOP_EXTERN PetscErrorCode SVMRegister(const char [],PetscErrorCode (*function)(SVM));
+
 FLLOP_EXTERN PetscErrorCode SVMCreate(MPI_Comm comm, SVM *svm_out);
 FLLOP_EXTERN PetscErrorCode SVMReset(SVM svm);
 FLLOP_EXTERN PetscErrorCode SVMDestroy(SVM *svm);

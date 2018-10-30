@@ -26,6 +26,8 @@ struct _p_SVM {
     PetscScalar b;
     
     QPS qps;
+
+    void *data;
 };
 
 #endif 

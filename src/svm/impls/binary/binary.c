@@ -34,20 +34,14 @@ static PetscErrorCode SVMQPSConvergedTrainRate(QPS qps,QP qp,PetscInt it,PetscRe
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMCreate_Binary"
-PetscErrorCode SVMCreate_Binary(MPI_Comm comm, SVM *svm_out)
+PetscErrorCode SVMCreate_Binary(SVM svm)
 {
-  SVM svm;
+  SVM_Binary *svm_binary;
 
   PetscFunctionBegin;
-  PetscValidPointer(svm_out, 2);
+  TRY( PetscNewLog(svm,&svm_binary) );
+  svm->data = (void *) svm_binary;
 
-#if !defined(PETSC_USE_DYNAMIC_LIBRARIES)
-  TRY( SVMInitializePackage() );
-#endif
-  TRY( PetscHeaderCreate(svm, SVM_CLASSID, "SVM", "SVM Classifier", "SVM", comm, SVMDestroy, SVMView) );
-
-  svm->setupcalled = PETSC_FALSE;
-  svm->setfromoptionscalled = PETSC_FALSE;
   svm->autoPostSolve = PETSC_TRUE;
   svm->qps = NULL;
 
@@ -68,8 +62,6 @@ PetscErrorCode SVMCreate_Binary(MPI_Comm comm, SVM *svm_out)
   svm->b = PETSC_INFINITY;
 
   TRY( PetscMemzero(svm->y_map,2*sizeof(PetscScalar)) );
-
-  *svm_out = svm;
   PetscFunctionReturn(0);
 }
 
