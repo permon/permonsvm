@@ -33,15 +33,8 @@ static PetscErrorCode SVMQPSConvergedTrainRateDestroy(void *ctx);
 static PetscErrorCode SVMQPSConvergedTrainRate(QPS qps,QP qp,PetscInt it,PetscReal rnorm,KSPConvergedReason *reason,void *cctx);
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMCreate"
-/*@
-SVMCreate - create instance of support vector machine classifier
-
-Parameters:
-+ comm - MPI comm
-- svm_out - pointer to created SVM
-@*/
-PetscErrorCode SVMCreate(MPI_Comm comm, SVM *svm_out)
+#define __FUNCT__ "SVMCreate_Binary"
+PetscErrorCode SVMCreate_Binary(MPI_Comm comm, SVM *svm_out)
 {
   SVM svm;
 
@@ -81,16 +74,8 @@ PetscErrorCode SVMCreate(MPI_Comm comm, SVM *svm_out)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMReset"
-/*@
-   QPReset - Resets a QP context to the QPsetupcalled = 0 state, destroys child, PC, Vecs,  Mats, etc.
-
-   Collective on SVM
-
-   Input Parameter:
-.  svm - the SVM
-@*/
-PetscErrorCode SVMReset(SVM svm)
+#define __FUNCT__ "SVMReset_Binary"
+PetscErrorCode SVMReset_Binary(SVM svm)
 {
   PetscFunctionBegin;
   TRY( QPSReset(svm->qps) );
@@ -111,16 +96,8 @@ PetscErrorCode SVMReset(SVM svm)
 
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMDestroy"
-/*@
-   SVMDestroy - Destroys SVM context.
-
-   Collective on SVM
-
-   Input Parameter:
-.  svm - SVM context
-@*/
-PetscErrorCode SVMDestroy(SVM *svm)
+#define __FUNCT__ "SVMDestroy_Binary"
+PetscErrorCode SVMDestroy_Binary(SVM *svm)
 {
   PetscFunctionBegin;
   if (!*svm) PetscFunctionReturn(0);
@@ -138,15 +115,8 @@ PetscErrorCode SVMDestroy(SVM *svm)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMView"
-/*@
-   SVMView - View information about SVM.
-
-   Input Parameters:
-+  svm - the SVM
--  v - visualization context
-@*/
-PetscErrorCode SVMView(SVM svm, PetscViewer v)
+#define __FUNCT__ "SVMView_Binary"
+PetscErrorCode SVMView_Binary(SVM svm, PetscViewer v)
 {
   PetscFunctionBegin;
   PetscFunctionReturn(0);
@@ -773,17 +743,8 @@ PetscErrorCode SVMGetOptionsPrefix(SVM svm,const char *prefix[])
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMTrain"
-/*@
-   SVMTrain -
-
-   Input Parameter:
-.  svm - the SVM
-
-   Output Parameter:
-.  qps -
-@*/
-PetscErrorCode SVMTrain(SVM svm)
+#define __FUNCT__ "SVMTrain_Binary"
+PetscErrorCode SVMTrain_Binary(SVM svm)
 {
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
@@ -867,14 +828,8 @@ PetscErrorCode SVMPostTrain(SVM svm)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMSetFromOptions"
-/*@
-   SVMSetFromOptions -
-
-   Input Parameter:
-.  svm - the SVM
-@*/
-PetscErrorCode SVMSetFromOptions(SVM svm)
+#define __FUNCT__ "SVMSetFromOptions_Binary"
+PetscErrorCode SVMSetFromOptions_Binary(SVM svm)
 {
   PetscReal C, LogCMin, LogCMax, LogCBase;
   PetscInt nfolds;
@@ -977,18 +932,8 @@ PetscErrorCode SVMClassify(SVM svm, Mat Xt_test, Vec *y_out)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMTest"
-/*@
-   SVMTest -
-
-   Input Parameter:
-+  svm - the SVM
--  Xt_test
-
-   Output Parameter:
-.
-@*/
-PetscErrorCode SVMTest(SVM svm, Mat Xt_test, Vec y_known, PetscInt *N_all, PetscInt *N_eq)
+#define __FUNCT__ "SVMTest_Binary"
+PetscErrorCode SVMTest_Binary(SVM svm, Mat Xt_test, Vec y_known, PetscInt *N_all, PetscInt *N_eq)
 {
   Vec y;
   IS is_eq;

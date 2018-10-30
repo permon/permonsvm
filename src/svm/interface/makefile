@@ -2,7 +2,7 @@ ALL: lib
 
 CFLAGS   =
 FFLAGS   =
-SOURCEC  = dlregissvm.c
+SOURCEC  = dlregissvm.c svm.c
 SOURCEF  = 
 SOURCEH  = 
 OBJSC    = ${SOURCEC:.c=.o}
