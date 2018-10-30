@@ -5,6 +5,29 @@ PetscClassId SVM_CLASSID;
 
 const char *const SVMLossTypes[]={"L1","L2","SVMLossType","SVM_",0};
 
+typedef struct {
+    PetscBool autoPostSolve;
+    PetscBool setupcalled;
+    PetscBool setfromoptionscalled;
+
+    PetscReal C, LogCMin, LogCMax, LogCBase;
+    PetscInt nfolds;
+    SVMLossType loss_type;
+
+    PetscBool warm_start;
+
+    Mat Xt;
+    Vec y;
+    Vec y_inner;
+    PetscScalar y_map[2];
+    Mat D;
+
+    Vec w;
+    PetscScalar b;
+
+    QPS qps;
+} SVM_Binary;
+
 static PetscErrorCode SVMQPSConvergedTrainRateCreate(SVM svm,void **ctx);
 static PetscErrorCode SVMQPSConvergedTrainRateDestroy(void *ctx);
 static PetscErrorCode SVMQPSConvergedTrainRate(QPS qps,QP qp,PetscInt it,PetscReal rnorm,KSPConvergedReason *reason,void *cctx);
