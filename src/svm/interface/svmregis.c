@@ -3,12 +3,22 @@
 
 FLLOP_EXTERN PetscErrorCode SVMCreate_Binary(SVM);
 
+/*
+   Contains the list of registered Create routines of all SVM types
+*/
+PetscFunctionList SVMList = 0;
+PetscBool SVMRegisterAllCalled = PETSC_FALSE;
+
 #undef __FUNCT__
 #define __FUNCT__ "SVMRegisterAll"
 PetscErrorCode SVMRegisterAll()
 {
 
   PetscFunctionBegin;
+  if (SVMRegisterAllCalled) PetscFunctionReturn(0);
+  SVMRegisterAllCalled = PETSC_TRUE;
+
+  TRY( SVMRegister(SVM_BINARY,SVMCreate_Binary) );
   PetscFunctionReturn(0);
 }
 
@@ -18,5 +28,6 @@ PetscErrorCode SVMRegister(const char sname[],PetscErrorCode (*function)(SVM))
 {
 
   PetscFunctionBegin;
+  TRY( PetscFunctionListAdd(&SVMList,sname,function) );
   PetscFunctionReturn(0);
 }

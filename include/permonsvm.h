@@ -48,6 +48,8 @@ M*/
 
 FLLOP_EXTERN PetscErrorCode SVMInitializePackage();
 
+FLLOP_EXTERN PetscFunctionList SVMList;
+FLLOP_EXTERN PetscBool SVMRegisterAllCalled;
 FLLOP_EXTERN PetscErrorCode SVMRegisterAll();
 FLLOP_EXTERN PetscErrorCode SVMRegister(const char [],PetscErrorCode (*function)(SVM));
 
