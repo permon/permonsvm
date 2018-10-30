@@ -2,7 +2,7 @@
 ALL: lib
 
 SOURCEH  = ../../include/permon/private/svmimpl.h ../../include/permonsvm.h
-DIRS     = interface 
+DIRS     = interface impls 
 LOCDIR   = src/svm/
 MANSEC   = SVM
 
