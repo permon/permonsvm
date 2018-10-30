@@ -1,10 +1,15 @@
-
 ALL: lib
 
-SOURCEH  = ../../include/permon/private/svmimpl.h ../../include/permonsvm.h
-DIRS     = interface impls utils
-LOCDIR   = src/svm/
+CFLAGS   =
+FFLAGS   =
+SOURCEC  = io.c
+SOURCEF  =
+SOURCEH  =
+OBJSC    = ${SOURCEC:.c=.o}
+LIBBASE  = libpermon
+DIRS     =
 MANSEC   = SVM
+LOCDIR   = src/svm/utils/
 
 include ${PERMON_SVM_DIR}/lib/permonsvm/conf/permonsvm_variables
 include ${PERMON_SVM_DIR}/lib/permonsvm/conf/permonsvm_rules
