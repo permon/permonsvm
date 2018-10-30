@@ -47,6 +47,7 @@ M*/
 M*/
 
 FLLOP_EXTERN PetscErrorCode SVMInitializePackage();
+FLLOP_EXTERN PetscErrorCode SVMFinalizePackage();
 
 FLLOP_EXTERN PetscFunctionList SVMList;
 FLLOP_EXTERN PetscBool SVMRegisterAllCalled;
