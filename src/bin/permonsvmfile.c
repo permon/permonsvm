@@ -22,6 +22,7 @@ PetscErrorCode SVMRunBinaryClassification() {
   TRY( PetscOptionsGetString(NULL,NULL,"-f_test",test_file,sizeof(test_file),&test_file_set) );
   
   TRY( SVMCreate(comm,&svm) );
+  TRY( SVMSetType(svm,SVM_BINARY) );
   TRY( SVMSetFromOptions(svm) );
 
   TRY( SVMLoadData(comm,training_file,&Xt_training,&y_training) );

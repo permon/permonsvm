@@ -117,6 +117,36 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMSetType"
+/*@
+
+@*/
+PetscErrorCode SVMSetType(SVM svm,const SVMType type) 
+{
+  PetscErrorCode (*create_svm)(SVM);
+  PetscBool issame = PETSC_FALSE;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidCharPointer(type,2);
+
+  TRY( PetscObjectTypeCompare((PetscObject) svm,type,&issame) );
+  if (issame) PetscFunctionReturn(0);
+
+  TRY( PetscFunctionListFind(SVMList,type,(void(**)(void))&create_svm) );
+  if (!create_svm) FLLOP_SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_UNKNOWN_TYPE,"Unable to find requested SVM type %s",type);
+
+  /* Destroy the pre-existing private SVM context */
+  if (svm->ops->destroy) svm->ops->destroy(svm);
+  /* Reinitialize function pointers in SVMOps structure */
+  TRY( PetscMemzero(svm->ops,sizeof(struct _SVMOps)) );
+
+  TRY( (*create_svm)(svm) );
+  TRY( PetscObjectChangeTypeName((PetscObject)svm,type) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMView"
 /*@
    SVMView - Views classification model details
