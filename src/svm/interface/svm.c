@@ -59,6 +59,27 @@ PetscErrorCode SVMReset(SVM svm)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMDestroyDefault"
+/*@
+   SVMDestroyDefault - Destroys SVM content
+
+   Input parameter:
+.  svm - instance of SVM
+
+   Developers Note: This is PETSC_EXTERN because it may be used by user written plugin SVM implementations
+
+   Level: developer
+@*/
+PetscErrorCode SVMDestroyDefault(SVM svm)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( PetscFree(svm->data) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMDestroy"
 /*@
    SVMDestroy - Destroys SVM context
