@@ -28,10 +28,17 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
 #endif
   TRY( PetscHeaderCreate(svm,SVM_CLASSID,"SVM","SVM Classifier","SVM",comm,SVMDestroy,SVMView) );
 
-  svm->C = 1.;
+  svm->C        = 1.;
+  svm->LogCBase = 2.;
+  svm->LogCMin  = -2.;
+  svm->LogCMax  = 2.;
+
+  svm->nfolds   = 5;
 
   svm->setupcalled          = PETSC_FALSE;
   svm->setfromoptionscalled = PETSC_FALSE;
+  svm->autoPostSolve        = PETSC_FALSE;
+
   *svm_out = svm;
   PetscFunctionReturn(0);
 }
