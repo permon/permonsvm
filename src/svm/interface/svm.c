@@ -195,6 +195,52 @@ PetscErrorCode SVMView(SVM svm,PetscViewer v)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMSetTrainingSamples"
+/*@
+   SVMSetTrainingSamples - Sets the training samples.
+
+   Input Parameter:
++  svm - the SVM
+.  Xt_training - samples data
+-  y - known labels of training samples
+
+   Level: beginner
+@*/
+PetscErrorCode SVMSetTrainingSamples(SVM svm,Mat Xt_training,Vec y_training)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+
+  TRY( PetscTryMethod(svm,"SVMSetTrainingSamples_C",(SVM,Mat,Vec),(svm,Xt_training,y_training)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetTrainingSamples"
+/*@
+   SVMSetTrainingSamples - Sets the training samples.
+
+   Input Parameter:
+.  svm - the SVM
+
+   Output Parameter:
++  Xt_training - training samples
+-  y_training - known labels of training samples
+
+   Level: beginner
+@*/
+PetscErrorCode SVMGetTrainingSamples(SVM svm,Mat *Xt_training,Vec *y_training)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+
+  TRY( PetscUseMethod(svm,"SVMGetTrainingSamples_C",(SVM,Mat *,Vec *),(svm,Xt_training,y_training)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMTrain"
 /*@
   SVMTrain - Creates a classification model on the basis of training samples

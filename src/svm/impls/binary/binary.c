@@ -16,8 +16,8 @@ typedef struct {
 
     PetscBool warm_start;
 
-    Mat Xt;
-    Vec y;
+    Mat Xt_training;
+    Vec y_training;
     Vec y_inner;
     PetscScalar y_map[2];
     Mat D;
@@ -45,19 +45,19 @@ PetscErrorCode SVMReset_Binary(SVM svm)
     TRY( QPSDestroy(&svm_binary->qps) );
   }
   TRY( VecDestroy(&svm_binary->w) );
-  TRY( MatDestroy(&svm_binary->Xt) );
+  TRY( MatDestroy(&svm_binary->Xt_training) );
   TRY( MatDestroy(&svm_binary->D) );
-  TRY( VecDestroy(&svm_binary->y) );
+  TRY( VecDestroy(&svm_binary->y_training) );
   TRY( VecDestroy(&svm_binary->y_inner) );
 
   PetscMemzero(svm_binary->y_map,2*sizeof(PetscScalar) );
   svm_binary->b = PETSC_INFINITY;
   
-  svm_binary->w       = NULL;
-  svm_binary->Xt      = NULL;
-  svm_binary->y       = NULL;
-  svm_binary->y_inner = NULL;
-  svm_binary->D       = NULL;
+  svm_binary->w           = NULL;
+  svm_binary->Xt_training = NULL;
+  svm_binary->y_training  = NULL;
+  svm_binary->y_inner     = NULL;
+  svm_binary->D           = NULL;
   PetscFunctionReturn(0);
 }
 
@@ -69,6 +69,9 @@ PetscErrorCode SVMDestroy_Binary(SVM svm)
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
   PetscFunctionBegin;
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingSamples_C",NULL) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingSamples_C",NULL) );
+
   TRY( QPSDestroy(&svm_binary->qps) );
   TRY( SVMDestroyDefault(svm) );
   PetscFunctionReturn(0);
@@ -294,58 +297,44 @@ PetscErrorCode SVMGetNfolds(SVM svm, PetscInt *nfolds)
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMSetTrainingSamples"
-/*@
-   SVMSetTrainingSamples - Sets the training samples.
-
-   Input Parameter:
-+  svm - the SVM
-.  Xt - samples data
--  y -
-@*/
-PetscErrorCode SVMSetTrainingSamples(SVM svm, Mat Xt, Vec y)
+PetscErrorCode SVMSetTrainingSamples_Binary(SVM svm,Mat Xt_training,Vec y_training)
 {
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidHeaderSpecific(Xt, MAT_CLASSID, 2);
-  PetscCheckSameComm(svm, 1, Xt, 2);
-  PetscValidHeaderSpecific(y, VEC_CLASSID, 3);
-  PetscCheckSameComm(svm, 1, y, 3);
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(Xt_training,MAT_CLASSID,2);
+  PetscCheckSameComm(svm,1,Xt_training,2);
+  PetscValidHeaderSpecific(y_training,VEC_CLASSID,3);
+  PetscCheckSameComm(svm,1,y_training,3);
 
-  TRY( MatDestroy(&svm->Xt) );
-  svm->Xt = Xt;
-  TRY( PetscObjectReference((PetscObject) Xt) );
+  TRY( MatDestroy(&svm_binary->Xt_training) );
+  svm_binary->Xt_training = Xt_training;
+  TRY( PetscObjectReference((PetscObject) Xt_training) );
 
-  TRY( VecDestroy(&svm->y) );
-  svm->y = y;
-  TRY( PetscObjectReference((PetscObject) y) );
+  TRY( VecDestroy(&svm_binary->y_training) );
+  svm_binary->y_training = y_training;
+  TRY( PetscObjectReference((PetscObject) y_training) );
 
-  svm->setupcalled = PETSC_FALSE;
+  svm_binary->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMGetTrainingSamples"
-/*@
-   SVMSetTrainingSamples - Sets the training samples.
-
-   Input Parameter:
-.  svm - the SVM
-
-   Output Parameter:
-+  Xt - samples data
--  y -
-@*/
-PetscErrorCode SVMGetTrainingSamples(SVM svm, Mat *Xt, Vec *y)
+PetscErrorCode SVMGetTrainingSamples_Binary(SVM svm,Mat *Xt_training,Vec *y_training)
 {
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  if (Xt) {
-    PetscValidPointer(Xt, 2);
-    *Xt = svm->Xt;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  if (Xt_training) {
+    PetscValidPointer(Xt_training,2);
+    *Xt_training = svm_binary->Xt_training;
   }
-  if (y) {
-    PetscValidPointer(y, 3);
-    *y = svm->y;
+  if (y_training) {
+    PetscValidPointer(y_training,3);
+    *y_training = svm_binary->y_training;
   }
   PetscFunctionReturn(0);
 }
@@ -918,14 +907,14 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   TRY( PetscNewLog(svm,&svm_binary) );
   svm->data = (void *) svm_binary;
 
-  svm_binary->loss_type = SVM_L2;
-  svm_binary->w         = NULL;
-  svm_binary->b         = PETSC_INFINITY;
-  svm_binary->qps       = NULL;
-  svm_binary->Xt        = NULL;
-  svm_binary->D         = NULL;
-  svm_binary->y         = NULL;
-  svm_binary->y_inner   = NULL;
+  svm_binary->loss_type   = SVM_L2;
+  svm_binary->w           = NULL;
+  svm_binary->b           = PETSC_INFINITY;
+  svm_binary->qps         = NULL;
+  svm_binary->Xt_training = NULL;
+  svm_binary->D           = NULL;
+  svm_binary->y_training  = NULL;
+  svm_binary->y_inner     = NULL;
 
   TRY( PetscMemzero(svm->y_map,2*sizeof(PetscScalar)) );
 
@@ -934,6 +923,9 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm->ops->setfromoptions = SVMSetFromOptions_Binary;
   svm->ops->train          = SVMTrain_Binary;
   svm->ops->view           = SVMView_Binary;
+
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingSamples_C",SVMSetTrainingSamples_Binary) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingSamples_C",SVMGetTrainingSamples_Binary) );
   PetscFunctionReturn(0);
 }
 
