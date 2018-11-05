@@ -27,7 +27,11 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
   TRY( SVMInitializePackage() );
 #endif
   TRY( PetscHeaderCreate(svm,SVM_CLASSID,"SVM","SVM Classifier","SVM",comm,SVMDestroy,SVMView) );
-  
+
+  svm->C = 1.;
+
+  svm->setupcalled          = PETSC_FALSE;
+  svm->setfromoptionscalled = PETSC_FALSE;
   *svm_out = svm;
   PetscFunctionReturn(0);
 }
@@ -50,6 +54,7 @@ PetscErrorCode SVMReset(SVM svm)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
+  TRY( (*svm->ops->reset)(svm) );
   PetscFunctionReturn(0);
 }
 
@@ -71,7 +76,16 @@ PetscErrorCode SVMDestroy(SVM *svm)
   PetscFunctionBegin;
   if (!*svm) PetscFunctionReturn(0);
 
-  PetscValidHeaderSpecific(*svm, SVM_CLASSID, 1);
+  PetscValidHeaderSpecific(*svm,SVM_CLASSID,1);
+  if (--((PetscObject) (*svm))->refct > 0) {
+    *svm = 0;
+    PetscFunctionReturn(0);
+  }
+
+  TRY( SVMReset(*svm) );
+  if ((*svm)->ops->destroy) {
+    TRY( (*(*svm)->ops->destroy)(*svm) );
+  }
 
   TRY( PetscHeaderDestroy(svm) );
   PetscFunctionReturn(0);
@@ -89,9 +103,16 @@ PetscErrorCode SVMDestroy(SVM *svm)
 @*/
 PetscErrorCode SVMSetFromOptions(SVM svm)
 {
+  PetscErrorCode ierr;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+
+  ierr = PetscObjectOptionsBegin((PetscObject)svm);CHKERRQ(ierr);
+  if (svm->ops->setfromoptions) {
+    TRY( svm->ops->setfromoptions(PetscOptionsObject,svm) );
+  }
+  ierr = PetscOptionsEnd();CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
 
@@ -130,7 +151,7 @@ PetscErrorCode SVMTrain(SVM svm)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-
+  TRY( svm->ops->train(svm) );
   PetscFunctionReturn(0);
 }
 

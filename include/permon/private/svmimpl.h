@@ -4,30 +4,42 @@
 #include <permon/private/qpsimpl.h>
 #include <permonsvm.h>
 
+typedef struct _SVMOps *SVMOps;
+
+struct _SVMOps {
+  PetscErrorCode (*reset)(SVM);
+  PetscErrorCode (*destroy)(SVM);
+  PetscErrorCode (*setfromoptions)(PetscOptionItems *,SVM);
+  PetscErrorCode (*setup)(SVM);
+  PetscErrorCode (*train)(SVM);
+  PetscErrorCode (*view)(SVM,PetscViewer);
+};
+
 struct _p_SVM {
-    PETSCHEADER(int);
-    PetscBool autoPostSolve;
-    PetscBool setupcalled;
-    PetscBool setfromoptionscalled;
-    
-    PetscReal C, LogCMin, LogCMax, LogCBase;
-    PetscInt nfolds;
-    SVMLossType loss_type;
+  PETSCHEADER(struct _SVMOps);
 
-    PetscBool warm_start;
-
-    Mat Xt;
-    Vec y;
-    Vec y_inner;
-    PetscScalar y_map[2];
-    Mat D;
+  PetscBool autoPostSolve;
+  PetscBool setupcalled;
+  PetscBool setfromoptionscalled;
     
-    Vec w;
-    PetscScalar b;
-    
-    QPS qps;
+  PetscReal C, LogCMin, LogCMax, LogCBase;
+  PetscInt nfolds;
+  SVMLossType loss_type;
 
-    void *data;
+  PetscBool warm_start;
+
+  Mat Xt;
+  Vec y;
+  Vec y_inner;
+  PetscScalar y_map[2];
+  Mat D;
+    
+  Vec w;
+  PetscScalar b;
+    
+  QPS qps;
+
+  void *data;
 };
 
 #endif 
