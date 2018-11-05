@@ -33,39 +33,6 @@ static PetscErrorCode SVMQPSConvergedTrainRateDestroy(void *ctx);
 static PetscErrorCode SVMQPSConvergedTrainRate(QPS qps,QP qp,PetscInt it,PetscReal rnorm,KSPConvergedReason *reason,void *cctx);
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMCreate_Binary"
-PetscErrorCode SVMCreate_Binary(SVM svm)
-{
-  SVM_Binary *svm_binary;
-
-  PetscFunctionBegin;
-  TRY( PetscNewLog(svm,&svm_binary) );
-  svm->data = (void *) svm_binary;
-
-  svm->autoPostSolve = PETSC_TRUE;
-  svm->qps = NULL;
-
-  svm->C = 1e1;
-  svm->LogCMin = -3.0;
-  svm->LogCBase = 2.0;
-  svm->LogCMax = 10.0;
-  svm->nfolds = 5;
-  svm->loss_type = SVM_L2;
-
-  svm->warm_start = PETSC_FALSE;
-
-  svm->Xt = NULL;
-  svm->y = NULL;
-  svm->y_inner = NULL;
-  svm->D = NULL;
-  svm->w = NULL;
-  svm->b = PETSC_INFINITY;
-
-  TRY( PetscMemzero(svm->y_map,2*sizeof(PetscScalar)) );
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
 #define __FUNCT__ "SVMReset_Binary"
 PetscErrorCode SVMReset_Binary(SVM svm)
 {
@@ -931,6 +898,35 @@ PetscErrorCode SVMTest_Binary(SVM svm, Mat Xt_test, Vec y_known, PetscInt *N_all
   TRY( VecDestroy(&y) );
   TRY( ISDestroy(&is_eq) );
   PetscFunctionReturnI(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMCreate_Binary"
+PetscErrorCode SVMCreate_Binary(SVM svm)
+{
+  SVM_Binary *svm_binary;
+
+  PetscFunctionBegin;
+  TRY( PetscNewLog(svm,&svm_binary) );
+  svm->data = (void *) svm_binary;
+
+  svm_binary->loss_type = SVM_L2;
+  svm_binary->w         = NULL;
+  svm_binary->b         = PETSC_INFINITY;
+  svm_binary->qps       = NULL;
+  svm_binary->Xt        = NULL;
+  svm_binary->D         = NULL;
+  svm_binary->y         = NULL;
+  svm_binary->y_inner   = NULL;
+
+  TRY( PetscMemzero(svm->y_map,2*sizeof(PetscScalar)) );
+
+  svm->ops->reset          = SVMReset_Binary;
+  svm->ops->destroy        = SVMDestroy_Binary;
+  svm->ops->setfromoptions = SVMSetFromOptions_Binary;
+  svm->ops->train          = SVMTrain_Binary;
+  svm->ops->view           = SVMView_Binary;
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
