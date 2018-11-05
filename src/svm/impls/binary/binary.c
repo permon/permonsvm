@@ -814,7 +814,7 @@ PetscErrorCode SVMPostTrain(SVM svm)
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMSetFromOptions_Binary"
-PetscErrorCode SVMSetFromOptions_Binary(SVM svm)
+PetscErrorCode SVMSetFromOptions_Binary(PetscOptionItems *PetscOptionsObject,SVM svm)
 {
   PetscReal C, LogCMin, LogCMax, LogCBase;
   PetscInt nfolds;
