@@ -69,8 +69,8 @@ PetscErrorCode SVMDestroy_Binary(SVM svm)
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
   PetscFunctionBegin;
-  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingSamples_C",NULL) );
-  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingSamples_C",NULL) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingDataset_C",NULL) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C",NULL) );
 
   TRY( QPSDestroy(&svm_binary->qps) );
   TRY( SVMDestroyDefault(svm) );
@@ -296,8 +296,8 @@ PetscErrorCode SVMGetNfolds(SVM svm, PetscInt *nfolds)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMSetTrainingSamples"
-PetscErrorCode SVMSetTrainingSamples_Binary(SVM svm,Mat Xt_training,Vec y_training)
+#define __FUNCT__ "SVMSetTrainingDataset"
+PetscErrorCode SVMSetTrainingDataset_Binary(SVM svm,Mat Xt_training,Vec y_training)
 {
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
@@ -321,8 +321,8 @@ PetscErrorCode SVMSetTrainingSamples_Binary(SVM svm,Mat Xt_training,Vec y_traini
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMGetTrainingSamples"
-PetscErrorCode SVMGetTrainingSamples_Binary(SVM svm,Mat *Xt_training,Vec *y_training)
+#define __FUNCT__ "SVMGetTrainingDataset_Binary"
+PetscErrorCode SVMGetTrainingDataset_Binary(SVM svm,Mat *Xt_training,Vec *y_training)
 {
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
@@ -465,7 +465,7 @@ static PetscErrorCode SVMSetUp_Remapy_Private(SVM svm)
   PetscScalar min,max;
 
   PetscFunctionBegin;
-  TRY( SVMGetTrainingSamples(svm, NULL, &y) );
+  TRY( SVMGetTrainingDataset(svm,NULL,&y) );
   TRY( VecMin(y,NULL,&min) );
   TRY( VecMax(y,NULL,&max) );
   if (min == -1.0 && max == 1.0) {
@@ -526,7 +526,7 @@ PetscErrorCode SVMSetUp(SVM svm)
   TRY( SVMGetQPS(svm, &qps) );
   TRY( QPSGetQP(qps, &qp) );
   TRY( SVMGetC(svm, &C) );
-  TRY( SVMGetTrainingSamples(svm, &Xt, &y) );
+  TRY( SVMGetTrainingDataset(svm, &Xt, &y) );
 
   /* map y to -1,1 values if needed */
   TRY( SVMSetUp_Remapy_Private(svm) );
@@ -731,7 +731,7 @@ PetscErrorCode SVMPostTrain(SVM svm)
   TRY( SVMGetQPS(svm, &qps) );
   TRY( QPSPostSolve(qps) );
   TRY( QPSGetQP(qps, &qp) );
-  TRY( SVMGetTrainingSamples(svm, &Xt, NULL) );
+  TRY( SVMGetTrainingDataset(svm,&Xt,NULL) );
   y = svm->y_inner;
 
   /* reconstruct w from dual solution z */
@@ -924,8 +924,8 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm->ops->train          = SVMTrain_Binary;
   svm->ops->view           = SVMView_Binary;
 
-  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingSamples_C",SVMSetTrainingSamples_Binary) );
-  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingSamples_C",SVMGetTrainingSamples_Binary) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingDataset_C",SVMSetTrainingDataset_Binary) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C",SVMGetTrainingDataset_Binary) );
   PetscFunctionReturn(0);
 }
 
@@ -989,7 +989,7 @@ PetscErrorCode SVMCrossValidate(SVM svm)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   TRY( PetscObjectGetComm((PetscObject)svm,&comm) );
   TRY( MPI_Comm_rank(comm, &rank) );
-  TRY( SVMGetTrainingSamples(svm,&Xt,&y) );
+  TRY( SVMGetTrainingDataset(svm,&Xt,&y) );
   TRY( MatGetSize(Xt,&n_examples,&n_attributes) );
   TRY( MatGetOwnershipRange(Xt,&lo,&hi) );
   TRY( SVMGetLogCMin(svm, &LogCMin) );
@@ -1035,7 +1035,7 @@ PetscErrorCode SVMCrossValidate(SVM svm)
     TRY( SVMCreate(PetscObjectComm((PetscObject)svm),&cross_svm) );
     TRY( SVMSetOptionsPrefix(cross_svm,prefix) );
     TRY( SVMAppendOptionsPrefix(cross_svm,"cross_") );
-    TRY( SVMSetTrainingSamples(cross_svm,Xt_train,y_train) );
+    TRY( SVMSetTrainingDataset(cross_svm,Xt_train,y_train) );
     TRY( SVMSetLossType(cross_svm,svm->loss_type) );
     TRY( SVMSetFromOptions(cross_svm) );
     for (j = 0; j < c_count; ++j) {
@@ -1141,7 +1141,7 @@ static PetscErrorCode SVMQPSConvergedTrainRate(QPS qps,QP qp,PetscInt it,PetscRe
 
 
   PetscFunctionBegin;
-  TRY( SVMGetTrainingSamples(svm, &Xt, &y_orig) );
+  TRY( SVMGetTrainingDataset(svm, &Xt, &y_orig) );
   y = svm->y_inner;
 
   /* reconstruct w from dual solution z */

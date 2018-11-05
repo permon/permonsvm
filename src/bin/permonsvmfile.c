@@ -31,7 +31,7 @@ PetscErrorCode SVMRunBinaryClassification() {
   TRY( MatGetSize(Xt_training,&M,&N));
   TRY( PetscPrintf(comm,"### PermonSVM:\tloaded %8d training samples with %8d attributes from file %s\n",M,N,training_file) );
 
-  TRY( SVMSetTrainingSamples(svm,Xt_training,y_training) );
+  TRY( SVMSetTrainingDataset(svm,Xt_training,y_training) );
   TRY( SVMTrain(svm) );
   TRY( SVMTest(svm,Xt_training,y_training,&N_all,&N_eq) );
   TRY( SVMGetC(svm,&C) );

@@ -195,9 +195,9 @@ PetscErrorCode SVMView(SVM svm,PetscViewer v)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMSetTrainingSamples"
+#define __FUNCT__ "SVMSetTrainingDataset"
 /*@
-   SVMSetTrainingSamples - Sets the training samples.
+   SVMSetTrainingDataset - Sets the training samples and labels.
 
    Input Parameter:
 +  svm - the SVM
@@ -206,20 +206,20 @@ PetscErrorCode SVMView(SVM svm,PetscViewer v)
 
    Level: beginner
 @*/
-PetscErrorCode SVMSetTrainingSamples(SVM svm,Mat Xt_training,Vec y_training)
+PetscErrorCode SVMSetTrainingDataset(SVM svm,Mat Xt_training,Vec y_training)
 {
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
-  TRY( PetscTryMethod(svm,"SVMSetTrainingSamples_C",(SVM,Mat,Vec),(svm,Xt_training,y_training)) );
+  TRY( PetscTryMethod(svm,"SVMSetTrainingDataset_C",(SVM,Mat,Vec),(svm,Xt_training,y_training)) );
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMGetTrainingSamples"
+#define __FUNCT__ "SVMGetTrainingDataset"
 /*@
-   SVMSetTrainingSamples - Sets the training samples.
+   SVMSetTrainingDataset - Sets the training samples and labels.
 
    Input Parameter:
 .  svm - the SVM
@@ -230,13 +230,13 @@ PetscErrorCode SVMSetTrainingSamples(SVM svm,Mat Xt_training,Vec y_training)
 
    Level: beginner
 @*/
-PetscErrorCode SVMGetTrainingSamples(SVM svm,Mat *Xt_training,Vec *y_training)
+PetscErrorCode SVMGetTrainingDataset(SVM svm,Mat *Xt_training,Vec *y_training)
 {
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
-  TRY( PetscUseMethod(svm,"SVMGetTrainingSamples_C",(SVM,Mat *,Vec *),(svm,Xt_training,y_training)) );
+  TRY( PetscUseMethod(svm,"SVMGetTrainingDataset_C",(SVM,Mat *,Vec *),(svm,Xt_training,y_training)) );
   PetscFunctionReturn(0);
 }
 
