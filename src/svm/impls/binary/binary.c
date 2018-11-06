@@ -526,6 +526,18 @@ PetscErrorCode SVMCreateQPS_Binary_Private(SVM svm,QPS *qps)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMSetUp_Binary"
+PetscErrorCode SVMSetUp_Binary(SVM svm)
+{
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
+  PetscFunctionBegin;
+
+
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetUp"
 /*@
    SVMSetUp -
@@ -945,6 +957,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
 
   TRY( PetscMemzero(svm->y_map,2*sizeof(PetscScalar)) );
 
+  svm->ops->setup          = SVMSetUp_Binary;
   svm->ops->reset          = SVMReset_Binary;
   svm->ops->destroy        = SVMDestroy_Binary;
   svm->ops->setfromoptions = SVMSetFromOptions_Binary;
