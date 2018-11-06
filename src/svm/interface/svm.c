@@ -175,6 +175,32 @@ PetscErrorCode SVMSetType(SVM svm,const SVMType type)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMSetUp"
+/*@
+  SVMSetUp - Sets up the internal data structures for the SVM.
+
+  Collective on SVM
+
+  Input parameter:
+. svm - instance of SVM
+
+  Level: developer
+
+.seealso SVMCreate(), SVMTrain(), SVMReset(), SVMDestroy(), SVM
+@*/
+PetscErrorCode SVMSetUp(SVM svm)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  if (svm->setupcalled) PetscFunctionReturn(0);
+
+  TRY( svm->ops->setup(svm) );
+  svm->setupcalled = PETSC_TRUE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMView"
 /*@
    SVMView - Views classification model details
