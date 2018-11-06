@@ -175,6 +175,54 @@ PetscErrorCode SVMSetType(SVM svm,const SVMType type)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMSetQPS"
+/*@
+  SVMSetQPS - Sets the QPS.
+
+  Collective on SVM
+
+  Input parameters:
++ svm - instance of SVM
+- qps - instance of QPS
+
+  Level: advanced
+@*/
+PetscErrorCode SVMSetQPS(SVM svm,QPS qps)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(svm,QPS_CLASSID,2);
+
+  TRY( PetscTryMethod(svm,"SVMSetQPS_C",(SVM,QPS),(svm,qps)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetQPS"
+/*@
+  SVMGetQPS - Gets the QPS.
+
+  Input Parameter:
+. svm - the SVM
+
+  Output Parameter:
+. qps - instance of QPS
+
+  Level: advanced
+@*/
+PetscErrorCode SVMGetQPS(SVM svm,QPS *qps)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidPointer(qps,2);
+
+  TRY( PetscUseMethod(svm,"SVMGetQPS_C",(SVM,QPS *),(svm,qps)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetUp"
 /*@
   SVMSetUp - Sets up the internal data structures for the SVM.
