@@ -526,13 +526,29 @@ PetscErrorCode SVMCreateQPS_Binary_Private(SVM svm,QPS *qps)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMGetQPS_Binary"
+PetscErrorCode SVMGetQPS_Binary(SVM svm,QPS *qps)
+{
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+  QPS        qps_inner;
+
+  PetscFunctionBegin;
+  if (!svm_binary->qps) {
+    TRY( SVMCreateQPS_Binary_Private(svm,&qps_inner) );
+    svm_binary->qps = qps_inner;
+  }
+
+  *qps = svm_binary->qps;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetUp_Binary"
 PetscErrorCode SVMSetUp_Binary(SVM svm)
 {
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
   PetscFunctionBegin;
-
 
   PetscFunctionReturn(0);
 }
