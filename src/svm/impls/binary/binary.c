@@ -499,6 +499,33 @@ static PetscErrorCode SVMSetUp_Remapy_Private(SVM svm)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMCreateQPS_Binary_Private"
+PetscErrorCode SVMCreateQPS_Binary_Private(SVM svm,QPS *qps)
+{
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+  PetscReal  rtol,divtol,max_eig_tol;
+  PetscInt   max_it,max_eig_it;
+  QPS        qps_inner;
+
+  PetscFunctionBegin;
+  rtol        = 1e-1;
+  divtol      = 1e100;
+  max_it      = 10000;
+  max_eig_it  = 100;
+  max_eig_tol = 1e-5;
+
+  TRY( QPSDestroy(&svm_binary->qps) );
+  TRY( QPSCreate(PetscObjectComm((PetscObject)svm),&qps_inner) );
+
+  TRY( QPSSetType(qps_inner,QPSMPGP) );
+  TRY( QPSSetTolerances(qps_inner,rtol,PETSC_DEFAULT,divtol,max_it) );
+  TRY( QPSMPGPSetOperatorMaxEigenvalueTolerance(qps_inner,max_eig_tol) );
+  TRY( QPSMPGPSetOperatorMaxEigenvalueIterations(qps_inner,max_eig_it) );
+  *qps = qps_inner;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetUp"
 /*@
    SVMSetUp -
