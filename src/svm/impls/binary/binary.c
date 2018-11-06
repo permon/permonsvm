@@ -479,6 +479,23 @@ PetscErrorCode SVMGetQPS_Binary(SVM svm,QPS *qps)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMSetQPS_Binary"
+PetscErrorCode SVMSetQPS_Binary(SVM svm,QPS qps)
+{
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
+  PetscFunctionBegin;
+  PetscCheckSameComm(svm,1,qps,2);
+
+  TRY( QPSDestroy(&svm_binary->qps) );
+  svm_binary->qps = qps;
+  TRY( PetscObjectReference((PetscObject) qps) );
+
+  svm->setupcalled = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetUp_Binary"
 PetscErrorCode SVMSetUp_Binary(SVM svm)
 {
