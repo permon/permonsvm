@@ -243,19 +243,11 @@ PetscErrorCode SVMSetC(SVM svm,PetscReal C)
   PetscValidLogicalCollectiveReal(svm,C,2);
 
   if (C <= 0 && C != PETSC_DECIDE && C != PETSC_DEFAULT) {
-    FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
+    FLLOP_SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
   }
-  if (svm->setupcalled) {
-    if (svm->loss_type == SVM_L1) {
-      Vec ub;
-      TRY( QPGetBox(svm->qps->solQP,NULL,&ub) );
-      TRY( VecSet(ub,C) );
 
-    } else {
-      TRY( MatScale(svm->D,C/svm->C) );
-    }
-  }
   svm->C = C;
+  svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
 
