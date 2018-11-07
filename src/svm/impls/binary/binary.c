@@ -88,56 +88,6 @@ PetscErrorCode SVMView_Binary(SVM svm, PetscViewer v)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMSetC"
-/*@
-   SVMSetC - Sets the C parameter.
-
-   Input Parameter:
-+  svm - the SVM
--  C - C parameter
-@*/
-PetscErrorCode SVMSetC(SVM svm, PetscReal C)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidLogicalCollectiveReal(svm, C, 2);
-
-  if (C <= 0 && C != PETSC_DECIDE && C != PETSC_DEFAULT) FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
-  if (svm->setupcalled) {
-    if (svm->loss_type == SVM_L1) {
-      Vec ub;
-      TRY( QPGetBox(svm->qps->solQP, NULL, &ub) );
-      TRY( VecSet(ub, C) );
-
-    } else {
-      TRY( MatScale(svm->D,C/svm->C) );
-    }
-  }
-  svm->C = C;
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetC"
-/*@
-   SVMGetC - Gets the C parameter.
-
-   Input Parameter:
-.  svm - the SVM
-
-   Output Parameter:
-.  C - C parameter
-@*/
-PetscErrorCode SVMGetC(SVM svm, PetscReal *C)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidRealPointer(C, 2);
-  *C = svm->C;
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
 #define __FUNCT__ "SVMSetLogCMin"
 /*@
    SVMSetC - Sets the minimal C parameter value.

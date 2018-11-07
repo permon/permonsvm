@@ -223,6 +223,66 @@ PetscErrorCode SVMGetQPS(SVM svm,QPS *qps)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMSetC"
+/*@
+  SVMSetC - Sets the penalty C.
+
+  Collective on SVM
+
+  Input Parameters:
++ svm - the SVM
+- C - penalty C
+
+  Level: beginner
+@*/
+PetscErrorCode SVMSetC(SVM svm,PetscReal C)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveReal(svm,C,2);
+
+  if (C <= 0 && C != PETSC_DECIDE && C != PETSC_DEFAULT) {
+    FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
+  }
+  if (svm->setupcalled) {
+    if (svm->loss_type == SVM_L1) {
+      Vec ub;
+      TRY( QPGetBox(svm->qps->solQP,NULL,&ub) );
+      TRY( VecSet(ub,C) );
+
+    } else {
+      TRY( MatScale(svm->D,C/svm->C) );
+    }
+  }
+  svm->C = C;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetC"
+/*@
+  SVMGetC - Gets the penalty C.
+
+  Input Parameter:
+. svm - the SVM
+
+  Output Parameter:
+. C - penalty C
+
+  Level: beginner
+@*/
+PetscErrorCode SVMGetC(SVM svm,PetscReal *C)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidRealPointer(C,2);
+  *C = svm->C;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetUp"
 /*@
   SVMSetUp - Sets up the internal data structures for the SVM.
