@@ -366,6 +366,33 @@ PetscErrorCode SVMGetTrainingDataset(SVM svm,Mat *Xt_training,Vec *y_training)
   PetscFunctionReturn(0);
 }
 
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetAutoPostTrain"
+/*@
+  SVMSetAutoPostTrain - Sets post train flag.
+
+  Collective on SVM
+
+  Input Parameter:
+. svm - the SVM
+
+  Output Parameter:
+. flg - flag
+
+  Level: developer
+@*/
+PetscErrorCode SVMSetAutoPostTrain(SVM svm,PetscBool flg)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveBool(svm,flg,2);
+
+  svm->autoPostSolve = flg;
+  PetscFunctionReturn(0);
+}
+
 #undef __FUNCT__
 #define __FUNCT__ "SVMTrain"
 /*@

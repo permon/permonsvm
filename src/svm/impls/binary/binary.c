@@ -543,25 +543,6 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMSetAutoPostTrain"
-/*@
-   SVMTrain -
-
-   Input Parameter:
-.  svm - the SVM
-
-   Output Parameter:
-.  qps -
-@*/
-PetscErrorCode SVMSetAutoPostTrain(SVM svm, PetscBool flg)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  svm->autoPostSolve = flg;
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
 #define __FUNCT__ "SVMSetOptionsPrefix"
 PetscErrorCode SVMSetOptionsPrefix(SVM svm,const char prefix[])
 {
