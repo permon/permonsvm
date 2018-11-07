@@ -349,40 +349,41 @@ PetscErrorCode SVMGetLossType(SVM svm, SVMLossType *type)
 /* map y to -1,1 values if needed */
 static PetscErrorCode SVMSetUp_Remapy_Private(SVM svm)
 {
-  Vec y;
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
+  Vec         y;
+  PetscInt    i,n;
+
   PetscScalar min,max;
+  const PetscScalar *y_arr;
+  PetscScalar *y_inner_arr;
 
   PetscFunctionBegin;
   TRY( SVMGetTrainingDataset(svm,NULL,&y) );
   TRY( VecMin(y,NULL,&min) );
   TRY( VecMax(y,NULL,&max) );
+
   if (min == -1.0 && max == 1.0) {
-    svm->y_inner = y;
-    TRY( PetscObjectReference((PetscObject)y) );
-    svm->y_map[0] = -1.0;
-    svm->y_map[1] = 1.0;
+    svm_binary->y_inner = y;
+    TRY( PetscObjectReference((PetscObject) y) );
   } else {
-    const PetscScalar *y_arr;
-    PetscScalar *y_inner_arr;
-    PetscInt i,n;
     TRY( VecGetLocalSize(y,&n) );
-    TRY( VecDuplicate(y, &svm->y_inner) );
+    TRY( VecDuplicate(y,&svm_binary->y_inner) );
     TRY( VecGetArrayRead(y,&y_arr) );
-    TRY( VecGetArray(svm->y_inner,&y_inner_arr) );
-    for (i=0; i<n; i++) {
+    TRY( VecGetArray(svm_binary->y_inner,&y_inner_arr) );
+    for (i = 0; i < n; ++i) {
       if (y_arr[i]==min) {
         y_inner_arr[i] = -1.0;
-      } else if (y_arr[i]==max) {
+      } else if (y_arr[i] == max) {
         y_inner_arr[i] = 1.0;
-      } else {
-        FLLOP_SETERRQ4(PetscObjectComm((PetscObject)svm),PETSC_ERR_ARG_OUTOFRANGE,"index %d: value %.1f is between max %.1f and min %.1f",i,y_arr[i],min,max);
       }
     }
     TRY( VecRestoreArrayRead(y,&y_arr) );
-    TRY( VecRestoreArray(svm->y_inner,&y_inner_arr) );
-    svm->y_map[0] = min;
-    svm->y_map[1] = max;
+    TRY( VecRestoreArray(svm_binary->y_inner,&y_inner_arr) );
   }
+
+  svm_binary->y_map[0] = min;
+  svm_binary->y_map[1] = max;
   PetscFunctionReturn(0);
 }
 
