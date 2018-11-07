@@ -345,9 +345,8 @@ PetscErrorCode SVMGetLossType(SVM svm, SVMLossType *type)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMSetUp_Remapy_Private"
-/* map y to -1,1 values if needed */
-static PetscErrorCode SVMSetUp_Remapy_Private(SVM svm)
+#define __FUNCT__ "SVMSetUp_Remapy_Binary_Private"
+static PetscErrorCode SVMSetUp_Remapy_Binary_Private(SVM svm)
 {
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
