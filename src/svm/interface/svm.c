@@ -434,6 +434,58 @@ PetscErrorCode SVMPostTrain(SVM svm)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMSetSeparatingHyperplane"
+/*@
+  SVMSetSeparatingHyperplane - Sets the classifier (separator) w*x - b = 0
+
+  Collective on SVM
+
+  Input Parameters:
++ svm - the SVM
+. w - the normal vector to the separating hyperplane
+- b - the offset of the hyperplane
+
+  Level: beginner
+@*/
+PetscErrorCode SVMSetSeparatingHyperplane(SVM svm,Vec w,PetscReal b)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+
+  TRY( PetscTryMethod(svm,"SVMSetSeparatingHyperplane_C",(SVM,Vec,PetscReal),(svm,w,b)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetSeparatingHyperplane"
+/*@
+  SVMGetSeparatingHyperplane - Returns the classifier (separator) w*x - b = 0 computed by PermonSVMTrain()
+
+  Not Collective
+
+  Input Parameter:
+. svm - the SVM context
+
+  Output Parameters:
++ w - the normal vector to the separating hyperplane
+- b - the offset of the hyperplane
+
+  Level: beginner
+
+.seealso: SVMTrain(), SVMClassify(), SVMTest()
+@*/
+PetscErrorCode SVMGetSeparatingHyperplane(SVM svm,Vec *w,PetscReal *b)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+
+  TRY( PetscUseMethod(svm,"SVMGetSeparatingHyperplane_C",(SVM,Vec *,PetscReal *),(svm,w,b)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMTest"
 /*@
   SVMTest - Tests quality of classification model

@@ -73,6 +73,8 @@ PetscErrorCode SVMDestroy_Binary(SVM svm)
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetQPS_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetQPS_C",NULL) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetSeparatingHyperplane_C",NULL) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetSeparatingHyperplane_C",NULL) );
 
   TRY( QPSDestroy(&svm_binary->qps) );
   TRY( SVMDestroyDefault(svm) );
@@ -707,14 +709,13 @@ PetscErrorCode SVMGetSeparatingHyperplane_Binary(SVM svm,Vec *w,PetscReal *b)
 #define __FUNCT__ "SVMPostTrain_Binary"
 PetscErrorCode SVMPostTrain_Binary(SVM svm)
 {
-  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
-
   Vec       w;
   PetscReal b;
+  
   PetscFunctionBegin;
   TRY( SVMReconstructHyperplane_Binary_Private(svm,&w,&b) );
-  svm_binary->w = w;
-  svm_binary->b = b;
+  TRY( SVMSetSeparatingHyperplane(svm,w,b) );
+  TRY( VecDestroy(&w) );
   PetscFunctionReturn(0);
 }
 
@@ -747,33 +748,6 @@ PetscErrorCode SVMSetFromOptions_Binary(PetscOptionItems *PetscOptionsObject,SVM
   svm->setfromoptionscalled = PETSC_TRUE;
   _fllop_ierr = PetscOptionsEnd();CHKERRQ(_fllop_ierr);
   PetscFunctionReturnI(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetSeparatingHyperplane"
-/*@
-   SVMGetSeparatingHyperplane - Return the classifier (separator) w*x - b = 0 computed by PermonSVMTrain()
-
-   Not Collective
-
-   Input Parameter:
-.  svm - the SVM context
-
-   Output Parameters:
-+  w - the normal vector to the separating hyperplane
--  b - the offset of the hyperplane is given by b/||w||
-
- .seealso: SVMTrain(), SVMClassify(), SVMTest()
-@*/
-PetscErrorCode SVMGetSeparatingHyperplane(SVM svm, Vec *w, PetscReal *b)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidPointer(w,2);
-  PetscValidRealPointer(b,3);
-  *w = svm->w;
-  *b = svm->b;
-  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -872,6 +846,8 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C",SVMGetTrainingDataset_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetQPS_C",SVMSetQPS_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetQPS_C",SVMGetQPS_Binary) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetSeparatingHyperplane_C",SVMSetSeparatingHyperplane_Binary) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetSeparatingHyperplane_C",SVMGetSeparatingHyperplane_Binary) );
   PetscFunctionReturn(0);
 }
 
