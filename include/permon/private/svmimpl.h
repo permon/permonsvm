@@ -12,6 +12,7 @@ struct _SVMOps {
   PetscErrorCode (*setfromoptions)(PetscOptionItems *,SVM);
   PetscErrorCode (*setup)(SVM);
   PetscErrorCode (*train)(SVM);
+  PetscErrorCode (*posttrain)(SVM);
   PetscErrorCode (*view)(SVM,PetscViewer);
 };
 

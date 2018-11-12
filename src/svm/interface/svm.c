@@ -413,6 +413,27 @@ PetscErrorCode SVMTrain(SVM svm)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMPostTrain"
+/*@
+  SVMPostTrain - Applies post train function
+
+  Collective on SVM
+
+  Input Parameter:
+. svm - the SVM
+
+  Level: advanced
+@*/
+PetscErrorCode SVMPostTrain(SVM svm)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( svm->ops->posttrain(svm) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMTest"
 /*@
   SVMTest - Tests quality of classification model

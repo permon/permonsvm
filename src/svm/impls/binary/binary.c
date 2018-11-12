@@ -686,68 +686,6 @@ PetscErrorCode SVMPostTrain_Binary(SVM svm)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMPostTrain"
-PetscErrorCode SVMPostTrain(SVM svm)
-{
-  QPS qps;
-  QP qp;
-  IS is_sv;
-  Vec o, y_sv, Xtw, Xtw_sv, t;
-  PetscInt len_sv;
-  Mat Xt;
-  Vec Yz, y, z, w;
-  PetscScalar b;
-
-  PetscFunctionBeginI;
-  TRY( SVMGetQPS(svm, &qps) );
-  TRY( QPSPostSolve(qps) );
-  TRY( QPSGetQP(qps, &qp) );
-  TRY( SVMGetTrainingDataset(svm,&Xt,NULL) );
-  y = svm->y_inner;
-
-  /* reconstruct w from dual solution z */
-  {
-    TRY( QPGetSolutionVector(qp, &z) );
-    TRY( VecDuplicate(z, &Yz) );
-
-    TRY( VecPointwiseMult(Yz, y, z) );            /* YZ = Y*z = y.*z */
-    TRY( MatCreateVecs(Xt, &w, NULL) );           /* create vector w such that Xt*w works */
-    TRY( MatMultTranspose(Xt, Yz, w) );           /* Xt = X^t, w = Xt' * Yz = (X^t)^t * Yz = X * Yz */
-
-    svm->w = w;
-
-    TRY( VecDestroy(&Yz) );
-  }
-
-  /* reconstruct b from dual solution z */
-  {
-    TRY( VecDuplicate(z, &o) );
-    TRY( VecZeroEntries(o) );
-    TRY( MatCreateVecs(Xt, NULL, &Xtw) );
-
-    TRY( VecWhichGreaterThan(z, o, &is_sv) );
-    TRY( ISGetSize(is_sv, &len_sv) );
-    TRY( MatMult(Xt, w, Xtw) );
-    TRY( VecGetSubVector(y, is_sv, &y_sv) );      /* y_sv = y(is_sv) */
-    TRY( VecGetSubVector(Xtw, is_sv, &Xtw_sv) );  /* Xtw_sv = Xtw(is_sv) */
-    TRY( VecDuplicate(y_sv, &t) );
-    TRY( VecWAXPY(t, -1.0, Xtw_sv, y_sv) );       /* t = y_sv - Xtw_sv */
-    TRY( VecRestoreSubVector(y, is_sv, &y_sv) );
-    TRY( VecRestoreSubVector(Xtw, is_sv, &Xtw_sv) );
-    TRY( VecSum(t, &b) );                         /* b = sum(t) */
-    b /= len_sv;                                  /* b = b / length(is_sv) */
-
-    svm->b = b;
-
-    TRY( ISDestroy(&is_sv) );
-    TRY( VecDestroy(&o) );
-    TRY( VecDestroy(&t) );
-    TRY( VecDestroy(&Xtw) );
-  }
-  PetscFunctionReturnI(0);
-}
-
-#undef __FUNCT__
 #define __FUNCT__ "SVMSetFromOptions_Binary"
 PetscErrorCode SVMSetFromOptions_Binary(PetscOptionItems *PetscOptionsObject,SVM svm)
 {
@@ -894,6 +832,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm->ops->destroy        = SVMDestroy_Binary;
   svm->ops->setfromoptions = SVMSetFromOptions_Binary;
   svm->ops->train          = SVMTrain_Binary;
+  svm->ops->posttrain      = SVMPostTrain_Binary;
   svm->ops->view           = SVMView_Binary;
 
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingDataset_C",SVMSetTrainingDataset_Binary) );
