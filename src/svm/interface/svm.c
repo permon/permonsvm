@@ -278,6 +278,61 @@ PetscErrorCode SVMGetC(SVM svm,PetscReal *C)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMSetLossType"
+/*@
+   SVMSetLossType - Sets the type of the hinge loss function
+
+   Logically Collective on SVM
+
+   Input Parameters:
++  svm - the SVM
+-  type - type of loss function
+
+   Level: beginner
+
+.seealso PermonSVMType, SVMGetLossType()
+@*/
+PetscErrorCode SVMSetLossType(SVM svm, SVMLossType type)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveEnum(svm,type,2);
+  if (type != svm->loss_type) {
+    svm->loss_type = type;
+    svm->setupcalled = PETSC_FALSE;
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetLossType"
+/*@
+   SVMGetLossType - Gets the type of the loss function
+
+   Not Collective
+
+   Input Parameter:
+.  svm - the SVM
+
+   Output Parameter:
+.  type - type of loss function
+
+   Level: beginner
+
+.seealso PermonSVMType, SVMSetLossType()
+@*/
+PetscErrorCode SVMGetLossType(SVM svm,SVMLossType *type)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidPointer(type,2);
+  *type = svm->loss_type;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetUp"
 /*@
   SVMSetUp - Sets up the internal data structures for the SVM.
