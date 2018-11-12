@@ -13,6 +13,7 @@ struct _SVMOps {
   PetscErrorCode (*setup)(SVM);
   PetscErrorCode (*train)(SVM);
   PetscErrorCode (*posttrain)(SVM);
+  PetscErrorCode (*classify)(SVM,Mat,Vec *);
   PetscErrorCode (*view)(SVM,PetscViewer);
 };
 
@@ -20,6 +21,7 @@ struct _p_SVM {
   PETSCHEADER(struct _SVMOps);
 
   PetscBool autoposttrain;
+  PetscBool posttraincalled;
   PetscBool setupcalled;
   PetscBool setfromoptionscalled;
     

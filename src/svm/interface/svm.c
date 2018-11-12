@@ -38,6 +38,7 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
   svm->setupcalled          = PETSC_FALSE;
   svm->setfromoptionscalled = PETSC_FALSE;
   svm->autoposttrain        = PETSC_TRUE;
+  svm->posttraincalled      = PETSC_FALSE;
 
   *svm_out = svm;
   PetscFunctionReturn(0);
@@ -62,6 +63,8 @@ PetscErrorCode SVMReset(SVM svm)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
   TRY( (*svm->ops->reset)(svm) );
+
+  svm->posttraincalled = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
 

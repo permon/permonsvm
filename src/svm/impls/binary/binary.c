@@ -713,9 +713,13 @@ PetscErrorCode SVMPostTrain_Binary(SVM svm)
   PetscReal b;
   
   PetscFunctionBegin;
+  if (svm->posttraincalled) PetscFunctionReturn(0);
+
   TRY( SVMReconstructHyperplane_Binary_Private(svm,&w,&b) );
   TRY( SVMSetSeparatingHyperplane(svm,w,b) );
   TRY( VecDestroy(&w) );
+
+  svm->posttraincalled = PETSC_TRUE;
   PetscFunctionReturn(0);
 }
 
@@ -751,49 +755,46 @@ PetscErrorCode SVMSetFromOptions_Binary(PetscOptionItems *PetscOptionsObject,SVM
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMClassify"
-/*@
-   SVMClassify -
-
-   Input Parameter:
-+  svm - the SVM
--  Xt_test
-
-   Output Parameter:
-.  y - labels {-1, 1}
-@*/
-PetscErrorCode SVMClassify(SVM svm, Mat Xt_test, Vec *y_out)
+#define __FUNCT__ "SVMClassify_Binary"
+PetscErrorCode SVMClassify_Binary(SVM svm,Mat Xt_pred,Vec *y_out)
 {
-  PetscInt i, m;
-  Vec Xtw_test, y, w;
-  PetscReal b;
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
-  const PetscScalar *Xtw_arr;
-  PetscScalar *y_arr;
+  Vec        Xtw_pred,y,w;
+  PetscReal  b;
+  PetscInt   i,m;
 
-  PetscFunctionBeginI;
-  TRY( SVMGetSeparatingHyperplane(svm, &w, &b) );
-  TRY( MatCreateVecs(Xt_test,NULL,&Xtw_test) );
-  TRY( MatMult(Xt_test,w,Xtw_test) );
+  const PetscScalar *Xtw_pred_arr;
+  PetscScalar *y_pred_arr;
 
-  TRY( VecDuplicate(Xtw_test, &y) );
-  TRY( VecGetLocalSize(Xtw_test, &m) );
+  PetscFunctionBegin;
+  if (!svm->posttraincalled) {
+   TRY( SVMPostTrain(svm) );
+  }
+  TRY( SVMGetSeparatingHyperplane(svm,&w,&b) );
 
-  TRY( VecGetArrayRead(Xtw_test, &Xtw_arr) );
-  TRY( VecGetArray(y, &y_arr) );
-  for (i=0; i<m; i++) {
-    if (Xtw_arr[i] + b > 0) {
-      y_arr[i] = svm->y_map[1];
+  TRY( MatCreateVecs(Xt_pred,NULL,&Xtw_pred) );
+  TRY( MatMult(Xt_pred,w,Xtw_pred) );
+
+  TRY( VecDuplicate(Xtw_pred,&y) );
+  TRY( VecGetLocalSize(y,&m) );
+
+  TRY( VecGetArrayRead(Xtw_pred, &Xtw_pred_arr) );
+  TRY( VecGetArray(y, &y_pred_arr) );
+  for (i = 0; i < m; ++i) {
+    if (Xtw_pred_arr[i] + b > 0.0) {
+      y_pred_arr[i] = svm_binary->y_map[1];
     } else {
-      y_arr[i] = svm->y_map[0];
+      y_pred_arr[i] = svm_binary->y_map[0];
     }
   }
-  TRY( VecRestoreArrayRead(Xtw_test, &Xtw_arr) );
-  TRY( VecRestoreArray(y, &y_arr) );
+  TRY( VecRestoreArrayRead(Xtw_pred,&Xtw_pred_arr) );
+  TRY( VecRestoreArray(y,&y_pred_arr) );
 
   *y_out = y;
-  TRY( VecDestroy(&Xtw_test) );
-  PetscFunctionReturnI(0);
+
+  TRY( VecDestroy(&Xtw_pred) );
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -840,6 +841,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm->ops->setfromoptions = SVMSetFromOptions_Binary;
   svm->ops->train          = SVMTrain_Binary;
   svm->ops->posttrain      = SVMPostTrain_Binary;
+  svm->ops->classify       = SVMClassify_Binary;
   svm->ops->view           = SVMView_Binary;
 
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingDataset_C",SVMSetTrainingDataset_Binary) );
