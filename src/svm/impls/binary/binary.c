@@ -671,6 +671,39 @@ PetscErrorCode SVMReconstructHyperplane_Binary_Private(SVM svm,Vec *w,PetscReal 
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMSetSeparatingHyperplane_Binary"
+PetscErrorCode SVMSetSeparatingHyperplane_Binary(SVM svm,Vec w,PetscReal b)
+{
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
+  PetscFunctionBegin;
+  PetscCheckSameComm(svm,1,w,2);
+
+  TRY( PetscObjectReference((PetscObject) w) );
+  svm_binary->w = w;
+  svm_binary->b = b;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetSeparatingHyperplane_Binary"
+PetscErrorCode SVMGetSeparatingHyperplane_Binary(SVM svm,Vec *w,PetscReal *b)
+{
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
+  PetscFunctionBegin;
+  if (w) {
+    PetscValidPointer(w,2);
+    *w = svm_binary->w;
+  }
+  if (b) {
+    PetscValidRealPointer(b,3);
+    *b = svm_binary->b;
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMPostTrain_Binary"
 PetscErrorCode SVMPostTrain_Binary(SVM svm)
 {
