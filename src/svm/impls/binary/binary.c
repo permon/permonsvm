@@ -89,20 +89,13 @@ PetscErrorCode SVMReset_Binary(SVM svm)
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMDestroy_Binary"
-PetscErrorCode SVMDestroy_Binary(SVM *svm)
+PetscErrorCode SVMDestroy_Binary(SVM svm)
 {
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
   PetscFunctionBegin;
-  if (!*svm) PetscFunctionReturn(0);
-
-  PetscValidHeaderSpecific(*svm, SVM_CLASSID, 1);
-  if (--((PetscObject) (*svm))->refct > 0) {
-      *svm = 0;
-      PetscFunctionReturn(0);
-  }
-
-  TRY( SVMReset(*svm) );
-  TRY( QPSDestroy(&(*svm)->qps) );
-  TRY( PetscHeaderDestroy(svm) );
+  TRY( QPSDestroy(&svm_binary->qps) );
+  TRY( SVMDestroyDefault(svm) );
   PetscFunctionReturn(0);
 }
 
