@@ -588,27 +588,105 @@ PetscErrorCode SVMGetOptionsPrefix(SVM svm,const char *prefix[])
 #define __FUNCT__ "SVMTrain_Binary"
 PetscErrorCode SVMTrain_Binary(SVM svm)
 {
-  PetscFunctionBeginI;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
+  PetscFunctionBegin;
   TRY( PetscPrintf(PetscObjectComm((PetscObject)svm),"### PermonSVM:   train with loss_type %s, C = %.2e\n",SVMLossTypes[svm->loss_type],svm->C) );
   TRY( SVMSetUp(svm) );
-  TRY( QPSSetAutoPostSolve(svm->qps, PETSC_FALSE) );
-  TRY( QPSSolve(svm->qps) );
-  if (svm->autoPostSolve) TRY( SVMPostTrain(svm) );
-  PetscFunctionReturnI(0);
+  TRY( QPSSetAutoPostSolve(svm_binary->qps,PETSC_FALSE) );
+  TRY( QPSSolve(svm_binary->qps) );
+  if (svm->autoposttrain) {
+    TRY( SVMPostTrain(svm) );
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMReconstructHyperplane_Binary_Private"
+PetscErrorCode SVMReconstructHyperplane_Binary_Private(SVM svm,Vec *w,PetscReal *b)
+{
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
+  QPS qps;
+  QP  qp;
+  Vec ub;
+
+  Mat Xt;
+  Vec x,y,yx,y_sv,t,w_inner,zeros;
+  Vec Xtw,Xtw_sv;
+
+  IS        is_sv;
+  PetscInt  nsv;
+  PetscReal b_inner;
+
+  PetscFunctionBegin;
+  TRY( SVMGetQPS(svm,&qps) );
+  TRY( QPSPostSolve(qps) );
+  TRY( QPSGetQP(qps,&qp) );
+
+  TRY( SVMGetTrainingDataset(svm,&Xt,NULL) );
+  y = svm_binary->y_inner;
+  TRY( QPGetBox(qp,NULL,&ub) );
+
+  /* Reconstruction of hyperplane normal */
+  TRY( QPGetSolutionVector(qp,&x) );
+  TRY( VecDuplicate(x,&yx) );
+
+  TRY( VecPointwiseMult(yx,y,x) ); /* yx = y.*x */
+  TRY( MatCreateVecs(Xt,&w_inner,NULL) );
+  TRY( MatMultTranspose(Xt,yx,w_inner) ); /* w = (X^t)^t * yx = X * yx */
+
+  /* Reconstruction of the hyperplane bias */
+  TRY( VecDuplicate(x,&zeros) );
+  TRY( VecZeroEntries(zeros) );
+
+  if (svm_binary->loss_type == SVM_L1) {
+    TRY( VecWhichBetween(x,zeros,ub,&is_sv) );
+  } else {
+    TRY( VecWhichGreaterThan(x,zeros,&is_sv) );
+  }
+  TRY( ISGetSize(is_sv,&nsv) );
+
+  TRY( MatCreateVecs(Xt,NULL,&Xtw) );
+  TRY( MatMult(Xt,w_inner,Xtw) );
+
+  TRY( VecGetSubVector(y,is_sv,&y_sv) );     /* y_sv = y(is_sv) */
+  TRY( VecGetSubVector(Xtw,is_sv,&Xtw_sv) ); /* Xtw_sv = Xt(is_sv) */
+  TRY( VecDuplicate(y_sv,&t) );
+  TRY( VecWAXPY(t,-1.,Xtw_sv,y_sv) );
+  TRY( VecRestoreSubVector(y,is_sv,&y_sv) );
+  TRY( VecRestoreSubVector(Xtw,is_sv,&Xtw_sv) );
+  TRY( VecSum(t,&b_inner) );
+
+  b_inner /= nsv;
+  *w = w_inner;
+  *b = b_inner;
+
+  TRY( VecDestroy(&zeros) );
+  TRY( VecDestroy(&Xtw) );
+  TRY( VecDestroy(&yx) );
+  TRY( VecDestroy(&t) );
+  TRY( ISDestroy(&is_sv) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMPostTrain_Binary"
+PetscErrorCode SVMPostTrain_Binary(SVM svm)
+{
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
+  Vec       w;
+  PetscReal b;
+  PetscFunctionBegin;
+  TRY( SVMReconstructHyperplane_Binary_Private(svm,&w,&b) );
+  svm_binary->w = w;
+  svm_binary->b = b;
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMPostTrain"
-/*@
-   SVMPostTrain -
-
-   Input Parameter:
-.  svm - the SVM
-
-   Output Parameter:
-.  qps -
-@*/
 PetscErrorCode SVMPostTrain(SVM svm)
 {
   QPS qps;

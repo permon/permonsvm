@@ -37,7 +37,7 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
 
   svm->setupcalled          = PETSC_FALSE;
   svm->setfromoptionscalled = PETSC_FALSE;
-  svm->autoPostSolve        = PETSC_FALSE;
+  svm->autoposttrain        = PETSC_FALSE;
 
   *svm_out = svm;
   PetscFunctionReturn(0);
@@ -389,7 +389,7 @@ PetscErrorCode SVMSetAutoPostTrain(SVM svm,PetscBool flg)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidLogicalCollectiveBool(svm,flg,2);
 
-  svm->autoPostSolve = flg;
+  svm->autoposttrain = flg;
   PetscFunctionReturn(0);
 }
 

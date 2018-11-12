@@ -18,7 +18,7 @@ struct _SVMOps {
 struct _p_SVM {
   PETSCHEADER(struct _SVMOps);
 
-  PetscBool autoPostSolve;
+  PetscBool autoposttrain;
   PetscBool setupcalled;
   PetscBool setfromoptionscalled;
     
