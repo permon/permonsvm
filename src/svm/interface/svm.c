@@ -37,7 +37,7 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
 
   svm->setupcalled          = PETSC_FALSE;
   svm->setfromoptionscalled = PETSC_FALSE;
-  svm->autoposttrain        = PETSC_FALSE;
+  svm->autoposttrain        = PETSC_TRUE;
 
   *svm_out = svm;
   PetscFunctionReturn(0);
