@@ -489,6 +489,31 @@ PetscErrorCode SVMGetSeparatingHyperplane(SVM svm,Vec *w,PetscReal *b)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMClassify"
+/*@
+  SVMClassify - Predicts labels of tested samples
+
+  Input Parameter:
++ svm - the SVM
+- Xt_test - matrix of tested samples
+
+  Output Parameter:
+. y - predicted labels of tested samples
+
+  Level: beginner
+
+.seealso: SVMTrain(), SVMTest()
+@*/
+PetscErrorCode SVMClassify(SVM svm,Mat Xt_pred,Vec *y_pred)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( svm->ops->classify(svm,Xt_pred,y_pred) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMTest"
 /*@
   SVMTest - Tests quality of classification model
