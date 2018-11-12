@@ -755,8 +755,8 @@ PetscErrorCode SVMSetFromOptions_Binary(PetscOptionItems *PetscOptionsObject,SVM
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMClassify_Binary"
-PetscErrorCode SVMClassify_Binary(SVM svm,Mat Xt_pred,Vec *y_out)
+#define __FUNCT__ "SVMPredict_Binary"
+PetscErrorCode SVMPredict_Binary(SVM svm,Mat Xt_pred,Vec *y_out)
 {
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
@@ -805,7 +805,7 @@ PetscErrorCode SVMTest_Binary(SVM svm, Mat Xt_test, Vec y_known, PetscInt *N_all
   IS is_eq;
 
   PetscFunctionBeginI;
-  TRY( SVMClassify(svm, Xt_test, &y) );
+  TRY( SVMPredict(svm, Xt_test, &y) );
   TRY( VecWhichEqual(y,y_known,&is_eq) );
   TRY( VecGetSize(y,N_all) );
   TRY( ISGetSize(is_eq,N_eq) );
@@ -841,7 +841,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm->ops->setfromoptions = SVMSetFromOptions_Binary;
   svm->ops->train          = SVMTrain_Binary;
   svm->ops->posttrain      = SVMPostTrain_Binary;
-  svm->ops->classify       = SVMClassify_Binary;
+  svm->ops->predict        = SVMPredict_Binary;
   svm->ops->view           = SVMView_Binary;
 
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingDataset_C",SVMSetTrainingDataset_Binary) );

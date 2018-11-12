@@ -88,7 +88,7 @@ FLLOP_EXTERN PetscErrorCode SVMTrain(SVM svm);
 FLLOP_EXTERN PetscErrorCode SVMPostTrain(SVM svm);
 FLLOP_EXTERN PetscErrorCode SVMSetSeparatingHyperplane(SVM svm,Vec w,PetscReal b);
 FLLOP_EXTERN PetscErrorCode SVMGetSeparatingHyperplane(SVM svm,Vec *w,PetscReal *b);
-FLLOP_EXTERN PetscErrorCode SVMClassify(SVM svm, Mat Xt_test, Vec *y_out);
+FLLOP_EXTERN PetscErrorCode SVMPredict(SVM svm,Mat Xt_test,Vec *y_out);
 FLLOP_EXTERN PetscErrorCode SVMTest(SVM svm, Mat Xt_test, Vec y_known, PetscInt *N_all, PetscInt *N_eq);
 FLLOP_EXTERN PetscErrorCode SVMCrossValidate(SVM svm);
 

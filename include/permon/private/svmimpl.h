@@ -13,7 +13,7 @@ struct _SVMOps {
   PetscErrorCode (*setup)(SVM);
   PetscErrorCode (*train)(SVM);
   PetscErrorCode (*posttrain)(SVM);
-  PetscErrorCode (*classify)(SVM,Mat,Vec *);
+  PetscErrorCode (*predict)(SVM,Mat,Vec *);
   PetscErrorCode (*view)(SVM,PetscViewer);
 };
 
