@@ -534,6 +534,6 @@ PetscErrorCode SVMTest(SVM svm,Mat Xt_test,Vec y_known,PetscInt *N_all,PetscInt 
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-
+  TRY( svm->ops->test(svm,Xt_test,y_known,N_all,N_eq) );
   PetscFunctionReturn(0);
 }
