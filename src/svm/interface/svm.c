@@ -226,6 +226,53 @@ PetscErrorCode SVMGetQPS(SVM svm,QPS *qps)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMSetNfolds"
+/*@
+   SVMSetNfolds - Sets the number of folds
+
+  Input Parameters:
++ svm - the SVM
+- C - C parameter
+
+  Level: beginner
+@*/
+PetscErrorCode SVMSetNfolds(SVM svm,PetscInt nfolds)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveInt(svm,nfolds,2);
+
+  if (nfolds < 2) FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be greater than 1.");
+  svm->nfolds = nfolds;
+  svm->setupcalled = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetNfolds"
+/*@
+  SVMGetNfolds - Gets the number of folds
+
+  Input Parameter:
+. svm - the SVM
+
+  Output Parameter:
+. nfolds - number of folds
+
+  Level: beginner
+@*/
+PetscErrorCode SVMGetNfolds(SVM svm,PetscInt *nfolds)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidRealPointer(nfolds,2);
+  *nfolds = svm->nfolds;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetC"
 /*@
   SVMSetC - Sets the penalty C.
