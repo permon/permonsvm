@@ -278,6 +278,57 @@ PetscErrorCode SVMGetC(SVM svm,PetscReal *C)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMSetLogCBase"
+/*@
+  SVMSetLogCBase - Sets the step C penalty value
+
+  Input Parameters:
++ svm - the SVM
+- LogCBase - step C penalty value
+
+  Level: beginner
+
+.seealso SVMSetC(), SVMSetLogCMin(), SVMSetLogCMax()
+@*/
+PetscErrorCode SVMSetLogCBase(SVM svm,PetscReal LogCBase)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidLogicalCollectiveReal(svm, LogCBase, 2);
+
+  if (LogCBase <= 0) FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
+  svm->LogCBase = LogCBase;
+  svm->setupcalled = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetLogCBase"
+/*@
+  SVMGetC - Gets the step C penalty value
+
+  Input Parameter:
+. svm - the SVM
+
+  Output Parameter:
+. LogCBase - step C penalty value
+
+  Level: beginner
+
+.seealso SVMGetC(), SVMGetLogCMin(), SVMGetLogCMax()
+@*/
+PetscErrorCode SVMGetLogCBase(SVM svm,PetscReal *LogCBase)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidRealPointer(LogCBase, 2);
+  *LogCBase = svm->LogCBase;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetLogCMin"
 /*@
   SVMSetLogCMin - Sets the minimal log C penalty value
@@ -288,7 +339,7 @@ PetscErrorCode SVMGetC(SVM svm,PetscReal *C)
 
   Level: beginner
 
-.seealso SVMSetC(), SVMSetLogCMax()
+.seealso SVMSetC(), SVMSetLogCBase(), SVMSetLogCMax()
 @*/
 PetscErrorCode SVMSetLogCMin(SVM svm,PetscReal LogCMin)
 {
@@ -314,7 +365,7 @@ PetscErrorCode SVMSetLogCMin(SVM svm,PetscReal LogCMin)
 
   Level: beginner
 
-.seealso SVMGetC(), SVMGetLogCMax()
+.seealso SVMGetC(), SVMGetLogCBase(), SVMGetLogCMax()
 @*/
 PetscErrorCode SVMGetLogCMin(SVM svm,PetscReal *LogCMin)
 {

@@ -90,47 +90,6 @@ PetscErrorCode SVMView_Binary(SVM svm, PetscViewer v)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMSetLogCBase"
-/*@
-   SVMSetLogCBase - Sets the step C value.
-
-   Input Parameter:
-+  svm - the SVM
--  LogCBase - step C value
-@*/
-PetscErrorCode SVMSetLogCBase(SVM svm, PetscReal LogCBase)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidLogicalCollectiveReal(svm, LogCBase, 2);
-
-  if (LogCBase <= 0) FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
-  svm->LogCBase = LogCBase;
-  svm->setupcalled = PETSC_FALSE;
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetLogCBase"
-/*@
-   SVMGetC - Gets the step C value.
-
-   Input Parameter:
-.  svm - the SVM
-
-   Output Parameter:
-.  LogCBase - step C value
-@*/
-PetscErrorCode SVMGetLogCBase(SVM svm, PetscReal *LogCBase)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidRealPointer(LogCBase, 2);
-  *LogCBase = svm->LogCBase;
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
 #define __FUNCT__ "SVMSetNfolds"
 /*@
    SVMSetC - Sets the C parameter.
