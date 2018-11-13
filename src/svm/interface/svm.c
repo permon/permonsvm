@@ -601,6 +601,34 @@ PetscErrorCode SVMGetOptionsPrefix(SVM svm,const char *prefix[])
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMSetWarmStart"
+/*@
+  SVMSetWarmStart - Set flag specifying whether warm start is used in cross-validation.
+  It is set to PETSC_TRUE by default.
+
+  Logically Collective on SVM
+
+  Input Parameters:
++ svm - the SVM
+- flg - use warm start in cross-validation
+
+  Options Database Keys:
+. -svm_warm_start - use warm start in cross-validation
+
+  Level: advanced
+
+.seealso PermonSVMType, SVMGetLossType()
+@*/
+PetscErrorCode SVMSetWarmStart(SVM svm, PetscBool flg)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveBool(svm,flg,2);
+  svm->warm_start = flg;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetUp"
 /*@
   SVMSetUp - Sets up the internal data structures for the SVM.
