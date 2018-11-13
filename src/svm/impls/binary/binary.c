@@ -75,6 +75,9 @@ PetscErrorCode SVMDestroy_Binary(SVM svm)
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetQPS_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetSeparatingHyperplane_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetSeparatingHyperplane_C",NULL) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetOptionsPrefix_C",NULL) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetOptionsPrefix_C",NULL) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMAppendOptionsPrefix_C",NULL) );
 
   TRY( QPSDestroy(&svm_binary->qps) );
   TRY( SVMDestroyDefault(svm) );
@@ -332,43 +335,40 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMSetOptionsPrefix"
-PetscErrorCode SVMSetOptionsPrefix(SVM svm,const char prefix[])
+#define __FUNCT__ "SVMSetOptionsPrefix_Binary"
+PetscErrorCode SVMSetOptionsPrefix_Binary(SVM svm,const char prefix[])
 {
   QPS qps;
 
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  TRY( PetscObjectSetOptionsPrefix((PetscObject)svm,prefix) );
+  TRY( PetscObjectSetOptionsPrefix((PetscObject) svm,prefix) );
   TRY( SVMGetQPS(svm,&qps) );
   TRY( QPSSetOptionsPrefix(qps,prefix) );
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMAppendOptionsPrefix"
-PetscErrorCode SVMAppendOptionsPrefix(SVM svm,const char prefix[])
+#define __FUNCT__ "SVMAppendOptionsPrefix_Binary"
+PetscErrorCode SVMAppendOptionsPrefix_Binary(SVM svm,const char prefix[])
 {
   QPS qps;
 
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  TRY( PetscObjectAppendOptionsPrefix((PetscObject)svm,prefix) );
+  TRY( PetscObjectAppendOptionsPrefix((PetscObject) svm,prefix) );
   TRY( SVMGetQPS(svm,&qps) );
   TRY( QPSAppendOptionsPrefix(qps,prefix) );
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMGetOptionsPrefix"
-PetscErrorCode SVMGetOptionsPrefix(SVM svm,const char *prefix[])
+#define __FUNCT__ "SVMGetOptionsPrefix_Binary"
+PetscErrorCode SVMGetOptionsPrefix_Binary(SVM svm,const char *prefix[])
 {
   QPS qps;
 
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  TRY( PetscObjectGetOptionsPrefix((PetscObject)svm,prefix) );
-  TRY(SVMGetQPS(svm,&qps) );
+  TRY( PetscObjectGetOptionsPrefix((PetscObject) svm,prefix) );
+  TRY( SVMGetQPS(svm,&qps) );
   TRY( QPSGetOptionsPrefix(qps,prefix) );
   PetscFunctionReturn(0);
 }
@@ -638,6 +638,9 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetQPS_C",SVMGetQPS_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetSeparatingHyperplane_C",SVMSetSeparatingHyperplane_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetSeparatingHyperplane_C",SVMGetSeparatingHyperplane_Binary) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetOptionsPrefix_C",SVMSetOptionsPrefix_Binary) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetOptionsPrefix_C",SVMGetOptionsPrefix_Binary) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMAppendOptionsPrefix_C",SVMAppendOptionsPrefix_Binary) );
   PetscFunctionReturn(0);
 }
 
