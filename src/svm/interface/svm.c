@@ -529,6 +529,54 @@ PetscErrorCode SVMGetLossType(SVM svm,SVMLossType *type)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMSetOptionsPrefix"
+/*@
+  SVMSetOptionsPrefix - Sets the prefix used for searching for all options of SVM QPS solver in the database
+
+  Collective on SVM
+
+  Input Parameters:
++ SVM - the SVM
+- prefix - the prefix string
+
+  Level: developer
+
+.seealso SVMGetOptionsPrefix(), SVM, QPS
+@*/
+PetscErrorCode SVMSetOptionsPrefix(SVM svm,const char prefix[])
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( PetscTryMethod(svm,"SVMSetOptionsPrefix_C",(SVM,const char []),(svm,prefix)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetOptionsPrefix"
+/*@
+  SVMGetOptionsPrefix - Gets the SVM QPS solver prefix
+
+  Input Parameters:
+. SVM - the SVM
+
+  Output Parameters:
+. prefix - pointer to the prefix string used is returned
+
+  Level: developer
+
+.seealso SVMSetOptionsPrefix(), SVM, QPS
+@*/
+PetscErrorCode SVMGetOptionsPrefix(SVM svm,const char *prefix[])
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( PetscUseMethod(svm,"SVMGetOptionsPrefix_C",(SVM,const char *[]),(svm,prefix)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetUp"
 /*@
   SVMSetUp - Sets up the internal data structures for the SVM.
