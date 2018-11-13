@@ -553,6 +553,30 @@ PetscErrorCode SVMSetOptionsPrefix(SVM svm,const char prefix[])
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMAppendOptionsPrefix"
+/*@
+  SVMAppendOptionsPrefix - Sets the prefix used for searching for all options of SVM QPS in the database
+
+  Collective on SVM
+
+  Input Parameters:
++ SVM - the SVM
+- prefix - the prefix string
+
+  Level: developer
+
+.seealso SVMSetOptionsPrefix(), SVMGetOptionsPrefix(), SVM, QPS
+*/
+PetscErrorCode SVMAppendOptionsPrefix(SVM svm,const char prefix[])
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( PetscTryMethod(svm,"SVMAppendOptionsPrefix_C",(SVM,const char []),(svm,prefix)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMGetOptionsPrefix"
 /*@
   SVMGetOptionsPrefix - Gets the SVM QPS solver prefix
