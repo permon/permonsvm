@@ -278,6 +278,56 @@ PetscErrorCode SVMGetC(SVM svm,PetscReal *C)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMSetLogCMin"
+/*@
+  SVMSetLogCMin - Sets the minimal log C penalty value
+
+  Input Parameter:
++ svm - the SVM
+- LogCMin - minimal log C penalty value
+
+  Level: beginner
+
+.seealso SVMSetC()
+@*/
+PetscErrorCode SVMSetLogCMin(SVM svm, PetscReal LogCMin)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveReal(svm,LogCMin,2);
+  svm->LogCMin = LogCMin;
+  svm->setupcalled = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetLogCMin"
+/*@
+  SVMGetLogCMin - Gets the minimal log C penalty value
+
+  Input Parameter:
+. svm - the SVM
+
+  Output Parameter:
+. LogCMin - minimal log C penalty value
+
+  Level: beginner
+
+.seealso SVMGetC()
+@*/
+PetscErrorCode SVMGetLogCMin(SVM svm, PetscReal *LogCMin)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidRealPointer(LogCMin, 2);
+  *LogCMin = svm->LogCMin;
+  PetscFunctionReturn(0);
+}
+
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetLossType"
 /*@
    SVMSetLossType - Sets the type of the hinge loss function

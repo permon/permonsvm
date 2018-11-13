@@ -90,45 +90,6 @@ PetscErrorCode SVMView_Binary(SVM svm, PetscViewer v)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMSetLogCMin"
-/*@
-   SVMSetC - Sets the minimal C parameter value.
-
-   Input Parameter:
-+  svm - the SVM
--  LogCMin - minimal C parameter value
-@*/
-PetscErrorCode SVMSetLogCMin(SVM svm, PetscReal LogCMin)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidLogicalCollectiveReal(svm, LogCMin, 2);
-  svm->LogCMin = LogCMin;
-  svm->setupcalled = PETSC_FALSE;
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetLogCMin"
-/*@
-   SVMGetC - Gets the minimal C parameter value.
-
-   Input Parameter:
-.  svm - the SVM
-
-   Output Parameter:
-.  LogCMin - minimal C parameter value
-@*/
-PetscErrorCode SVMGetLogCMin(SVM svm, PetscReal *LogCMin)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidRealPointer(LogCMin, 2);
-  *LogCMin = svm->LogCMin;
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
 #define __FUNCT__ "SVMSetLogCBase"
 /*@
    SVMSetLogCBase - Sets the step C value.
