@@ -131,45 +131,6 @@ PetscErrorCode SVMGetLogCBase(SVM svm, PetscReal *LogCBase)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMSetLogCMax"
-/*@
-   SVMSetLogCMax - Sets the max C parameter value.
-
-   Input Parameter:
-+  svm - the SVM
--  LogCMax - max C parameter value
-@*/
-PetscErrorCode SVMSetLogCMax(SVM svm, PetscReal LogCMax)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidLogicalCollectiveReal(svm, LogCMax, 2);
-  svm->LogCMax = LogCMax;
-  svm->setupcalled = PETSC_FALSE;
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetLogCMax"
-/*@
-   SVMGetLogCMax - Gets the max C parameter value.
-
-   Input Parameter:
-.  svm - the SVM
-
-   Output Parameter:
-.  LogCMax - maximal C parameter value
-@*/
-PetscErrorCode SVMGetLogCMax(SVM svm, PetscReal *LogCMax)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidRealPointer(LogCMax, 2);
-  *LogCMax = svm->LogCMax;
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
 #define __FUNCT__ "SVMSetNfolds"
 /*@
    SVMSetC - Sets the C parameter.

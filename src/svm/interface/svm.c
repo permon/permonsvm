@@ -288,9 +288,9 @@ PetscErrorCode SVMGetC(SVM svm,PetscReal *C)
 
   Level: beginner
 
-.seealso SVMSetC()
+.seealso SVMSetC(), SVMSetLogCMax()
 @*/
-PetscErrorCode SVMSetLogCMin(SVM svm, PetscReal LogCMin)
+PetscErrorCode SVMSetLogCMin(SVM svm,PetscReal LogCMin)
 {
 
   PetscFunctionBegin;
@@ -314,9 +314,9 @@ PetscErrorCode SVMSetLogCMin(SVM svm, PetscReal LogCMin)
 
   Level: beginner
 
-.seealso SVMGetC()
+.seealso SVMGetC(), SVMGetLogCMax()
 @*/
-PetscErrorCode SVMGetLogCMin(SVM svm, PetscReal *LogCMin)
+PetscErrorCode SVMGetLogCMin(SVM svm,PetscReal *LogCMin)
 {
 
   PetscFunctionBegin;
@@ -326,6 +326,54 @@ PetscErrorCode SVMGetLogCMin(SVM svm, PetscReal *LogCMin)
   PetscFunctionReturn(0);
 }
 
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetLogCMax"
+/*@
+  SVMSetLogCMax - Sets the maximal log C penalty value
+
+  Input Parameters:
++ svm - the SVM
+- LogCMax - maximal log C penalty value
+
+  Level: beginner
+
+.seealso SVMSetC(), SVMSetLogCMin()
+@*/
+PetscErrorCode SVMSetLogCMax(SVM svm,PetscReal LogCMax)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveReal(svm,LogCMax,2);
+  svm->LogCMax = LogCMax;
+  svm->setupcalled = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetLogCMax"
+/*@
+  SVMGetLogCMax - Gets the maximal log C penalty value
+
+  Input Parameter:
+. svm - the SVM
+
+  Output Parameter:
+. LogCMax - maximal log C penalty value
+
+  Level: beginner
+
+.seealso SVMGetC(), SVMGetLogCMax()
+@*/
+PetscErrorCode SVMGetLogCMax(SVM svm,PetscReal *LogCMax)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidRealPointer(LogCMax,2);
+  *LogCMax = svm->LogCMax;
+  PetscFunctionReturn(0);
+}
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMSetLossType"
