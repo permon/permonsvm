@@ -888,3 +888,45 @@ PetscErrorCode SVMTest(SVM svm,Mat Xt_test,Vec y_known,PetscInt *N_all,PetscInt 
   TRY( svm->ops->test(svm,Xt_test,y_known,N_all,N_eq) );
   PetscFunctionReturn(0);
 }
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGridSearch"
+/*@
+  SVMGridSearch - Chooses best C penalty from manually specified set
+
+  Input Parameter:
++ svm - the SVM
+
+  Level: beginner
+
+.seealso: SVMCrossValidation(), SVMSetLogCBase(), SVMSetLogCMin(), SVMSetLogCMax(), SVM
+@*/
+FLLOP_EXTERN PetscErrorCode SVMGridSearch(SVM svm)
+{
+
+  PetscFunctionBeginI;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( svm->ops->gridsearch(svm) );
+  PetscFunctionReturnI(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMCrossValidation"
+/*@
+  SVMCrossValidation - Performs k-folds cross validation
+
+  Input Parameter:
++ svm - the SVM
+
+  Level: beginner
+
+.seealso: SVMGridSearch(), SVMSetNfolds(), SVM
+@*/
+FLLOP_EXTERN PetscErrorCode SVMCrossValidation(SVM svm)
+{
+
+  PetscFunctionBeginI;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( svm->ops->crossvalidation(svm) );
+  PetscFunctionReturnI(0);
+}

@@ -263,6 +263,10 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   if (svm_binary->setupcalled) PetscFunctionReturn(0);
 
   TRY( SVMGetC(svm,&C) );
+  if (C == -1.0) {
+    TRY( SVMGridSearch(svm) );
+    TRY( SVMGetC(svm,&C) );
+  }
   TRY( SVMGetTrainingDataset(svm,&Xt_training,NULL) );
 
   /* Set QP and QPS solver */
@@ -602,6 +606,26 @@ PetscErrorCode SVMTest_Binary(SVM svm,Mat Xt_test,Vec y_known,PetscInt *N_all,Pe
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMGridSearch_Binary"
+PetscErrorCode SVMGridSearch_Binary(SVM svm)
+{
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
+  PetscFunctionBegin;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMCrossValidation_Binary"
+PetscErrorCode SVMCrossValidation_Binary(SVM svm)
+{
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
+  PetscFunctionBegin;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMCreate_Binary"
 PetscErrorCode SVMCreate_Binary(SVM svm)
 {
@@ -622,15 +646,17 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
 
   TRY( PetscMemzero(svm->y_map,2*sizeof(PetscScalar)) );
 
-  svm->ops->setup          = SVMSetUp_Binary;
-  svm->ops->reset          = SVMReset_Binary;
-  svm->ops->destroy        = SVMDestroy_Binary;
-  svm->ops->setfromoptions = SVMSetFromOptions_Binary;
-  svm->ops->train          = SVMTrain_Binary;
-  svm->ops->posttrain      = SVMPostTrain_Binary;
-  svm->ops->predict        = SVMPredict_Binary;
-  svm->ops->test           = SVMTest_Binary;
-  svm->ops->view           = SVMView_Binary;
+  svm->ops->setup           = SVMSetUp_Binary;
+  svm->ops->reset           = SVMReset_Binary;
+  svm->ops->destroy         = SVMDestroy_Binary;
+  svm->ops->setfromoptions  = SVMSetFromOptions_Binary;
+  svm->ops->train           = SVMTrain_Binary;
+  svm->ops->posttrain       = SVMPostTrain_Binary;
+  svm->ops->predict         = SVMPredict_Binary;
+  svm->ops->test            = SVMTest_Binary;
+  svm->ops->crossvalidation = SVMCrossValidation_Binary;
+  svm->ops->gridsearch      = SVMGridSearch_Binary;
+  svm->ops->view            = SVMView_Binary;
 
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingDataset_C",SVMSetTrainingDataset_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C",SVMGetTrainingDataset_Binary) );
