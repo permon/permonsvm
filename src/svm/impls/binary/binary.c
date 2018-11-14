@@ -384,8 +384,8 @@ PetscErrorCode SVMTrain_Binary(SVM svm)
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
   PetscFunctionBegin;
-  TRY( PetscPrintf(PetscObjectComm((PetscObject)svm),"### PermonSVM:   train with loss_type %s, C = %.2e\n",SVMLossTypes[svm->loss_type],svm->C) );
   TRY( SVMSetUp(svm) );
+  TRY( PetscPrintf(PetscObjectComm((PetscObject)svm),"### PermonSVM:   train with loss_type %s, C = %.2e\n",SVMLossTypes[svm->loss_type],svm->C) );
   TRY( QPSSetAutoPostSolve(svm_binary->qps,PETSC_FALSE) );
   TRY( QPSSolve(svm_binary->qps) );
   if (svm->autoposttrain) {
@@ -609,9 +609,40 @@ PetscErrorCode SVMTest_Binary(SVM svm,Mat Xt_test,Vec y_known,PetscInt *N_all,Pe
 #define __FUNCT__ "SVMGridSearch_Binary"
 PetscErrorCode SVMGridSearch_Binary(SVM svm)
 {
-  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+  MPI_Comm    comm;
+  PetscMPIInt rank;
+
+  PetscReal logC_min,logC_max,logC_base;
+  PetscReal C_min;
+
+  PetscReal *c_arr = NULL;
+  PetscInt  n,i;
 
   PetscFunctionBegin;
+  TRY( PetscObjectGetComm((PetscObject) svm,&comm) );
+  TRY( MPI_Comm_rank(comm,&rank) );
+
+  TRY( SVMGetLogCMin(svm,&logC_min) );
+  TRY( SVMGetLogCMax(svm,&logC_max) );
+  TRY( SVMGetLogCBase(svm,&logC_base) );
+
+  C_min = PetscPowReal(logC_base,logC_min);
+  n = (PetscInt) (logC_max - logC_min + 1);
+  TRY( PetscMalloc1(n,&c_arr) );
+
+  c_arr[0] = C_min;
+  for (i = 1; i < n; ++i) {
+    c_arr[i] = c_arr[i-1] * logC_base;
+  }
+
+  TRY( PetscPrintf(comm,"### PermonSVM: following values of C will be tested:\n") );
+  if (!rank) {
+    TRY( PetscRealView(n,c_arr,PETSC_VIEWER_STDOUT_SELF) );
+  }
+
+  TRY( SVMCrossValidation(svm) );
+  svm->C = 1.0;
+  TRY( PetscFree(c_arr) );
   PetscFunctionReturn(0);
 }
 
