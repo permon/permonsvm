@@ -453,8 +453,92 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
 {
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
-  PetscFunctionBegin;
+  QP        qp;
+  QPS       qps;
 
+  Mat       H,HpE,mats[2];
+  Vec       e,x_init;
+
+  PetscReal C;
+  Vec       lb,ub;
+
+  Mat       Xt_training,X_training;
+  Vec       y;
+
+  PetscInt  n,m,N;
+
+  PetscFunctionBegin;
+  if (svm_binary->setupcalled) PetscFunctionReturn(0);
+
+  TRY( SVMGetC(svm,&C) );
+  TRY( SVMGetTrainingDataset(svm,&Xt_training,NULL) );
+
+  /* Set QP and QPS solver */
+  TRY( SVMGetQPS(svm,&qps) );
+  TRY( QPSGetQP(qps,&qp) );
+
+  /* Remap y to -1,1 values if needed */
+  TRY( SVMSetUp_Remapy_Binary_Private(svm) );
+  y = svm_binary->y_inner;
+
+  /* Create Hessian */
+  TRY( PermonMatTranspose(Xt_training,MAT_TRANSPOSE_CHEAPEST,&X_training) );
+  TRY( MatCreateNormal(X_training,&H) );  /* H = X^t * X */
+  TRY( MatDiagonalScale(H,y,y) );         /* H = diag(y)*H*diag(y) */
+
+  /* Create right hand side vector*/
+  TRY( VecDuplicate(y,&e) );  /* creating vector e same size and type as y_training */
+  TRY( VecSet(e,1.0) );
+  TRY( QPSetRhs(qp,e) );      /* set linear term of QP problem */
+
+  /* Create box constraints */
+  TRY( VecDuplicate(y,&lb) );  /* create lower bound constraint vector */
+  TRY( VecSet(lb,0.) );
+
+  if (svm->loss_type == SVM_L1) {
+    TRY( VecDuplicate(lb,&ub) );
+    TRY( VecSet(ub,C) );
+  } else {
+    /* 1 / 2t = C / 2 => t = 1 / C */
+    /* H = H + t * I */
+    /* https://link.springer.com/article/10.1134/S1054661812010129 */
+    /* http://www.lib.kobe-u.ac.jp/repository/90000225.pdf */
+
+    TRY( MatGetLocalSize(H,&m,&n) );
+    TRY( MatGetSize(H,&N,NULL) );
+    TRY( MatCreateIdentity(PetscObjectComm((PetscObject) svm),m,n,N,&svm_binary->D) );
+    TRY( MatScale(svm_binary->D,1. / C) );
+
+    mats[0] = svm_binary->D;
+    mats[1] = H;
+    TRY( MatCreateSum(PetscObjectComm((PetscObject)svm),2,mats,&HpE) );
+    TRY( MatDestroy(&H) );
+    H  = HpE;
+    ub = NULL;
+  }
+
+  TRY( VecDuplicate(lb,&x_init) );
+  TRY( VecSet(x_init,C - 10 * PETSC_MACHINE_EPSILON) );
+
+  TRY( QPSetInitialVector(qp,x_init) );
+  TRY( VecDestroy(&x_init) );
+
+  TRY( QPSetOperator(qp,H) );
+  TRY( QPSetBox(qp,lb,ub) );
+
+  if (svm->setfromoptionscalled) {
+    TRY( QPSSetFromOptions(qps) );
+  }
+  TRY( QPSSetUp(qps) );
+
+  /* decreasing reference counts */
+  TRY( MatDestroy(&X_training) );
+  TRY( MatDestroy(&H) );
+  TRY( VecDestroy(&e) );
+  TRY( VecDestroy(&lb) );
+  TRY( VecDestroy(&ub) );
+
+  svm->setupcalled = PETSC_TRUE;
   PetscFunctionReturn(0);
 }
 
@@ -489,7 +573,7 @@ PetscErrorCode SVMSetUp(SVM svm)
   TRY( SVMGetTrainingDataset(svm, &Xt, &y) );
 
   /* map y to -1,1 values if needed */
-  TRY( SVMSetUp_Remapy_Private(svm) );
+  TRY( SVMSetUp_Remapy_Binary_Private(svm) );
 
   if (C == PETSC_DECIDE || C == PETSC_DEFAULT) {
     TRY( SVMCrossValidate(svm) );
