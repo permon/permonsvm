@@ -257,12 +257,30 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   Mat       Xt_training,X_training;
   Vec       y;
 
-  PetscInt  n,m,N;
+  PetscInt    n,m,N;
+  SVMLossType loss_type;
 
   PetscFunctionBegin;
   if (svm_binary->setupcalled) PetscFunctionReturn(0);
-
+  TRY( SVMGetLossType(svm,&loss_type) );
   TRY( SVMGetC(svm,&C) );
+
+  if (svm->warm_start && svm->posttraincalled) {
+    if (loss_type == SVM_L1)
+    {
+      TRY( SVMGetQPS(svm,&qps) );
+      TRY( QPSGetQP(qps,&qp) );
+      TRY( QPGetBox(qp,NULL,&ub) );
+      TRY( VecSet(ub,C) );
+    } else {
+      TRY( MatScale(svm_binary->D,svm->C_old) );
+      TRY( MatScale(svm_binary->D,1. / C) );
+    }
+    svm->posttraincalled = PETSC_FALSE;
+    svm->setupcalled = PETSC_TRUE;
+    PetscFunctionReturn(0);
+  }
+
   if (C == -1.0) {
     TRY( SVMGridSearch(svm) );
     TRY( SVMGetC(svm,&C) );
@@ -291,7 +309,7 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   TRY( VecDuplicate(y,&lb) );  /* create lower bound constraint vector */
   TRY( VecSet(lb,0.) );
 
-  if (svm->loss_type == SVM_L1) {
+  if (loss_type == SVM_L1) {
     TRY( VecDuplicate(lb,&ub) );
     TRY( VecSet(ub,C) );
   } else {

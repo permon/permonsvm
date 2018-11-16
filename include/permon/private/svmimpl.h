@@ -28,7 +28,7 @@ struct _p_SVM {
   PetscBool setupcalled;
   PetscBool setfromoptionscalled;
     
-  PetscReal C, LogCMin, LogCMax, LogCBase;
+  PetscReal C,C_old,LogCMin,LogCMax,LogCBase;
   PetscInt nfolds;
   SVMLossType loss_type;
 

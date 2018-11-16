@@ -29,6 +29,7 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
   TRY( PetscHeaderCreate(svm,SVM_CLASSID,"SVM","SVM Classifier","SVM",comm,SVMDestroy,SVMView) );
 
   svm->C        = 1.;
+  svm->C_old    = 1.;
   svm->LogCBase = 2.;
   svm->LogCMin  = -2.;
   svm->LogCMax  = 2.;
@@ -62,9 +63,20 @@ PetscErrorCode SVMReset(SVM svm)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
+  svm->C        = 1.;
+  svm->C_old    = 1.;
+  svm->LogCBase = 2.;
+  svm->LogCMin  = -2.;
+  svm->LogCMax  = 2.;
+
+  svm->nfolds   = 5;
+
   TRY( (*svm->ops->reset)(svm) );
 
-  svm->posttraincalled = PETSC_FALSE;
+  svm->setupcalled          = PETSC_FALSE;
+  svm->setfromoptionscalled = PETSC_FALSE;
+  svm->autoposttrain        = PETSC_TRUE;
+  svm->posttraincalled      = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
 
@@ -292,11 +304,14 @@ PetscErrorCode SVMSetC(SVM svm,PetscReal C)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidLogicalCollectiveReal(svm,C,2);
 
+  if (svm->C == C) PetscFunctionReturn(0);
+
   if (C <= 0 && C != PETSC_DECIDE && C != PETSC_DEFAULT) {
     FLLOP_SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
   }
 
-  svm->C = C;
+  svm->C_old = svm->C;
+  svm->C     = C;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
