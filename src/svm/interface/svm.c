@@ -937,11 +937,11 @@ FLLOP_EXTERN PetscErrorCode SVMGridSearch(SVM svm)
 
 .seealso: SVMGridSearch(), SVMSetNfolds(), SVM
 @*/
-FLLOP_EXTERN PetscErrorCode SVMCrossValidation(SVM svm)
+FLLOP_EXTERN PetscErrorCode SVMCrossValidation(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal score[])
 {
 
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  TRY( svm->ops->crossvalidation(svm) );
+  TRY( svm->ops->crossvalidation(svm,c_arr,m,score) );
   PetscFunctionReturnI(0);
 }

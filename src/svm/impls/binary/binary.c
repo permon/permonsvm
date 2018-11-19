@@ -633,7 +633,8 @@ PetscErrorCode SVMGridSearch_Binary(SVM svm)
   PetscReal logC_min,logC_max,logC_base;
   PetscReal C_min;
 
-  PetscReal *c_arr = NULL;
+  PetscReal *c_arr,*score;
+  PetscReal C,score_max;
   PetscInt  n,i;
 
   PetscFunctionBegin;
@@ -645,32 +646,121 @@ PetscErrorCode SVMGridSearch_Binary(SVM svm)
   TRY( SVMGetLogCBase(svm,&logC_base) );
 
   C_min = PetscPowReal(logC_base,logC_min);
+
   n = (PetscInt) (logC_max - logC_min + 1);
   TRY( PetscMalloc1(n,&c_arr) );
+  TRY( PetscMalloc1(n,&score) );
 
   c_arr[0] = C_min;
   for (i = 1; i < n; ++i) {
     c_arr[i] = c_arr[i-1] * logC_base;
   }
+  TRY( PetscMemzero(score,n * sizeof(PetscReal)) );
 
   TRY( PetscPrintf(comm,"### PermonSVM: following values of C will be tested:\n") );
   if (!rank) {
     TRY( PetscRealView(n,c_arr,PETSC_VIEWER_STDOUT_SELF) );
   }
 
-  TRY( SVMCrossValidation(svm) );
-  svm->C = 1.0;
+  TRY( SVMCrossValidation(svm,c_arr,n,score) );
+
+  C = c_arr[0];
+  score_max = score[0];
+  for (i = 1; i < n; ++i) {
+    if (score[i] > score_max) {
+      score_max = score[i];
+      C = c_arr[i];
+    }
+  }
+
+  svm->C = C;
   TRY( PetscFree(c_arr) );
+  TRY( PetscFree(score) );
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMCrossValidation_Binary"
-PetscErrorCode SVMCrossValidation_Binary(SVM svm)
+PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal score[])
 {
-  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+  MPI_Comm comm;
+  SVM cross_svm;
+
+  QP  qp;
+  QPS qps;
+
+  Mat      Xt,Xt_training,Xt_test;
+  Vec      x,y,y_training,y_test;
+
+  PetscInt lo,hi,first,n;
+  PetscInt i,j,nfolds;
+
+  IS       is_training,is_test;
+  PetscInt N_eq,N_all;
+
+  const char *prefix;
 
   PetscFunctionBegin;
+  TRY( PetscObjectGetComm((PetscObject) svm,&comm) );
+  TRY( SVMGetNfolds(svm,&nfolds) );
+
+  TRY( SVMGetTrainingDataset(svm,&Xt,&y) );
+  TRY( MatGetOwnershipRange(Xt,&lo,&hi) );
+
+  TRY( SVMCreate(PetscObjectComm((PetscObject)svm),&cross_svm) );
+  TRY( SVMSetType(cross_svm,SVM_BINARY) );
+  TRY( SVMGetOptionsPrefix(svm,&prefix) );
+  TRY( SVMAppendOptionsPrefix(cross_svm,"cross_") );
+  TRY( SVMSetFromOptions(cross_svm) );
+
+  TRY( ISCreate(PetscObjectComm((PetscObject) svm),&is_test) );
+  TRY( ISSetType(is_test,ISSTRIDE) );
+
+  for (i = 0; i < nfolds; ++i) {
+    TRY( PetscPrintf(comm,"### PermonSVM: Running k-folds cross validation on fold %d of %d\n",i+1,nfolds) );
+
+    first = lo + i - 1;
+    if (first < lo) first += nfolds;
+    n = (hi + nfolds - first - 1) / nfolds;
+
+    TRY( ISStrideSetStride(is_test,n,first,nfolds) );
+    TRY( MatCreateSubMatrix(Xt,is_test,NULL,MAT_INITIAL_MATRIX,&Xt_test) );
+    TRY( VecGetSubVector(y,is_test,&y_test) );
+
+    TRY( ISComplement(is_test,lo,hi,&is_training) );
+    TRY( MatCreateSubMatrix(Xt,is_training,NULL,MAT_INITIAL_MATRIX,&Xt_training) );
+    TRY( VecGetSubVector(y,is_training,&y_training) );
+
+    TRY( SVMSetTrainingDataset(cross_svm,Xt_training,y_training) );
+    for (j = 0; j < m; ++j) {
+      TRY( SVMSetC(cross_svm,c_arr[j]) );
+
+      if (!cross_svm->warm_start) {
+        TRY( SVMGetQPS(cross_svm,&qps) );
+        TRY( QPSGetSolvedQP(qps,&qp) );
+        if (qp) {
+          Vec ub;
+          TRY( QPGetSolutionVector(qp,&x) );
+          TRY( VecSet(x,c_arr[j] - 10 * PETSC_MACHINE_EPSILON) );
+          TRY( QPGetBox(qp,NULL,&ub) );
+          if (ub) { TRY( VecSet(ub,c_arr[j]) ); }
+        }
+        cross_svm->posttraincalled = PETSC_FALSE;
+      }
+
+      TRY( SVMTrain(cross_svm) );
+      TRY( SVMTest(cross_svm,Xt_test,y_test,&N_all,&N_eq) );
+
+      score[j] += ((PetscReal) N_eq) / ((PetscReal) N_all);
+    }
+
+    TRY( SVMReset(cross_svm) );
+  }
+
+  for (i = 0; i < m; ++i) score[i] /= (PetscReal) nfolds;
+
+  TRY( ISDestroy(&is_test) );
+  TRY( SVMDestroy(&cross_svm) );
   PetscFunctionReturn(0);
 }
 

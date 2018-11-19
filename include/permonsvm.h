@@ -93,6 +93,6 @@ FLLOP_EXTERN PetscErrorCode SVMTest(SVM svm, Mat Xt_test, Vec y_known, PetscInt 
 FLLOP_EXTERN PetscErrorCode SVMCrossValidate(SVM svm);
 
 FLLOP_EXTERN PetscErrorCode SVMGridSearch(SVM svm);
-FLLOP_EXTERN PetscErrorCode SVMCrossValidation(SVM svm);
+FLLOP_EXTERN PetscErrorCode SVMCrossValidation(SVM svm,PetscReal [],PetscInt,PetscReal []);
 #endif
 
