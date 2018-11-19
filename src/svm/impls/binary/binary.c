@@ -432,7 +432,6 @@ PetscErrorCode SVMTrain_Binary(SVM svm)
 
   PetscFunctionBegin;
   TRY( SVMSetUp(svm) );
-  TRY( PetscPrintf(PetscObjectComm((PetscObject)svm),"### PermonSVM:   train with loss_type %s, C = %.2e\n",SVMLossTypes[svm->loss_type],svm->C) );
   TRY( QPSSetAutoPostSolve(svm_binary->qps,PETSC_FALSE) );
   TRY( QPSSolve(svm_binary->qps) );
   if (svm->autoposttrain) {
