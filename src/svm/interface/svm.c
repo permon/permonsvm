@@ -685,7 +685,9 @@ PetscErrorCode SVMView(SVM svm,PetscViewer v)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-
+  if (svm->ops->view) {
+    TRY( svm->ops->view(svm,v) );
+  }
   PetscFunctionReturn(0);
 }
 

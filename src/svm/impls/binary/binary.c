@@ -6,26 +6,28 @@ PetscClassId SVM_CLASSID;
 const char *const SVMLossTypes[]={"L1","L2","SVMLossType","SVM_",0};
 
 typedef struct {
-    PetscBool autoPostSolve;
-    PetscBool setupcalled;
-    PetscBool setfromoptionscalled;
+  PetscBool autoPostSolve;
+  PetscBool setupcalled;
+  PetscBool setfromoptionscalled;
 
-    PetscReal C, LogCMin, LogCMax, LogCBase;
-    PetscInt nfolds;
-    SVMLossType loss_type;
+  PetscReal C, LogCMin, LogCMax, LogCBase;
+  PetscInt nfolds;
+  SVMLossType loss_type;
 
-    PetscBool warm_start;
+  PetscBool warm_start;
 
-    Mat Xt_training;
-    Vec y_training;
-    Vec y_inner;
-    PetscScalar y_map[2];
-    Mat D;
+  Mat Xt_training;
+  Vec y_training;
+  Vec y_inner;
+  PetscScalar y_map[2];
+  Mat D;
 
-    Vec w;
-    PetscScalar b;
+  Vec w;
+  PetscScalar b;
 
-    QPS qps;
+  QPS qps;
+
+  PetscInt N_eq,N_all;
 } SVM_Binary;
 
 typedef struct {
@@ -90,9 +92,20 @@ PetscErrorCode SVMDestroy_Binary(SVM svm)
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMView_Binary"
-PetscErrorCode SVMView_Binary(SVM svm, PetscViewer v)
+PetscErrorCode SVMView_Binary(SVM svm,PetscViewer v)
 {
+  SVM_Binary *svm_binary = (SVM_Binary *) svm;
+
+  PetscInt   N_eq,N_all;
+  PetscBool  isascii;
+
   PetscFunctionBegin;
+  TRY( PetscObjectTypeCompare((PetscObject)v,PETSCVIEWERASCII,&isascii) );
+  if (isascii) {
+    N_all = svm_binary->N_all;
+    N_eq  = svm_binary->N_eq;
+    TRY( PetscViewerASCIIPrintf(v,"SVM: %d of %d test samples classified correctly (%.2f%%)\n",N_eq,N_all,((PetscReal)N_eq)/((PetscReal)N_all)*100.0) );
+  }
   PetscFunctionReturn(0);
 }
 
@@ -628,8 +641,14 @@ PetscErrorCode SVMPredict_Binary(SVM svm,Mat Xt_pred,Vec *y_out)
 #define __FUNCT__ "SVMTest_Binary"
 PetscErrorCode SVMTest_Binary(SVM svm,Mat Xt_test,Vec y_known,PetscInt *N_all,PetscInt *N_eq)
 {
+  SVM_Binary *svm_binary = (SVM_Binary *) svm;
+
   Vec y;
   IS  is_eq;
+
+  PetscViewer       v;
+  PetscViewerFormat format;
+  PetscBool         view;
 
   PetscFunctionBegin;
   TRY( SVMPredict(svm,Xt_test,&y) );
@@ -638,6 +657,18 @@ PetscErrorCode SVMTest_Binary(SVM svm,Mat Xt_test,Vec y_known,PetscInt *N_all,Pe
   TRY( ISGetSize(is_eq,N_eq) );
   TRY( VecDestroy(&y) );
   TRY( ISDestroy(&is_eq) );
+
+  svm_binary->N_all = *N_all;
+  svm_binary->N_eq  = *N_eq;
+
+  TRY( PetscOptionsGetViewer(((PetscObject)svm)->comm,((PetscObject)svm)->prefix,"-svm_view",&v,&format,&view) );
+
+  if (view) {
+    TRY( PetscViewerPushFormat(v,format) );
+    TRY( SVMView(svm,v) );
+    TRY( PetscViewerPopFormat(v) );
+    TRY( PetscViewerDestroy(&v) );
+  }
   PetscFunctionReturn(0);
 }
 
