@@ -705,11 +705,6 @@ PetscErrorCode SVMGridSearch_Binary(SVM svm)
   }
   TRY( PetscMemzero(score,n * sizeof(PetscReal)) );
 
-  TRY( PetscPrintf(comm,"### PermonSVM: following values of C will be tested:\n") );
-  if (!rank) {
-    TRY( PetscRealView(n,c_arr,PETSC_VIEWER_STDOUT_SELF) );
-  }
-
   TRY( SVMCrossValidation(svm,c_arr,n,score) );
 
   C = c_arr[0];
