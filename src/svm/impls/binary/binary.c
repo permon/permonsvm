@@ -36,10 +36,6 @@ static PetscErrorCode SVMMonitorCreateMtx_Binary(void **,SVM);
 static PetscErrorCode SVMMonitorDestroyMtx_Binary(void **);
 static PetscErrorCode SVMMonitorDefault_Binary(QPS,PetscInt,PetscReal,void *);
 
-static PetscErrorCode SVMQPSConvergedTrainRateCreate(SVM svm,void **ctx);
-static PetscErrorCode SVMQPSConvergedTrainRateDestroy(void *ctx);
-static PetscErrorCode SVMQPSConvergedTrainRate(QPS qps,QP qp,PetscInt it,PetscReal rnorm,KSPConvergedReason *reason,void *cctx);
-
 #undef __FUNCT__
 #define __FUNCT__ "SVMReset_Binary"
 PetscErrorCode SVMReset_Binary(SVM svm)
@@ -912,118 +908,5 @@ PetscErrorCode SVMMonitorDefault_Binary(QPS qps,PetscInt it,PetscReal rnorm,void
   TRY( PetscViewerASCIIPrintf(v,",\tNSV=%3D\n",nsv) );
 
   TRY( ISDestroy(&is_sv) );
-  PetscFunctionReturn(0);
-}
-
-typedef struct {
-  SVM svm;
-  void *defaultCtx;
-} ConvergedTrainRateCtx;
-
-#undef __FUNCT__
-#define __FUNCT__ "SVMQPSConvergedTrainRateCreate"
-static PetscErrorCode SVMQPSConvergedTrainRateCreate(SVM svm,void **ctx)
-{
-  ConvergedTrainRateCtx *cctx;
-
-  PetscFunctionBegin;
-  PetscNew(&cctx);
-  *ctx = cctx;
-  cctx->svm = svm;
-  TRY( QPSConvergedDefaultCreate(&cctx->defaultCtx) );
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "SVMQPSConvergedTrainRateDestroy"
-static PetscErrorCode SVMQPSConvergedTrainRateDestroy(void *ctx)
-{
-  ConvergedTrainRateCtx *cctx = (ConvergedTrainRateCtx*) ctx;
-
-  PetscFunctionBegin;
-  TRY( QPSConvergedDefaultDestroy(cctx->defaultCtx) );
-  TRY( PetscFree(cctx) );
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "SVMQPSConvergedTrainRate"
-static PetscErrorCode SVMQPSConvergedTrainRate(QPS qps,QP qp,PetscInt it,PetscReal rnorm,KSPConvergedReason *reason,void *cctx)
-{
-  SVM svm = ((ConvergedTrainRateCtx*) cctx)->svm;
-  void *ctx = ((ConvergedTrainRateCtx*) cctx)->defaultCtx;
-  Mat Xt;
-  Vec y,y_orig;
-  PetscInt N_all, N_eq;
-  PetscReal rate,func,margin;
-  IS is_sv;
-  Vec o, y_sv, Xtw, Xtw_sv, t;
-  PetscInt len_sv;
-  Vec Yz, z, w;
-  PetscScalar b;
-  Vec grad,rhs;
-
-
-  PetscFunctionBegin;
-  TRY( SVMGetTrainingDataset(svm, &Xt, &y_orig) );
-  y = svm->y_inner;
-
-  /* reconstruct w from dual solution z */
-  {
-    TRY( QPGetSolutionVector(qp, &z) );
-    TRY( VecDuplicate(z, &Yz) );
-    TRY( VecPointwiseMult(Yz, y, z) );            /* YZ = Y*z = y.*z */
-    TRY( MatCreateVecs(Xt, &w, NULL) );           /* create vector w such that Xt*w works */
-    TRY( MatMultTranspose(Xt, Yz, w) );           /* Xt = X^t, w = Xt' * Yz = (X^t)^t * Yz = X * Yz */
-
-    svm->w = w;
-
-    PetscScalar r;
-    VecDot(z, y, &r);
-    PetscPrintf(MPI_COMM_WORLD, "Be * y = %f\n", r);
-  }
-
-  /* reconstruct b from dual solution z */
-  {
-    TRY( VecDuplicate(z, &o) );
-    TRY( VecZeroEntries(o) );
-    TRY( MatCreateVecs(Xt, NULL, &Xtw) );
-
-    TRY( VecWhichGreaterThan(z, o, &is_sv) );
-    TRY( ISGetSize(is_sv, &len_sv) );
-    TRY( MatMult(Xt, w, Xtw) );
-    TRY( VecGetSubVector(y, is_sv, &y_sv) );      /* y_sv = y(is_sv) */
-    TRY( VecGetSubVector(Xtw, is_sv, &Xtw_sv) );  /* Xtw_sv = Xtw(is_sv) */
-    TRY( VecDuplicate(y_sv, &t) );
-    TRY( VecWAXPY(t, -1.0, Xtw_sv, y_sv) );       /* t = y_sv - Xtw_sv */
-    TRY( VecRestoreSubVector(y, is_sv, &y_sv) );
-    TRY( VecRestoreSubVector(Xtw, is_sv, &Xtw_sv) );
-    TRY( VecSum(t, &b) );                         /* b = sum(t) */
-    b /= len_sv;                                  /* b = b / length(is_sv) */
-
-    svm->b = b;
-  }
-
-  TRY( SVMTest(svm, Xt, y_orig, &N_all, &N_eq) );
-  rate = ((PetscReal)N_eq)/((PetscReal)N_all);
-
-  /* compute value of the functional !!!MPGP ONLY!!! */
-  TRY( QPGetRhs(qp,&rhs) );
-  TRY( VecDuplicate(qps->work[3],&grad) );
-  TRY( VecWAXPY(grad,-1.0,rhs,qps->work[3]) );
-  TRY( VecDot(z,grad,&func) );
-  func = .5*func;
-  TRY( VecNorm(w,NORM_2,&margin) );
-  margin = 2.0/margin;
-  TRY( PetscPrintf(PETSC_COMM_WORLD, "it= %d RATE= %.8f% rnorm= %.8e func= %.8e margin= %.8e\n",it,rate*100.0,rnorm,func,margin) );
-  TRY( QPSConvergedDefault(qps,qp,it,rnorm,reason,ctx) );
-
-  TRY( ISDestroy(&is_sv) );
-  TRY( VecDestroy(&o) );
-  TRY( VecDestroy(&t) );
-  TRY( VecDestroy(&Yz) );
-  TRY( VecDestroy(&Xtw) );
-  TRY( VecDestroy(&w) );
-  TRY( VecDestroy(&grad) );
   PetscFunctionReturn(0);
 }
