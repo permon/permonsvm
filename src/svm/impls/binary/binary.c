@@ -760,8 +760,6 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
   TRY( ISSetType(is_test,ISSTRIDE) );
 
   for (i = 0; i < nfolds; ++i) {
-    TRY( PetscPrintf(comm,"### PermonSVM: Running k-folds cross validation on fold %d of %d\n",i+1,nfolds) );
-
     first = lo + i - 1;
     if (first < lo) first += nfolds;
     n = (hi + nfolds - first - 1) / nfolds;
