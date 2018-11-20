@@ -17,6 +17,7 @@ typedef struct {
   PetscScalar b;
 
   QPS         qps;
+  PetscInt    svm_mod;
 
   PetscInt    N_eq,N_all;
 } SVM_Binary;
@@ -49,12 +50,14 @@ PetscErrorCode SVMReset_Binary(SVM svm)
 
   PetscMemzero(svm_binary->y_map,2 * sizeof(PetscScalar) );
   svm_binary->b = PETSC_INFINITY;
-  
+
   svm_binary->w           = NULL;
   svm_binary->Xt_training = NULL;
   svm_binary->y_training  = NULL;
   svm_binary->y_inner     = NULL;
   svm_binary->D           = NULL;
+
+  svm_binary->svm_mod     = 1;
   PetscFunctionReturn(0);
 }
 
@@ -244,6 +247,31 @@ PetscErrorCode SVMSetQPS_Binary(SVM svm,QPS qps)
   TRY( PetscObjectReference((PetscObject) qps) );
 
   svm->setupcalled = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetMod_Binary"
+PetscErrorCode SVMSetMod_Binary(SVM svm,PetscInt mod)
+{
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
+  PetscFunctionBegin;
+  if (svm_binary->svm_mod != mod) {
+    svm_binary->svm_mod = mod;
+    svm->setupcalled = PETSC_FALSE;
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetMod_Binary"
+PetscErrorCode SVMGetMod_Binary(SVM svm,PetscInt *mod)
+{
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
+  PetscFunctionBegin;
+  *mod = svm_binary->svm_mod;
   PetscFunctionReturn(0);
 }
 
@@ -542,7 +570,7 @@ PetscErrorCode SVMPostTrain_Binary(SVM svm)
 {
   Vec       w;
   PetscReal b;
-  
+
   PetscFunctionBegin;
   if (svm->posttraincalled) PetscFunctionReturn(0);
 
@@ -796,6 +824,8 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm_binary->y_training  = NULL;
   svm_binary->y_inner     = NULL;
 
+  svm_binary->svm_mod     = 1;
+
   TRY( PetscMemzero(svm_binary->y_map,2 * sizeof(PetscScalar)) );
 
   svm->ops->setup           = SVMSetUp_Binary;
@@ -814,6 +844,8 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C",SVMGetTrainingDataset_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetQPS_C",SVMSetQPS_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetQPS_C",SVMGetQPS_Binary) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetMod_C",SVMSetMod_Binary) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetMod_C",SVMGetMod_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetSeparatingHyperplane_C",SVMSetSeparatingHyperplane_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetSeparatingHyperplane_C",SVMGetSeparatingHyperplane_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetOptionsPrefix_C",SVMSetOptionsPrefix_Binary) );
