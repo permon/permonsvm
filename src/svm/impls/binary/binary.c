@@ -6,28 +6,19 @@ PetscClassId SVM_CLASSID;
 const char *const SVMLossTypes[]={"L1","L2","SVMLossType","SVM_",0};
 
 typedef struct {
-  PetscBool autoPostSolve;
-  PetscBool setupcalled;
-  PetscBool setfromoptionscalled;
+  Mat         Xt_training;
+  Vec         y_training;
+  Vec         y_inner;
 
-  PetscReal C, LogCMin, LogCMax, LogCBase;
-  PetscInt nfolds;
-  SVMLossType loss_type;
-
-  PetscBool warm_start;
-
-  Mat Xt_training;
-  Vec y_training;
-  Vec y_inner;
   PetscScalar y_map[2];
-  Mat D;
+  Mat         D;
 
-  Vec w;
+  Vec         w;
   PetscScalar b;
 
-  QPS qps;
+  QPS         qps;
 
-  PetscInt N_eq,N_all;
+  PetscInt    N_eq,N_all;
 } SVM_Binary;
 
 typedef struct {
@@ -56,7 +47,7 @@ PetscErrorCode SVMReset_Binary(SVM svm)
   TRY( VecDestroy(&svm_binary->y_training) );
   TRY( VecDestroy(&svm_binary->y_inner) );
 
-  PetscMemzero(svm_binary->y_map,2*sizeof(PetscScalar) );
+  PetscMemzero(svm_binary->y_map,2 * sizeof(PetscScalar) );
   svm_binary->b = PETSC_INFINITY;
   
   svm_binary->w           = NULL;
@@ -130,7 +121,7 @@ PetscErrorCode SVMSetTrainingDataset_Binary(SVM svm,Mat Xt_training,Vec y_traini
   svm_binary->y_training = y_training;
   TRY( PetscObjectReference((PetscObject) y_training) );
 
-  svm_binary->setupcalled = PETSC_FALSE;
+  svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
 
@@ -281,7 +272,7 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   void        *mctx;  /* monitor context */
 
   PetscFunctionBegin;
-  if (svm_binary->setupcalled) PetscFunctionReturn(0);
+  if (svm->setupcalled) PetscFunctionReturn(0);
   TRY( SVMGetLossType(svm,&loss_type) );
   TRY( SVMGetC(svm,&C) );
 
@@ -481,8 +472,8 @@ PetscErrorCode SVMReconstructHyperplane_Binary_Private(SVM svm,Vec *w,PetscReal 
   TRY( VecDuplicate(x,&zeros) );
   TRY( VecZeroEntries(zeros) );
 
-  if (svm_binary->loss_type == SVM_L1) {
-    TRY( VecWhichBetween(x,zeros,ub,&is_sv) );
+  if (svm->loss_type == SVM_L1) {
+    TRY( VecWhichBetween(zeros,x,ub,&is_sv) );
   } else {
     TRY( VecWhichGreaterThan(x,zeros,&is_sv) );
   }
@@ -500,6 +491,7 @@ PetscErrorCode SVMReconstructHyperplane_Binary_Private(SVM svm,Vec *w,PetscReal 
   TRY( VecSum(t,&b_inner) );
 
   b_inner /= nsv;
+
   *w = w_inner;
   *b = b_inner;
 
@@ -566,30 +558,11 @@ PetscErrorCode SVMPostTrain_Binary(SVM svm)
 #define __FUNCT__ "SVMSetFromOptions_Binary"
 PetscErrorCode SVMSetFromOptions_Binary(PetscOptionItems *PetscOptionsObject,SVM svm)
 {
-  PetscReal C, LogCMin, LogCMax, LogCBase;
-  PetscInt nfolds;
-  PetscBool flg, flg1;
-  SVMLossType loss_type;
+  PetscErrorCode ierr;
 
   PetscFunctionBeginI;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  _fllop_ierr = PetscObjectOptionsBegin((PetscObject)svm);CHKERRQ(_fllop_ierr);
-  TRY( PetscOptionsReal("-svm_C","Set SVM C (C).","SVMSetC",svm->C,&C,&flg) );
-  if (flg) TRY(SVMSetC(svm, C) );
-  TRY( PetscOptionsReal("-svm_logC_min","Set SVM minimal C value (LogCMin).","SVMSetLogCMin",svm->LogCMin,&LogCMin,&flg) );
-  if (flg) TRY(SVMSetLogCMin(svm, LogCMin) );
-  TRY( PetscOptionsReal("-svm_logC_max","Set SVM maximal C value (LogCMax).","SVMSetLogCMax",svm->LogCMax,&LogCMax,&flg) );
-  if (flg) TRY(SVMSetLogCMax(svm, LogCMax) );
-  TRY( PetscOptionsReal("-svm_logC_base","Set power base of SVM parameter C (LogCBase).","SVMSetLogCBase",svm->LogCBase,&LogCBase,&flg) );
-  if (flg) TRY(SVMSetLogCBase(svm, LogCBase) );
-  TRY( PetscOptionsInt("-svm_nfolds","Set number of folds (nfolds).","SVMSetNfolds",svm->nfolds,&nfolds,&flg) );
-  if (flg) TRY(SVMSetNfolds(svm, nfolds) );
-  TRY( PetscOptionsEnum("-svm_loss_type","Specify the loss function for soft-margin SVM (non-separable samples).","SVMSetNfolds",SVMLossTypes,(PetscEnum)svm->loss_type,(PetscEnum*)&loss_type,&flg) );
-  if (flg) TRY(SVMSetLossType(svm, loss_type) );
-  TRY( PetscOptionsBool("-svm_warm_start","Specify whether warm start is used in cross-validation.","SVMSetWarmStart",svm->warm_start,&flg1,&flg) );
-  if (flg) TRY(SVMSetWarmStart(svm, flg1) );
-  svm->setfromoptionscalled = PETSC_TRUE;
-  _fllop_ierr = PetscOptionsEnd();CHKERRQ(_fllop_ierr);
+  ierr = PetscObjectOptionsBegin((PetscObject) svm);CHKERRQ(ierr);
+  ierr = PetscOptionsEnd();CHKERRQ(ierr);
   PetscFunctionReturnI(0);
 }
 
@@ -815,7 +788,6 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   TRY( PetscNewLog(svm,&svm_binary) );
   svm->data = (void *) svm_binary;
 
-  svm_binary->loss_type   = SVM_L2;
   svm_binary->w           = NULL;
   svm_binary->b           = PETSC_INFINITY;
   svm_binary->qps         = NULL;
@@ -824,7 +796,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm_binary->y_training  = NULL;
   svm_binary->y_inner     = NULL;
 
-  TRY( PetscMemzero(svm->y_map,2*sizeof(PetscScalar)) );
+  TRY( PetscMemzero(svm_binary->y_map,2 * sizeof(PetscScalar)) );
 
   svm->ops->setup           = SVMSetUp_Binary;
   svm->ops->reset           = SVMReset_Binary;

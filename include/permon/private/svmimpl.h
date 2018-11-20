@@ -1,3 +1,4 @@
+
 #if !defined(__SVMIMPL_H)
 #define	__SVMIMPL_H
 
@@ -23,30 +24,20 @@ struct _SVMOps {
 struct _p_SVM {
   PETSCHEADER(struct _SVMOps);
 
+  PetscReal C,C_old;
+  PetscReal LogCMin,LogCMax,LogCBase;
+  PetscInt  nfolds;
+
+  SVMLossType loss_type;
+
+  PetscBool   warm_start;
+
   PetscBool autoposttrain;
   PetscBool posttraincalled;
   PetscBool setupcalled;
   PetscBool setfromoptionscalled;
-    
-  PetscReal C,C_old,LogCMin,LogCMax,LogCBase;
-  PetscInt nfolds;
-  SVMLossType loss_type;
-
-  PetscBool warm_start;
-
-  Mat Xt;
-  Vec y;
-  Vec y_inner;
-  PetscScalar y_map[2];
-  Mat D;
-    
-  Vec w;
-  PetscScalar b;
-    
-  QPS qps;
 
   void *data;
 };
 
-#endif 
-
+#endif

@@ -28,13 +28,15 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
 #endif
   TRY( PetscHeaderCreate(svm,SVM_CLASSID,"SVM","SVM Classifier","SVM",comm,SVMDestroy,SVMView) );
 
-  svm->C        = 1.;
-  svm->C_old    = 1.;
-  svm->LogCBase = 2.;
-  svm->LogCMin  = -2.;
-  svm->LogCMax  = 2.;
+  svm->C          = 1.;
+  svm->C_old      = 1.;
+  svm->LogCBase   = 2.;
+  svm->LogCMin    = -2.;
+  svm->LogCMax    = 2.;
+  svm->loss_type  = SVM_L1;
 
-  svm->nfolds   = 5;
+  svm->nfolds     = 5;
+  svm->warm_start = PETSC_FALSE;
 
   svm->setupcalled          = PETSC_FALSE;
   svm->setfromoptionscalled = PETSC_FALSE;
@@ -63,13 +65,15 @@ PetscErrorCode SVMReset(SVM svm)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
-  svm->C        = 1.;
-  svm->C_old    = 1.;
-  svm->LogCBase = 2.;
-  svm->LogCMin  = -2.;
-  svm->LogCMax  = 2.;
+  svm->C          = 1.;
+  svm->C_old      = 1.;
+  svm->LogCBase   = 2.;
+  svm->LogCMin    = -2.;
+  svm->LogCMax    = 2.;
+  svm->loss_type  = SVM_L1;
 
-  svm->nfolds   = 5;
+  svm->nfolds     = 5;
+  svm->warm_start = PETSC_FALSE;
 
   TRY( (*svm->ops->reset)(svm) );
 
@@ -148,14 +152,51 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
 {
   PetscErrorCode ierr;
 
+  PetscReal      C,logC_min,logC_max,logC_base;
+  PetscBool      flg,warm_start;
+
+  SVMLossType    loss_type;
+  PetscInt       nfolds;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
   ierr = PetscObjectOptionsBegin((PetscObject)svm);CHKERRQ(ierr);
+  TRY( PetscOptionsReal("-svm_C","Set SVM C (C).","SVMSetC",svm->C,&C,&flg) );
+  if (flg) {
+    TRY( SVMSetC(svm,C) );
+  }
+  TRY( PetscOptionsReal("-svm_logC_min","Set SVM minimal C value (LogCMin).","SVMSetLogCMin",svm->LogCMin,&logC_min,&flg) );
+  if (flg) {
+    TRY( SVMSetLogCMin(svm,logC_min) );
+  }
+  TRY( PetscOptionsReal("-svm_logC_max","Set SVM maximal C value (LogCMax).","SVMSetLogCMax",svm->LogCMax,&logC_max,&flg) );
+  if (flg) {
+    TRY( SVMSetLogCMax(svm,logC_max) );
+  }
+  TRY( PetscOptionsReal("-svm_logC_base","Set power base of SVM parameter C (LogCBase).","SVMSetLogCBase",svm->LogCBase,&logC_base,&flg) );
+  if (flg) {
+    TRY( SVMSetLogCBase(svm,logC_base) );
+  }
+  TRY( PetscOptionsInt("-svm_nfolds","Set number of folds (nfolds).","SVMSetNfolds",svm->nfolds,&nfolds,&flg) );
+  if (flg) {
+    TRY( SVMSetNfolds(svm,nfolds) );
+  }
+  TRY( PetscOptionsEnum("-svm_loss_type","Specify the loss function for soft-margin SVM (non-separable samples).","SVMSetNfolds",SVMLossTypes,(PetscEnum)svm->loss_type,(PetscEnum*)&loss_type,&flg) );
+  if (flg) {
+    TRY( SVMSetLossType(svm,loss_type) );
+  }
+  TRY( PetscOptionsBool("-svm_warm_start","Specify whether warm start is used in cross-validation.","SVMSetWarmStart",svm->warm_start,&warm_start,&flg) );
+  if (flg) {
+    TRY(SVMSetWarmStart(svm,warm_start) );
+  }
+
   if (svm->ops->setfromoptions) {
     TRY( svm->ops->setfromoptions(PetscOptionsObject,svm) );
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
+
+  svm->setfromoptionscalled = PETSC_TRUE;
   PetscFunctionReturn(0);
 }
 
