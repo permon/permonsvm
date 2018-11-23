@@ -588,8 +588,17 @@ PetscErrorCode SVMSetFromOptions_Binary(PetscOptionItems *PetscOptionsObject,SVM
 {
   PetscErrorCode ierr;
 
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
+  PetscInt  svm_mod;
+  PetscBool flg;
+
   PetscFunctionBeginI;
   ierr = PetscObjectOptionsBegin((PetscObject) svm);CHKERRQ(ierr);
+  TRY( PetscOptionsInt("-svm_binary_mod","","SVMSetMod",svm_binary->svm_mod,&svm_mod,&flg) );
+  if (flg) {
+    TRY( SVMSetMod(svm,svm_mod) );
+  }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   PetscFunctionReturnI(0);
 }
