@@ -205,7 +205,7 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
 /*@
 
 @*/
-PetscErrorCode SVMSetType(SVM svm,const SVMType type) 
+PetscErrorCode SVMSetType(SVM svm,const SVMType type)
 {
   PetscErrorCode (*create_svm)(SVM);
   PetscBool issame = PETSC_FALSE;
@@ -554,6 +554,47 @@ PetscErrorCode SVMSetLossType(SVM svm, SVMLossType type)
     svm->loss_type = type;
     svm->setupcalled = PETSC_FALSE;
   }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetMod"
+/*@
+   SVMSetMod - Sets type of SVM formulation
+
+   Logically Collective on SVM
+
+   Input Parameters:
++  svm - the SVM
+-  mod - type of SVM formulation
+@*/
+PetscErrorCode SVMSetMod(SVM svm,PetscInt mod)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveInt(svm,mod,2);
+  TRY( PetscTryMethod(svm,"SVMSetMod_C",(SVM,PetscInt),(svm,mod)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetMod"
+/*@
+   SVMGetMod - Gets type of SVM formulation
+
+   Input Parameter:
+.  svm - the SVM
+
+   Output Parameter:
+.  mod - type of SVM formulation
+@*/
+PetscErrorCode SVMGetMod(SVM svm,PetscInt *mod)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( PetscTryMethod(svm,"SVMGetMod_C",(SVM,PetscInt *),(svm,mod)) );
   PetscFunctionReturn(0);
 }
 

@@ -60,6 +60,9 @@ FLLOP_EXTERN PetscErrorCode SVMDestroy(SVM *svm);
 FLLOP_EXTERN PetscErrorCode SVMDestroyDefault(SVM svm);
 FLLOP_EXTERN PetscErrorCode SVMSetType(SVM,const SVMType);
 
+FLLOP_EXTERN PetscErrorCode SVMSetMod(SVM,PetscInt);
+FLLOP_EXTERN PetscErrorCode SVMGetMod(SVM,PetscInt *);
+
 FLLOP_EXTERN PetscErrorCode SVMView(SVM svm, PetscViewer v);
 FLLOP_EXTERN PetscErrorCode SVMSetC(SVM svm,PetscReal _C);
 FLLOP_EXTERN PetscErrorCode SVMGetC(SVM svm,PetscReal *C);
