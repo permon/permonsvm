@@ -57,7 +57,7 @@ PetscErrorCode SVMReset_Binary(SVM svm)
   svm_binary->y_inner     = NULL;
   svm_binary->D           = NULL;
 
-  svm_binary->svm_mod     = 1;
+  svm_binary->svm_mod     = 2;
   PetscFunctionReturn(0);
 }
 
@@ -833,7 +833,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm_binary->y_training  = NULL;
   svm_binary->y_inner     = NULL;
 
-  svm_binary->svm_mod     = 1;
+  svm_binary->svm_mod     = 2;
 
   TRY( PetscMemzero(svm_binary->y_map,2 * sizeof(PetscScalar)) );
 
