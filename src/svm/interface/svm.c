@@ -939,6 +939,30 @@ PetscErrorCode SVMGetSeparatingHyperplane(SVM svm,Vec *w,PetscReal *b)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMSetBias"
+PetscErrorCode SVMSetBias(SVM svm,PetscReal bias)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+
+  TRY( PetscTryMethod(svm,"SVMSetBias_C",(SVM,PetscReal),(svm,bias)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__
+PetscErrorCode SVMGetBias(SVM svm,PetscReal *bias)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+
+  TRY( PetscUseMethod(svm,"SVMGetBias_C",(SVM,PetscReal *),(svm,bias)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMPredict"
 /*@
   SVMPredict - Predicts labels of tested samples
