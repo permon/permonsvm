@@ -653,6 +653,7 @@ PetscErrorCode SVMSetFromOptions_Binary(PetscOptionItems *PetscOptionsObject,SVM
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
   PetscInt  svm_mod;
+  PetscReal b;
   PetscBool flg;
 
   PetscFunctionBeginI;
@@ -660,6 +661,10 @@ PetscErrorCode SVMSetFromOptions_Binary(PetscOptionItems *PetscOptionsObject,SVM
   TRY( PetscOptionsInt("-svm_binary_mod","","SVMSetMod",svm_binary->svm_mod,&svm_mod,&flg) );
   if (flg) {
     TRY( SVMSetMod(svm,svm_mod) );
+  }
+  TRY( PetscOptionsReal("-svm_bias","","SVMSetBias",svm_binary->b,&b,&flg) );
+  if (flg) {
+    TRY( SVMSetBias(svm,b) );
   }
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
   PetscFunctionReturnI(0);
