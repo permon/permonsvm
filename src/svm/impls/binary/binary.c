@@ -49,7 +49,7 @@ PetscErrorCode SVMReset_Binary(SVM svm)
   TRY( VecDestroy(&svm_binary->y_inner) );
 
   PetscMemzero(svm_binary->y_map,2 * sizeof(PetscScalar) );
-  svm_binary->b = PETSC_INFINITY;
+  svm_binary->b = 1.;
 
   svm_binary->w           = NULL;
   svm_binary->Xt_training = NULL;
@@ -901,7 +901,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm->data = (void *) svm_binary;
 
   svm_binary->w           = NULL;
-  svm_binary->b           = PETSC_INFINITY;
+  svm_binary->b           = 1.;
   svm_binary->qps         = NULL;
   svm_binary->Xt_training = NULL;
   svm_binary->D           = NULL;
