@@ -883,6 +883,9 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
       score[j] += ((PetscReal) N_eq) / ((PetscReal) N_all);
     }
 
+    TRY( MatDestroy(&Xt_training) );
+    TRY( VecRestoreSubVector(y,is_training,&y_training) );
+
     TRY( SVMReset(cross_svm) );
     TRY( SVMSetLossType(cross_svm,svm_loss) );
     TRY( SVMSetMod(cross_svm,svm_mod) );
