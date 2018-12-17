@@ -191,27 +191,42 @@ static PetscErrorCode SVMSetUp_Remapy_Binary_Private(SVM svm)
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMCreateQPS_Binary_Private"
-PetscErrorCode SVMCreateQPS_Binary_Private(SVM svm,QPS *qps)
-{
+PetscErrorCode SVMCreateQPS_Binary_Private(SVM svm,QPS *qps) {
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
-  PetscReal  rtol,divtol,max_eig_tol;
-  PetscInt   max_it,max_eig_it;
-  QPS        qps_inner;
+
+  PetscReal rtol, divtol, max_eig_tol;
+  PetscInt max_it, max_eig_it;
+
+  QPS      qps_inner,qps_smalxe_inner;
+  PetscInt svm_mod;
 
   PetscFunctionBegin;
-  rtol        = 1e-1;
-  divtol      = 1e100;
-  max_it      = 10000;
-  max_eig_it  = 100;
+  rtol = 1e-1;
+  divtol = 1e100;
+  max_it = 10000;
+  max_eig_it = 100;
   max_eig_tol = 1e-5;
 
-  TRY( QPSDestroy(&svm_binary->qps) );
-  TRY( QPSCreate(PetscObjectComm((PetscObject)svm),&qps_inner) );
+  TRY( SVMGetMod(svm,&svm_mod) );
 
-  TRY( QPSSetType(qps_inner,QPSMPGP) );
-  TRY( QPSSetTolerances(qps_inner,rtol,PETSC_DEFAULT,divtol,max_it) );
-  TRY( QPSMPGPSetOperatorMaxEigenvalueTolerance(qps_inner,max_eig_tol) );
-  TRY( QPSMPGPSetOperatorMaxEigenvalueIterations(qps_inner,max_eig_it) );
+  TRY( QPSDestroy(&svm_binary->qps) );
+  TRY( QPSCreate(PetscObjectComm((PetscObject) svm),&qps_inner) );
+
+  if (svm_mod == 1) {
+    TRY( QPSSetType(qps_inner,QPSSMALXE) );
+    TRY( QPSSMALXEGetInnerQPS(qps_inner,&qps_smalxe_inner) );
+    TRY( QPSSetType(qps_smalxe_inner,QPSMPGP) );
+    TRY( QPSSMALXESetOperatorMaxEigenvalueTolerance(qps_inner,max_eig_tol) );
+    TRY( QPSSMALXESetOperatorMaxEigenvalueIterations(qps_inner,max_eig_it) );
+    TRY( QPSSetTolerances(qps_smalxe_inner,rtol,PETSC_DEFAULT,divtol,max_it) );
+    TRY( QPSSMALXESetM1Initial(qps_inner,1.0,QPS_ARG_MULTIPLE) );
+    TRY( QPSSMALXESetRhoInitial(qps_inner,1.0,QPS_ARG_MULTIPLE) );
+  } else {
+    TRY( QPSSetType(qps_inner,QPSMPGP) );
+    TRY( QPSSetTolerances(qps_inner,rtol,PETSC_DEFAULT,divtol,max_it) );
+    TRY( QPSMPGPSetOperatorMaxEigenvalueTolerance(qps_inner,max_eig_tol) );
+    TRY( QPSMPGPSetOperatorMaxEigenvalueIterations(qps_inner,max_eig_it) );
+  }
   *qps = qps_inner;
   PetscFunctionReturn(0);
 }
@@ -287,13 +302,16 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   Mat       H,HpE,mats[2];
   Vec       e,x_init;
 
-  PetscReal C;
+  Mat       Be = NULL;
+  PetscReal norm;
   Vec       lb,ub;
 
   Mat       Xt_training,X_training;
   Vec       y;
+  PetscInt  n,m,N;
 
-  PetscInt    n,m,N;
+  PetscReal   C;
+  PetscInt    svm_mod;
   SVMLossType loss_type;
 
   PetscBool   svm_monitor_set;
@@ -301,7 +319,9 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
 
   PetscFunctionBegin;
   if (svm->setupcalled) PetscFunctionReturn(0);
+
   TRY( SVMGetLossType(svm,&loss_type) );
+  TRY( SVMGetMod(svm,&svm_mod) );
   TRY( SVMGetC(svm,&C) );
 
   if (svm->warm_start && svm->posttraincalled) {
@@ -345,6 +365,14 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   TRY( VecDuplicate(y,&e) );  /* creating vector e same size and type as y_training */
   TRY( VecSet(e,1.0) );
   TRY( QPSetRhs(qp,e) );      /* set linear term of QP problem */
+
+  /* Set equality constrain for solver type 1 (with equality constraint) */
+  if (svm_mod == 1) {
+    TRY( MatCreateOneRow(y,&Be) );   /* Be = y^t */
+    TRY( VecNorm(y,NORM_2,&norm) );
+    TRY( MatScale(Be,1.0/norm) );    /* ||Be|| = 1 */
+    TRY( QPSetEq(qp,Be,NULL) );
+  }
 
   /* Create box constraints */
   TRY( VecDuplicate(y,&lb) );  /* create lower bound constraint vector */
@@ -396,6 +424,7 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   /* decreasing reference counts */
   TRY( MatDestroy(&X_training) );
   TRY( MatDestroy(&H) );
+  TRY( MatDestroy(&Be) );
   TRY( VecDestroy(&e) );
   TRY( VecDestroy(&lb) );
   TRY( VecDestroy(&ub) );
@@ -465,19 +494,23 @@ PetscErrorCode SVMReconstructHyperplane_Binary_Private(SVM svm,Vec *w,PetscReal 
 {
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
-  QPS qps;
-  QP  qp;
-  Vec ub;
+  QPS       qps;
+  QP        qp;
+  Vec       lb,ub;
 
-  Mat Xt;
-  Vec x,y,yx,y_sv,t,w_inner,zeros;
-  Vec Xtw,Xtw_sv;
+  Mat       Xt;
+  Vec       x,y,yx,y_sv,t,w_inner;
+  Vec       Xtw,Xtw_sv;
 
   IS        is_sv;
   PetscInt  nsv;
   PetscReal b_inner;
 
+  PetscInt  svm_mod;
+
   PetscFunctionBegin;
+  TRY( SVMGetMod(svm,&svm_mod) );
+
   TRY( SVMGetQPS(svm,&qps) );
   if (callpostsolve) {
     TRY( QPSPostSolve(qps) );
@@ -486,7 +519,6 @@ PetscErrorCode SVMReconstructHyperplane_Binary_Private(SVM svm,Vec *w,PetscReal 
 
   TRY( SVMGetTrainingDataset(svm,&Xt,NULL) );
   y = svm_binary->y_inner;
-  TRY( QPGetBox(qp,NULL,&ub) );
 
   /* Reconstruction of hyperplane normal */
   TRY( QPGetSolutionVector(qp,&x) );
@@ -497,37 +529,40 @@ PetscErrorCode SVMReconstructHyperplane_Binary_Private(SVM svm,Vec *w,PetscReal 
   TRY( MatMultTranspose(Xt,yx,w_inner) ); /* w = (X^t)^t * yx = X * yx */
 
   /* Reconstruction of the hyperplane bias */
-  TRY( VecDuplicate(x,&zeros) );
-  TRY( VecZeroEntries(zeros) );
+  if (svm_mod == 1) {
+    TRY( QPGetBox(qp,&lb,&ub) );
 
-  if (svm->loss_type == SVM_L1) {
-    TRY( VecWhichBetween(zeros,x,ub,&is_sv) );
+    if (svm->loss_type == SVM_L1) {
+      TRY( VecWhichBetween(lb,x,ub,&is_sv) );
+    } else {
+      TRY( VecWhichGreaterThan(x,lb,&is_sv) );
+    }
+    TRY( ISGetSize(is_sv,&nsv) );
+
+    TRY( MatCreateVecs(Xt,NULL,&Xtw) );
+    TRY( MatMult(Xt,w_inner,Xtw) );
+
+    TRY( VecGetSubVector(y,is_sv,&y_sv) );     /* y_sv = y(is_sv) */
+    TRY( VecGetSubVector(Xtw,is_sv,&Xtw_sv) ); /* Xtw_sv = Xt(is_sv) */
+    TRY( VecDuplicate(y_sv,&t) );
+    TRY( VecWAXPY(t,-1.,Xtw_sv,y_sv) );
+    TRY( VecRestoreSubVector(y,is_sv,&y_sv) );
+    TRY( VecRestoreSubVector(Xtw,is_sv,&Xtw_sv) );
+    TRY( VecSum(t,&b_inner) );
+
+    b_inner /= nsv;
+
+    TRY( ISDestroy(&is_sv) );
+    TRY( VecDestroy(&Xtw) );
+    TRY( VecDestroy(&t) );
   } else {
-    TRY( VecWhichGreaterThan(x,zeros,&is_sv) );
+    b_inner = 0.;
   }
-  TRY( ISGetSize(is_sv,&nsv) );
-
-  TRY( MatCreateVecs(Xt,NULL,&Xtw) );
-  TRY( MatMult(Xt,w_inner,Xtw) );
-
-  TRY( VecGetSubVector(y,is_sv,&y_sv) );     /* y_sv = y(is_sv) */
-  TRY( VecGetSubVector(Xtw,is_sv,&Xtw_sv) ); /* Xtw_sv = Xt(is_sv) */
-  TRY( VecDuplicate(y_sv,&t) );
-  TRY( VecWAXPY(t,-1.,Xtw_sv,y_sv) );
-  TRY( VecRestoreSubVector(y,is_sv,&y_sv) );
-  TRY( VecRestoreSubVector(Xtw,is_sv,&Xtw_sv) );
-  TRY( VecSum(t,&b_inner) );
-
-  b_inner /= nsv;
 
   *w = w_inner;
   *b = b_inner;
 
-  TRY( VecDestroy(&zeros) );
-  TRY( VecDestroy(&Xtw) );
   TRY( VecDestroy(&yx) );
-  TRY( VecDestroy(&t) );
-  TRY( ISDestroy(&is_sv) );
   PetscFunctionReturn(0);
 }
 
@@ -753,15 +788,25 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
 
   const char *prefix;
 
+  PetscInt    svm_mod;
+  SVMLossType svm_loss;
+
   PetscFunctionBegin;
   TRY( PetscObjectGetComm((PetscObject) svm,&comm) );
+
   TRY( SVMGetNfolds(svm,&nfolds) );
+  TRY( SVMGetLossType(svm,&svm_loss) );
+  TRY( SVMGetMod(svm,&svm_mod) );
 
   TRY( SVMGetTrainingDataset(svm,&Xt,&y) );
   TRY( MatGetOwnershipRange(Xt,&lo,&hi) );
 
   TRY( SVMCreate(PetscObjectComm((PetscObject)svm),&cross_svm) );
   TRY( SVMSetType(cross_svm,SVM_BINARY) );
+
+  TRY( SVMSetMod(cross_svm,svm_mod) );
+  TRY( SVMSetLossType(cross_svm,svm_loss) );
+
   TRY( SVMGetOptionsPrefix(svm,&prefix) );
   TRY( SVMAppendOptionsPrefix(cross_svm,"cross_") );
   TRY( SVMSetFromOptions(cross_svm) );
@@ -786,7 +831,7 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
     for (j = 0; j < m; ++j) {
       TRY( SVMSetC(cross_svm,c_arr[j]) );
 
-      if (!cross_svm->warm_start) {
+      if (!cross_svm->warm_start && j > 0) {
         TRY( SVMGetQPS(cross_svm,&qps) );
         TRY( QPSGetSolvedQP(qps,&qp) );
         if (qp) {
@@ -797,6 +842,7 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
           if (ub) { TRY( VecSet(ub,c_arr[j]) ); }
         }
         cross_svm->posttraincalled = PETSC_FALSE;
+        cross_svm->setupcalled = PETSC_TRUE;
       }
 
       TRY( SVMTrain(cross_svm) );
@@ -806,6 +852,8 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
     }
 
     TRY( SVMReset(cross_svm) );
+    TRY( SVMSetLossType(cross_svm,svm_loss) );
+    TRY( SVMSetMod(cross_svm,svm_mod) );
   }
 
   for (i = 0; i < m; ++i) score[i] /= (PetscReal) nfolds;
