@@ -95,12 +95,15 @@ PetscErrorCode SVMView_Binary(SVM svm,PetscViewer v)
   PetscInt   N_eq,N_all;
   PetscBool  isascii;
 
+  PetscReal  C;
+
   PetscFunctionBegin;
   TRY( PetscObjectTypeCompare((PetscObject)v,PETSCVIEWERASCII,&isascii) );
   if (isascii) {
     N_all = svm_binary->N_all;
     N_eq  = svm_binary->N_eq;
-    TRY( PetscViewerASCIIPrintf(v,"SVM: %d of %d test samples classified correctly (%.2f%%)\n",N_eq,N_all,((PetscReal)N_eq)/((PetscReal)N_all)*100.0) );
+    TRY( SVMGetC(svm,&C) );
+    TRY( PetscViewerASCIIPrintf(v,"SVM: %d of %d test samples classified correctly (%.2f%%) with C = %.3f\n",N_eq,N_all,((PetscReal)N_eq)/((PetscReal)N_all)*100.0,C) );
   }
   PetscFunctionReturn(0);
 }
