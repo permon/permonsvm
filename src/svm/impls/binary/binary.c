@@ -826,6 +826,8 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
   PetscInt    svm_mod;
   SVMLossType svm_loss;
 
+  PetscBool   info_set;
+
   PetscFunctionBegin;
   TRY( PetscObjectGetComm((PetscObject) svm,&comm) );
 
@@ -849,7 +851,13 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
   TRY( ISCreate(PetscObjectComm((PetscObject) svm),&is_test) );
   TRY( ISSetType(is_test,ISSTRIDE) );
 
+  TRY( PetscOptionsHasName(NULL,((PetscObject)cross_svm)->prefix,"-svm_info",&info_set) );
+
   for (i = 0; i < nfolds; ++i) {
+    if (info_set) {
+      TRY( PetscPrintf(comm,"SVM: fold %d of %d\n",i+1,nfolds) );
+    }
+
     first = lo + i - 1;
     if (first < lo) first += nfolds;
     n = (hi + nfolds - first - 1) / nfolds;
@@ -882,6 +890,10 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
 
       TRY( SVMTrain(cross_svm) );
       TRY( SVMTest(cross_svm,Xt_test,y_test,&N_all,&N_eq) );
+
+      if (info_set) {
+        TRY( SVMView(cross_svm,PETSC_VIEWER_STDOUT_(comm)) );
+      }
 
       score[j] += ((PetscReal) N_eq) / ((PetscReal) N_all);
     }
