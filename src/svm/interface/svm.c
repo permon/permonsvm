@@ -84,7 +84,6 @@ PetscErrorCode SVMReset(SVM svm)
   TRY( (*svm->ops->reset)(svm) );
 
   svm->setupcalled          = PETSC_FALSE;
-  svm->setfromoptionscalled = PETSC_FALSE;
   svm->autoposttrain        = PETSC_TRUE;
   svm->posttraincalled      = PETSC_FALSE;
   PetscFunctionReturn(0);

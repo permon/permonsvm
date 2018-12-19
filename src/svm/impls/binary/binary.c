@@ -334,7 +334,7 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
     {
       TRY( SVMGetQPS(svm,&qps) );
       TRY( QPSGetQP(qps,&qp) );
-      TRY( QPGetBox(qp,NULL,&ub) );
+      TRY( QPGetBox(qp,NULL,NULL,&ub) );
       TRY( VecSet(ub,C) );
     } else {
       TRY( MatScale(svm_binary->D,svm->C_old) );
@@ -412,10 +412,9 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   TRY( VecDestroy(&x_init) );
 
   TRY( QPSetOperator(qp,H) );
-  TRY( QPSetBox(qp,lb,ub) );
+  TRY( QPSetBox(qp,NULL,lb,ub) );
 
   if (svm_monitor_set) {
-    TRY( QPSMonitorCancel(qps) );
     TRY( SVMMonitorCreateMtx_Binary(&mctx,svm) );
     TRY( QPSMonitorSet(qps,SVMMonitorDefault_Binary,mctx,SVMMonitorDestroyMtx_Binary) );
   }
@@ -535,7 +534,7 @@ PetscErrorCode SVMReconstructHyperplane_Binary_Private(SVM svm,Vec *w,PetscReal 
 
   /* Reconstruction of the hyperplane bias */
   if (svm_mod == 1) {
-    TRY( QPGetBox(qp,&lb,&ub) );
+    TRY( QPGetBox(qp,NULL,&lb,&ub) );
 
     if (svm->loss_type == SVM_L1) {
       TRY( VecWhichBetween(lb,x,ub,&is_sv) );
@@ -885,7 +884,7 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
           Vec ub;
           TRY( QPGetSolutionVector(qp,&x) );
           TRY( VecSet(x,c_arr[j] - 10 * PETSC_MACHINE_EPSILON) );
-          TRY( QPGetBox(qp,NULL,&ub) );
+          TRY( QPGetBox(qp,NULL,NULL,&ub) );
           if (ub) { TRY( VecSet(ub,c_arr[j]) ); }
         }
         cross_svm->posttraincalled = PETSC_FALSE;
@@ -900,6 +899,9 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
       }
 
       score[j] += ((PetscReal) N_eq) / ((PetscReal) N_all);
+
+      TRY( SVMGetQPS(cross_svm,&qps) );
+      TRY( QPSResetStatistics(qps) );
     }
 
     TRY( SVMReset(cross_svm) );
@@ -1029,11 +1031,11 @@ PetscErrorCode SVMMonitorDefault_Binary(QPS qps,PetscInt it,PetscReal rnorm,void
   /* Get number of support vectors */
   TRY( SVMGetQPS(svm_inner,&qps) );
   TRY( QPSGetQP(qps,&qp) );
-  TRY( QPGetBox(qp,&lb,&ub) );
+  TRY( QPGetBox(qp,NULL,&lb,&ub) );
   TRY( QPGetSolutionVector(qp,&x) );
 
   if (loss_type == SVM_L1) {
-    TRY( QPGetBox(qp,&lb,&ub) );
+    TRY( QPGetBox(qp,NULL,&lb,&ub) );
     TRY( VecWhichBetween(lb,x,ub,&is_sv) );
   } else {
     TRY( VecWhichGreaterThan(x,lb,&is_sv));
