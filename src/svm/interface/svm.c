@@ -6,7 +6,9 @@ PetscClassId SVM_CLASSID;
 #undef __FUNCT__
 #define __FUNCT__ "SVMCreate"
 /*@
-  SVMCreate - Creates instance of Support Vector Machine classifier
+  SVMCreate - Creates instance of Support Vector Machine classifier.
+
+  Collective on MPI_Comm
 
   Input Parameter:
 . comm - MPI comm
@@ -15,6 +17,8 @@ PetscClassId SVM_CLASSID;
 . svm_out - pointer to created SVM
 
   Level: beginner
+
+.seealso SVMDestroy(), SVMReset(), SVMSetup(), SVMSetFromOptions()
 @*/
 PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
 {
@@ -50,14 +54,16 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
 #undef __FUNCT__
 #define __FUNCT__ "SVMReset"
 /*@
-  SVMReset - Resets a SVM context
+  SVMReset - Resets a SVM context to the setupcalled = 0.
 
   Collective on SVM
 
   Input Parameter:
-. svm - the SVM
+. svm - SVM context
 
   Level: beginner
+
+.seealso SVMCreate(), SVMSetUp()
 @*/
 PetscErrorCode SVMReset(SVM svm)
 {
@@ -87,14 +93,16 @@ PetscErrorCode SVMReset(SVM svm)
 #undef __FUNCT__
 #define __FUNCT__ "SVMDestroyDefault"
 /*@
-   SVMDestroyDefault - Destroys SVM content
+  SVMDestroyDefault - Destroys SVM context.
 
-   Input parameter:
-.  svm - instance of SVM
+  Input parameter:
+. svm - SVM context
 
-   Developers Note: This is PETSC_EXTERN because it may be used by user written plugin SVM implementations
+  Developers Note: This is PETSC_EXTERN because it may be used by user written plugin SVM implementations
 
-   Level: developer
+  Level: developer
+
+.seealso SVMDestroy()
 @*/
 PetscErrorCode SVMDestroyDefault(SVM svm)
 {
@@ -108,14 +116,16 @@ PetscErrorCode SVMDestroyDefault(SVM svm)
 #undef __FUNCT__
 #define __FUNCT__ "SVMDestroy"
 /*@
-   SVMDestroy - Destroys SVM context
+  SVMDestroy - Destroys SVM context.
 
-   Collective on SVM
+  Collective on SVM
 
-   Input Parameters:
-.  svm - SVM context
+  Input Parameter:
+. svm - SVM context
 
-   Level: beginner
+  Level: beginner
+
+.seealso SVMCreate(), SVMSetUp()
 @*/
 PetscErrorCode SVMDestroy(SVM *svm)
 {
@@ -141,12 +151,16 @@ PetscErrorCode SVMDestroy(SVM *svm)
 #undef __FUNCT__
 #define __FUNCT__ "SVMSetFromOptions"
 /*@
-  SVMSetFromOptions - Sets SVM options from the options database
+  SVMSetFromOptions - Sets SVM options from the options database.
+
+  Logically Collective on SVM
 
   Input Parameter:
-. svm - the SVM
+. svm - SVM context
 
   Level: beginner
+
+.seealso SVMCreate(), SVMSetUp()
 @*/
 PetscErrorCode SVMSetFromOptions(SVM svm)
 {
@@ -188,7 +202,7 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   }
   TRY( PetscOptionsBool("-svm_warm_start","Specify whether warm start is used in cross-validation.","SVMSetWarmStart",svm->warm_start,&warm_start,&flg) );
   if (flg) {
-    TRY(SVMSetWarmStart(svm,warm_start) );
+    TRY( SVMSetWarmStart(svm,warm_start) );
   }
 
   if (svm->ops->setfromoptions) {
@@ -203,7 +217,17 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
 #undef __FUNCT__
 #define __FUNCT__ "SVMSetType"
 /*@
+  SVMSetType - Sets the type of SVM classifier.
 
+  Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+- type - the type of SVM classifier
+
+  Level: beginner
+
+.seealso SVMCreate(), SVMType
 @*/
 PetscErrorCode SVMSetType(SVM svm,const SVMType type)
 {
@@ -235,20 +259,22 @@ PetscErrorCode SVMSetType(SVM svm,const SVMType type)
 /*@
   SVMSetQPS - Sets the QPS.
 
-  Collective on SVM
+  Not Collective
 
-  Input parameters:
-+ svm - instance of SVM
-- qps - instance of QPS
+  Input Parameters:
++ svm - SVM context
+- qps - QPS context
 
   Level: advanced
+
+.seealso SVMGetQPS()
 @*/
 PetscErrorCode SVMSetQPS(SVM svm,QPS qps)
 {
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidHeaderSpecific(svm,QPS_CLASSID,2);
+  PetscValidHeaderSpecific(qps,QPS_CLASSID,2);
 
   TRY( PetscTryMethod(svm,"SVMSetQPS_C",(SVM,QPS),(svm,qps)) );
   PetscFunctionReturn(0);
@@ -257,15 +283,19 @@ PetscErrorCode SVMSetQPS(SVM svm,QPS qps)
 #undef __FUNCT__
 #define __FUNCT__ "SVMGetQPS"
 /*@
-  SVMGetQPS - Gets the QPS.
+  SVMGetQPS - Returns the QPS.
+
+  Not Collective
 
   Input Parameter:
-. svm - the SVM
+. svm - SVM context
 
   Output Parameter:
-. qps - instance of QPS
+. qps - QPS context
 
   Level: advanced
+
+.seealso SVMSetQPS()
 @*/
 PetscErrorCode SVMGetQPS(SVM svm,QPS *qps)
 {
@@ -281,13 +311,17 @@ PetscErrorCode SVMGetQPS(SVM svm,QPS *qps)
 #undef __FUNCT__
 #define __FUNCT__ "SVMSetNfolds"
 /*@
-   SVMSetNfolds - Sets the number of folds
+  SVMSetNfolds - Sets the number of folds.
+
+  Logically Collective on SVM
 
   Input Parameters:
-+ svm - the SVM
-- C - C parameter
++ svm - SVM context
+- nfolds - the number of folds
 
   Level: beginner
+
+.seealso SVMSetNfolds(), SVMCrossValidation()
 @*/
 PetscErrorCode SVMSetNfolds(SVM svm,PetscInt nfolds)
 {
@@ -305,15 +339,19 @@ PetscErrorCode SVMSetNfolds(SVM svm,PetscInt nfolds)
 #undef __FUNCT__
 #define __FUNCT__ "SVMGetNfolds"
 /*@
-  SVMGetNfolds - Gets the number of folds
+  SVMGetNfolds - Returns the number of folds.
+
+  Not Collective
 
   Input Parameter:
-. svm - the SVM
+. svm - SVM context
 
   Output Parameter:
-. nfolds - number of folds
+. nfolds - the number of folds
 
   Level: beginner
+
+.seealso SVMSetNfolds(), SVMCrossValidation()
 @*/
 PetscErrorCode SVMGetNfolds(SVM svm,PetscInt *nfolds)
 {
@@ -328,15 +366,17 @@ PetscErrorCode SVMGetNfolds(SVM svm,PetscInt *nfolds)
 #undef __FUNCT__
 #define __FUNCT__ "SVMSetC"
 /*@
-  SVMSetC - Sets the penalty C.
+  SVMSetC - Sets the value of penalty C.
 
   Collective on SVM
 
   Input Parameters:
-+ svm - the SVM
-- C - penalty C
++ svm - SVM context
+- C - the value of penalty C
 
   Level: beginner
+
+.seealso SVMGetC(), SVMGridSearch()
 @*/
 PetscErrorCode SVMSetC(SVM svm,PetscReal C)
 {
@@ -360,15 +400,19 @@ PetscErrorCode SVMSetC(SVM svm,PetscReal C)
 #undef __FUNCT__
 #define __FUNCT__ "SVMGetC"
 /*@
-  SVMGetC - Gets the penalty C.
+  SVMGetC - Returns the value of penalty C.
+
+  Not Collective
 
   Input Parameter:
-. svm - the SVM
+. svm - SVM context
 
   Output Parameter:
-. C - penalty C
+. C - the value of penalty C
 
   Level: beginner
+
+.seealso SVMSetC(), SVMGridSearch()
 @*/
 PetscErrorCode SVMGetC(SVM svm,PetscReal *C)
 {
@@ -383,15 +427,17 @@ PetscErrorCode SVMGetC(SVM svm,PetscReal *C)
 #undef __FUNCT__
 #define __FUNCT__ "SVMSetLogCBase"
 /*@
-  SVMSetLogCBase - Sets the step C penalty value
+  SVMSetLogCBase - Sets the value of penalty C step.
+
+  Logically Collective on SVM
 
   Input Parameters:
-+ svm - the SVM
-- LogCBase - step C penalty value
++ svm - SVM context
+- LogCBase - the value of penalty C step
 
   Level: beginner
 
-.seealso SVMSetC(), SVMSetLogCMin(), SVMSetLogCMax()
+.seealso SVMSetC(), SVMSetLogBase(), SVMSetLogCMin(), SVMSetLogCMax(), SVMGridSearch()
 @*/
 PetscErrorCode SVMSetLogCBase(SVM svm,PetscReal LogCBase)
 {
@@ -409,17 +455,19 @@ PetscErrorCode SVMSetLogCBase(SVM svm,PetscReal LogCBase)
 #undef __FUNCT__
 #define __FUNCT__ "SVMGetLogCBase"
 /*@
-  SVMGetC - Gets the step C penalty value
+  SVMGetLogCBase - Returns the value of penalty C step.
+
+  Not Collective
 
   Input Parameter:
-. svm - the SVM
+. svm - SVM context
 
   Output Parameter:
-. LogCBase - step C penalty value
+. LogCBase - the value of penalty C step
 
   Level: beginner
 
-.seealso SVMGetC(), SVMGetLogCMin(), SVMGetLogCMax()
+.seealso SVMGetC(), SVMGetLogCMin(), SVMGetLogCMax(), SVMGridSearch()
 @*/
 PetscErrorCode SVMGetLogCBase(SVM svm,PetscReal *LogCBase)
 {
@@ -434,15 +482,17 @@ PetscErrorCode SVMGetLogCBase(SVM svm,PetscReal *LogCBase)
 #undef __FUNCT__
 #define __FUNCT__ "SVMSetLogCMin"
 /*@
-  SVMSetLogCMin - Sets the minimal log C penalty value
+  SVMSetLogCMin - Sets the minimum value of log C penalty.
+
+  Logically Colective on SVM
 
   Input Parameter:
-+ svm - the SVM
-- LogCMin - minimal log C penalty value
++ svm - SVM context
+- LogCMin - the minimum value of log C penalty
 
   Level: beginner
 
-.seealso SVMSetC(), SVMSetLogCBase(), SVMSetLogCMax()
+.seealso SVMSetC(), SVMSetLogCBase(), SVMSetLogCMax(), SVMGridSearch()
 @*/
 PetscErrorCode SVMSetLogCMin(SVM svm,PetscReal LogCMin)
 {
@@ -458,17 +508,19 @@ PetscErrorCode SVMSetLogCMin(SVM svm,PetscReal LogCMin)
 #undef __FUNCT__
 #define __FUNCT__ "SVMGetLogCMin"
 /*@
-  SVMGetLogCMin - Gets the minimal log C penalty value
+  SVMGetLogCMin - Returns the minimum value of log C penalty.
+
+  Not Collective
 
   Input Parameter:
-. svm - the SVM
+. svm - SVM context
 
   Output Parameter:
-. LogCMin - minimal log C penalty value
+. LogCMin - the minimum value of log C penalty
 
   Level: beginner
 
-.seealso SVMGetC(), SVMGetLogCBase(), SVMGetLogCMax()
+.seealso SVMGetC(), SVMGetLogCBase(), SVMGetLogCMax(), SVMGridSearch()
 @*/
 PetscErrorCode SVMGetLogCMin(SVM svm,PetscReal *LogCMin)
 {
@@ -483,15 +535,17 @@ PetscErrorCode SVMGetLogCMin(SVM svm,PetscReal *LogCMin)
 #undef __FUNCT__
 #define __FUNCT__ "SVMSetLogCMax"
 /*@
-  SVMSetLogCMax - Sets the maximal log C penalty value
+  SVMSetLogCMax - Sets the maximum value of log C penalty.
+
+  Logically Collective on SVM
 
   Input Parameters:
-+ svm - the SVM
-- LogCMax - maximal log C penalty value
++ svm - SVM context
+- LogCMax - the maximum value of log C penalty
 
   Level: beginner
 
-.seealso SVMSetC(), SVMSetLogCMin()
+.seealso SVMSetC(), SVMSetLogCBase(), SVMSetLogCMin(), SVMGridSearch()
 @*/
 PetscErrorCode SVMSetLogCMax(SVM svm,PetscReal LogCMax)
 {
@@ -507,17 +561,19 @@ PetscErrorCode SVMSetLogCMax(SVM svm,PetscReal LogCMax)
 #undef __FUNCT__
 #define __FUNCT__ "SVMGetLogCMax"
 /*@
-  SVMGetLogCMax - Gets the maximal log C penalty value
+  SVMGetLogCMax - Returns the maximum value of log C penalty.
+
+  Not Collective
 
   Input Parameter:
-. svm - the SVM
+. svm - SVM context
 
   Output Parameter:
-. LogCMax - maximal log C penalty value
+. LogCMax - the maximum value of log C penalty
 
   Level: beginner
 
-.seealso SVMGetC(), SVMGetLogCMax()
+.seealso SVMGetC(), SVMGetLogCBase(), SVMGetLogCMin(), SVMGridSearch()
 @*/
 PetscErrorCode SVMGetLogCMax(SVM svm,PetscReal *LogCMax)
 {
@@ -532,19 +588,19 @@ PetscErrorCode SVMGetLogCMax(SVM svm,PetscReal *LogCMax)
 #undef __FUNCT__
 #define __FUNCT__ "SVMSetLossType"
 /*@
-   SVMSetLossType - Sets the type of the hinge loss function
+   SVMSetLossType - Sets the type of the hinge loss function.
 
    Logically Collective on SVM
 
    Input Parameters:
-+  svm - the SVM
--  type - type of loss function
++  svm - SVM context
+-  type - the type of loss function
 
    Level: beginner
 
-.seealso PermonSVMType, SVMGetLossType()
+.seealso SVMLossType, SVMGetLossType()
 @*/
-PetscErrorCode SVMSetLossType(SVM svm, SVMLossType type)
+PetscErrorCode SVMSetLossType(SVM svm,SVMLossType type)
 {
 
   PetscFunctionBegin;
@@ -558,60 +614,19 @@ PetscErrorCode SVMSetLossType(SVM svm, SVMLossType type)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMSetMod"
-/*@
-   SVMSetMod - Sets type of SVM formulation
-
-   Logically Collective on SVM
-
-   Input Parameters:
-+  svm - the SVM
--  mod - type of SVM formulation
-@*/
-PetscErrorCode SVMSetMod(SVM svm,PetscInt mod)
-{
-
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveInt(svm,mod,2);
-  TRY( PetscTryMethod(svm,"SVMSetMod_C",(SVM,PetscInt),(svm,mod)) );
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetMod"
-/*@
-   SVMGetMod - Gets type of SVM formulation
-
-   Input Parameter:
-.  svm - the SVM
-
-   Output Parameter:
-.  mod - type of SVM formulation
-@*/
-PetscErrorCode SVMGetMod(SVM svm,PetscInt *mod)
-{
-
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  TRY( PetscTryMethod(svm,"SVMGetMod_C",(SVM,PetscInt *),(svm,mod)) );
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
 #define __FUNCT__ "SVMGetLossType"
 /*@
-   SVMGetLossType - Gets the type of the loss function
+  SVMGetLossType - Returns the type of the loss function.
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  svm - the SVM
+  Input Parameter:
+. svm - SVM context
 
-   Output Parameter:
-.  type - type of loss function
+  Output Parameter:
+. type - the type of loss function
 
-   Level: beginner
+  Level: beginner
 
 .seealso PermonSVMType, SVMSetLossType()
 @*/
@@ -626,19 +641,70 @@ PetscErrorCode SVMGetLossType(SVM svm,SVMLossType *type)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMSetMod"
+/*@
+  SVMSetMod - Sets type of SVM formulation.
+
+  Logically Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+- mod - type of SVM formulation
+
+  Level: beginner
+
+.seealso SVMGetMod()
+@*/
+PetscErrorCode SVMSetMod(SVM svm,PetscInt mod)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveInt(svm,mod,2);
+  TRY( PetscTryMethod(svm,"SVMSetMod_C",(SVM,PetscInt),(svm,mod)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetMod"
+/*@
+  SVMGetMod - Returns type of SVM formulation.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. mod - the type of SVM formulation
+
+  Level: beginner
+
+.seealso SVMSetMod()
+@*/
+PetscErrorCode SVMGetMod(SVM svm,PetscInt *mod)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( PetscTryMethod(svm,"SVMGetMod_C",(SVM,PetscInt *),(svm,mod)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetOptionsPrefix"
 /*@
-  SVMSetOptionsPrefix - Sets the prefix used for searching for all options of SVM QPS solver in the database
+  SVMSetOptionsPrefix - Sets the prefix used for searching for all options of the SVM classifier and the QPS solver in the database.
 
   Collective on SVM
 
   Input Parameters:
-+ SVM - the SVM
++ SVM - SVM context
 - prefix - the prefix string
 
   Level: developer
 
-.seealso SVMGetOptionsPrefix(), SVM, QPS
+.seealso SVMAppendOptionsPrefix(), SVMGetOptionsPrefix(), SVM, QPS
 @*/
 PetscErrorCode SVMSetOptionsPrefix(SVM svm,const char prefix[])
 {
@@ -652,12 +718,12 @@ PetscErrorCode SVMSetOptionsPrefix(SVM svm,const char prefix[])
 #undef __FUNCT__
 #define __FUNCT__ "SVMAppendOptionsPrefix"
 /*@
-  SVMAppendOptionsPrefix - Sets the prefix used for searching for all options of SVM QPS in the database
+  SVMAppendOptionsPrefix - Appends the prefix used for searching for all options of the SVM classifier and the QPS solver in the database.
 
   Collective on SVM
 
   Input Parameters:
-+ SVM - the SVM
++ SVM - SVM context
 - prefix - the prefix string
 
   Level: developer
@@ -676,13 +742,15 @@ PetscErrorCode SVMAppendOptionsPrefix(SVM svm,const char prefix[])
 #undef __FUNCT__
 #define __FUNCT__ "SVMGetOptionsPrefix"
 /*@
-  SVMGetOptionsPrefix - Gets the SVM QPS solver prefix
+  SVMGetOptionsPrefix - Returns the prefix of SVM classifier and QPS solver.
+
+  Not Collective
 
   Input Parameters:
-. SVM - the SVM
+. SVM - SVM context
 
   Output Parameters:
-. prefix - pointer to the prefix string used is returned
+. prefix - pointer to the prefix string
 
   Level: developer
 
@@ -706,7 +774,7 @@ PetscErrorCode SVMGetOptionsPrefix(SVM svm,const char *prefix[])
   Logically Collective on SVM
 
   Input Parameters:
-+ svm - the SVM
++ svm - SVM context
 - flg - use warm start in cross-validation
 
   Options Database Keys:
@@ -716,7 +784,7 @@ PetscErrorCode SVMGetOptionsPrefix(SVM svm,const char *prefix[])
 
 .seealso PermonSVMType, SVMGetLossType()
 @*/
-PetscErrorCode SVMSetWarmStart(SVM svm, PetscBool flg)
+PetscErrorCode SVMSetWarmStart(SVM svm,PetscBool flg)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
@@ -732,8 +800,8 @@ PetscErrorCode SVMSetWarmStart(SVM svm, PetscBool flg)
 
   Collective on SVM
 
-  Input parameter:
-. svm - instance of SVM
+  Input Parameter:
+. svm - SVM context
 
   Level: developer
 
@@ -754,13 +822,18 @@ PetscErrorCode SVMSetUp(SVM svm)
 #undef __FUNCT__
 #define __FUNCT__ "SVMView"
 /*@
-   SVMView - Views classification model details
+  SVMView - Views classification model details.
 
-   Input Parameters:
-+  svm - the SVM
--  v - visualization context
+  Input Parameters:
++ svm - SVM context
+- v - visualization context
 
-   Level: beginner
+  Level: beginner
+
+  Options Database Keys:
+. -svm_view - Prints info on classification model at conclusion of SVMTest()
+
+.seealso PetscViewer
 @*/
 PetscErrorCode SVMView(SVM svm,PetscViewer v)
 {
@@ -776,14 +849,18 @@ PetscErrorCode SVMView(SVM svm,PetscViewer v)
 #undef __FUNCT__
 #define __FUNCT__ "SVMSetTrainingDataset"
 /*@
-   SVMSetTrainingDataset - Sets the training samples and labels.
+  SVMSetTrainingDataset - Sets the training samples and labels.
 
-   Input Parameter:
-+  svm - the SVM
-.  Xt_training - samples data
--  y - known labels of training samples
+  Not Collective
 
-   Level: beginner
+  Input Parameter:
++ svm - SVM context
+. Xt_training - samples data
+- y - known labels of training samples
+
+  Level: beginner
+
+.seealso SVMGetTrainingDataset()
 @*/
 PetscErrorCode SVMSetTrainingDataset(SVM svm,Mat Xt_training,Vec y_training)
 {
@@ -798,16 +875,20 @@ PetscErrorCode SVMSetTrainingDataset(SVM svm,Mat Xt_training,Vec y_training)
 #undef __FUNCT__
 #define __FUNCT__ "SVMGetTrainingDataset"
 /*@
-   SVMSetTrainingDataset - Sets the training samples and labels.
+  SVMGetTrainingDataset - Returns the training samples and labels.
 
-   Input Parameter:
-.  svm - the SVM
+  Not Collective
 
-   Output Parameter:
-+  Xt_training - training samples
--  y_training - known labels of training samples
+  Input Parameter:
+. svm - SVM context
 
-   Level: beginner
+  Output Parameter:
++ Xt_training - training samples
+- y_training - known labels of training samples
+
+  Level: beginner
+
+.seealso SVMSetTrainingDataset()
 @*/
 PetscErrorCode SVMGetTrainingDataset(SVM svm,Mat *Xt_training,Vec *y_training)
 {
@@ -823,17 +904,19 @@ PetscErrorCode SVMGetTrainingDataset(SVM svm,Mat *Xt_training,Vec *y_training)
 #undef __FUNCT__
 #define __FUNCT__ "SVMSetAutoPostTrain"
 /*@
-  SVMSetAutoPostTrain - Sets post train flag.
+  SVMSetAutoPostTrain - Sets auto post train flag.
 
-  Collective on SVM
+  Logically Collective on SVM
 
   Input Parameter:
-. svm - the SVM
+. svm - SVM context
 
   Output Parameter:
 . flg - flag
 
   Level: developer
+
+.seealso SVMPostTrain()
 @*/
 PetscErrorCode SVMSetAutoPostTrain(SVM svm,PetscBool flg)
 {
@@ -849,12 +932,16 @@ PetscErrorCode SVMSetAutoPostTrain(SVM svm,PetscBool flg)
 #undef __FUNCT__
 #define __FUNCT__ "SVMTrain"
 /*@
-  SVMTrain - Creates a classification model on the basis of training samples
+  SVMTrain - Trains a classification model on the basis of training samples.
+
+  Collective on SVM
 
   Input Parameters:
-. svm - the SVM
+. svm - SVM context
 
   Level: beginner
+
+.seealso SVMPrectict(), SVMTest(), SVMGetSeparatingHyperplane()
 @*/
 PetscErrorCode SVMTrain(SVM svm)
 {
@@ -868,14 +955,16 @@ PetscErrorCode SVMTrain(SVM svm)
 #undef __FUNCT__
 #define __FUNCT__ "SVMPostTrain"
 /*@
-  SVMPostTrain - Applies post train function
+  SVMPostTrain - Applies post train function.
 
   Collective on SVM
 
   Input Parameter:
-. svm - the SVM
+. svm - SVM context
 
   Level: advanced
+
+.seealso SVMTrain()
 @*/
 PetscErrorCode SVMPostTrain(SVM svm)
 {
@@ -889,16 +978,18 @@ PetscErrorCode SVMPostTrain(SVM svm)
 #undef __FUNCT__
 #define __FUNCT__ "SVMSetSeparatingHyperplane"
 /*@
-  SVMSetSeparatingHyperplane - Sets the classifier (separator) w*x - b = 0
+  SVMSetSeparatingHyperplane - Sets the classifier (separator) <w,x> + b = 0.
 
-  Collective on SVM
+  Not Collective
 
   Input Parameters:
-+ svm - the SVM
++ svm - SVM context
 . w - the normal vector to the separating hyperplane
 - b - the offset of the hyperplane
 
   Level: beginner
+
+.seealso SVMSetBias()
 @*/
 PetscErrorCode SVMSetSeparatingHyperplane(SVM svm,Vec w,PetscReal b)
 {
@@ -913,12 +1004,12 @@ PetscErrorCode SVMSetSeparatingHyperplane(SVM svm,Vec w,PetscReal b)
 #undef __FUNCT__
 #define __FUNCT__ "SVMGetSeparatingHyperplane"
 /*@
-  SVMGetSeparatingHyperplane - Returns the classifier (separator) w*x - b = 0 computed by PermonSVMTrain()
+  SVMGetSeparatingHyperplane - Returns the linear classification model, i.e. <w,x> + b = 0, computed by PermonSVMTrain().
 
   Not Collective
 
   Input Parameter:
-. svm - the SVM context
+. svm - SVM context
 
   Output Parameters:
 + w - the normal vector to the separating hyperplane
@@ -940,6 +1031,19 @@ PetscErrorCode SVMGetSeparatingHyperplane(SVM svm,Vec *w,PetscReal *b)
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMSetBias"
+/*@
+  SVMSetBias - Sets the bias (b) of the linear classification model, i.e. <w,x> + b.
+
+  Logically Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+- bias - the bias (b) of the linear classification model
+
+  Level: intermediate
+
+.seealso SVMGetBias(), SVMSetMod()
+@*/
 PetscErrorCode SVMSetBias(SVM svm,PetscReal bias)
 {
 
@@ -952,6 +1056,21 @@ PetscErrorCode SVMSetBias(SVM svm,PetscReal bias)
 
 #undef __FUNCT__
 #define __FUNCT__
+/*@
+  SVMSetBias - Returns the bias (b) of the linear classification model, i.e. <w,x> + b.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. bias - the bias (b) of the linear classification model
+
+  Level: intermediate
+
+.seealso SVMSetBias(), SVMSetMod()
+@*/
 PetscErrorCode SVMGetBias(SVM svm,PetscReal *bias)
 {
 
@@ -965,10 +1084,12 @@ PetscErrorCode SVMGetBias(SVM svm,PetscReal *bias)
 #undef __FUNCT__
 #define __FUNCT__ "SVMPredict"
 /*@
-  SVMPredict - Predicts labels of tested samples
+  SVMPredict - Predicts labels of tested samples.
 
-  Input Parameter:
-+ svm - the SVM
+  Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
 - Xt_test - matrix of tested samples
 
   Output Parameter:
@@ -990,10 +1111,12 @@ PetscErrorCode SVMPredict(SVM svm,Mat Xt_pred,Vec *y_pred)
 #undef __FUNCT__
 #define __FUNCT__ "SVMTest"
 /*@
-  SVMTest - Tests quality of classification model
+  SVMTest - Tests quality of classification model.
+
+  Collective on SVM
 
   Input Parameters:
-+ svm - the SVM
++ svm - SVM context
 . Xt_test - matrix of tested samples
 - y_known - known labels of tested samples
 
@@ -1002,6 +1125,8 @@ PetscErrorCode SVMPredict(SVM svm,Mat Xt_pred,Vec *y_pred)
 - N_eq  - number of right classified samples
 
   Level: beginner
+
+.seealso SVMTrain(), SVMPredict()
 @*/
 PetscErrorCode SVMTest(SVM svm,Mat Xt_test,Vec y_known,PetscInt *N_all,PetscInt *N_eq)
 {
@@ -1015,16 +1140,18 @@ PetscErrorCode SVMTest(SVM svm,Mat Xt_test,Vec y_known,PetscInt *N_all,PetscInt 
 #undef __FUNCT__
 #define __FUNCT__ "SVMGridSearch"
 /*@
-  SVMGridSearch - Chooses best C penalty from manually specified set
+  SVMGridSearch - Chooses the best value of penalty C from manually specified set.
+
+  Collective on SVM
 
   Input Parameter:
-+ svm - the SVM
++ svm - SVM context
 
   Level: beginner
 
 .seealso: SVMCrossValidation(), SVMSetLogCBase(), SVMSetLogCMin(), SVMSetLogCMax(), SVM
 @*/
-FLLOP_EXTERN PetscErrorCode SVMGridSearch(SVM svm)
+PetscErrorCode SVMGridSearch(SVM svm)
 {
 
   PetscFunctionBeginI;
@@ -1036,16 +1163,23 @@ FLLOP_EXTERN PetscErrorCode SVMGridSearch(SVM svm)
 #undef __FUNCT__
 #define __FUNCT__ "SVMCrossValidation"
 /*@
-  SVMCrossValidation - Performs k-folds cross validation
+  SVMCrossValidation - Performs k-folds cross validation.
 
-  Input Parameter:
-+ svm - the SVM
+  Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+. c_arr - manually specified set of penalty C values
+- m - size of c_arr
+
+  Output Parameter:
+. score - array of scores for each penalty C
 
   Level: beginner
 
 .seealso: SVMGridSearch(), SVMSetNfolds(), SVM
 @*/
-FLLOP_EXTERN PetscErrorCode SVMCrossValidation(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal score[])
+PetscErrorCode SVMCrossValidation(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal score[])
 {
 
   PetscFunctionBeginI;

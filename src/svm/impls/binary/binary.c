@@ -612,6 +612,8 @@ PetscErrorCode SVMSetBias_Binary(SVM svm,PetscReal b)
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
   PetscFunctionBegin;
+  PetscValidLogicalCollectiveReal(svm,b,2);
+
   if (svm_binary->b != b) {
     svm_binary->b = b;
     svm->setupcalled = PETSC_FALSE;
