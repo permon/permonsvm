@@ -171,7 +171,7 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   SVMLossType    loss_type;
   PetscInt       nfolds;
 
-  PetscFunctionBegin;
+  PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
   ierr = PetscObjectOptionsBegin((PetscObject)svm);CHKERRQ(ierr);
@@ -210,7 +210,7 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
   svm->setfromoptionscalled = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturnI(0);
 }
 
 #undef __FUNCT__
