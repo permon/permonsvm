@@ -1,3 +1,4 @@
+
 #if !defined(__PERMONSVM_H)
 #define __PERMONSVM_H
 
@@ -31,17 +32,17 @@ typedef enum {SVM_L1, SVM_L2} SVMLossType;
 FLLOP_EXTERN const char *const SVMLossTypes[];
 
 /*MC
-     SVM_L1 - L1 type of loss function, \xi = max(0, 1 - y_i * w' * x_i)
+  SVM_L1 - L1 type of loss function, \xi = max(0, 1 - y_i * w' * x_i)
 
-   Level: beginner
+  Level: beginner
 
 .seealso: SVMLossType, SVM_L2, SVMGetLossType(), SVMSetLossType()
 M*/
 
 /*MC
-     SVM_L2 - L2 type of loss function, \xi = max(0, 1 - y_i * w' * x_i)^2
+  SVM_L2 - L2 type of loss function, \xi = max(0, 1 - y_i * w' * x_i)^2
 
-   Level: beginner
+  Level: beginner
 
 .seealso: SVMLossType, SVM_L1, SVMGetLossType(), SVMSetLossType()
 M*/
@@ -54,53 +55,54 @@ FLLOP_EXTERN PetscBool SVMRegisterAllCalled;
 FLLOP_EXTERN PetscErrorCode SVMRegisterAll();
 FLLOP_EXTERN PetscErrorCode SVMRegister(const char [],PetscErrorCode (*function)(SVM));
 
-FLLOP_EXTERN PetscErrorCode SVMCreate(MPI_Comm comm, SVM *svm_out);
-FLLOP_EXTERN PetscErrorCode SVMReset(SVM svm);
-FLLOP_EXTERN PetscErrorCode SVMDestroy(SVM *svm);
-FLLOP_EXTERN PetscErrorCode SVMDestroyDefault(SVM svm);
+FLLOP_EXTERN PetscErrorCode SVMCreate(MPI_Comm,SVM *);
 FLLOP_EXTERN PetscErrorCode SVMSetType(SVM,const SVMType);
+FLLOP_EXTERN PetscErrorCode SVMReset(SVM);
+FLLOP_EXTERN PetscErrorCode SVMDestroy(SVM *);
+FLLOP_EXTERN PetscErrorCode SVMDestroyDefault(SVM);
+FLLOP_EXTERN PetscErrorCode SVMSetFromOptions(SVM);
+FLLOP_EXTERN PetscErrorCode SVMSetUp(SVM);
+FLLOP_EXTERN PetscErrorCode SVMView(SVM,PetscViewer);
+
+FLLOP_EXTERN PetscErrorCode SVMSetTrainingDataset(SVM,Mat,Vec);
+FLLOP_EXTERN PetscErrorCode SVMGetTrainingDataset(SVM,Mat *,Vec *);
 
 FLLOP_EXTERN PetscErrorCode SVMSetMod(SVM,PetscInt);
 FLLOP_EXTERN PetscErrorCode SVMGetMod(SVM,PetscInt *);
-
+FLLOP_EXTERN PetscErrorCode SVMSetLossType(SVM,SVMLossType);
+FLLOP_EXTERN PetscErrorCode SVMGetLossType(SVM,SVMLossType *);
+FLLOP_EXTERN PetscErrorCode SVMSetC(SVM,PetscReal);
+FLLOP_EXTERN PetscErrorCode SVMGetC(SVM,PetscReal *);
+FLLOP_EXTERN PetscErrorCode SVMSetLogCMin(SVM,PetscReal);
+FLLOP_EXTERN PetscErrorCode SVMGetLogCMin(SVM,PetscReal *);
+FLLOP_EXTERN PetscErrorCode SVMSetLogCMax(SVM,PetscReal);
+FLLOP_EXTERN PetscErrorCode SVMGetLogCMax(SVM,PetscReal *);
+FLLOP_EXTERN PetscErrorCode SVMSetLogCBase(SVM,PetscReal);
+FLLOP_EXTERN PetscErrorCode SVMGetLogCBase(SVM,PetscReal *);
+FLLOP_EXTERN PetscErrorCode SVMSetNfolds(SVM,PetscInt);
+FLLOP_EXTERN PetscErrorCode SVMGetNfolds(SVM,PetscInt *);
+FLLOP_EXTERN PetscErrorCode SVMSetSeparatingHyperplane(SVM,Vec,PetscReal);
+FLLOP_EXTERN PetscErrorCode SVMGetSeparatingHyperplane(SVM,Vec *,PetscReal *);
 FLLOP_EXTERN PetscErrorCode SVMSetBias(SVM,PetscReal);
 FLLOP_EXTERN PetscErrorCode SVMGetBias(SVM,PetscReal *);
 
-FLLOP_EXTERN PetscErrorCode SVMView(SVM svm, PetscViewer v);
-FLLOP_EXTERN PetscErrorCode SVMSetC(SVM svm,PetscReal _C);
-FLLOP_EXTERN PetscErrorCode SVMGetC(SVM svm,PetscReal *C);
-FLLOP_EXTERN PetscErrorCode SVMSetLogCMin(SVM svm, PetscReal LogCMin);
-FLLOP_EXTERN PetscErrorCode SVMGetLogCMin(SVM svm, PetscReal *LogCMin);
-FLLOP_EXTERN PetscErrorCode SVMSetLogCMax(SVM svm, PetscReal LogCMax);
-FLLOP_EXTERN PetscErrorCode SVMGetLogCMax(SVM svm, PetscReal *LogCMax);
-FLLOP_EXTERN PetscErrorCode SVMSetLogCBase(SVM svm, PetscReal LogCBase);
-FLLOP_EXTERN PetscErrorCode SVMGetLogCBase(SVM svm, PetscReal *LogCBase);
-FLLOP_EXTERN PetscErrorCode SVMSetTrainingDataset(SVM svm,Mat Xt_training,Vec y_training);
-FLLOP_EXTERN PetscErrorCode SVMGetTrainingDataset(SVM svm,Mat *Xt_training,Vec *y_training);
-FLLOP_EXTERN PetscErrorCode SVMSetLossType(SVM svm,SVMLossType type);
-FLLOP_EXTERN PetscErrorCode SVMGetLossType(SVM svm,SVMLossType *type);
-FLLOP_EXTERN PetscErrorCode SVMSetNfolds(SVM svm, PetscInt nfolds);
-FLLOP_EXTERN PetscErrorCode SVMGetNfolds(SVM svm, PetscInt *nfolds);
-FLLOP_EXTERN PetscErrorCode SVMSetWarmStart(SVM svm, PetscBool flg);
-FLLOP_EXTERN PetscErrorCode SVMSetQPS(SVM svm,QPS qps);
-FLLOP_EXTERN PetscErrorCode SVMGetQPS(SVM svm,QPS *qps);
-FLLOP_EXTERN PetscErrorCode SVMSetOptionsPrefix(SVM svm,const char prefix[]);
-FLLOP_EXTERN PetscErrorCode SVMAppendOptionsPrefix(SVM svm,const char prefix[]);
-FLLOP_EXTERN PetscErrorCode SVMGetOptionsPrefix(SVM svm,const char *prefix[]);
-FLLOP_EXTERN PetscErrorCode SVMSetUp(SVM svm);
-FLLOP_EXTERN PetscErrorCode SVMSetAutoPostTrain(SVM svm, PetscBool flg);
-FLLOP_EXTERN PetscErrorCode SVMSetFromOptions(SVM svm);
-FLLOP_EXTERN PetscErrorCode SVMTrain(SVM svm);
-FLLOP_EXTERN PetscErrorCode SVMPostTrain(SVM svm);
-FLLOP_EXTERN PetscErrorCode SVMSetSeparatingHyperplane(SVM svm,Vec w,PetscReal b);
-FLLOP_EXTERN PetscErrorCode SVMGetSeparatingHyperplane(SVM svm,Vec *w,PetscReal *b);
-FLLOP_EXTERN PetscErrorCode SVMPredict(SVM svm,Mat Xt_test,Vec *y_out);
-FLLOP_EXTERN PetscErrorCode SVMTest(SVM svm, Mat Xt_test, Vec y_known, PetscInt *N_all, PetscInt *N_eq);
-FLLOP_EXTERN PetscErrorCode SVMCrossValidate(SVM svm);
+FLLOP_EXTERN PetscErrorCode SVMTrain(SVM);
+FLLOP_EXTERN PetscErrorCode SVMPostTrain(SVM);
+FLLOP_EXTERN PetscErrorCode SVMSetAutoPostTrain(SVM,PetscBool);
+FLLOP_EXTERN PetscErrorCode SVMPredict(SVM,Mat,Vec *);
+FLLOP_EXTERN PetscErrorCode SVMTest(SVM,Mat,Vec,PetscInt *,PetscInt *);
 
-FLLOP_EXTERN PetscErrorCode SVMGridSearch(SVM svm);
-FLLOP_EXTERN PetscErrorCode SVMCrossValidation(SVM svm,PetscReal [],PetscInt,PetscReal []);
+FLLOP_EXTERN PetscErrorCode SVMCrossValidate(SVM);
+FLLOP_EXTERN PetscErrorCode SVMGridSearch(SVM);
+FLLOP_EXTERN PetscErrorCode SVMCrossValidation(SVM,PetscReal [],PetscInt,PetscReal []);
+
+FLLOP_EXTERN PetscErrorCode SVMSetQPS(SVM,QPS);
+FLLOP_EXTERN PetscErrorCode SVMGetQPS(SVM,QPS *);
+FLLOP_EXTERN PetscErrorCode SVMSetWarmStart(SVM,PetscBool);
+
+FLLOP_EXTERN PetscErrorCode SVMSetOptionsPrefix(SVM svm,const char []);
+FLLOP_EXTERN PetscErrorCode SVMAppendOptionsPrefix(SVM svm,const char []);
+FLLOP_EXTERN PetscErrorCode SVMGetOptionsPrefix(SVM svm,const char *[]);
 
 FLLOP_EXTERN PetscErrorCode MatCreate_Biased(Mat,PetscReal,Mat *);
 #endif
-
