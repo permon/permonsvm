@@ -351,7 +351,7 @@ PetscErrorCode SVMLoadData(SVM svm,const char *filename,Mat *Xt,Vec *y) {
 
   if (view) {
     TRY( MatGetSize(Xt_inner,&M,&N) );
-    TRY( PetscPrintf(comm,"SVM: loaded %d training samples with %d attributes from file %s\n", M, N, filename) );
+    TRY( PetscPrintf(comm,"SVM: loaded %d samples with %d attributes from file %s\n", M, N, filename) );
   }
 
   TRY( SVMGetMod(svm,&svm_mod) );
