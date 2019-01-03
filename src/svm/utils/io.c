@@ -322,7 +322,10 @@ PetscErrorCode SVMAsseblyMatVec(MPI_Comm comm,char *buff,Mat *Xt,Vec *labels) {
 #undef __FUNCT__
 #define __FUNCT__ "SVMLoadData"
 PetscErrorCode SVMLoadData(MPI_Comm comm,const char *filename,Mat *Xt,Vec *y) {
-  char *chunk_buff = NULL;
+  char     *chunk_buff = NULL;
+  PetscInt M,N;
+
+  PetscBool         view;
 
   PetscFunctionBeginI;
   PetscValidPointer(Xt,3);
@@ -333,5 +336,11 @@ PetscErrorCode SVMLoadData(MPI_Comm comm,const char *filename,Mat *Xt,Vec *y) {
 
   if (chunk_buff) TRY( PetscFree(chunk_buff) );
 
+  TRY( PetscOptionsHasName(NULL,NULL,"-svm_view_io",&view) );
+
+  if (view) {
+    TRY( MatGetSize(*Xt,&M,&N) );
+    TRY( PetscPrintf(comm,"SVM: loaded %d training samples with %d attributes from file %s\n",M,N,filename) );
+  }
   PetscFunctionReturnI(0);
 }
