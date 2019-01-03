@@ -171,7 +171,7 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   SVMLossType    loss_type;
   PetscInt       nfolds;
 
-  PetscFunctionBeginI;
+  PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
   ierr = PetscObjectOptionsBegin((PetscObject)svm);CHKERRQ(ierr);
@@ -210,7 +210,7 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   ierr = PetscOptionsEnd();CHKERRQ(ierr);
 
   svm->setfromoptionscalled = PETSC_TRUE;
-  PetscFunctionReturnI(0);
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -809,13 +809,13 @@ PetscErrorCode SVMSetWarmStart(SVM svm,PetscBool flg)
 PetscErrorCode SVMSetUp(SVM svm)
 {
 
-  PetscFunctionBegin;
+  PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   if (svm->setupcalled) PetscFunctionReturn(0);
 
   TRY( svm->ops->setup(svm) );
   svm->setupcalled = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturnI(0);
 }
 
 #undef __FUNCT__
@@ -945,10 +945,10 @@ PetscErrorCode SVMSetAutoPostTrain(SVM svm,PetscBool flg)
 PetscErrorCode SVMTrain(SVM svm)
 {
 
-  PetscFunctionBegin;
+  PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   TRY( svm->ops->train(svm) );
-  PetscFunctionReturn(0);
+  PetscFunctionReturnI(0);
 }
 
 #undef __FUNCT__
@@ -968,10 +968,10 @@ PetscErrorCode SVMTrain(SVM svm)
 PetscErrorCode SVMPostTrain(SVM svm)
 {
 
-  PetscFunctionBegin;
+  PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   TRY( svm->ops->posttrain(svm) );
-  PetscFunctionReturn(0);
+  PetscFunctionReturnI(0);
 }
 
 #undef __FUNCT__
@@ -1101,10 +1101,10 @@ PetscErrorCode SVMGetBias(SVM svm,PetscReal *bias)
 PetscErrorCode SVMPredict(SVM svm,Mat Xt_pred,Vec *y_pred)
 {
 
-  PetscFunctionBegin;
+  PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   TRY( svm->ops->predict(svm,Xt_pred,y_pred) );
-  PetscFunctionReturn(0);
+  PetscFunctionReturnI(0);
 }
 
 #undef __FUNCT__
@@ -1130,10 +1130,10 @@ PetscErrorCode SVMPredict(SVM svm,Mat Xt_pred,Vec *y_pred)
 PetscErrorCode SVMTest(SVM svm,Mat Xt_test,Vec y_known,PetscInt *N_all,PetscInt *N_eq)
 {
 
-  PetscFunctionBegin;
+  PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   TRY( svm->ops->test(svm,Xt_test,y_known,N_all,N_eq) );
-  PetscFunctionReturn(0);
+  PetscFunctionReturnI(0);
 }
 
 #undef __FUNCT__
