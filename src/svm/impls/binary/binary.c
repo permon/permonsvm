@@ -36,20 +36,28 @@ static PetscErrorCode SVMQPSConvergedTrainRate(QPS qps,QP qp,PetscInt it,PetscRe
 #define __FUNCT__ "SVMReset_Binary"
 PetscErrorCode SVMReset_Binary(SVM svm)
 {
-  PetscFunctionBegin;
-  TRY( QPSReset(svm->qps) );
-  TRY( MatDestroy(&svm->Xt) );
-  TRY( VecDestroy(&svm->y) );
-  TRY( VecDestroy(&svm->y_inner) );
-  TRY( MatDestroy(&svm->D) );
-  TRY( PetscMemzero(svm->y_map,2*sizeof(PetscScalar)) );
-  TRY( VecDestroy(&svm->w) );
+  SVM_Binary *svm_binary;
 
-  svm->Xt      = NULL;
-  svm->y       = NULL;
-  svm->y_inner = NULL;
-  svm->D = NULL;
-  svm->w = NULL;
+  PetscFunctionBegin;
+  svm_binary = (SVM_Binary *) svm->data;
+
+  if (svm_binary->qps) {
+    TRY( QPSDestroy(&svm_binary->qps) );
+  }
+  TRY( VecDestroy(&svm_binary->w) );
+  TRY( MatDestroy(&svm_binary->Xt) );
+  TRY( MatDestroy(&svm_binary->D) );
+  TRY( VecDestroy(&svm_binary->y) );
+  TRY( VecDestroy(&svm_binary->y_inner) );
+
+  PetscMemzero(svm_binary->y_map,2*sizeof(PetscScalar) );
+  svm_binary->b = PETSC_INFINITY;
+  
+  svm_binary->w       = NULL;
+  svm_binary->Xt      = NULL;
+  svm_binary->y       = NULL;
+  svm_binary->y_inner = NULL;
+  svm_binary->D       = NULL;
   PetscFunctionReturn(0);
 }
 
