@@ -3,55 +3,49 @@
 
 PetscClassId SVM_CLASSID;
 
-const char *const SVMLossTypes[]={"L1","L2","SVMLossType","SVM_",0};
-
-static PetscErrorCode SVMQPSConvergedTrainRateCreate(SVM svm,void **ctx);
-static PetscErrorCode SVMQPSConvergedTrainRateDestroy(void *ctx);
-static PetscErrorCode SVMQPSConvergedTrainRate(QPS qps,QP qp,PetscInt it,PetscReal rnorm,KSPConvergedReason *reason,void *cctx);
-
 #undef __FUNCT__
 #define __FUNCT__ "SVMCreate"
 /*@
-SVMCreate - create instance of support vector machine classifier
+  SVMCreate - Creates instance of Support Vector Machine classifier.
 
-Parameters:
-+ comm - MPI comm
-- svm_out - pointer to created SVM
+  Collective on MPI_Comm
+
+  Input Parameter:
+. comm - MPI comm
+
+  Output Parameter:
+. svm_out - pointer to created SVM
+
+  Level: beginner
+
+.seealso SVMDestroy(), SVMReset(), SVMSetup(), SVMSetFromOptions()
 @*/
-PetscErrorCode SVMCreate(MPI_Comm comm, SVM *svm_out)
+PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
 {
   SVM svm;
 
   PetscFunctionBegin;
-  PetscValidPointer(svm_out, 2);
+  PetscValidPointer(svm_out,2);
 
 #if !defined(PETSC_USE_DYNAMIC_LIBRARIES)
   TRY( SVMInitializePackage() );
 #endif
-  TRY( PetscHeaderCreate(svm, SVM_CLASSID, "SVM", "SVM Classifier", "SVM", comm, SVMDestroy, SVMView) );
+  TRY( PetscHeaderCreate(svm,SVM_CLASSID,"SVM","SVM Classifier","SVM",comm,SVMDestroy,SVMView) );
 
-  svm->setupcalled = PETSC_FALSE;
-  svm->setfromoptionscalled = PETSC_FALSE;
-  svm->autoPostSolve = PETSC_TRUE;
-  svm->qps = NULL;
+  svm->C          = 1.;
+  svm->C_old      = 1.;
+  svm->LogCBase   = 2.;
+  svm->LogCMin    = -2.;
+  svm->LogCMax    = 2.;
+  svm->loss_type  = SVM_L1;
 
-  svm->C = 1e1;
-  svm->LogCMin = -3.0;
-  svm->LogCBase = 2.0;
-  svm->LogCMax = 10.0;
-  svm->nfolds = 5;
-  svm->loss_type = SVM_L2;
-
+  svm->nfolds     = 5;
   svm->warm_start = PETSC_FALSE;
 
-  svm->Xt = NULL;
-  svm->y = NULL;
-  svm->y_inner = NULL;
-  svm->D = NULL;
-  svm->w = NULL;
-  svm->b = PETSC_INFINITY;
-
-  TRY( PetscMemzero(svm->y_map,2*sizeof(PetscScalar)) );
+  svm->setupcalled          = PETSC_FALSE;
+  svm->setfromoptionscalled = PETSC_FALSE;
+  svm->autoposttrain        = PETSC_TRUE;
+  svm->posttraincalled      = PETSC_FALSE;
 
   *svm_out = svm;
   PetscFunctionReturn(0);
@@ -60,175 +54,393 @@ PetscErrorCode SVMCreate(MPI_Comm comm, SVM *svm_out)
 #undef __FUNCT__
 #define __FUNCT__ "SVMReset"
 /*@
-   QPReset - Resets a QP context to the QPsetupcalled = 0 state, destroys child, PC, Vecs,  Mats, etc.
+  SVMReset - Resets a SVM context to the setupcalled = 0.
 
-   Collective on SVM
+  Collective on SVM
 
-   Input Parameter:
-.  svm - the SVM
+  Input Parameter:
+. svm - SVM context
+
+  Level: beginner
+
+.seealso SVMCreate(), SVMSetUp()
 @*/
 PetscErrorCode SVMReset(SVM svm)
 {
-  PetscFunctionBegin;
-  TRY( QPSReset(svm->qps) );
-  TRY( MatDestroy(&svm->Xt) );
-  TRY( VecDestroy(&svm->y) );
-  TRY( VecDestroy(&svm->y_inner) );
-  TRY( MatDestroy(&svm->D) );
-  TRY( PetscMemzero(svm->y_map,2*sizeof(PetscScalar)) );
-  TRY( VecDestroy(&svm->w) );
 
-  svm->Xt      = NULL;
-  svm->y       = NULL;
-  svm->y_inner = NULL;
-  svm->D = NULL;
-  svm->w = NULL;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+
+  svm->C          = 1.;
+  svm->C_old      = 1.;
+  svm->LogCBase   = 2.;
+  svm->LogCMin    = -2.;
+  svm->LogCMax    = 2.;
+  svm->loss_type  = SVM_L1;
+
+  svm->nfolds     = 5;
+  svm->warm_start = PETSC_FALSE;
+
+  TRY( (*svm->ops->reset)(svm) );
+
+  svm->setupcalled          = PETSC_FALSE;
+  svm->autoposttrain        = PETSC_TRUE;
+  svm->posttraincalled      = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
 
+#undef __FUNCT__
+#define __FUNCT__ "SVMDestroyDefault"
+/*@
+  SVMDestroyDefault - Destroys SVM context.
+
+  Input parameter:
+. svm - SVM context
+
+  Developers Note: This is PETSC_EXTERN because it may be used by user written plugin SVM implementations
+
+  Level: developer
+
+.seealso SVMDestroy()
+@*/
+PetscErrorCode SVMDestroyDefault(SVM svm)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( PetscFree(svm->data) );
+  PetscFunctionReturn(0);
+}
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMDestroy"
 /*@
-   SVMDestroy - Destroys SVM context.
+  SVMDestroy - Destroys SVM context.
 
-   Collective on SVM
+  Collective on SVM
 
-   Input Parameter:
-.  svm - SVM context
+  Input Parameter:
+. svm - SVM context
+
+  Level: beginner
+
+.seealso SVMCreate(), SVMSetUp()
 @*/
 PetscErrorCode SVMDestroy(SVM *svm)
 {
+
   PetscFunctionBegin;
   if (!*svm) PetscFunctionReturn(0);
 
-  PetscValidHeaderSpecific(*svm, SVM_CLASSID, 1);
+  PetscValidHeaderSpecific(*svm,SVM_CLASSID,1);
   if (--((PetscObject) (*svm))->refct > 0) {
-      *svm = 0;
-      PetscFunctionReturn(0);
+    *svm = 0;
+    PetscFunctionReturn(0);
   }
 
   TRY( SVMReset(*svm) );
-  TRY( QPSDestroy(&(*svm)->qps) );
+  if ((*svm)->ops->destroy) {
+    TRY( (*(*svm)->ops->destroy)(*svm) );
+  }
+
   TRY( PetscHeaderDestroy(svm) );
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMView"
+#define __FUNCT__ "SVMSetFromOptions"
 /*@
-   SVMView - View information about SVM.
+  SVMSetFromOptions - Sets SVM options from the options database.
 
-   Input Parameters:
-+  svm - the SVM
--  v - visualization context
+  Logically Collective on SVM
+
+  Input Parameter:
+. svm - SVM context
+
+  Level: beginner
+
+.seealso SVMCreate(), SVMSetUp()
 @*/
-PetscErrorCode SVMView(SVM svm, PetscViewer v)
+PetscErrorCode SVMSetFromOptions(SVM svm)
 {
+  PetscErrorCode ierr;
+
+  PetscReal      C,logC_min,logC_max,logC_base;
+  PetscBool      flg,warm_start;
+
+  SVMLossType    loss_type;
+  PetscInt       nfolds;
+
   PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+
+  ierr = PetscObjectOptionsBegin((PetscObject)svm);CHKERRQ(ierr);
+  TRY( PetscOptionsReal("-svm_C","Set SVM C (C).","SVMSetC",svm->C,&C,&flg) );
+  if (flg) {
+    TRY( SVMSetC(svm,C) );
+  }
+  TRY( PetscOptionsReal("-svm_logC_min","Set SVM minimal C value (LogCMin).","SVMSetLogCMin",svm->LogCMin,&logC_min,&flg) );
+  if (flg) {
+    TRY( SVMSetLogCMin(svm,logC_min) );
+  }
+  TRY( PetscOptionsReal("-svm_logC_max","Set SVM maximal C value (LogCMax).","SVMSetLogCMax",svm->LogCMax,&logC_max,&flg) );
+  if (flg) {
+    TRY( SVMSetLogCMax(svm,logC_max) );
+  }
+  TRY( PetscOptionsReal("-svm_logC_base","Set power base of SVM parameter C (LogCBase).","SVMSetLogCBase",svm->LogCBase,&logC_base,&flg) );
+  if (flg) {
+    TRY( SVMSetLogCBase(svm,logC_base) );
+  }
+  TRY( PetscOptionsInt("-svm_nfolds","Set number of folds (nfolds).","SVMSetNfolds",svm->nfolds,&nfolds,&flg) );
+  if (flg) {
+    TRY( SVMSetNfolds(svm,nfolds) );
+  }
+  TRY( PetscOptionsEnum("-svm_loss_type","Specify the loss function for soft-margin SVM (non-separable samples).","SVMSetNfolds",SVMLossTypes,(PetscEnum)svm->loss_type,(PetscEnum*)&loss_type,&flg) );
+  if (flg) {
+    TRY( SVMSetLossType(svm,loss_type) );
+  }
+  TRY( PetscOptionsBool("-svm_warm_start","Specify whether warm start is used in cross-validation.","SVMSetWarmStart",svm->warm_start,&warm_start,&flg) );
+  if (flg) {
+    TRY( SVMSetWarmStart(svm,warm_start) );
+  }
+
+  if (svm->ops->setfromoptions) {
+    TRY( svm->ops->setfromoptions(PetscOptionsObject,svm) );
+  }
+  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+
+  svm->setfromoptionscalled = PETSC_TRUE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetType"
+/*@
+  SVMSetType - Sets the type of SVM classifier.
+
+  Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+- type - the type of SVM classifier
+
+  Level: beginner
+
+.seealso SVMCreate(), SVMType
+@*/
+PetscErrorCode SVMSetType(SVM svm,const SVMType type)
+{
+  PetscErrorCode (*create_svm)(SVM);
+  PetscBool issame = PETSC_FALSE;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidCharPointer(type,2);
+
+  TRY( PetscObjectTypeCompare((PetscObject) svm,type,&issame) );
+  if (issame) PetscFunctionReturn(0);
+
+  TRY( PetscFunctionListFind(SVMList,type,(void(**)(void))&create_svm) );
+  if (!create_svm) FLLOP_SETERRQ1(PETSC_COMM_SELF,PETSC_ERR_ARG_UNKNOWN_TYPE,"Unable to find requested SVM type %s",type);
+
+  /* Destroy the pre-existing private SVM context */
+  if (svm->ops->destroy) svm->ops->destroy(svm);
+  /* Reinitialize function pointers in SVMOps structure */
+  TRY( PetscMemzero(svm->ops,sizeof(struct _SVMOps)) );
+
+  TRY( (*create_svm)(svm) );
+  TRY( PetscObjectChangeTypeName((PetscObject)svm,type) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetQPS"
+/*@
+  SVMSetQPS - Sets the QPS.
+
+  Not Collective
+
+  Input Parameters:
++ svm - SVM context
+- qps - QPS context
+
+  Level: advanced
+
+.seealso SVMGetQPS()
+@*/
+PetscErrorCode SVMSetQPS(SVM svm,QPS qps)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(qps,QPS_CLASSID,2);
+
+  TRY( PetscTryMethod(svm,"SVMSetQPS_C",(SVM,QPS),(svm,qps)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetQPS"
+/*@
+  SVMGetQPS - Returns the QPS.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. qps - QPS context
+
+  Level: advanced
+
+.seealso SVMSetQPS()
+@*/
+PetscErrorCode SVMGetQPS(SVM svm,QPS *qps)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidPointer(qps,2);
+
+  TRY( PetscUseMethod(svm,"SVMGetQPS_C",(SVM,QPS *),(svm,qps)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetNfolds"
+/*@
+  SVMSetNfolds - Sets the number of folds.
+
+  Logically Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+- nfolds - the number of folds
+
+  Level: beginner
+
+.seealso SVMSetNfolds(), SVMCrossValidation()
+@*/
+PetscErrorCode SVMSetNfolds(SVM svm,PetscInt nfolds)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveInt(svm,nfolds,2);
+
+  if (nfolds < 2) FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be greater than 1.");
+  svm->nfolds = nfolds;
+  svm->setupcalled = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetNfolds"
+/*@
+  SVMGetNfolds - Returns the number of folds.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. nfolds - the number of folds
+
+  Level: beginner
+
+.seealso SVMSetNfolds(), SVMCrossValidation()
+@*/
+PetscErrorCode SVMGetNfolds(SVM svm,PetscInt *nfolds)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidRealPointer(nfolds,2);
+  *nfolds = svm->nfolds;
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMSetC"
 /*@
-   SVMSetC - Sets the C parameter.
+  SVMSetC - Sets the value of penalty C.
 
-   Input Parameter:
-+  svm - the SVM
--  C - C parameter
+  Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+- C - the value of penalty C
+
+  Level: beginner
+
+.seealso SVMGetC(), SVMGridSearch()
 @*/
-PetscErrorCode SVMSetC(SVM svm, PetscReal C)
+PetscErrorCode SVMSetC(SVM svm,PetscReal C)
 {
+
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidLogicalCollectiveReal(svm, C, 2);
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveReal(svm,C,2);
 
-  if (C <= 0 && C != PETSC_DECIDE && C != PETSC_DEFAULT) FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
-  if (svm->setupcalled) {
-    if (svm->loss_type == SVM_L1) {
-      Vec ub;
-      TRY( QPGetBox(svm->qps->solQP, NULL, &ub) );
-      TRY( VecSet(ub, C) );
+  if (svm->C == C) PetscFunctionReturn(0);
 
-    } else {
-      TRY( MatScale(svm->D,C/svm->C) );
-    }
+  if (C <= 0 && C != PETSC_DECIDE && C != PETSC_DEFAULT) {
+    FLLOP_SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
   }
-  svm->C = C;
+
+  svm->C_old = svm->C;
+  svm->C     = C;
+  svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMGetC"
 /*@
-   SVMGetC - Gets the C parameter.
+  SVMGetC - Returns the value of penalty C.
 
-   Input Parameter:
-.  svm - the SVM
+  Not Collective
 
-   Output Parameter:
-.  C - C parameter
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. C - the value of penalty C
+
+  Level: beginner
+
+.seealso SVMSetC(), SVMGridSearch()
 @*/
-PetscErrorCode SVMGetC(SVM svm, PetscReal *C)
+PetscErrorCode SVMGetC(SVM svm,PetscReal *C)
 {
+
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidRealPointer(C, 2);
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidRealPointer(C,2);
   *C = svm->C;
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetLogCMin"
-/*@
-   SVMSetC - Sets the minimal C parameter value.
-
-   Input Parameter:
-+  svm - the SVM
--  LogCMin - minimal C parameter value
-@*/
-PetscErrorCode SVMSetLogCMin(SVM svm, PetscReal LogCMin)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidLogicalCollectiveReal(svm, LogCMin, 2);
-  svm->LogCMin = LogCMin;
-  svm->setupcalled = PETSC_FALSE;
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetLogCMin"
-/*@
-   SVMGetC - Gets the minimal C parameter value.
-
-   Input Parameter:
-.  svm - the SVM
-
-   Output Parameter:
-.  LogCMin - minimal C parameter value
-@*/
-PetscErrorCode SVMGetLogCMin(SVM svm, PetscReal *LogCMin)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidRealPointer(LogCMin, 2);
-  *LogCMin = svm->LogCMin;
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMSetLogCBase"
 /*@
-   SVMSetLogCBase - Sets the step C value.
+  SVMSetLogCBase - Sets the value of penalty C step.
 
-   Input Parameter:
-+  svm - the SVM
--  LogCBase - step C value
+  Logically Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+- LogCBase - the value of penalty C step
+
+  Level: beginner
+
+.seealso SVMSetC(), SVMSetLogBase(), SVMSetLogCMin(), SVMSetLogCMax(), SVMGridSearch()
 @*/
-PetscErrorCode SVMSetLogCBase(SVM svm, PetscReal LogCBase)
+PetscErrorCode SVMSetLogCBase(SVM svm,PetscReal LogCBase)
 {
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscValidLogicalCollectiveReal(svm, LogCBase, 2);
@@ -242,16 +454,23 @@ PetscErrorCode SVMSetLogCBase(SVM svm, PetscReal LogCBase)
 #undef __FUNCT__
 #define __FUNCT__ "SVMGetLogCBase"
 /*@
-   SVMGetC - Gets the step C value.
+  SVMGetLogCBase - Returns the value of penalty C step.
 
-   Input Parameter:
-.  svm - the SVM
+  Not Collective
 
-   Output Parameter:
-.  LogCBase - step C value
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. LogCBase - the value of penalty C step
+
+  Level: beginner
+
+.seealso SVMGetC(), SVMGetLogCMin(), SVMGetLogCMax(), SVMGridSearch()
 @*/
-PetscErrorCode SVMGetLogCBase(SVM svm, PetscReal *LogCBase)
+PetscErrorCode SVMGetLogCBase(SVM svm,PetscReal *LogCBase)
 {
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscValidRealPointer(LogCBase, 2);
@@ -260,19 +479,79 @@ PetscErrorCode SVMGetLogCBase(SVM svm, PetscReal *LogCBase)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMSetLogCMax"
+#define __FUNCT__ "SVMSetLogCMin"
 /*@
-   SVMSetLogCMax - Sets the max C parameter value.
+  SVMSetLogCMin - Sets the minimum value of log C penalty.
 
-   Input Parameter:
-+  svm - the SVM
--  LogCMax - max C parameter value
+  Logically Colective on SVM
+
+  Input Parameter:
++ svm - SVM context
+- LogCMin - the minimum value of log C penalty
+
+  Level: beginner
+
+.seealso SVMSetC(), SVMSetLogCBase(), SVMSetLogCMax(), SVMGridSearch()
 @*/
-PetscErrorCode SVMSetLogCMax(SVM svm, PetscReal LogCMax)
+PetscErrorCode SVMSetLogCMin(SVM svm,PetscReal LogCMin)
 {
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveReal(svm,LogCMin,2);
+  svm->LogCMin = LogCMin;
+  svm->setupcalled = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetLogCMin"
+/*@
+  SVMGetLogCMin - Returns the minimum value of log C penalty.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. LogCMin - the minimum value of log C penalty
+
+  Level: beginner
+
+.seealso SVMGetC(), SVMGetLogCBase(), SVMGetLogCMax(), SVMGridSearch()
+@*/
+PetscErrorCode SVMGetLogCMin(SVM svm,PetscReal *LogCMin)
+{
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidLogicalCollectiveReal(svm, LogCMax, 2);
+  PetscValidRealPointer(LogCMin, 2);
+  *LogCMin = svm->LogCMin;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetLogCMax"
+/*@
+  SVMSetLogCMax - Sets the maximum value of log C penalty.
+
+  Logically Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+- LogCMax - the maximum value of log C penalty
+
+  Level: beginner
+
+.seealso SVMSetC(), SVMSetLogCBase(), SVMSetLogCMin(), SVMGridSearch()
+@*/
+PetscErrorCode SVMSetLogCMax(SVM svm,PetscReal LogCMax)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveReal(svm,LogCMax,2);
   svm->LogCMax = LogCMax;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(0);
@@ -281,142 +560,51 @@ PetscErrorCode SVMSetLogCMax(SVM svm, PetscReal LogCMax)
 #undef __FUNCT__
 #define __FUNCT__ "SVMGetLogCMax"
 /*@
-   SVMGetLogCMax - Gets the max C parameter value.
+  SVMGetLogCMax - Returns the maximum value of log C penalty.
 
-   Input Parameter:
-.  svm - the SVM
+  Not Collective
 
-   Output Parameter:
-.  LogCMax - maximal C parameter value
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. LogCMax - the maximum value of log C penalty
+
+  Level: beginner
+
+.seealso SVMGetC(), SVMGetLogCBase(), SVMGetLogCMin(), SVMGridSearch()
 @*/
-PetscErrorCode SVMGetLogCMax(SVM svm, PetscReal *LogCMax)
+PetscErrorCode SVMGetLogCMax(SVM svm,PetscReal *LogCMax)
 {
+
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidRealPointer(LogCMax, 2);
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidRealPointer(LogCMax,2);
   *LogCMax = svm->LogCMax;
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetNfolds"
-/*@
-   SVMSetC - Sets the C parameter.
-
-   Input Parameter:
-+  svm - the SVM
--  C - C parameter
-@*/
-PetscErrorCode SVMSetNfolds(SVM svm, PetscInt nfolds)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidLogicalCollectiveInt(svm, nfolds, 2);
-
-  if (nfolds < 2) FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be greater than 1.");
-  svm->nfolds = nfolds;
-  svm->setupcalled = PETSC_FALSE;
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetNfolds"
-/*@
-   SVMGetNfolds - Gets the number of folds.
-
-   Input Parameter:
-.  svm - the SVM
-
-   Output Parameter:
-.  nfolds - number of folds
-@*/
-PetscErrorCode SVMGetNfolds(SVM svm, PetscInt *nfolds)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidRealPointer(nfolds, 2);
-  *nfolds = svm->nfolds;
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetTrainingSamples"
-/*@
-   SVMSetTrainingSamples - Sets the training samples.
-
-   Input Parameter:
-+  svm - the SVM
-.  Xt - samples data
--  y -
-@*/
-PetscErrorCode SVMSetTrainingSamples(SVM svm, Mat Xt, Vec y)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidHeaderSpecific(Xt, MAT_CLASSID, 2);
-  PetscCheckSameComm(svm, 1, Xt, 2);
-  PetscValidHeaderSpecific(y, VEC_CLASSID, 3);
-  PetscCheckSameComm(svm, 1, y, 3);
-
-  TRY( MatDestroy(&svm->Xt) );
-  svm->Xt = Xt;
-  TRY( PetscObjectReference((PetscObject) Xt) );
-
-  TRY( VecDestroy(&svm->y) );
-  svm->y = y;
-  TRY( PetscObjectReference((PetscObject) y) );
-
-  svm->setupcalled = PETSC_FALSE;
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetTrainingSamples"
-/*@
-   SVMSetTrainingSamples - Sets the training samples.
-
-   Input Parameter:
-.  svm - the SVM
-
-   Output Parameter:
-+  Xt - samples data
--  y -
-@*/
-PetscErrorCode SVMGetTrainingSamples(SVM svm, Mat *Xt, Vec *y)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  if (Xt) {
-    PetscValidPointer(Xt, 2);
-    *Xt = svm->Xt;
-  }
-  if (y) {
-    PetscValidPointer(y, 3);
-    *y = svm->y;
-  }
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMSetLossType"
 /*@
-   SVMSetLossType - Sets the type of the loss function.
+   SVMSetLossType - Sets the type of the hinge loss function.
 
    Logically Collective on SVM
 
    Input Parameters:
-+  svm - the SVM
--  type - type of loss function
++  svm - SVM context
+-  type - the type of loss function
 
    Level: beginner
 
-.seealso PermonSVMType, SVMGetLossType()
+.seealso SVMLossType, SVMGetLossType()
 @*/
-PetscErrorCode SVMSetLossType(SVM svm, SVMLossType type)
+PetscErrorCode SVMSetLossType(SVM svm,SVMLossType type)
 {
+
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidLogicalCollectiveEnum(svm, type, 2);
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveEnum(svm,type,2);
   if (type != svm->loss_type) {
     svm->loss_type = type;
     svm->setupcalled = PETSC_FALSE;
@@ -427,669 +615,574 @@ PetscErrorCode SVMSetLossType(SVM svm, SVMLossType type)
 #undef __FUNCT__
 #define __FUNCT__ "SVMGetLossType"
 /*@
-   SVMGetLossType - Gets the type of the loss function.
+  SVMGetLossType - Returns the type of the loss function.
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  svm - the SVM
+  Input Parameter:
+. svm - SVM context
 
-   Output Parameter:
-.  type - type of loss function
+  Output Parameter:
+. type - the type of loss function
 
-   Level: beginner
+  Level: beginner
 
 .seealso PermonSVMType, SVMSetLossType()
 @*/
-PetscErrorCode SVMGetLossType(SVM svm, SVMLossType *type)
+PetscErrorCode SVMGetLossType(SVM svm,SVMLossType *type)
 {
+
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidPointer(type, 2);
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidPointer(type,2);
   *type = svm->loss_type;
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMSetQPS"
+#define __FUNCT__ "SVMSetMod"
 /*@
-   SVMSetQPS - Sets the QPS.
+  SVMSetMod - Sets type of SVM formulation.
 
-   Input Parameter:
-.  svm - the SVM
+  Logically Collective on SVM
 
-   Output Parameter:
-.  qps -
+  Input Parameters:
++ svm - SVM context
+- mod - type of SVM formulation
+
+  Level: beginner
+
+.seealso SVMGetMod()
 @*/
-PetscErrorCode SVMSetQPS(SVM svm, QPS qps)
+PetscErrorCode SVMSetMod(SVM svm,PetscInt mod)
 {
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidHeaderSpecific(qps, QPS_CLASSID, 2);
-  PetscCheckSameComm(svm, 1, qps, 2);
 
-  TRY( QPSDestroy(&svm->qps) );
-  svm->qps = qps;
-  TRY( PetscObjectReference((PetscObject) qps) );
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveInt(svm,mod,2);
+  TRY( PetscTryMethod(svm,"SVMSetMod_C",(SVM,PetscInt),(svm,mod)) );
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMGetQPS"
+#define __FUNCT__ "SVMGetMod"
 /*@
-   SVMGetQPS - Gets the QPS.
+  SVMGetMod - Returns type of SVM formulation.
 
-   Input Parameter:
-.  svm - the SVM
+  Not Collective
 
-   Output Parameter:
-.  qps -
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. mod - the type of SVM formulation
+
+  Level: beginner
+
+.seealso SVMSetMod()
 @*/
-PetscErrorCode SVMGetQPS(SVM svm, QPS *qps)
+PetscErrorCode SVMGetMod(SVM svm,PetscInt *mod)
 {
+
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidPointer(qps,2);
-  if (!svm->qps) {
-    QPS qps; //qps_inner;
-    //Tao tao;
-
-    TRY( QPSCreate(PetscObjectComm((PetscObject)svm),&qps) );
-
-    /* set default solver */
-    TRY( QPSSetType(qps,QPSMPGP) );
-    //TRY( QPSSMALXEGetInnerQPS(qps,&qps_inner) );
-    //TRY( QPSSetType(qps_inner,QPSTAO) );
-    //TRY( QPSTaoGetTao(qps_inner,&tao) );
-    //TRY( TaoSetType(tao,TAOBLMVM) );
-
-    /* set default solver settings */
-    TRY( QPSSetTolerances(qps,1e-1,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT) );
-    //TRY( QPSSMALXESetM1Initial(qps,1.0,QPS_ARG_MULTIPLE) );
-    //TRY( QPSSMALXESetRhoInitial(qps,1.0,QPS_ARG_MULTIPLE) );
-
-    svm->qps = qps;
-  }
-  *qps = svm->qps;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( PetscTryMethod(svm,"SVMGetMod_C",(SVM,PetscInt *),(svm,mod)) );
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMSetUp_Remapy_Private"
-/* map y to -1,1 values if needed */
-static PetscErrorCode SVMSetUp_Remapy_Private(SVM svm)
+#define __FUNCT__ "SVMSetOptionsPrefix"
+/*@
+  SVMSetOptionsPrefix - Sets the prefix used for searching for all options of the SVM classifier and the QPS solver in the database.
+
+  Collective on SVM
+
+  Input Parameters:
++ SVM - SVM context
+- prefix - the prefix string
+
+  Level: developer
+
+.seealso SVMAppendOptionsPrefix(), SVMGetOptionsPrefix(), SVM, QPS
+@*/
+PetscErrorCode SVMSetOptionsPrefix(SVM svm,const char prefix[])
 {
-  Vec y;
-  PetscScalar min,max;
 
   PetscFunctionBegin;
-  TRY( SVMGetTrainingSamples(svm, NULL, &y) );
-  TRY( VecMin(y,NULL,&min) );
-  TRY( VecMax(y,NULL,&max) );
-  if (min == -1.0 && max == 1.0) {
-    svm->y_inner = y;
-    TRY( PetscObjectReference((PetscObject)y) );
-    svm->y_map[0] = -1.0;
-    svm->y_map[1] = 1.0;
-  } else {
-    const PetscScalar *y_arr;
-    PetscScalar *y_inner_arr;
-    PetscInt i,n;
-    TRY( VecGetLocalSize(y,&n) );
-    TRY( VecDuplicate(y, &svm->y_inner) );
-    TRY( VecGetArrayRead(y,&y_arr) );
-    TRY( VecGetArray(svm->y_inner,&y_inner_arr) );
-    for (i=0; i<n; i++) {
-      if (y_arr[i]==min) {
-        y_inner_arr[i] = -1.0;
-      } else if (y_arr[i]==max) {
-        y_inner_arr[i] = 1.0;
-      } else {
-        FLLOP_SETERRQ4(PetscObjectComm((PetscObject)svm),PETSC_ERR_ARG_OUTOFRANGE,"index %d: value %.1f is between max %.1f and min %.1f",i,y_arr[i],min,max);
-      }
-    }
-    TRY( VecRestoreArrayRead(y,&y_arr) );
-    TRY( VecRestoreArray(svm->y_inner,&y_inner_arr) );
-    svm->y_map[0] = min;
-    svm->y_map[1] = max;
-  }
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( PetscTryMethod(svm,"SVMSetOptionsPrefix_C",(SVM,const char []),(svm,prefix)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMAppendOptionsPrefix"
+/*@
+  SVMAppendOptionsPrefix - Appends the prefix used for searching for all options of the SVM classifier and the QPS solver in the database.
+
+  Collective on SVM
+
+  Input Parameters:
++ SVM - SVM context
+- prefix - the prefix string
+
+  Level: developer
+
+.seealso SVMSetOptionsPrefix(), SVMGetOptionsPrefix(), SVM, QPS
+*/
+PetscErrorCode SVMAppendOptionsPrefix(SVM svm,const char prefix[])
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( PetscTryMethod(svm,"SVMAppendOptionsPrefix_C",(SVM,const char []),(svm,prefix)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetOptionsPrefix"
+/*@
+  SVMGetOptionsPrefix - Returns the prefix of SVM classifier and QPS solver.
+
+  Not Collective
+
+  Input Parameters:
+. SVM - SVM context
+
+  Output Parameters:
+. prefix - pointer to the prefix string
+
+  Level: developer
+
+.seealso SVMSetOptionsPrefix(), SVM, QPS
+@*/
+PetscErrorCode SVMGetOptionsPrefix(SVM svm,const char *prefix[])
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( PetscUseMethod(svm,"SVMGetOptionsPrefix_C",(SVM,const char *[]),(svm,prefix)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetWarmStart"
+/*@
+  SVMSetWarmStart - Set flag specifying whether warm start is used in cross-validation.
+  It is set to PETSC_TRUE by default.
+
+  Logically Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+- flg - use warm start in cross-validation
+
+  Options Database Keys:
+. -svm_warm_start - use warm start in cross-validation
+
+  Level: advanced
+
+.seealso PermonSVMType, SVMGetLossType()
+@*/
+PetscErrorCode SVMSetWarmStart(SVM svm,PetscBool flg)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveBool(svm,flg,2);
+  svm->warm_start = flg;
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMSetUp"
 /*@
-   SVMSetUp -
+  SVMSetUp - Sets up the internal data structures for the SVM.
 
-   Input Parameter:
-.  svm - the SVM
+  Collective on SVM
+
+  Input Parameter:
+. svm - SVM context
+
+  Level: developer
+
+.seealso SVMCreate(), SVMTrain(), SVMReset(), SVMDestroy(), SVM
 @*/
 PetscErrorCode SVMSetUp(SVM svm)
 {
-  QPS qps;
-  QP qp;
-  PetscReal C;
-  Mat Xt;
-  Vec y;
-  Mat X,H;
-  Vec e,lb,ub;
-  Mat BE;
-  PetscReal norm;
-  Vec x_init;
 
-  FllopTracedFunctionBegin;
+  PetscFunctionBeginI;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   if (svm->setupcalled) PetscFunctionReturn(0);
 
-  FllopTraceBegin;
-  TRY( SVMGetQPS(svm, &qps) );
-  TRY( QPSGetQP(qps, &qp) );
-  TRY( SVMGetC(svm, &C) );
-  TRY( SVMGetTrainingSamples(svm, &Xt, &y) );
-
-  /* map y to -1,1 values if needed */
-  TRY( SVMSetUp_Remapy_Private(svm) );
-
-  if (C == PETSC_DECIDE || C == PETSC_DEFAULT) {
-    TRY( SVMCrossValidate(svm) );
-    TRY( SVMGetC(svm, &C) );
-  }
-
-  y = svm->y_inner;
-
-  /* creating Hessian */
-  TRY( PermonMatTranspose(Xt,MAT_TRANSPOSE_CHEAPEST,&X) );
-  TRY( MatCreateNormal(X,&H) );                   /* H = X^t * X */
-  TRY( MatDiagonalScale(H,y,y) );                 /* H = diag(y)*H*diag(y) */
-  TRY( MatDestroy(&svm->D) );
-  if (svm->loss_type == SVM_L2) {
-    PetscInt m,n,N;
-    Mat mats[2], HpE;
-    //TODO use MatShift(H,0.5*C) once implemented
-    TRY( MatGetLocalSize(H,&m,&n) );
-    TRY( MatGetSize(H,&N,NULL) );
-    TRY( MatCreateIdentity(PetscObjectComm((PetscObject)svm),m,n,N,&svm->D) );
-    TRY( MatScale(svm->D,0.5*C) );
-    mats[1] = H; mats[0] = svm->D;
-    TRY( MatCreateSum(PetscObjectComm((PetscObject)svm),2,mats,&HpE) );
-    TRY( MatDestroy(&H) );
-    H = HpE;
-  } else {
-    FLLOP_ASSERT(svm->loss_type==SVM_L1,"svm->loss_type==SVM_L1");
-  }
-
-  TRY( QPSetOperator(qp,H) );                     /* set Hessian of QP problem */
-
-  /* creating linear term */
-  TRY( VecDuplicate(y,&e) );                      /* creating vector e same size and type as y */
-  TRY( VecSet(e,1.0) );
-  TRY( QPSetRhs(qp, e) );                         /* set linear term of QP problem */
-
-  TRY( QPTNormalizeObjective(qp) );
-
-  /* creating matrix of equality constraint */
-  TRY( MatCreateOneRow(y,&BE) );                  /* Be = y^t */
-  TRY( VecNorm(y, NORM_2, &norm) );
-  TRY( MatScale(BE,1.0/norm) );                   /* ||Be|| = 1 */
-  //TRY( QPSetEq(qp, BE, NULL) );                   /* set equality constraint to QP problem */
-
-  {
-    PetscInt m;
-    TRY( MatGetSize(BE,&m,NULL) );
-    FLLOP_ASSERT(m==1,"m==1");
-  }
-
-  /* creating box constraints */
-  TRY( VecDuplicate(y,&lb) );                     /* create lower bound constraint vector */
-  TRY( VecSet(lb, 0.0) );
-  if (svm->loss_type == SVM_L1) {
-    TRY( VecDuplicate(y,&ub) );                   /* create upper bound constraint vector */
-    TRY( VecSet(ub, C) );
-  } else {
-    ub = NULL;
-  }
-  TRY( QPSetBox(qp, lb, ub) );                    /* set box constraints to QP problem */
-
-  /* set init guess */
-  if (svm->loss_type == SVM_L1) {
-    VecDuplicate(lb, &x_init);
-    VecSet(x_init, 0.);
-    QPSetInitialVector(qp, x_init);
-    VecDestroy(&x_init);
-  }
-
-  /* permorm QP transforms */
-  TRY( QPTFromOptions(qp) );                      /* transform QP problem e.g. scaling */
-
-  /* set solver settings from options if SVMSetFromOptions has been called */
-  if (svm->setfromoptionscalled) {
-    TRY( QPSSetFromOptions(qps) );
-  }
-
-  /* monitor Test rate */
-  PetscBool printRate = PETSC_FALSE;
-  TRY( PetscOptionsGetBool(NULL,NULL,"-print_rate", &printRate, NULL));
-  if (printRate) {
-    void *cctx;
-    TRY( SVMQPSConvergedTrainRateCreate(svm,&cctx) );
-    TRY( QPSSetConvergenceTest(qps,SVMQPSConvergedTrainRate,cctx,SVMQPSConvergedTrainRateDestroy) );
-  }
-
-  /* setup solver */
-  TRY( QPSSetUp(qps) );
-
-  /* decreasing reference counts */
-  TRY( MatDestroy(&X) );
-  TRY( MatDestroy(&H) );
-  TRY( VecDestroy(&e) );
-  TRY( MatDestroy(&BE) );
-  TRY( VecDestroy(&lb) );
-  TRY( VecDestroy(&ub) );
+  TRY( svm->ops->setup(svm) );
   svm->setupcalled = PETSC_TRUE;
   PetscFunctionReturnI(0);
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMView"
+/*@
+  SVMView - Views classification model details.
+
+  Input Parameters:
++ svm - SVM context
+- v - visualization context
+
+  Level: beginner
+
+  Options Database Keys:
+. -svm_view - Prints info on classification model at conclusion of SVMTest()
+
+.seealso PetscViewer
+@*/
+PetscErrorCode SVMView(SVM svm,PetscViewer v)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  if (svm->ops->view) {
+    TRY( svm->ops->view(svm,v) );
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetTrainingDataset"
+/*@
+  SVMSetTrainingDataset - Sets the training samples and labels.
+
+  Not Collective
+
+  Input Parameter:
++ svm - SVM context
+. Xt_training - samples data
+- y - known labels of training samples
+
+  Level: beginner
+
+.seealso SVMGetTrainingDataset()
+@*/
+PetscErrorCode SVMSetTrainingDataset(SVM svm,Mat Xt_training,Vec y_training)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+
+  TRY( PetscTryMethod(svm,"SVMSetTrainingDataset_C",(SVM,Mat,Vec),(svm,Xt_training,y_training)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetTrainingDataset"
+/*@
+  SVMGetTrainingDataset - Returns the training samples and labels.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
++ Xt_training - training samples
+- y_training - known labels of training samples
+
+  Level: beginner
+
+.seealso SVMSetTrainingDataset()
+@*/
+PetscErrorCode SVMGetTrainingDataset(SVM svm,Mat *Xt_training,Vec *y_training)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+
+  TRY( PetscUseMethod(svm,"SVMGetTrainingDataset_C",(SVM,Mat *,Vec *),(svm,Xt_training,y_training)) );
+  PetscFunctionReturn(0);
+}
+
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetAutoPostTrain"
 /*@
-   SVMTrain -
+  SVMSetAutoPostTrain - Sets auto post train flag.
 
-   Input Parameter:
-.  svm - the SVM
+  Logically Collective on SVM
 
-   Output Parameter:
-.  qps -
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. flg - flag
+
+  Level: developer
+
+.seealso SVMPostTrain()
 @*/
-PetscErrorCode SVMSetAutoPostTrain(SVM svm, PetscBool flg)
+PetscErrorCode SVMSetAutoPostTrain(SVM svm,PetscBool flg)
 {
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  svm->autoPostSolve = flg;
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetOptionsPrefix"
-PetscErrorCode SVMSetOptionsPrefix(SVM svm,const char prefix[])
-{
-  QPS qps;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  TRY( PetscObjectSetOptionsPrefix((PetscObject)svm,prefix) );
-  TRY( SVMGetQPS(svm,&qps) );
-  TRY( QPSSetOptionsPrefix(qps,prefix) );
-  PetscFunctionReturn(0);
-}
+  PetscValidLogicalCollectiveBool(svm,flg,2);
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMAppendOptionsPrefix"
-PetscErrorCode SVMAppendOptionsPrefix(SVM svm,const char prefix[])
-{
-  QPS qps;
-
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  TRY( PetscObjectAppendOptionsPrefix((PetscObject)svm,prefix) );
-  TRY( SVMGetQPS(svm,&qps) );
-  TRY( QPSAppendOptionsPrefix(qps,prefix) );
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetOptionsPrefix"
-PetscErrorCode SVMGetOptionsPrefix(SVM svm,const char *prefix[])
-{
-  QPS qps;
-
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  TRY( PetscObjectGetOptionsPrefix((PetscObject)svm,prefix) );
-  TRY(SVMGetQPS(svm,&qps) );
-  TRY( QPSGetOptionsPrefix(qps,prefix) );
+  svm->autoposttrain = flg;
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMTrain"
 /*@
-   SVMTrain -
+  SVMTrain - Trains a classification model on the basis of training samples.
 
-   Input Parameter:
-.  svm - the SVM
+  Collective on SVM
 
-   Output Parameter:
-.  qps -
+  Input Parameters:
+. svm - SVM context
+
+  Level: beginner
+
+.seealso SVMPrectict(), SVMTest(), SVMGetSeparatingHyperplane()
 @*/
 PetscErrorCode SVMTrain(SVM svm)
 {
+
   PetscFunctionBeginI;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  TRY( PetscPrintf(PetscObjectComm((PetscObject)svm),"### PermonSVM:   train with loss_type %s, C = %.2e\n",SVMLossTypes[svm->loss_type],svm->C) );
-  TRY( SVMSetUp(svm) );
-  TRY( QPSSetAutoPostSolve(svm->qps, PETSC_FALSE) );
-  TRY( QPSSolve(svm->qps) );
-  if (svm->autoPostSolve) TRY( SVMPostTrain(svm) );
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( svm->ops->train(svm) );
   PetscFunctionReturnI(0);
 }
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMPostTrain"
 /*@
-   SVMPostTrain -
+  SVMPostTrain - Applies post train function.
 
-   Input Parameter:
-.  svm - the SVM
+  Collective on SVM
 
-   Output Parameter:
-.  qps -
+  Input Parameter:
+. svm - SVM context
+
+  Level: advanced
+
+.seealso SVMTrain()
 @*/
 PetscErrorCode SVMPostTrain(SVM svm)
 {
-  QPS qps;
-  QP qp;
-  IS is_sv;
-  Vec o, y_sv, Xtw, Xtw_sv, t;
-  PetscInt len_sv;
-  Mat Xt;
-  Vec Yz, y, z, w;
-  PetscScalar b;
 
   PetscFunctionBeginI;
-  TRY( SVMGetQPS(svm, &qps) );
-  TRY( QPSPostSolve(qps) );
-  TRY( QPSGetQP(qps, &qp) );
-  TRY( SVMGetTrainingSamples(svm, &Xt, NULL) );
-  y = svm->y_inner;
-
-  /* reconstruct w from dual solution z */
-  {
-    TRY( QPGetSolutionVector(qp, &z) );
-    TRY( VecDuplicate(z, &Yz) );
-
-    TRY( VecPointwiseMult(Yz, y, z) );            /* YZ = Y*z = y.*z */
-    TRY( MatCreateVecs(Xt, &w, NULL) );           /* create vector w such that Xt*w works */
-    TRY( MatMultTranspose(Xt, Yz, w) );           /* Xt = X^t, w = Xt' * Yz = (X^t)^t * Yz = X * Yz */
-
-    svm->w = w;
-
-    TRY( VecDestroy(&Yz) );
-  }
-
-  /* reconstruct b from dual solution z */
-  {
-    TRY( VecDuplicate(z, &o) );
-    TRY( VecZeroEntries(o) );
-    TRY( MatCreateVecs(Xt, NULL, &Xtw) );
-
-    TRY( VecWhichGreaterThan(z, o, &is_sv) );
-    TRY( ISGetSize(is_sv, &len_sv) );
-    TRY( MatMult(Xt, w, Xtw) );
-    TRY( VecGetSubVector(y, is_sv, &y_sv) );      /* y_sv = y(is_sv) */
-    TRY( VecGetSubVector(Xtw, is_sv, &Xtw_sv) );  /* Xtw_sv = Xtw(is_sv) */
-    TRY( VecDuplicate(y_sv, &t) );
-    TRY( VecWAXPY(t, -1.0, Xtw_sv, y_sv) );       /* t = y_sv - Xtw_sv */
-    TRY( VecRestoreSubVector(y, is_sv, &y_sv) );
-    TRY( VecRestoreSubVector(Xtw, is_sv, &Xtw_sv) );
-    TRY( VecSum(t, &b) );                         /* b = sum(t) */
-    b /= len_sv;                                  /* b = b / length(is_sv) */
-
-    svm->b = b;
-
-    TRY( ISDestroy(&is_sv) );
-    TRY( VecDestroy(&o) );
-    TRY( VecDestroy(&t) );
-    TRY( VecDestroy(&Xtw) );
-  }
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( svm->ops->posttrain(svm) );
   PetscFunctionReturnI(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMSetFromOptions"
+#define __FUNCT__ "SVMSetSeparatingHyperplane"
 /*@
-   SVMSetFromOptions -
+  SVMSetSeparatingHyperplane - Sets the classifier (separator) <w,x> + b = 0.
 
-   Input Parameter:
-.  svm - the SVM
+  Not Collective
+
+  Input Parameters:
++ svm - SVM context
+. w - the normal vector to the separating hyperplane
+- b - the offset of the hyperplane
+
+  Level: beginner
+
+.seealso SVMSetBias()
 @*/
-PetscErrorCode SVMSetFromOptions(SVM svm)
+PetscErrorCode SVMSetSeparatingHyperplane(SVM svm,Vec w,PetscReal b)
 {
-  PetscReal C, LogCMin, LogCMax, LogCBase;
-  PetscInt nfolds;
-  PetscBool flg, flg1;
-  SVMLossType loss_type;
 
-  PetscFunctionBeginI;
+  PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  _fllop_ierr = PetscObjectOptionsBegin((PetscObject)svm);CHKERRQ(_fllop_ierr);
-  TRY( PetscOptionsReal("-svm_C","Set SVM C (C).","SVMSetC",svm->C,&C,&flg) );
-  if (flg) TRY(SVMSetC(svm, C) );
-  TRY( PetscOptionsReal("-svm_logC_min","Set SVM minimal C value (LogCMin).","SVMSetLogCMin",svm->LogCMin,&LogCMin,&flg) );
-  if (flg) TRY(SVMSetLogCMin(svm, LogCMin) );
-  TRY( PetscOptionsReal("-svm_logC_max","Set SVM maximal C value (LogCMax).","SVMSetLogCMax",svm->LogCMax,&LogCMax,&flg) );
-  if (flg) TRY(SVMSetLogCMax(svm, LogCMax) );
-  TRY( PetscOptionsReal("-svm_logC_base","Set power base of SVM parameter C (LogCBase).","SVMSetLogCBase",svm->LogCBase,&LogCBase,&flg) );
-  if (flg) TRY(SVMSetLogCBase(svm, LogCBase) );
-  TRY( PetscOptionsInt("-svm_nfolds","Set number of folds (nfolds).","SVMSetNfolds",svm->nfolds,&nfolds,&flg) );
-  if (flg) TRY(SVMSetNfolds(svm, nfolds) );
-  TRY( PetscOptionsEnum("-svm_loss_type","Specify the loss function for soft-margin SVM (non-separable samples).","SVMSetNfolds",SVMLossTypes,(PetscEnum)svm->loss_type,(PetscEnum*)&loss_type,&flg) );
-  if (flg) TRY(SVMSetLossType(svm, loss_type) );
-  TRY( PetscOptionsBool("-svm_warm_start","Specify whether warm start is used in cross-validation.","SVMSetWarmStart",svm->warm_start,&flg1,&flg) );
-  if (flg) TRY(SVMSetWarmStart(svm, flg1) );
-  svm->setfromoptionscalled = PETSC_TRUE;
-  _fllop_ierr = PetscOptionsEnd();CHKERRQ(_fllop_ierr);
-  PetscFunctionReturnI(0);
+
+  TRY( PetscTryMethod(svm,"SVMSetSeparatingHyperplane_C",(SVM,Vec,PetscReal),(svm,w,b)) );
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMGetSeparatingHyperplane"
 /*@
-   SVMGetSeparatingHyperplane - Return the classifier (separator) w*x - b = 0 computed by PermonSVMTrain()
+  SVMGetSeparatingHyperplane - Returns the linear classification model, i.e. <w,x> + b = 0, computed by PermonSVMTrain().
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  svm - the SVM context
+  Input Parameter:
+. svm - SVM context
 
-   Output Parameters:
-+  w - the normal vector to the separating hyperplane
--  b - the offset of the hyperplane is given by b/||w||
+  Output Parameters:
++ w - the normal vector to the separating hyperplane
+- b - the offset of the hyperplane
 
- .seealso: SVMTrain(), SVMClassify(), SVMTest()
+  Level: beginner
+
+.seealso: SVMTrain(), SVMPredict(), SVMTest()
 @*/
-PetscErrorCode SVMGetSeparatingHyperplane(SVM svm, Vec *w, PetscReal *b)
+PetscErrorCode SVMGetSeparatingHyperplane(SVM svm,Vec *w,PetscReal *b)
 {
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidPointer(w,2);
-  PetscValidRealPointer(b,3);
-  *w = svm->w;
-  *b = svm->b;
+
+  TRY( PetscUseMethod(svm,"SVMGetSeparatingHyperplane_C",(SVM,Vec *,PetscReal *),(svm,w,b)) );
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMClassify"
+#define __FUNCT__ "SVMSetBias"
 /*@
-   SVMClassify -
+  SVMSetBias - Sets the bias (b) of the linear classification model, i.e. <w,x> + b.
 
-   Input Parameter:
-+  svm - the SVM
--  Xt_test
+  Logically Collective on SVM
 
-   Output Parameter:
-.  y - labels {-1, 1}
+  Input Parameters:
++ svm - SVM context
+- bias - the bias (b) of the linear classification model
+
+  Level: intermediate
+
+.seealso SVMGetBias(), SVMSetMod()
 @*/
-PetscErrorCode SVMClassify(SVM svm, Mat Xt_test, Vec *y_out)
+PetscErrorCode SVMSetBias(SVM svm,PetscReal bias)
 {
-  PetscInt i, m;
-  Vec Xtw_test, y, w;
-  PetscReal b;
 
-  const PetscScalar *Xtw_arr;
-  PetscScalar *y_arr;
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+
+  TRY( PetscTryMethod(svm,"SVMSetBias_C",(SVM,PetscReal),(svm,bias)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__
+/*@
+  SVMSetBias - Returns the bias (b) of the linear classification model, i.e. <w,x> + b.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. bias - the bias (b) of the linear classification model
+
+  Level: intermediate
+
+.seealso SVMSetBias(), SVMSetMod()
+@*/
+PetscErrorCode SVMGetBias(SVM svm,PetscReal *bias)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+
+  TRY( PetscUseMethod(svm,"SVMGetBias_C",(SVM,PetscReal *),(svm,bias)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMPredict"
+/*@
+  SVMPredict - Predicts labels of tested samples.
+
+  Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+- Xt_test - matrix of tested samples
+
+  Output Parameter:
+. y - predicted labels of tested samples
+
+  Level: beginner
+
+.seealso: SVMTrain(), SVMTest()
+@*/
+PetscErrorCode SVMPredict(SVM svm,Mat Xt_pred,Vec *y_pred)
+{
 
   PetscFunctionBeginI;
-  TRY( SVMGetSeparatingHyperplane(svm, &w, &b) );
-  TRY( MatCreateVecs(Xt_test,NULL,&Xtw_test) );
-  TRY( MatMult(Xt_test,w,Xtw_test) );
-
-  TRY( VecDuplicate(Xtw_test, &y) );
-  TRY( VecGetLocalSize(Xtw_test, &m) );
-
-  TRY( VecGetArrayRead(Xtw_test, &Xtw_arr) );
-  TRY( VecGetArray(y, &y_arr) );
-  for (i=0; i<m; i++) {
-    if (Xtw_arr[i] + b > 0) {
-      y_arr[i] = svm->y_map[1];
-    } else {
-      y_arr[i] = svm->y_map[0];
-    }
-  }
-  TRY( VecRestoreArrayRead(Xtw_test, &Xtw_arr) );
-  TRY( VecRestoreArray(y, &y_arr) );
-
-  *y_out = y;
-  TRY( VecDestroy(&Xtw_test) );
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( svm->ops->predict(svm,Xt_pred,y_pred) );
   PetscFunctionReturnI(0);
 }
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMTest"
 /*@
-   SVMTest -
+  SVMTest - Tests quality of classification model.
 
-   Input Parameter:
-+  svm - the SVM
--  Xt_test
+  Collective on SVM
 
-   Output Parameter:
-.
+  Input Parameters:
++ svm - SVM context
+. Xt_test - matrix of tested samples
+- y_known - known labels of tested samples
+
+  Output Parameters:
++ N_all - number of all tested samples
+- N_eq  - number of right classified samples
+
+  Level: beginner
+
+.seealso SVMTrain(), SVMPredict()
 @*/
-PetscErrorCode SVMTest(SVM svm, Mat Xt_test, Vec y_known, PetscInt *N_all, PetscInt *N_eq)
+PetscErrorCode SVMTest(SVM svm,Mat Xt_test,Vec y_known,PetscInt *N_all,PetscInt *N_eq)
 {
-  Vec y;
-  IS is_eq;
 
   PetscFunctionBeginI;
-  TRY( SVMClassify(svm, Xt_test, &y) );
-  TRY( VecWhichEqual(y,y_known,&is_eq) );
-  TRY( VecGetSize(y,N_all) );
-  TRY( ISGetSize(is_eq,N_eq) );
-  TRY( VecDestroy(&y) );
-  TRY( ISDestroy(&is_eq) );
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( svm->ops->test(svm,Xt_test,y_known,N_all,N_eq) );
   PetscFunctionReturnI(0);
 }
 
-
-typedef struct {
-  SVM svm;
-  void *defaultCtx;
-} ConvergedTrainRateCtx;
-
 #undef __FUNCT__
-#define __FUNCT__ "SVMQPSConvergedTrainRateCreate"
-static PetscErrorCode SVMQPSConvergedTrainRateCreate(SVM svm,void **ctx)
-{
-  ConvergedTrainRateCtx *cctx;
+#define __FUNCT__ "SVMGridSearch"
+/*@
+  SVMGridSearch - Chooses the best value of penalty C from manually specified set.
 
-  PetscFunctionBegin;
-  PetscNew(&cctx);
-  *ctx = cctx;
-  cctx->svm = svm;
-  TRY( QPSConvergedDefaultCreate(&cctx->defaultCtx) );
-  PetscFunctionReturn(0);
+  Collective on SVM
+
+  Input Parameter:
++ svm - SVM context
+
+  Level: beginner
+
+.seealso: SVMCrossValidation(), SVMSetLogCBase(), SVMSetLogCMin(), SVMSetLogCMax(), SVM
+@*/
+PetscErrorCode SVMGridSearch(SVM svm)
+{
+
+  PetscFunctionBeginI;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( svm->ops->gridsearch(svm) );
+  PetscFunctionReturnI(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMQPSConvergedTrainRateDestroy"
-static PetscErrorCode SVMQPSConvergedTrainRateDestroy(void *ctx)
+#define __FUNCT__ "SVMCrossValidation"
+/*@
+  SVMCrossValidation - Performs k-folds cross validation.
+
+  Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+. c_arr - manually specified set of penalty C values
+- m - size of c_arr
+
+  Output Parameter:
+. score - array of scores for each penalty C
+
+  Level: beginner
+
+.seealso: SVMGridSearch(), SVMSetNfolds(), SVM
+@*/
+PetscErrorCode SVMCrossValidation(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal score[])
 {
-  ConvergedTrainRateCtx *cctx = (ConvergedTrainRateCtx*) ctx;
 
-  PetscFunctionBegin;
-  TRY( QPSConvergedDefaultDestroy(cctx->defaultCtx) );
-  TRY( PetscFree(cctx) );
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "SVMQPSConvergedTrainRate"
-static PetscErrorCode SVMQPSConvergedTrainRate(QPS qps,QP qp,PetscInt it,PetscReal rnorm,KSPConvergedReason *reason,void *cctx)
-{
-  SVM svm = ((ConvergedTrainRateCtx*) cctx)->svm;
-  void *ctx = ((ConvergedTrainRateCtx*) cctx)->defaultCtx;
-  Mat Xt;
-  Vec y,y_orig;
-  PetscInt N_all, N_eq;
-  PetscReal rate,func,margin;
-  IS is_sv;
-  Vec o, y_sv, Xtw, Xtw_sv, t;
-  PetscInt len_sv;
-  Vec Yz, z, w;
-  PetscScalar b;
-  Vec grad,rhs;
-
-
-  PetscFunctionBegin;
-  TRY( SVMGetTrainingSamples(svm, &Xt, &y_orig) );
-  y = svm->y_inner;
-
-  /* reconstruct w from dual solution z */
-  {
-    TRY( QPGetSolutionVector(qp, &z) );
-    TRY( VecDuplicate(z, &Yz) );
-    TRY( VecPointwiseMult(Yz, y, z) );            /* YZ = Y*z = y.*z */
-    TRY( MatCreateVecs(Xt, &w, NULL) );           /* create vector w such that Xt*w works */
-    TRY( MatMultTranspose(Xt, Yz, w) );           /* Xt = X^t, w = Xt' * Yz = (X^t)^t * Yz = X * Yz */
-
-    svm->w = w;
-
-    PetscScalar r;
-    VecDot(z, y, &r);
-    PetscPrintf(MPI_COMM_WORLD, "Be * y = %f\n", r);
-  }
-
-  /* reconstruct b from dual solution z */
-  {
-    TRY( VecDuplicate(z, &o) );
-    TRY( VecZeroEntries(o) );
-    TRY( MatCreateVecs(Xt, NULL, &Xtw) );
-
-    TRY( VecWhichGreaterThan(z, o, &is_sv) );
-    TRY( ISGetSize(is_sv, &len_sv) );
-    TRY( MatMult(Xt, w, Xtw) );
-    TRY( VecGetSubVector(y, is_sv, &y_sv) );      /* y_sv = y(is_sv) */
-    TRY( VecGetSubVector(Xtw, is_sv, &Xtw_sv) );  /* Xtw_sv = Xtw(is_sv) */
-    TRY( VecDuplicate(y_sv, &t) );
-    TRY( VecWAXPY(t, -1.0, Xtw_sv, y_sv) );       /* t = y_sv - Xtw_sv */
-    TRY( VecRestoreSubVector(y, is_sv, &y_sv) );
-    TRY( VecRestoreSubVector(Xtw, is_sv, &Xtw_sv) );
-    TRY( VecSum(t, &b) );                         /* b = sum(t) */
-    b /= len_sv;                                  /* b = b / length(is_sv) */
-
-    svm->b = b;
-  }
-
-  TRY( SVMTest(svm, Xt, y_orig, &N_all, &N_eq) );
-  rate = ((PetscReal)N_eq)/((PetscReal)N_all);
-
-  /* compute value of the functional !!!MPGP ONLY!!! */
-  TRY( QPGetRhs(qp,&rhs) );
-  TRY( VecDuplicate(qps->work[3],&grad) );
-  TRY( VecWAXPY(grad,-1.0,rhs,qps->work[3]) );
-  TRY( VecDot(z,grad,&func) );
-  func = .5*func;
-  TRY( VecNorm(w,NORM_2,&margin) );
-  margin = 2.0/margin;
-  TRY( PetscPrintf(PETSC_COMM_WORLD, "it= %d RATE= %.8f% rnorm= %.8e func= %.8e margin= %.8e\n",it,rate*100.0,rnorm,func,margin) );
-  TRY( QPSConvergedDefault(qps,qp,it,rnorm,reason,ctx) );
-
-  TRY( ISDestroy(&is_sv) );
-  TRY( VecDestroy(&o) );
-  TRY( VecDestroy(&t) );
-  TRY( VecDestroy(&Yz) );
-  TRY( VecDestroy(&Xtw) );
-  TRY( VecDestroy(&w) );
-  TRY( VecDestroy(&grad) );
-  PetscFunctionReturn(0);
+  PetscFunctionBeginI;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( svm->ops->crossvalidation(svm,c_arr,m,score) );
+  PetscFunctionReturnI(0);
 }

@@ -2,14 +2,14 @@ ALL: lib
 
 CFLAGS   =
 FFLAGS   =
-SOURCEC  = dlregissvm.c svmregis.c svm.c
-SOURCEF  = 
-SOURCEH  = 
+SOURCEC  = io.c matutils.c
+SOURCEF  =
+SOURCEH  =
 OBJSC    = ${SOURCEC:.c=.o}
 LIBBASE  = libpermon
 DIRS     =
 MANSEC   = SVM
-LOCDIR   = src/svm/interface/
+LOCDIR   = src/svm/utils/
 
 include ${PERMON_SVM_DIR}/lib/permonsvm/conf/permonsvm_variables
 include ${PERMON_SVM_DIR}/lib/permonsvm/conf/permonsvm_rules
