@@ -580,9 +580,10 @@ PetscErrorCode SVMSetSeparatingHyperplane_Binary(SVM svm,Vec w,PetscReal b)
   PetscFunctionBegin;
   PetscCheckSameComm(svm,1,w,2);
 
-  TRY( PetscObjectReference((PetscObject) w) );
+  TRY( VecDestroy(&svm_binary->w) );
   svm_binary->w = w;
   svm_binary->b = b;
+  TRY( PetscObjectReference((PetscObject) w) );
   PetscFunctionReturn(0);
 }
 
@@ -871,6 +872,7 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
     TRY( VecGetSubVector(y,is_training,&y_training) );
 
     TRY( SVMSetTrainingDataset(cross_svm,Xt_training,y_training) );
+
     for (j = 0; j < m; ++j) {
       TRY( SVMSetC(cross_svm,c_arr[j]) );
 
@@ -898,12 +900,15 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
       score[j] += ((PetscReal) N_eq) / ((PetscReal) N_all);
     }
 
-    TRY( MatDestroy(&Xt_training) );
-    TRY( VecRestoreSubVector(y,is_training,&y_training) );
-
     TRY( SVMReset(cross_svm) );
     TRY( SVMSetLossType(cross_svm,svm_loss) );
     TRY( SVMSetMod(cross_svm,svm_mod) );
+
+    TRY( VecRestoreSubVector(y,is_training,&y_training) );
+    TRY( MatDestroy(&Xt_training) );
+    TRY( VecRestoreSubVector(y,is_test,&y_test) );
+    TRY( MatDestroy(&Xt_test) );
+    TRY( ISDestroy(&is_training) );
   }
 
   for (i = 0; i < m; ++i) score[i] /= (PetscReal) nfolds;
@@ -975,7 +980,6 @@ PetscErrorCode SVMMonitorCreateMtx_Binary(void **mctx,SVM svm)
 
   TRY( PetscNew(&mctx_inner) );
   mctx_inner->svm_inner = svm;
-  TRY( PetscObjectReference((PetscObject) svm) );
   *mctx = mctx_inner;
   PetscFunctionReturn(0);
 }
@@ -985,11 +989,8 @@ PetscErrorCode SVMMonitorCreateMtx_Binary(void **mctx,SVM svm)
 PetscErrorCode SVMMonitorDestroyMtx_Binary(void **mctx)
 {
   SVM_Binary_mctx *mctx_inner = (SVM_Binary_mctx *) *mctx;
-  SVM              svm_inner;
 
   PetscFunctionBegin;
-  svm_inner  = mctx_inner->svm_inner;
-  TRY( PetscObjectDereference((PetscObject) svm_inner) );
   mctx_inner->svm_inner = NULL;
   TRY( PetscFree(mctx_inner) );
   PetscFunctionReturn(0);
@@ -1043,6 +1044,7 @@ PetscErrorCode SVMMonitorDefault_Binary(QPS qps,PetscInt it,PetscReal rnorm,void
   TRY( PetscViewerASCIIPrintf(v,",\tbias=%.10e",b_inner) );
   TRY( PetscViewerASCIIPrintf(v,",\tNSV=%3D\n",nsv) );
 
+  TRY( VecDestroy(&w_inner) );
   TRY( ISDestroy(&is_sv) );
   PetscFunctionReturn(0);
 }
