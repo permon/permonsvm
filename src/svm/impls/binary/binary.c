@@ -26,8 +26,8 @@ typedef struct {
   SVM svm_inner;
 } SVM_Binary_mctx;
 
-static PetscErrorCode SVMMonitorCreateMtx_Binary(void **,SVM);
-static PetscErrorCode SVMMonitorDestroyMtx_Binary(void **);
+static PetscErrorCode SVMMonitorCreateMCtx_Binary(void **,SVM);
+static PetscErrorCode SVMMonitorDestroyMCtx_Binary(void **);
 static PetscErrorCode SVMMonitorDefault_Binary(QPS,PetscInt,PetscReal,void *);
 
 #undef __FUNCT__
@@ -406,7 +406,7 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   }
 
   TRY( VecDuplicate(lb,&x_init) );
-  TRY( VecSet(x_init,C - 10 * PETSC_MACHINE_EPSILON) );
+  TRY( VecSet(x_init,C - 100 * PETSC_MACHINE_EPSILON) );
 
   TRY( QPSetInitialVector(qp,x_init) );
   TRY( VecDestroy(&x_init) );
@@ -415,8 +415,8 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   TRY( QPSetBox(qp,NULL,lb,ub) );
 
   if (svm_monitor_set) {
-    TRY( SVMMonitorCreateMtx_Binary(&mctx,svm) );
-    TRY( QPSMonitorSet(qps,SVMMonitorDefault_Binary,mctx,SVMMonitorDestroyMtx_Binary) );
+    TRY( SVMMonitorCreateMCtx_Binary(&mctx,svm) );
+    TRY( QPSMonitorSet(qps,SVMMonitorDefault_Binary,mctx,SVMMonitorDestroyMCtx_Binary) );
   }
 
   if (svm->setfromoptionscalled) {
@@ -973,8 +973,8 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMMonitorCreateMtx_Binary"
-PetscErrorCode SVMMonitorCreateMtx_Binary(void **mctx,SVM svm)
+#define __FUNCT__ "SVMMonitorCreateMCtx_Binary"
+PetscErrorCode SVMMonitorCreateMCtx_Binary(void **mctx,SVM svm)
 {
   SVM_Binary_mctx *mctx_inner;
 
@@ -989,8 +989,8 @@ PetscErrorCode SVMMonitorCreateMtx_Binary(void **mctx,SVM svm)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMMonitorDestroyMtx_Binary"
-PetscErrorCode SVMMonitorDestroyMtx_Binary(void **mctx)
+#define __FUNCT__ "SVMMonitorDestroyMCtx_Binary"
+PetscErrorCode SVMMonitorDestroyMCtx_Binary(void **mctx)
 {
   SVM_Binary_mctx *mctx_inner = (SVM_Binary_mctx *) *mctx;
 
