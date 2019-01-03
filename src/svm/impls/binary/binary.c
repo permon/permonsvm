@@ -40,7 +40,8 @@ PetscErrorCode SVMReset_Binary(SVM svm)
   svm_binary = (SVM_Binary *) svm->data;
 
   if (svm_binary->qps) {
-    TRY( QPSDestroy(&svm_binary->qps) );
+    TRY( QPSReset(svm_binary->qps) );
+    TRY( QPSMonitorCancel(svm_binary->qps) );
   }
   TRY( VecDestroy(&svm_binary->w) );
   TRY( MatDestroy(&svm_binary->Xt_training) );
@@ -907,6 +908,7 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
     TRY( SVMReset(cross_svm) );
     TRY( SVMSetLossType(cross_svm,svm_loss) );
     TRY( SVMSetMod(cross_svm,svm_mod) );
+    TRY( SVMSetFromOptions(cross_svm) );
 
     TRY( VecRestoreSubVector(y,is_training,&y_training) );
     TRY( MatDestroy(&Xt_training) );
