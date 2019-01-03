@@ -132,8 +132,8 @@ PetscErrorCode SVMReadBuffer(MPI_Comm comm,const char *filename,char **chunk_buf
     }
   }
 
-  if (comm_rank != comm_size-1) { 
-    TRY( MPI_Send(&eol_pos,1,MPIU_INT,comm_rank + 1,0,comm) ); 
+  if (comm_rank != comm_size-1) {
+    TRY( MPI_Send(&eol_pos,1,MPIU_INT,comm_rank + 1,0,comm) );
   }
   if (comm_rank != 0) {
     TRY( MPI_Recv(&eol_start,1,MPIU_INT,comm_rank - 1,0,comm,MPI_STATUS_IGNORE) );
@@ -301,15 +301,18 @@ PetscErrorCode SVMAsseblyMatVec(MPI_Comm comm,char *buff,Mat *Xt,Vec *labels) {
     DynamicArrayAddValue(k,offset);
   }
 
-  TRY( MatCreateMPIAIJWithArrays(comm,m,PETSC_DETERMINE,PETSC_DETERMINE,N,i.data,j.data,a.data,Xt) );
-  TRY( MatAssemblyBegin(*Xt,MAT_FINAL_ASSEMBLY) );
-  TRY( MatAssemblyEnd(*Xt,MAT_FINAL_ASSEMBLY) );
-  
+  TRY( MatCreate(comm,Xt) );
+  TRY( MatSetType(*Xt,MATAIJ) );
+  TRY( MatSetSizes(*Xt,m,PETSC_DECIDE,PETSC_DECIDE,N) );
+
+  TRY( MatSeqAIJSetPreallocationCSR(*Xt,i.data,j.data,a.data) );
+  TRY( MatMPIAIJSetPreallocationCSR(*Xt,i.data,j.data,a.data) );
+
   TRY( MatCreateVecs(*Xt,NULL,labels) );
   if (y.data) TRY( VecSetValues(*labels,y.size,k.data,y.data,INSERT_VALUES) );
   TRY( VecAssemblyBegin(*labels) );
   TRY( VecAssemblyEnd(*labels) );
-  
+
   if (y.data) DynamicArrayClear(y);
   if (k.data) DynamicArrayClear(k);
   DynamicArrayClear(i);
@@ -321,26 +324,44 @@ PetscErrorCode SVMAsseblyMatVec(MPI_Comm comm,char *buff,Mat *Xt,Vec *labels) {
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMLoadData"
-PetscErrorCode SVMLoadData(MPI_Comm comm,const char *filename,Mat *Xt,Vec *y) {
-  char     *chunk_buff = NULL;
-  PetscInt M,N;
+PetscErrorCode SVMLoadData(SVM svm,const char *filename,Mat *Xt,Vec *y) {
+  MPI_Comm          comm;
+
+  char              *chunk_buff = NULL;
+  Mat               Xt_inner,Xt_biased;
+  PetscInt          M,N;
 
   PetscBool         view;
+
+  PetscInt          svm_mod;
+  PetscReal         bias;
 
   PetscFunctionBeginI;
   PetscValidPointer(Xt,3);
   PetscValidPointer(y,4);
 
+  TRY( PetscObjectGetComm((PetscObject) svm,&comm) );
+
   TRY( SVMReadBuffer(comm,filename,&chunk_buff) );
-  TRY( SVMAsseblyMatVec(comm,chunk_buff,Xt,y) );
+  TRY( SVMAsseblyMatVec(comm,chunk_buff,&Xt_inner,y) );
 
   if (chunk_buff) TRY( PetscFree(chunk_buff) );
 
   TRY( PetscOptionsHasName(NULL,NULL,"-svm_view_io",&view) );
 
   if (view) {
-    TRY( MatGetSize(*Xt,&M,&N) );
-    TRY( PetscPrintf(comm,"SVM: loaded %d training samples with %d attributes from file %s\n",M,N,filename) );
+    TRY( MatGetSize(Xt_inner,&M,&N) );
+    TRY( PetscPrintf(comm,"SVM: loaded %d training samples with %d attributes from file %s\n", M, N, filename) );
   }
+
+  TRY( SVMGetMod(svm,&svm_mod) );
+
+  if (svm_mod == 2) {
+    TRY( SVMGetBias(svm,&bias) );
+    TRY( MatCreate_Biased(Xt_inner,bias,&Xt_biased) );
+    Xt_inner = Xt_biased;
+  }
+
+  *Xt = Xt_inner;
   PetscFunctionReturnI(0);
 }

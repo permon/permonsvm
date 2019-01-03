@@ -2,7 +2,7 @@ ALL: lib
 
 CFLAGS   =
 FFLAGS   =
-SOURCEC  = io.c
+SOURCEC  = io.c matutils.c
 SOURCEF  =
 SOURCEH  =
 OBJSC    = ${SOURCEC:.c=.o}

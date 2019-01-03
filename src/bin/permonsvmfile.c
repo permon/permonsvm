@@ -7,7 +7,7 @@ static MPI_Comm  comm;
 #undef __FUNCT__
 #define __FUNCT__ "SVMRunBinaryClassification"
 PetscErrorCode SVMRunBinaryClassification() {
-  SVM svm;
+  SVM       svm;
 
   PetscInt  N_all,N_eq;
   Mat       Xt_training,Xt_test;
@@ -20,12 +20,12 @@ PetscErrorCode SVMRunBinaryClassification() {
   PetscFunctionBeginI;
   TRY( PetscOptionsGetString(NULL,NULL,"-f_training",training_file,sizeof(training_file),NULL) );
   TRY( PetscOptionsGetString(NULL,NULL,"-f_test",test_file,sizeof(test_file),&test_file_set) );
-  
+
   TRY( SVMCreate(comm,&svm) );
   TRY( SVMSetType(svm,SVM_BINARY) );
   TRY( SVMSetFromOptions(svm) );
 
-  TRY( SVMLoadData(comm,training_file,&Xt_training,&y_training) );
+  TRY( SVMLoadData(svm,training_file,&Xt_training,&y_training) );
   TRY( PetscObjectSetName((PetscObject) Xt_training,"Xt_training") );
   TRY( PetscObjectSetName((PetscObject) y_training,"y_training") );
 
@@ -34,7 +34,7 @@ PetscErrorCode SVMRunBinaryClassification() {
   TRY( SVMTest(svm,Xt_training,y_training,&N_all,&N_eq) );
 
   if (test_file_set) {
-    TRY( SVMLoadData(comm,test_file,&Xt_test,&y_test) );
+    TRY( SVMLoadData(svm,test_file,&Xt_test,&y_test) );
     TRY( PetscObjectSetName((PetscObject) Xt_test,"Xt_test") );
     TRY( PetscObjectSetName((PetscObject) y_test,"y_test") );
 

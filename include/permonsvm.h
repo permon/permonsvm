@@ -100,5 +100,7 @@ FLLOP_EXTERN PetscErrorCode SVMCrossValidate(SVM svm);
 
 FLLOP_EXTERN PetscErrorCode SVMGridSearch(SVM svm);
 FLLOP_EXTERN PetscErrorCode SVMCrossValidation(SVM svm,PetscReal [],PetscInt,PetscReal []);
+
+FLLOP_EXTERN PetscErrorCode MatCreate_Biased(Mat,PetscReal,Mat *);
 #endif
 
