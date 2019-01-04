@@ -82,6 +82,7 @@ PetscErrorCode SVMDestroy_Binary(SVM svm)
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetBias_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetSeparatingHyperplane_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetSeparatingHyperplane_C",NULL) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetModelScore_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetOptionsPrefix_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetOptionsPrefix_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMAppendOptionsPrefix_C",NULL) );
@@ -842,7 +843,7 @@ PetscErrorCode SVMEvaluateModelScores_Binary_Private(SVM svm,Vec y_pred,Vec y_kn
 #define __FUNCT__ "SVMTest_Binary"
 PetscErrorCode SVMTest_Binary(SVM svm,PetscInt *N_all,PetscInt *N_eq)
 {
-  SVM_Binary *svm_binary = (SVM_Binary *) svm;
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
   Mat Xt_test;
   Vec y_test;
@@ -877,6 +878,19 @@ PetscErrorCode SVMTest_Binary(SVM svm,PetscInt *N_all,PetscInt *N_eq)
 
   TRY( VecDestroy(&y) );
   TRY( ISDestroy(&is_eq) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetModelScore_Binary"
+PetscErrorCode SVMGetModelScore_Binary(SVM svm,ModelScore score_type,PetscReal *s)
+{
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
+  PetscFunctionBegin;
+  PetscValidRealPointer(s,3);
+
+  *s = svm_binary->model_scores[score_type];
   PetscFunctionReturn(0);
 }
 
@@ -1093,6 +1107,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetBias_C",SVMGetBias_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetSeparatingHyperplane_C",SVMSetSeparatingHyperplane_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetSeparatingHyperplane_C",SVMGetSeparatingHyperplane_Binary) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetModelScore_C",SVMGetModelScore_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetOptionsPrefix_C",SVMSetOptionsPrefix_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetOptionsPrefix_C",SVMGetOptionsPrefix_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMAppendOptionsPrefix_C",SVMAppendOptionsPrefix_Binary) );
