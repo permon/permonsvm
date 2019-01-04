@@ -47,6 +47,44 @@ M*/
 .seealso: SVMLossType, SVM_L1, SVMGetLossType(), SVMSetLossType()
 M*/
 
+/*E
+  ModelScore - type of model performance score.
+
+  Level: beginner
+E*/
+typedef enum {MODEL_ACCURACY, MODEL_PRECISION, MODEL_SENSITIVITY, MODEL_F1, MODEL_MCC} ModelScore;
+FLLOP_EXTERN const char *const ModelScores[];
+
+/*MC
+  MODEL_ACCURACY -
+
+  Level: beginner
+M*/
+
+/*MC
+  MODEL_PRECISION -
+
+  Level: beginner
+M*/
+
+/*MC
+  MODEL_SENSTIVITY -
+
+  Level: beginner
+M*/
+
+/*MC
+  MODEL_F1 - harmonic average of precision and sensitivity.
+
+  Level: beginner
+M*/
+
+/*MC
+  MODEL_MCC - Matthews correlation coefficient.
+
+  Level: beginner
+M*/
+
 FLLOP_EXTERN PetscErrorCode SVMInitializePackage();
 FLLOP_EXTERN PetscErrorCode SVMFinalizePackage();
 
