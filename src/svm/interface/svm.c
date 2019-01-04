@@ -1246,6 +1246,21 @@ PetscErrorCode SVMTest(SVM svm,PetscInt *N_all,PetscInt *N_eq)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMGetModelScore"
+/*@
+  SVMGetModelScore -
+@*/
+PetscErrorCode SVMGetModelScore(SVM svm,ModelScore score_type,PetscReal *s)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+
+  TRY( PetscUseMethod(svm,"SVMGetModelScore_C",(SVM,ModelScore,PetscReal *),(svm,score_type,s)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMGridSearch"
 /*@
   SVMGridSearch - Chooses the best value of penalty C from manually specified set.

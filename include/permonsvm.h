@@ -133,6 +133,8 @@ FLLOP_EXTERN PetscErrorCode SVMSetAutoPostTrain(SVM,PetscBool);
 FLLOP_EXTERN PetscErrorCode SVMPredict(SVM,Mat,Vec *);
 FLLOP_EXTERN PetscErrorCode SVMTest(SVM,PetscInt *,PetscInt *);
 
+FLLOP_EXTERN PetscErrorCode SVMGetModelScore(SVM,ModelScore,PetscReal *);
+
 FLLOP_EXTERN PetscErrorCode SVMCrossValidate(SVM);
 FLLOP_EXTERN PetscErrorCode SVMGridSearch(SVM);
 FLLOP_EXTERN PetscErrorCode SVMCrossValidation(SVM,PetscReal [],PetscInt,PetscReal []);
