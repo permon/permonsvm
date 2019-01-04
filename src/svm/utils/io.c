@@ -380,6 +380,9 @@ PetscErrorCode SVMLoadTrainingDataset(SVM svm,const char *filename)
     PetscViewer v = PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject) svm) );
     TRY( SVMViewIO(svm,SVM_TRAINING_DATASET,filename,v) );
   }
+
+  TRY( MatDestroy(&Xt_training) );
+  TRY( VecDestroy(&y_training) );
   PetscFunctionReturnI(0);
 }
 
@@ -405,6 +408,9 @@ PetscErrorCode SVMLoadTestDataset(SVM svm,const char *filename)
     PetscViewer v = PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject) svm) );
     TRY( SVMViewIO(svm,SVM_TEST_DATASET,filename,v) );
   }
+
+  TRY( MatDestroy(&Xt_test) );
+  TRY( VecDestroy(&y_test) );
   PetscFunctionReturnI(0);
 }
 
@@ -483,5 +489,8 @@ PetscErrorCode SVMDatasetInfo(Mat Xt,Vec y,PetscInt svm_mod,PetscViewer v)
   TRY( PetscViewerASCIIPrintf(v,"samples-\t%5D (%.2f%%)\n",M_minus,per_minus) );
   TRY( PetscViewerASCIIPrintf(v,"features\t%5D\n",N) );
   TRY( PetscViewerASCIIPopTab(v) );
+
+  TRY( VecDestroy(&y_max) );
+  TRY( ISDestroy(&is_plus) );
   PetscFunctionReturn(0);
 }
