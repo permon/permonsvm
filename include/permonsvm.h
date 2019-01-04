@@ -63,6 +63,7 @@ FLLOP_EXTERN PetscErrorCode SVMDestroyDefault(SVM);
 FLLOP_EXTERN PetscErrorCode SVMSetFromOptions(SVM);
 FLLOP_EXTERN PetscErrorCode SVMSetUp(SVM);
 FLLOP_EXTERN PetscErrorCode SVMView(SVM,PetscViewer);
+FLLOP_EXTERN PetscErrorCode SVMViewScore(SVM,PetscViewer);
 
 FLLOP_EXTERN PetscErrorCode SVMSetTrainingDataset(SVM,Mat,Vec);
 FLLOP_EXTERN PetscErrorCode SVMGetTrainingDataset(SVM,Mat *,Vec *);

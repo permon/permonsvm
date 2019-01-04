@@ -854,6 +854,33 @@ PetscErrorCode SVMView(SVM svm,PetscViewer v)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMViewScore"
+/*@
+  SVMView - Views performance score of model.
+
+  Input Parameters:
++ svm - SVM context
+- v - visualization context
+
+  Level: beginner
+
+  Options Database Keys:
+. -svm_view_score - Prints info on classification model at conclusion of SVMTest()
+
+.seealso PetscViewer
+@*/
+PetscErrorCode SVMViewScore(SVM svm,PetscViewer v)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  if (svm->ops->viewscore) {
+    TRY( svm->ops->viewscore(svm,v) );
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetTrainingDataset"
 /*@
   SVMSetTrainingDataset - Sets the training samples and labels.

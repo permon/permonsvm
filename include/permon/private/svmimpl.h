@@ -19,6 +19,7 @@ struct _SVMOps {
   PetscErrorCode (*gridsearch)(SVM);
   PetscErrorCode (*crossvalidation)(SVM,PetscReal [],PetscInt,PetscReal []);
   PetscErrorCode (*view)(SVM,PetscViewer);
+  PetscErrorCode (*viewscore)(SVM,PetscViewer);
 };
 
 struct _p_SVM {
