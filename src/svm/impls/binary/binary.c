@@ -20,6 +20,7 @@ typedef struct {
   PetscInt    svm_mod;
 
   PetscInt    N_eq,N_all;
+  PetscInt    confusion_matrix[4];
 } SVM_Binary;
 
 typedef struct {
@@ -49,7 +50,9 @@ PetscErrorCode SVMReset_Binary(SVM svm)
   TRY( VecDestroy(&svm_binary->y_training) );
   TRY( VecDestroy(&svm_binary->y_inner) );
 
-  PetscMemzero(svm_binary->y_map,2 * sizeof(PetscScalar) );
+  TRY( PetscMemzero(svm_binary->y_map,2 * sizeof(PetscScalar)) );
+  TRY( PetscMemzero(svm_binary->confusion_matrix,4 * sizeof(PetscInt)) );
+
   svm_binary->b = 1.;
 
   svm_binary->w           = NULL;
@@ -950,6 +953,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm_binary->svm_mod     = 2;
 
   TRY( PetscMemzero(svm_binary->y_map,2 * sizeof(PetscScalar)) );
+  TRY( PetscMemzero(svm_binary->confusion_matrix,4 * sizeof(PetscInt)) );
 
   svm->ops->setup           = SVMSetUp_Binary;
   svm->ops->reset           = SVMReset_Binary;
