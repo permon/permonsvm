@@ -322,7 +322,7 @@ PetscErrorCode SVMAsseblyMatVec(MPI_Comm comm,char *buff,Mat *Xt,Vec *labels) {
   PetscFunctionReturn(0);
 }
 
-PetscErrorCode SVMDatasetInfo(Mat,Vec,PetscViewer);
+PetscErrorCode SVMDatasetInfo(Mat,Vec,PetscInt,PetscViewer);
 PetscErrorCode SVMViewIO(SVM,const char *,const char *,PetscViewer);
 
 #undef __FUNCT__
@@ -415,6 +415,8 @@ PetscErrorCode SVMViewIO(SVM svm,const char *dataset_type,const char *filename,P
   Mat Xt;
   Vec y;
 
+  PetscInt  svm_mod;
+
   PetscBool iseq;
   PetscBool isascii;
 
@@ -422,6 +424,8 @@ PetscErrorCode SVMViewIO(SVM svm,const char *dataset_type,const char *filename,P
   TRY( PetscObjectTypeCompare((PetscObject)v,PETSCVIEWERASCII,&isascii) );
 
   if (isascii) {
+    TRY( SVMGetMod(svm,&svm_mod) );
+
     TRY( PetscViewerASCIIPrintf(v, "=====================\n") );
     TRY( PetscObjectPrintClassNamePrefixType((PetscObject) svm,v) );
 
@@ -439,7 +443,7 @@ PetscErrorCode SVMViewIO(SVM svm,const char *dataset_type,const char *filename,P
     }
 
     TRY( PetscViewerASCIIPushTab(v) );
-    TRY( SVMDatasetInfo(Xt,y,v) );
+    TRY( SVMDatasetInfo(Xt,y,svm_mod,v) );
     TRY( PetscViewerASCIIPopTab(v) );
 
     TRY(PetscViewerASCIIPopTab(v));
@@ -450,7 +454,7 @@ PetscErrorCode SVMViewIO(SVM svm,const char *dataset_type,const char *filename,P
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMViewDatasetInfo"
-PetscErrorCode SVMDatasetInfo(Mat Xt,Vec y,PetscViewer v)
+PetscErrorCode SVMDatasetInfo(Mat Xt,Vec y,PetscInt svm_mod,PetscViewer v)
 {
   PetscInt    M,N,M_plus,M_minus;
   PetscReal   max,per_plus,per_minus;
@@ -470,6 +474,8 @@ PetscErrorCode SVMDatasetInfo(Mat Xt,Vec y,PetscViewer v)
   per_plus = ((PetscReal) M_plus / (PetscReal) M) * 100.;
   M_minus = M - M_plus;
   per_minus = 100 - per_plus;
+
+  if (svm_mod == 2) N -= 1;
 
   TRY( PetscViewerASCIIPushTab(v) );
   TRY( PetscViewerASCIIPrintf(v,"samples\t%5D\n",M) );
