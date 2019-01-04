@@ -3,6 +3,10 @@
 
 #include <permonsvm.h>
 
-FLLOP_EXTERN PetscErrorCode SVMLoadData(SVM svm,const char *,Mat *,Vec *);
+#define SVM_TRAINING_DATASET "Training dataset"
+#define SVM_TEST_DATASET     "Test dataset"
 
+FLLOP_EXTERN PetscErrorCode SVMLoadData(SVM svm,const char *,Mat *,Vec *);
+FLLOP_EXTERN PetscErrorCode SVMLoadTestDataset(SVM svm,const char *);
+FLLOP_EXTERN PetscErrorCode SVMLoadTrainingDataset(SVM,const char *);
 #endif //__PERMONSVMIO_H
