@@ -322,6 +322,8 @@ PetscErrorCode SVMAsseblyMatVec(MPI_Comm comm,char *buff,Mat *Xt,Vec *labels) {
   PetscFunctionReturn(0);
 }
 
+PetscErrorCode SVMDatasetInfo(Mat,Vec,PetscViewer);
+
 #undef __FUNCT__
 #define __FUNCT__ "SVMLoadData"
 PetscErrorCode SVMLoadData(SVM svm,const char *filename,Mat *Xt,Vec *y) {
@@ -329,7 +331,6 @@ PetscErrorCode SVMLoadData(SVM svm,const char *filename,Mat *Xt,Vec *y) {
 
   char              *chunk_buff = NULL;
   Mat               Xt_inner,Xt_biased;
-  PetscInt          M,N;
 
   PetscBool         view;
 
@@ -350,8 +351,8 @@ PetscErrorCode SVMLoadData(SVM svm,const char *filename,Mat *Xt,Vec *y) {
   TRY( PetscOptionsHasName(NULL,NULL,"-svm_view_io",&view) );
 
   if (view) {
-    TRY( MatGetSize(Xt_inner,&M,&N) );
-    TRY( PetscPrintf(comm,"SVM: loaded %d samples with %d attributes from file %s\n", M, N, filename) );
+    PetscViewer v = PETSC_VIEWER_STDOUT_(comm);
+    TRY( SVMDatasetInfo(Xt_inner,*y,v) );
   }
 
   TRY( SVMGetMod(svm,&svm_mod) );
@@ -364,4 +365,36 @@ PetscErrorCode SVMLoadData(SVM svm,const char *filename,Mat *Xt,Vec *y) {
 
   *Xt = Xt_inner;
   PetscFunctionReturnI(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMViewDatasetInfo"
+PetscErrorCode SVMDatasetInfo(Mat Xt,Vec y,PetscViewer v)
+{
+  PetscInt    M,N,M_plus,M_minus;
+  PetscReal   max,per_plus,per_minus;
+  Vec         y_max;
+  IS          is_plus;
+
+  PetscFunctionBegin;
+  TRY( MatGetSize(Xt,&M,&N) );
+
+  TRY( VecDuplicate(y,&y_max) );
+  TRY( VecMax(y,NULL,&max) );
+  TRY( VecSet(y_max,max) );
+
+  TRY( VecWhichEqual(y,y_max,&is_plus) );
+  TRY( ISGetSize(is_plus,&M_plus) );
+
+  per_plus = ((PetscReal) M_plus / (PetscReal) M) * 100.;
+  M_minus = M - M_plus;
+  per_minus = 100 - per_plus;
+
+  TRY( PetscViewerASCIIPushTab(v) );
+  TRY( PetscViewerASCIIPrintf(v,"samples\t%5D\n",M) );
+  TRY( PetscViewerASCIIPrintf(v,"samples+\t%5D (%.2f%%)\n",M_plus,per_plus) );
+  TRY( PetscViewerASCIIPrintf(v,"samples-\t%5D (%.2f%%)\n",M_minus,per_minus) );
+  TRY( PetscViewerASCIIPrintf(v,"features\t%5D\n",N) );
+  TRY( PetscViewerASCIIPopTab(v) );
+  PetscFunctionReturn(0);
 }
