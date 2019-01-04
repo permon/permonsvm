@@ -47,6 +47,9 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
   svm->autoposttrain        = PETSC_TRUE;
   svm->posttraincalled      = PETSC_FALSE;
 
+  svm->Xt_test = NULL;
+  svm->y_test  = NULL;
+
   *svm_out = svm;
   PetscFunctionReturn(0);
 }
@@ -80,6 +83,11 @@ PetscErrorCode SVMReset(SVM svm)
 
   svm->nfolds     = 5;
   svm->warm_start = PETSC_FALSE;
+
+  TRY( MatDestroy(&svm->Xt_test) );
+  svm->Xt_test = NULL;
+  TRY( VecDestroy(&svm->y_test) );
+  svm->y_test  = NULL;
 
   TRY( (*svm->ops->reset)(svm) );
 
@@ -859,7 +867,7 @@ PetscErrorCode SVMView(SVM svm,PetscViewer v)
 
   Level: beginner
 
-.seealso SVMGetTrainingDataset()
+.seealso SVMGetTrainingDataset(), SVMSetTestDataset(), SVMGetTestDataset()
 @*/
 PetscErrorCode SVMSetTrainingDataset(SVM svm,Mat Xt_training,Vec y_training)
 {
@@ -887,7 +895,7 @@ PetscErrorCode SVMSetTrainingDataset(SVM svm,Mat Xt_training,Vec y_training)
 
   Level: beginner
 
-.seealso SVMSetTrainingDataset()
+.seealso SVMSetTrainingDataset(), SVMSetTestDataset(), SVMGetTestDataset()
 @*/
 PetscErrorCode SVMGetTrainingDataset(SVM svm,Mat *Xt_training,Vec *y_training)
 {
@@ -896,6 +904,78 @@ PetscErrorCode SVMGetTrainingDataset(SVM svm,Mat *Xt_training,Vec *y_training)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
   TRY( PetscUseMethod(svm,"SVMGetTrainingDataset_C",(SVM,Mat *,Vec *),(svm,Xt_training,y_training)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetTestDataset"
+/*@
+  SVMSetTrainingDataset - Sets the test samples and labels.
+
+  Not Collective
+
+  Input Parameter:
++ svm - SVM context
+. Xt_test - test samples
+- y_test - known labels of test samples
+
+  Level: beginner
+
+.seealso SVMSetTrainingDataset(), SVMGetTrainingDataset(), SVMGetTestDataset()
+@*/
+PetscErrorCode SVMSetTestDataset(SVM svm,Mat Xt_test,Vec y_test)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(Xt_test,MAT_CLASSID,2);
+  PetscCheckSameComm(svm,1,Xt_test,2);
+  PetscValidHeaderSpecific(y_test,VEC_CLASSID,3);
+  PetscCheckSameComm(svm,1,y_test,3);
+
+  TRY( MatDestroy(&svm->Xt_test) );
+  svm->Xt_test = Xt_test;
+  TRY( PetscObjectReference((PetscObject) Xt_test) );
+
+  TRY( VecDestroy(&svm->y_test) );
+  svm->y_test = y_test;
+  TRY( PetscObjectReference((PetscObject) y_test) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetTestDataset"
+/*@
+  SVMGetTestDataset - Returns the test samples and labels.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
++ Xt_test - test samples
+- y_test - known labels of test samples
+
+  Level: beginner
+
+.seealso SVMSetTrainingDataset(), SVMGetTrainingDataset(), SVMSetTestDataset()
+@*/
+PetscErrorCode SVMGetTestDataset(SVM svm,Mat *Xt_test,Vec *y_test)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+
+  if (Xt_test) {
+    PetscValidPointer(Xt_test,2);
+    *Xt_test = svm->Xt_test;
+  }
+
+  if (y_test) {
+    PetscValidPointer(y_test,2);
+    *y_test = svm->y_test;
+  }
   PetscFunctionReturn(0);
 }
 

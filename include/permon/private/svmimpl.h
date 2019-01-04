@@ -37,6 +37,9 @@ struct _p_SVM {
   PetscBool setupcalled;
   PetscBool setfromoptionscalled;
 
+  Mat Xt_test;
+  Vec y_test;
+
   void *data;
 };
 #endif
