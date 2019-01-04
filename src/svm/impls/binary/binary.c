@@ -114,6 +114,55 @@ PetscErrorCode SVMView_Binary(SVM svm,PetscViewer v)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMViewScore_Binary"
+PetscErrorCode SVMViewScore_Binary(SVM svm,PetscViewer v)
+{
+  MPI_Comm  comm;
+
+  PetscReal   C;
+  PetscInt    mod;
+  SVMLossType loss_type;
+
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+  PetscBool isascii;
+
+  PetscFunctionBegin;
+  comm = PetscObjectComm((PetscObject) svm);
+  if (!v) v = PETSC_VIEWER_STDOUT_(comm);
+
+  TRY( PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERASCII,&isascii) );
+  if (isascii) {
+    TRY( SVMGetC(svm,&C) );
+    TRY( SVMGetMod(svm,&mod) );
+    TRY( SVMGetLossType(svm,&loss_type) );
+
+    TRY( PetscViewerASCIIPrintf(v,"=====================\n") );
+    TRY( PetscObjectPrintClassNamePrefixType((PetscObject) svm,v) );
+
+    TRY( PetscViewerASCIIPushTab(v) );
+    TRY( PetscViewerASCIIPrintf(v,"model performance score\n") );
+    TRY( PetscViewerASCIIPrintf(v,"training parameters: C=%.3f, mod=%d, loss=%s\n",C,mod,SVMLossTypes[loss_type]) );
+    TRY( PetscViewerASCIIPrintf(v,"Confusion matrix:\n") );
+    TRY( PetscViewerASCIIPushTab(v) );
+
+    TRY( PetscViewerASCIIPrintf(v,"TP = %4d\tFP = %4d\n",svm_binary->confusion_matrix[0],svm_binary->confusion_matrix[1]) );
+    TRY( PetscViewerASCIIPrintf(v,"FN = %4d\tTN = %4d\n",svm_binary->confusion_matrix[2],svm_binary->confusion_matrix[3]) );
+    TRY( PetscViewerASCIIPopTab(v) );
+
+    TRY( PetscViewerASCIIPrintf(v,"accuracy=%.2f%%",svm_binary->model_scores[0] * 100.) );
+    TRY( PetscViewerASCIIPrintf(v,"precision=%.2f%%",svm_binary->model_scores[1] * 100.) );
+    TRY( PetscViewerASCIIPrintf(v,"sensitivity=%.2f%%\n",svm_binary->model_scores[2] * 100.) );
+    TRY( PetscViewerASCIIPrintf(v,"F1.0_score=%.2f",svm_binary->model_scores[3]) );
+    TRY( PetscViewerASCIIPrintf(v,"mmc=%.2f\n",svm_binary->model_scores[4]) );
+    TRY( PetscViewerASCIIPopTab(v) );
+    TRY( PetscViewerASCIIPrintf(v,"=====================\n") );
+  } else {
+    if (!isascii) FLLOP_SETERRQ1(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewScore", ((PetscObject)v)->type_name);
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetTrainingDataset"
 PetscErrorCode SVMSetTrainingDataset_Binary(SVM svm,Mat Xt_training,Vec y_training)
 {
@@ -802,7 +851,7 @@ PetscErrorCode SVMTest_Binary(SVM svm,PetscInt *N_all,PetscInt *N_eq)
 
   PetscViewer       v;
   PetscViewerFormat format;
-  PetscBool         view;
+  PetscBool         view_score;
 
   PetscFunctionBegin;
   TRY( SVMGetTestDataset(svm,&Xt_test,&y_test) );
@@ -818,10 +867,10 @@ PetscErrorCode SVMTest_Binary(SVM svm,PetscInt *N_all,PetscInt *N_eq)
   /* Evaluation of model performance scores */
   TRY( SVMEvaluateModelScores_Binary_Private(svm,y,y_test) );
 
-  TRY( PetscOptionsGetViewer(((PetscObject)svm)->comm,((PetscObject)svm)->prefix,"-svm_view",&v,&format,&view) );
-  if (view) {
+  TRY( PetscOptionsGetViewer(((PetscObject)svm)->comm,((PetscObject)svm)->prefix,"-svm_view_score",&v,&format,&view_score) );
+  if (view_score) {
     TRY( PetscViewerPushFormat(v,format) );
-    TRY( SVMView(svm,v) );
+    TRY( SVMViewScore(svm,v) );
     TRY( PetscViewerPopFormat(v) );
     TRY( PetscViewerDestroy(&v) );
   }
@@ -973,10 +1022,6 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
       TRY( SVMTrain(cross_svm) );
       TRY( SVMTest(cross_svm,&N_all,&N_eq) );
 
-      if (info_set) {
-        TRY( SVMView(cross_svm,PETSC_VIEWER_STDOUT_(comm)) );
-      }
-
       score[j] += ((PetscReal) N_eq) / ((PetscReal) N_all);
 
       TRY( SVMGetQPS(cross_svm,&qps) );
@@ -1036,6 +1081,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm->ops->crossvalidation = SVMCrossValidation_Binary;
   svm->ops->gridsearch      = SVMGridSearch_Binary;
   svm->ops->view            = SVMView_Binary;
+  svm->ops->viewscore       = SVMViewScore_Binary;
 
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingDataset_C",SVMSetTrainingDataset_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C",SVMGetTrainingDataset_Binary) );
