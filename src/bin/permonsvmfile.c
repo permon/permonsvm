@@ -9,8 +9,8 @@ static MPI_Comm  comm;
 PetscErrorCode SVMRunBinaryClassification() {
   SVM       svm;
 
-  Mat       Xt_training,Xt_test;
-  Vec       y_training,y_test;
+  Mat       Xt_test;
+  Vec       y_test;
 
   char      training_file[PETSC_MAX_PATH_LEN] = "examples/heart_scale";
   char      test_file[PETSC_MAX_PATH_LEN]     = "";
@@ -24,14 +24,8 @@ PetscErrorCode SVMRunBinaryClassification() {
   TRY( SVMSetType(svm,SVM_BINARY) );
   TRY( SVMSetFromOptions(svm) );
 
-  TRY( SVMLoadData(svm,training_file,&Xt_training,&y_training) );
-  TRY( PetscObjectSetName((PetscObject) Xt_training,"Xt_training") );
-  TRY( PetscObjectSetName((PetscObject) y_training,"y_training") );
-
-  TRY( SVMSetTrainingDataset(svm,Xt_training,y_training) );
+  TRY( SVMLoadTrainingDataset(svm,training_file) );
   TRY( SVMTrain(svm) );
-  TRY( SVMSetTestDataset(svm,Xt_training,y_training) );
-  TRY( SVMTest(svm,NULL,NULL) );
 
   if (test_file_set) {
     TRY( SVMLoadData(svm,test_file,&Xt_test,&y_test) );
@@ -45,8 +39,6 @@ PetscErrorCode SVMRunBinaryClassification() {
     TRY( VecDestroy(&y_test) );
   }
 
-  TRY( MatDestroy(&Xt_training) );
-  TRY( VecDestroy(&y_training) );
   TRY( SVMDestroy(&svm) );
   PetscFunctionReturnI(0);
 }

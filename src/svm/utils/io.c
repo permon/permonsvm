@@ -323,6 +323,7 @@ PetscErrorCode SVMAsseblyMatVec(MPI_Comm comm,char *buff,Mat *Xt,Vec *labels) {
 }
 
 PetscErrorCode SVMDatasetInfo(Mat,Vec,PetscViewer);
+PetscErrorCode SVMViewIO(SVM,const char *,const char *,PetscViewer);
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMLoadData"
@@ -332,12 +333,10 @@ PetscErrorCode SVMLoadData(SVM svm,const char *filename,Mat *Xt,Vec *y) {
   char              *chunk_buff = NULL;
   Mat               Xt_inner,Xt_biased;
 
-  PetscBool         view;
-
   PetscInt          svm_mod;
   PetscReal         bias;
 
-  PetscFunctionBeginI;
+  PetscFunctionBegin;
   PetscValidPointer(Xt,3);
   PetscValidPointer(y,4);
 
@@ -348,15 +347,7 @@ PetscErrorCode SVMLoadData(SVM svm,const char *filename,Mat *Xt,Vec *y) {
 
   if (chunk_buff) TRY( PetscFree(chunk_buff) );
 
-  TRY( PetscOptionsHasName(NULL,NULL,"-svm_view_io",&view) );
-
-  if (view) {
-    PetscViewer v = PETSC_VIEWER_STDOUT_(comm);
-    TRY( SVMDatasetInfo(Xt_inner,*y,v) );
-  }
-
   TRY( SVMGetMod(svm,&svm_mod) );
-
   if (svm_mod == 2) {
     TRY( SVMGetBias(svm,&bias) );
     TRY( MatCreate_Biased(Xt_inner,bias,&Xt_biased) );
@@ -364,7 +355,7 @@ PetscErrorCode SVMLoadData(SVM svm,const char *filename,Mat *Xt,Vec *y) {
   }
 
   *Xt = Xt_inner;
-  PetscFunctionReturnI(0);
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -374,13 +365,57 @@ PetscErrorCode SVMLoadTrainingDataset(SVM svm,const char *filename)
   Mat Xt_training;
   Vec y_training;
 
-  PetscFunctionBegin;
+  PetscBool view;
+
+  PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
   TRY( SVMLoadData(svm,filename,&Xt_training,&y_training) );
   TRY( PetscObjectSetName((PetscObject) Xt_training,"Xt_training") );
   TRY( PetscObjectSetName((PetscObject) y_training,"y_training") );
   TRY( SVMSetTrainingDataset(svm,Xt_training,y_training) );
+
+  TRY( PetscOptionsHasName(NULL,NULL,"-svm_view_io",&view) );
+  if (view) {
+    PetscViewer v = PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject) svm) );
+    TRY( SVMViewIO(svm,SVM_TRAINING_DATASET,filename,v) );
+  }
+  PetscFunctionReturnI(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMViewIO"
+PetscErrorCode SVMViewIO(SVM svm,const char *dataset_type,const char *filename,PetscViewer v)
+{
+  Mat Xt;
+  Vec y;
+
+  PetscBool iseq;
+  PetscBool isascii;
+
+  PetscFunctionBegin;
+  TRY( PetscObjectTypeCompare((PetscObject)v,PETSCVIEWERASCII,&isascii) );
+
+  if (isascii) {
+    TRY( PetscViewerASCIIPrintf(v, "=====================\n") );
+    TRY( PetscObjectPrintClassNamePrefixType((PetscObject) svm,v) );
+
+    TRY( PetscViewerASCIIPushTab(v) );
+    TRY( PetscViewerASCIIPrintf(v,"%s from source \"%s\" was loaded successfully!\n",dataset_type,filename) );
+    TRY( PetscViewerASCIIPrintf(v,"Dataset contains:\n") );
+
+    TRY( PetscStrcmp(dataset_type,SVM_TRAINING_DATASET,&iseq) );
+    if (iseq) {
+      TRY( SVMGetTrainingDataset(svm,&Xt,&y) );
+    }
+
+    TRY( PetscViewerASCIIPushTab(v) );
+    TRY( SVMDatasetInfo(Xt,y,v) );
+    TRY( PetscViewerASCIIPopTab(v) );
+
+    TRY(PetscViewerASCIIPopTab(v));
+    TRY(PetscViewerASCIIPrintf(v,"=====================\n"));
+  }
   PetscFunctionReturn(0);
 }
 
