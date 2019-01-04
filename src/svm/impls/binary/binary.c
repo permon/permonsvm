@@ -721,10 +721,12 @@ PetscErrorCode SVMPredict_Binary(SVM svm,Mat Xt_pred,Vec *y_out)
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMTest_Binary"
-PetscErrorCode SVMTest_Binary(SVM svm,Mat Xt_test,Vec y_known,PetscInt *N_all,PetscInt *N_eq)
+PetscErrorCode SVMTest_Binary(SVM svm,PetscInt *N_all,PetscInt *N_eq)
 {
   SVM_Binary *svm_binary = (SVM_Binary *) svm;
 
+  Mat Xt_test;
+  Vec y_test;
   Vec y;
   IS  is_eq;
 
@@ -733,15 +735,17 @@ PetscErrorCode SVMTest_Binary(SVM svm,Mat Xt_test,Vec y_known,PetscInt *N_all,Pe
   PetscBool         view;
 
   PetscFunctionBegin;
+  TRY( SVMGetTestDataset(svm,&Xt_test,&y_test) );
+
   TRY( SVMPredict(svm,Xt_test,&y) );
-  TRY( VecWhichEqual(y,y_known,&is_eq) );
-  TRY( VecGetSize(y,N_all) );
-  TRY( ISGetSize(is_eq,N_eq) );
+  TRY( VecWhichEqual(y,y_test,&is_eq) );
+  TRY( VecGetSize(y,&svm_binary->N_all) );
+  TRY( ISGetSize(is_eq,&svm_binary->N_eq) );
   TRY( VecDestroy(&y) );
   TRY( ISDestroy(&is_eq) );
 
-  svm_binary->N_all = *N_all;
-  svm_binary->N_eq  = *N_eq;
+  if (N_all != NULL) *N_all = svm_binary->N_all;
+  if (N_eq  != NULL) *N_eq  = svm_binary->N_eq;
 
   TRY( PetscOptionsGetViewer(((PetscObject)svm)->comm,((PetscObject)svm)->prefix,"-svm_view",&v,&format,&view) );
 
@@ -874,6 +878,7 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
     TRY( VecGetSubVector(y,is_training,&y_training) );
 
     TRY( SVMSetTrainingDataset(cross_svm,Xt_training,y_training) );
+    TRY( SVMSetTestDataset(cross_svm,Xt_test,y_test) );
 
     for (j = 0; j < m; ++j) {
       TRY( SVMSetC(cross_svm,c_arr[j]) );
@@ -893,7 +898,7 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
       }
 
       TRY( SVMTrain(cross_svm) );
-      TRY( SVMTest(cross_svm,Xt_test,y_test,&N_all,&N_eq) );
+      TRY( SVMTest(cross_svm,&N_all,&N_eq) );
 
       if (info_set) {
         TRY( SVMView(cross_svm,PETSC_VIEWER_STDOUT_(comm)) );

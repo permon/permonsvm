@@ -9,7 +9,6 @@ static MPI_Comm  comm;
 PetscErrorCode SVMRunBinaryClassification() {
   SVM       svm;
 
-  PetscInt  N_all,N_eq;
   Mat       Xt_training,Xt_test;
   Vec       y_training,y_test;
 
@@ -31,14 +30,16 @@ PetscErrorCode SVMRunBinaryClassification() {
 
   TRY( SVMSetTrainingDataset(svm,Xt_training,y_training) );
   TRY( SVMTrain(svm) );
-  TRY( SVMTest(svm,Xt_training,y_training,&N_all,&N_eq) );
+  TRY( SVMSetTestDataset(svm,Xt_training,y_training) );
+  TRY( SVMTest(svm,NULL,NULL) );
 
   if (test_file_set) {
     TRY( SVMLoadData(svm,test_file,&Xt_test,&y_test) );
     TRY( PetscObjectSetName((PetscObject) Xt_test,"Xt_test") );
     TRY( PetscObjectSetName((PetscObject) y_test,"y_test") );
 
-    TRY( SVMTest(svm,Xt_test,y_test,&N_all,&N_eq) );
+    TRY( SVMSetTestDataset(svm,Xt_test,y_test) );
+    TRY( SVMTest(svm,NULL,NULL) );
 
     TRY( MatDestroy(&Xt_test) );
     TRY( VecDestroy(&y_test) );
