@@ -889,7 +889,7 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
         if (qp) {
           Vec ub;
           TRY( QPGetSolutionVector(qp,&x) );
-          TRY( VecSet(x,c_arr[j] - 10 * PETSC_MACHINE_EPSILON) );
+          TRY( VecSet(x,c_arr[j] - 100 * PETSC_MACHINE_EPSILON) );
           TRY( QPGetBox(qp,NULL,NULL,&ub) );
           if (ub) { TRY( VecSet(ub,c_arr[j]) ); }
         }
