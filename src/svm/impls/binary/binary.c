@@ -21,6 +21,7 @@ typedef struct {
 
   PetscInt    N_eq,N_all;
   PetscInt    confusion_matrix[4];
+  PetscReal   model_scores[5];
 } SVM_Binary;
 
 typedef struct {
@@ -723,6 +724,72 @@ PetscErrorCode SVMPredict_Binary(SVM svm,Mat Xt_pred,Vec *y_out)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMEvaluateModelScores_Binary_Private"
+PetscErrorCode SVMEvaluateModelScores_Binary_Private(SVM svm,Vec y_pred,Vec y_known)
+{
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
+  Vec       label,y_pred_sub,y_known_sub;
+  IS        is_label,is_eq;
+
+  PetscInt  TP,FP,TN,FN,N;
+
+  PetscFunctionBegin;
+  TRY( VecDuplicate(y_known,&label) );
+
+  /* TN and FN samples */
+  TRY( VecSet(label,svm_binary->y_map[0]) );
+  TRY( VecWhichEqual(y_known,label,&is_label) );
+  TRY( VecGetSubVector(y_known,is_label,&y_known_sub) );
+  TRY( VecGetSubVector(y_pred,is_label,&y_pred_sub) );
+  TRY( VecWhichEqual(y_known_sub,y_pred_sub,&is_eq) );
+
+  TRY( ISGetSize(is_eq,&TN) );
+  TRY( VecGetSize(y_known_sub,&N) );
+  FN = N - TN;
+
+  TRY( VecRestoreSubVector(y_known,is_label,&y_known_sub) );
+  TRY( VecRestoreSubVector(y_pred,is_label,&y_pred_sub) );
+  TRY( ISDestroy(&is_label) );
+  TRY( ISDestroy(&is_eq) );
+
+  /* TP and FP samples */
+  TRY( VecSet(label,svm_binary->y_map[1]) );
+  TRY( VecWhichEqual(y_known,label,&is_label) );
+  TRY( VecGetSubVector(y_known,is_label,&y_known_sub) );
+  TRY( VecGetSubVector(y_pred,is_label,&y_pred_sub) );
+  TRY( VecWhichEqual(y_known_sub,y_pred_sub,&is_eq) );
+
+  TRY( ISGetSize(is_eq,&TP) );
+  TRY( VecGetSize(y_known_sub,&N) );
+  FP = N - TP;
+
+  TRY( VecRestoreSubVector(y_known,is_label,&y_known_sub) );
+  TRY( VecRestoreSubVector(y_pred,is_label,&y_pred_sub) );
+  TRY( ISDestroy(&is_label) );
+  TRY( ISDestroy(&is_eq) );
+
+  /* confusion matrix */
+  svm_binary->confusion_matrix[0] = TP;
+  svm_binary->confusion_matrix[1] = FP;
+  svm_binary->confusion_matrix[2] = FN;
+  svm_binary->confusion_matrix[3] = TN;
+
+  /* performance scores of model */
+  svm_binary->model_scores[0] = (PetscReal) (TP + TN) / (PetscReal) (TP + TN + FP + FN); /* accuracy */
+  svm_binary->model_scores[1] = (PetscReal) TP / (PetscReal) (TP + FP); /* precision */
+  svm_binary->model_scores[2] = (PetscReal) TP / (TP + FN); /* sensitivity */
+  /* F1 */
+  svm_binary->model_scores[3] = 2. * (svm_binary->model_scores[1] * svm_binary->model_scores[2]) / (svm_binary->model_scores[1] + svm_binary->model_scores[2]);
+  /* Matthews correlation coefficient */
+  svm_binary->model_scores[4] = (PetscReal) (TP * TN - FP * FN);
+  svm_binary->model_scores[4] /= (PetscSqrtReal(TP + FP) * PetscSqrtReal(TP + FN) * PetscSqrtReal(TN + FP) * PetscSqrtReal(TN + FN) );
+
+  TRY( VecDestroy(&label) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMTest_Binary"
 PetscErrorCode SVMTest_Binary(SVM svm,PetscInt *N_all,PetscInt *N_eq)
 {
@@ -744,20 +811,23 @@ PetscErrorCode SVMTest_Binary(SVM svm,PetscInt *N_all,PetscInt *N_eq)
   TRY( VecWhichEqual(y,y_test,&is_eq) );
   TRY( VecGetSize(y,&svm_binary->N_all) );
   TRY( ISGetSize(is_eq,&svm_binary->N_eq) );
-  TRY( VecDestroy(&y) );
-  TRY( ISDestroy(&is_eq) );
 
   if (N_all != NULL) *N_all = svm_binary->N_all;
   if (N_eq  != NULL) *N_eq  = svm_binary->N_eq;
 
-  TRY( PetscOptionsGetViewer(((PetscObject)svm)->comm,((PetscObject)svm)->prefix,"-svm_view",&v,&format,&view) );
+  /* Evaluation of model performance scores */
+  TRY( SVMEvaluateModelScores_Binary_Private(svm,y,y_test) );
 
+  TRY( PetscOptionsGetViewer(((PetscObject)svm)->comm,((PetscObject)svm)->prefix,"-svm_view",&v,&format,&view) );
   if (view) {
     TRY( PetscViewerPushFormat(v,format) );
     TRY( SVMView(svm,v) );
     TRY( PetscViewerPopFormat(v) );
     TRY( PetscViewerDestroy(&v) );
   }
+
+  TRY( VecDestroy(&y) );
+  TRY( ISDestroy(&is_eq) );
   PetscFunctionReturn(0);
 }
 
