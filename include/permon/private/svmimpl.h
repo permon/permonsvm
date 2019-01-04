@@ -15,7 +15,7 @@ struct _SVMOps {
   PetscErrorCode (*train)(SVM);
   PetscErrorCode (*posttrain)(SVM);
   PetscErrorCode (*predict)(SVM,Mat,Vec *);
-  PetscErrorCode (*test)(SVM,PetscInt *,PetscInt *);
+  PetscErrorCode (*test)(SVM);
   PetscErrorCode (*gridsearch)(SVM);
   PetscErrorCode (*crossvalidation)(SVM,PetscReal [],PetscInt,PetscReal []);
   PetscErrorCode (*view)(SVM,PetscViewer);

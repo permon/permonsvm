@@ -1236,12 +1236,12 @@ PetscErrorCode SVMPredict(SVM svm,Mat Xt_pred,Vec *y_pred)
 
 .seealso SVMTrain(), SVMPredict()
 @*/
-PetscErrorCode SVMTest(SVM svm,PetscInt *N_all,PetscInt *N_eq)
+PetscErrorCode SVMTest(SVM svm)
 {
 
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  TRY( svm->ops->test(svm,N_all,N_eq) );
+  TRY( svm->ops->test(svm) );
   PetscFunctionReturnI(0);
 }
 

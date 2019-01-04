@@ -19,7 +19,6 @@ typedef struct {
   QPS         qps;
   PetscInt    svm_mod;
 
-  PetscInt    N_eq,N_all;
   PetscInt    confusion_matrix[4];
   PetscReal   model_scores[5];
 } SVM_Binary;
@@ -53,6 +52,7 @@ PetscErrorCode SVMReset_Binary(SVM svm)
 
   TRY( PetscMemzero(svm_binary->y_map,2 * sizeof(PetscScalar)) );
   TRY( PetscMemzero(svm_binary->confusion_matrix,4 * sizeof(PetscInt)) );
+  TRY( PetscMemzero(svm_binary->model_scores,5 * sizeof(PetscReal)) );
 
   svm_binary->b = 1.;
 
@@ -96,20 +96,11 @@ PetscErrorCode SVMDestroy_Binary(SVM svm)
 #define __FUNCT__ "SVMView_Binary"
 PetscErrorCode SVMView_Binary(SVM svm,PetscViewer v)
 {
-  SVM_Binary *svm_binary = (SVM_Binary *) svm;
-
-  PetscInt   N_eq,N_all;
   PetscBool  isascii;
-
-  PetscReal  C;
 
   PetscFunctionBegin;
   TRY( PetscObjectTypeCompare((PetscObject)v,PETSCVIEWERASCII,&isascii) );
   if (isascii) {
-    N_all = svm_binary->N_all;
-    N_eq  = svm_binary->N_eq;
-    TRY( SVMGetC(svm,&C) );
-    TRY( PetscViewerASCIIPrintf(v,"SVM: %d of %d test samples classified correctly (%.2f%%) with C = %.3f\n",N_eq,N_all,((PetscReal)N_eq)/((PetscReal)N_all)*100.0,C) );
   }
   PetscFunctionReturn(0);
 }
@@ -841,32 +832,22 @@ PetscErrorCode SVMEvaluateModelScores_Binary_Private(SVM svm,Vec y_pred,Vec y_kn
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMTest_Binary"
-PetscErrorCode SVMTest_Binary(SVM svm,PetscInt *N_all,PetscInt *N_eq)
+PetscErrorCode SVMTest_Binary(SVM svm)
 {
-  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
-
   Mat Xt_test;
-  Vec y_test;
-  Vec y;
-  IS  is_eq;
+  Vec y_known;
+  Vec y_pred;
 
   PetscViewer       v;
   PetscViewerFormat format;
   PetscBool         view_score;
 
   PetscFunctionBegin;
-  TRY( SVMGetTestDataset(svm,&Xt_test,&y_test) );
-
-  TRY( SVMPredict(svm,Xt_test,&y) );
-  TRY( VecWhichEqual(y,y_test,&is_eq) );
-  TRY( VecGetSize(y,&svm_binary->N_all) );
-  TRY( ISGetSize(is_eq,&svm_binary->N_eq) );
-
-  if (N_all != NULL) *N_all = svm_binary->N_all;
-  if (N_eq  != NULL) *N_eq  = svm_binary->N_eq;
+  TRY( SVMGetTestDataset(svm,&Xt_test,&y_known) );
+  TRY( SVMPredict(svm,Xt_test,&y_pred) );
 
   /* Evaluation of model performance scores */
-  TRY( SVMEvaluateModelScores_Binary_Private(svm,y,y_test) );
+  TRY( SVMEvaluateModelScores_Binary_Private(svm,y_pred,y_known) );
 
   TRY( PetscOptionsGetViewer(((PetscObject)svm)->comm,((PetscObject)svm)->prefix,"-svm_view_score",&v,&format,&view_score) );
   if (view_score) {
@@ -876,8 +857,7 @@ PetscErrorCode SVMTest_Binary(SVM svm,PetscInt *N_all,PetscInt *N_eq)
     TRY( PetscViewerDestroy(&v) );
   }
 
-  TRY( VecDestroy(&y) );
-  TRY( ISDestroy(&is_eq) );
+  TRY( VecDestroy(&y_pred) );
   PetscFunctionReturn(0);
 }
 
@@ -958,11 +938,11 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
   Mat      Xt,Xt_training,Xt_test;
   Vec      x,y,y_training,y_test;
 
-  PetscInt lo,hi,first,n;
-  PetscInt i,j,nfolds;
+  PetscInt  lo,hi,first,n;
+  PetscInt  i,j,nfolds;
+  PetscReal s;
 
   IS       is_training,is_test;
-  PetscInt N_eq,N_all;
 
   const char *prefix;
 
@@ -1034,9 +1014,10 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
       }
 
       TRY( SVMTrain(cross_svm) );
-      TRY( SVMTest(cross_svm,&N_all,&N_eq) );
+      TRY( SVMTest(cross_svm) );
 
-      score[j] += ((PetscReal) N_eq) / ((PetscReal) N_all);
+      TRY( SVMGetModelScore(cross_svm,MODEL_ACCURACY,&s) );
+      score[j] += s;
 
       TRY( SVMGetQPS(cross_svm,&qps) );
       TRY( QPSResetStatistics(qps) );
@@ -1083,6 +1064,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
 
   TRY( PetscMemzero(svm_binary->y_map,2 * sizeof(PetscScalar)) );
   TRY( PetscMemzero(svm_binary->confusion_matrix,4 * sizeof(PetscInt)) );
+  TRY( PetscMemzero(svm_binary->model_scores,5 * sizeof(PetscReal)) );
 
   svm->ops->setup           = SVMSetUp_Binary;
   svm->ops->reset           = SVMReset_Binary;
