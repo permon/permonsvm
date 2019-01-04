@@ -368,6 +368,23 @@ PetscErrorCode SVMLoadData(SVM svm,const char *filename,Mat *Xt,Vec *y) {
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMLoadTrainingDataset"
+PetscErrorCode SVMLoadTrainingDataset(SVM svm,const char *filename)
+{
+  Mat Xt_training;
+  Vec y_training;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+
+  TRY( SVMLoadData(svm,filename,&Xt_training,&y_training) );
+  TRY( PetscObjectSetName((PetscObject) Xt_training,"Xt_training") );
+  TRY( PetscObjectSetName((PetscObject) y_training,"y_training") );
+  TRY( SVMSetTrainingDataset(svm,Xt_training,y_training) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMViewDatasetInfo"
 PetscErrorCode SVMDatasetInfo(Mat Xt,Vec y,PetscViewer v)
 {
