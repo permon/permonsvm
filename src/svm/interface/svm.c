@@ -819,7 +819,7 @@ PetscErrorCode SVMSetUp(SVM svm)
 
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  if (svm->setupcalled) PetscFunctionReturn(0);
+  if (svm->setupcalled) PetscFunctionReturnI(0);
 
   TRY( svm->ops->setup(svm) );
   svm->setupcalled = PETSC_TRUE;
