@@ -384,6 +384,31 @@ PetscErrorCode SVMLoadTrainingDataset(SVM svm,const char *filename)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMLoadTestDataset"
+PetscErrorCode SVMLoadTestDataset(SVM svm,const char *filename)
+{
+  Mat Xt_test;
+  Vec y_test;
+
+  PetscBool view;
+
+  PetscFunctionBeginI;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+
+  TRY( SVMLoadData(svm,filename,&Xt_test,&y_test) );
+  TRY( PetscObjectSetName((PetscObject) Xt_test,"Xt_test") );
+  TRY( PetscObjectSetName((PetscObject) y_test,"y_test") );
+  TRY( SVMSetTestDataset(svm,Xt_test,y_test) );
+
+  TRY( PetscOptionsHasName(NULL,NULL,"-svm_view_io",&view) );
+  if (view) {
+    PetscViewer v = PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject) svm) );
+    TRY( SVMViewIO(svm,SVM_TEST_DATASET,filename,v) );
+  }
+  PetscFunctionReturnI(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMViewIO"
 PetscErrorCode SVMViewIO(SVM svm,const char *dataset_type,const char *filename,PetscViewer v)
 {
@@ -407,6 +432,10 @@ PetscErrorCode SVMViewIO(SVM svm,const char *dataset_type,const char *filename,P
     TRY( PetscStrcmp(dataset_type,SVM_TRAINING_DATASET,&iseq) );
     if (iseq) {
       TRY( SVMGetTrainingDataset(svm,&Xt,&y) );
+    }
+    TRY( PetscStrcmp(dataset_type,SVM_TEST_DATASET,&iseq) );
+    if (iseq) {
+      TRY( SVMGetTestDataset(svm,&Xt,&y) );
     }
 
     TRY( PetscViewerASCIIPushTab(v) );
