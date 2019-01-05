@@ -1083,10 +1083,21 @@ PetscErrorCode SVMTrain(SVM svm)
 @*/
 PetscErrorCode SVMPostTrain(SVM svm)
 {
+  PetscBool view;
+  PetscViewer v;
+  PetscViewerFormat format;
 
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   TRY( svm->ops->posttrain(svm) );
+
+  TRY( PetscOptionsGetViewer(((PetscObject) svm)->comm,((PetscObject) svm)->prefix,"-svm_view",&v,&format,&view) );
+  if (view) {
+    TRY( PetscViewerPushFormat(v,format) );
+    TRY( SVMView(svm,v) );
+    TRY( PetscViewerPopFormat(v) );
+    TRY( PetscViewerDestroy(&v) );
+  }
   PetscFunctionReturnI(0);
 }
 
