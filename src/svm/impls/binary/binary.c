@@ -949,6 +949,8 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
   PetscInt    svm_mod;
   SVMLossType svm_loss;
 
+  ModelScore  model_score;
+
   PetscBool   info_set;
 
   PetscFunctionBegin;
@@ -957,6 +959,7 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
   TRY( SVMGetNfolds(svm,&nfolds) );
   TRY( SVMGetLossType(svm,&svm_loss) );
   TRY( SVMGetMod(svm,&svm_mod) );
+  TRY( SVMGetCrossValidationScoreType(svm,&model_score) );
 
   TRY( SVMGetTrainingDataset(svm,&Xt,&y) );
   TRY( MatGetOwnershipRange(Xt,&lo,&hi) );
@@ -1016,7 +1019,7 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
       TRY( SVMTrain(cross_svm) );
       TRY( SVMTest(cross_svm) );
 
-      TRY( SVMGetModelScore(cross_svm,MODEL_ACCURACY,&s) );
+      TRY( SVMGetModelScore(cross_svm,model_score,&s) );
       score[j] += s;
 
       TRY( SVMGetQPS(cross_svm,&qps) );

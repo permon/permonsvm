@@ -180,6 +180,8 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   PetscBool      flg,warm_start;
 
   SVMLossType    loss_type;
+
+  ModelScore     model_score;
   PetscInt       nfolds;
 
   PetscFunctionBegin;
@@ -209,6 +211,10 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   TRY( PetscOptionsEnum("-svm_loss_type","Specify the loss function for soft-margin SVM (non-separable samples).","SVMSetNfolds",SVMLossTypes,(PetscEnum)svm->loss_type,(PetscEnum*)&loss_type,&flg) );
   if (flg) {
     TRY( SVMSetLossType(svm,loss_type) );
+  }
+  TRY( PetscOptionsEnum("-svm_cv_model_score_type","Specify the model score type for evaluating performance of model during cross-validation.","SVMSetCrossValidationScoreType",ModelScores,(PetscEnum)svm->cv_model_score,(PetscEnum*)&model_score,&flg) );
+  if (flg) {
+    TRY( SVMSetCrossValidationScoreType(svm,model_score) );
   }
   TRY( PetscOptionsBool("-svm_warm_start","Specify whether warm start is used in cross-validation.","SVMSetWarmStart",svm->warm_start,&warm_start,&flg) );
   if (flg) {
