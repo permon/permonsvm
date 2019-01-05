@@ -51,38 +51,50 @@ M*/
   ModelScore - type of model performance score.
 
   Level: beginner
+
+.seealso SVMGetModelScore()
 E*/
 typedef enum {MODEL_ACCURACY, MODEL_PRECISION, MODEL_SENSITIVITY, MODEL_F1, MODEL_MCC} ModelScore;
 FLLOP_EXTERN const char *const ModelScores[];
 
 /*MC
-  MODEL_ACCURACY -
+  MODEL_ACCURACY - a ratio of correctly predicted samples to the total samples.
 
   Level: beginner
+
+.seealso ModelScore, MODEL_PRECISION, MODEL_SENSTIVITY, MODEL_F1, MODEL_MCC, SVMGetModelScore()
 M*/
 
 /*MC
-  MODEL_PRECISION -
+  MODEL_PRECISION - a ratio of correctly predicted positive samples to the total predicted positive samples.
 
   Level: beginner
+
+.seealso ModelScore, MODEL_ACCURACY, MODEL_SENSTIVITY, MODEL_F1, MODEL_MCC, SVMGetModelScore()
 M*/
 
 /*MC
-  MODEL_SENSTIVITY -
+  MODEL_SENSTIVITY - a ratio of correctly predicted positive samples to the all samples in actual class.
 
   Level: beginner
+
+.seealso ModelScore, MODEL_ACCURACY, MODEL_PRECISION, MODEL_F1, MODEL_MCC, SVMGetModelScore()
 M*/
 
 /*MC
-  MODEL_F1 - harmonic average of precision and sensitivity.
+  MODEL_F1 - a harmonic average of precision and sensitivity.
 
   Level: beginner
+
+.seealso ModelScore, MODEL_ACCURACY, MODEL_PRECISION, MODEL_SENSTIVITY, MODEL_MCC, SVMGetModelScore()
 M*/
 
 /*MC
   MODEL_MCC - Matthews correlation coefficient.
 
   Level: beginner
+
+.seealso ModelScore, MODEL_ACCURACY, MODEL_PRECISION, MODEL_SENSTIVITY, MODEL_F1, SVMGetModelScore()
 M*/
 
 FLLOP_EXTERN PetscErrorCode SVMInitializePackage();

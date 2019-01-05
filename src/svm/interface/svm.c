@@ -1224,17 +1224,11 @@ PetscErrorCode SVMPredict(SVM svm,Mat Xt_pred,Vec *y_pred)
   Collective on SVM
 
   Input Parameters:
-+ svm - SVM context
-. Xt_test - matrix of tested samples
-- y_known - known labels of tested samples
-
-  Output Parameters:
-+ N_all - number of all tested samples
-- N_eq  - number of right classified samples
+. svm - SVM context
 
   Level: beginner
 
-.seealso SVMTrain(), SVMPredict()
+.seealso SVMSetTestDataset(), SVMTrain(), SVMPredict()
 @*/
 PetscErrorCode SVMTest(SVM svm)
 {
@@ -1248,7 +1242,18 @@ PetscErrorCode SVMTest(SVM svm)
 #undef __FUNCT__
 #define __FUNCT__ "SVMGetModelScore"
 /*@
-  SVMGetModelScore -
+  SVMGetModelScore - Returns the model performance score of specified score_type.
+
+  Not Collective
+
+  Input Parameters:
++ svm - SVM context
+- score_type - type of model score
+
+  Output Parameter:
+. s - score value
+
+.seealso ModelScore
 @*/
 PetscErrorCode SVMGetModelScore(SVM svm,ModelScore score_type,PetscReal *s)
 {
