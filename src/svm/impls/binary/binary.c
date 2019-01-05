@@ -19,7 +19,8 @@ typedef struct {
   QPS         qps;
   PetscInt    svm_mod;
 
-  PetscInt    N_eq,N_all;
+  PetscInt    confusion_matrix[4];
+  PetscReal   model_scores[5];
 } SVM_Binary;
 
 typedef struct {
@@ -49,7 +50,10 @@ PetscErrorCode SVMReset_Binary(SVM svm)
   TRY( VecDestroy(&svm_binary->y_training) );
   TRY( VecDestroy(&svm_binary->y_inner) );
 
-  PetscMemzero(svm_binary->y_map,2 * sizeof(PetscScalar) );
+  TRY( PetscMemzero(svm_binary->y_map,2 * sizeof(PetscScalar)) );
+  TRY( PetscMemzero(svm_binary->confusion_matrix,4 * sizeof(PetscInt)) );
+  TRY( PetscMemzero(svm_binary->model_scores,5 * sizeof(PetscReal)) );
+
   svm_binary->b = 1.;
 
   svm_binary->w           = NULL;
@@ -78,6 +82,7 @@ PetscErrorCode SVMDestroy_Binary(SVM svm)
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetBias_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetSeparatingHyperplane_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetSeparatingHyperplane_C",NULL) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetModelScore_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetOptionsPrefix_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetOptionsPrefix_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMAppendOptionsPrefix_C",NULL) );
@@ -91,20 +96,60 @@ PetscErrorCode SVMDestroy_Binary(SVM svm)
 #define __FUNCT__ "SVMView_Binary"
 PetscErrorCode SVMView_Binary(SVM svm,PetscViewer v)
 {
-  SVM_Binary *svm_binary = (SVM_Binary *) svm;
-
-  PetscInt   N_eq,N_all;
   PetscBool  isascii;
-
-  PetscReal  C;
 
   PetscFunctionBegin;
   TRY( PetscObjectTypeCompare((PetscObject)v,PETSCVIEWERASCII,&isascii) );
   if (isascii) {
-    N_all = svm_binary->N_all;
-    N_eq  = svm_binary->N_eq;
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMViewScore_Binary"
+PetscErrorCode SVMViewScore_Binary(SVM svm,PetscViewer v)
+{
+  MPI_Comm  comm;
+
+  PetscReal   C;
+  PetscInt    mod;
+  SVMLossType loss_type;
+
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+  PetscBool isascii;
+
+  PetscFunctionBegin;
+  comm = PetscObjectComm((PetscObject) svm);
+  if (!v) v = PETSC_VIEWER_STDOUT_(comm);
+
+  TRY( PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERASCII,&isascii) );
+  if (isascii) {
     TRY( SVMGetC(svm,&C) );
-    TRY( PetscViewerASCIIPrintf(v,"SVM: %d of %d test samples classified correctly (%.2f%%) with C = %.3f\n",N_eq,N_all,((PetscReal)N_eq)/((PetscReal)N_all)*100.0,C) );
+    TRY( SVMGetMod(svm,&mod) );
+    TRY( SVMGetLossType(svm,&loss_type) );
+
+    TRY( PetscViewerASCIIPrintf(v,"=====================\n") );
+    TRY( PetscObjectPrintClassNamePrefixType((PetscObject) svm,v) );
+
+    TRY( PetscViewerASCIIPushTab(v) );
+    TRY( PetscViewerASCIIPrintf(v,"model performance score\n") );
+    TRY( PetscViewerASCIIPrintf(v,"training parameters: C=%.3f, mod=%d, loss=%s\n",C,mod,SVMLossTypes[loss_type]) );
+    TRY( PetscViewerASCIIPrintf(v,"Confusion matrix:\n") );
+    TRY( PetscViewerASCIIPushTab(v) );
+
+    TRY( PetscViewerASCIIPrintf(v,"TP = %4d\tFP = %4d\n",svm_binary->confusion_matrix[0],svm_binary->confusion_matrix[1]) );
+    TRY( PetscViewerASCIIPrintf(v,"FN = %4d\tTN = %4d\n",svm_binary->confusion_matrix[2],svm_binary->confusion_matrix[3]) );
+    TRY( PetscViewerASCIIPopTab(v) );
+
+    TRY( PetscViewerASCIIPrintf(v,"accuracy=%.2f%%",svm_binary->model_scores[0] * 100.) );
+    TRY( PetscViewerASCIIPrintf(v,"precision=%.2f%%",svm_binary->model_scores[1] * 100.) );
+    TRY( PetscViewerASCIIPrintf(v,"sensitivity=%.2f%%\n",svm_binary->model_scores[2] * 100.) );
+    TRY( PetscViewerASCIIPrintf(v,"F1.0_score=%.2f",svm_binary->model_scores[3]) );
+    TRY( PetscViewerASCIIPrintf(v,"mmc=%.2f\n",svm_binary->model_scores[4]) );
+    TRY( PetscViewerASCIIPopTab(v) );
+    TRY( PetscViewerASCIIPrintf(v,"=====================\n") );
+  } else {
+    if (!isascii) FLLOP_SETERRQ1(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewScore", ((PetscObject)v)->type_name);
   }
   PetscFunctionReturn(0);
 }
@@ -720,41 +765,112 @@ PetscErrorCode SVMPredict_Binary(SVM svm,Mat Xt_pred,Vec *y_out)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMTest_Binary"
-PetscErrorCode SVMTest_Binary(SVM svm,PetscInt *N_all,PetscInt *N_eq)
+#define __FUNCT__ "SVMEvaluateModelScores_Binary_Private"
+PetscErrorCode SVMEvaluateModelScores_Binary_Private(SVM svm,Vec y_pred,Vec y_known)
 {
-  SVM_Binary *svm_binary = (SVM_Binary *) svm;
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
+  Vec       label,y_pred_sub,y_known_sub;
+  IS        is_label,is_eq;
+
+  PetscInt  TP,FP,TN,FN,N;
+
+  PetscFunctionBegin;
+  TRY( VecDuplicate(y_known,&label) );
+
+  /* TN and FN samples */
+  TRY( VecSet(label,svm_binary->y_map[0]) );
+  TRY( VecWhichEqual(y_known,label,&is_label) );
+  TRY( VecGetSubVector(y_known,is_label,&y_known_sub) );
+  TRY( VecGetSubVector(y_pred,is_label,&y_pred_sub) );
+  TRY( VecWhichEqual(y_known_sub,y_pred_sub,&is_eq) );
+
+  TRY( ISGetSize(is_eq,&TN) );
+  TRY( VecGetSize(y_known_sub,&N) );
+  FN = N - TN;
+
+  TRY( VecRestoreSubVector(y_known,is_label,&y_known_sub) );
+  TRY( VecRestoreSubVector(y_pred,is_label,&y_pred_sub) );
+  TRY( ISDestroy(&is_label) );
+  TRY( ISDestroy(&is_eq) );
+
+  /* TP and FP samples */
+  TRY( VecSet(label,svm_binary->y_map[1]) );
+  TRY( VecWhichEqual(y_known,label,&is_label) );
+  TRY( VecGetSubVector(y_known,is_label,&y_known_sub) );
+  TRY( VecGetSubVector(y_pred,is_label,&y_pred_sub) );
+  TRY( VecWhichEqual(y_known_sub,y_pred_sub,&is_eq) );
+
+  TRY( ISGetSize(is_eq,&TP) );
+  TRY( VecGetSize(y_known_sub,&N) );
+  FP = N - TP;
+
+  TRY( VecRestoreSubVector(y_known,is_label,&y_known_sub) );
+  TRY( VecRestoreSubVector(y_pred,is_label,&y_pred_sub) );
+  TRY( ISDestroy(&is_label) );
+  TRY( ISDestroy(&is_eq) );
+
+  /* confusion matrix */
+  svm_binary->confusion_matrix[0] = TP;
+  svm_binary->confusion_matrix[1] = FP;
+  svm_binary->confusion_matrix[2] = FN;
+  svm_binary->confusion_matrix[3] = TN;
+
+  /* performance scores of model */
+  svm_binary->model_scores[0] = (PetscReal) (TP + TN) / (PetscReal) (TP + TN + FP + FN); /* accuracy */
+  svm_binary->model_scores[1] = (PetscReal) TP / (PetscReal) (TP + FP); /* precision */
+  svm_binary->model_scores[2] = (PetscReal) TP / (TP + FN); /* sensitivity */
+  /* F1 */
+  svm_binary->model_scores[3] = 2. * (svm_binary->model_scores[1] * svm_binary->model_scores[2]) / (svm_binary->model_scores[1] + svm_binary->model_scores[2]);
+  /* Matthews correlation coefficient */
+  svm_binary->model_scores[4] = (PetscReal) (TP * TN - FP * FN);
+  svm_binary->model_scores[4] /= (PetscSqrtReal(TP + FP) * PetscSqrtReal(TP + FN) * PetscSqrtReal(TN + FP) * PetscSqrtReal(TN + FN) );
+
+  TRY( VecDestroy(&label) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMTest_Binary"
+PetscErrorCode SVMTest_Binary(SVM svm)
+{
   Mat Xt_test;
-  Vec y_test;
-  Vec y;
-  IS  is_eq;
+  Vec y_known;
+  Vec y_pred;
 
   PetscViewer       v;
   PetscViewerFormat format;
-  PetscBool         view;
+  PetscBool         view_score;
 
   PetscFunctionBegin;
-  TRY( SVMGetTestDataset(svm,&Xt_test,&y_test) );
+  TRY( SVMGetTestDataset(svm,&Xt_test,&y_known) );
+  TRY( SVMPredict(svm,Xt_test,&y_pred) );
 
-  TRY( SVMPredict(svm,Xt_test,&y) );
-  TRY( VecWhichEqual(y,y_test,&is_eq) );
-  TRY( VecGetSize(y,&svm_binary->N_all) );
-  TRY( ISGetSize(is_eq,&svm_binary->N_eq) );
-  TRY( VecDestroy(&y) );
-  TRY( ISDestroy(&is_eq) );
+  /* Evaluation of model performance scores */
+  TRY( SVMEvaluateModelScores_Binary_Private(svm,y_pred,y_known) );
 
-  if (N_all != NULL) *N_all = svm_binary->N_all;
-  if (N_eq  != NULL) *N_eq  = svm_binary->N_eq;
-
-  TRY( PetscOptionsGetViewer(((PetscObject)svm)->comm,((PetscObject)svm)->prefix,"-svm_view",&v,&format,&view) );
-
-  if (view) {
+  TRY( PetscOptionsGetViewer(((PetscObject)svm)->comm,((PetscObject)svm)->prefix,"-svm_view_score",&v,&format,&view_score) );
+  if (view_score) {
     TRY( PetscViewerPushFormat(v,format) );
-    TRY( SVMView(svm,v) );
+    TRY( SVMViewScore(svm,v) );
     TRY( PetscViewerPopFormat(v) );
     TRY( PetscViewerDestroy(&v) );
   }
+
+  TRY( VecDestroy(&y_pred) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetModelScore_Binary"
+PetscErrorCode SVMGetModelScore_Binary(SVM svm,ModelScore score_type,PetscReal *s)
+{
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
+  PetscFunctionBegin;
+  PetscValidRealPointer(s,3);
+
+  *s = svm_binary->model_scores[score_type];
   PetscFunctionReturn(0);
 }
 
@@ -822,16 +938,18 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
   Mat      Xt,Xt_training,Xt_test;
   Vec      x,y,y_training,y_test;
 
-  PetscInt lo,hi,first,n;
-  PetscInt i,j,nfolds;
+  PetscInt  lo,hi,first,n;
+  PetscInt  i,j,nfolds;
+  PetscReal s;
 
   IS       is_training,is_test;
-  PetscInt N_eq,N_all;
 
   const char *prefix;
 
   PetscInt    svm_mod;
   SVMLossType svm_loss;
+
+  ModelScore  model_score;
 
   PetscBool   info_set;
 
@@ -841,6 +959,7 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
   TRY( SVMGetNfolds(svm,&nfolds) );
   TRY( SVMGetLossType(svm,&svm_loss) );
   TRY( SVMGetMod(svm,&svm_mod) );
+  TRY( SVMGetCrossValidationScoreType(svm,&model_score) );
 
   TRY( SVMGetTrainingDataset(svm,&Xt,&y) );
   TRY( MatGetOwnershipRange(Xt,&lo,&hi) );
@@ -898,13 +1017,10 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
       }
 
       TRY( SVMTrain(cross_svm) );
-      TRY( SVMTest(cross_svm,&N_all,&N_eq) );
+      TRY( SVMTest(cross_svm) );
 
-      if (info_set) {
-        TRY( SVMView(cross_svm,PETSC_VIEWER_STDOUT_(comm)) );
-      }
-
-      score[j] += ((PetscReal) N_eq) / ((PetscReal) N_all);
+      TRY( SVMGetModelScore(cross_svm,model_score,&s) );
+      score[j] += s;
 
       TRY( SVMGetQPS(cross_svm,&qps) );
       TRY( QPSResetStatistics(qps) );
@@ -950,6 +1066,8 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm_binary->svm_mod     = 2;
 
   TRY( PetscMemzero(svm_binary->y_map,2 * sizeof(PetscScalar)) );
+  TRY( PetscMemzero(svm_binary->confusion_matrix,4 * sizeof(PetscInt)) );
+  TRY( PetscMemzero(svm_binary->model_scores,5 * sizeof(PetscReal)) );
 
   svm->ops->setup           = SVMSetUp_Binary;
   svm->ops->reset           = SVMReset_Binary;
@@ -962,6 +1080,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm->ops->crossvalidation = SVMCrossValidation_Binary;
   svm->ops->gridsearch      = SVMGridSearch_Binary;
   svm->ops->view            = SVMView_Binary;
+  svm->ops->viewscore       = SVMViewScore_Binary;
 
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingDataset_C",SVMSetTrainingDataset_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C",SVMGetTrainingDataset_Binary) );
@@ -973,6 +1092,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetBias_C",SVMGetBias_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetSeparatingHyperplane_C",SVMSetSeparatingHyperplane_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetSeparatingHyperplane_C",SVMGetSeparatingHyperplane_Binary) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetModelScore_C",SVMGetModelScore_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetOptionsPrefix_C",SVMSetOptionsPrefix_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetOptionsPrefix_C",SVMGetOptionsPrefix_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMAppendOptionsPrefix_C",SVMAppendOptionsPrefix_Binary) );

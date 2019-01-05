@@ -15,10 +15,11 @@ struct _SVMOps {
   PetscErrorCode (*train)(SVM);
   PetscErrorCode (*posttrain)(SVM);
   PetscErrorCode (*predict)(SVM,Mat,Vec *);
-  PetscErrorCode (*test)(SVM,PetscInt *,PetscInt *);
+  PetscErrorCode (*test)(SVM);
   PetscErrorCode (*gridsearch)(SVM);
   PetscErrorCode (*crossvalidation)(SVM,PetscReal [],PetscInt,PetscReal []);
   PetscErrorCode (*view)(SVM,PetscViewer);
+  PetscErrorCode (*viewscore)(SVM,PetscViewer);
 };
 
 struct _p_SVM {
@@ -29,6 +30,7 @@ struct _p_SVM {
   PetscInt  nfolds;
 
   SVMLossType loss_type;
+  ModelScore  cv_model_score;
 
   PetscBool   warm_start;
 

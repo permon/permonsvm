@@ -26,7 +26,7 @@ PetscErrorCode SVMRunBinaryClassification() {
 
   if (test_file_set) {
     TRY( SVMLoadTestDataset(svm,test_file) );
-    TRY( SVMTest(svm,NULL,NULL) );
+    TRY( SVMTest(svm) );
   }
 
   TRY( SVMDestroy(&svm) );
