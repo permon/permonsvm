@@ -30,6 +30,7 @@ struct _p_SVM {
   PetscInt  nfolds;
 
   SVMLossType loss_type;
+  ModelScore  cv_model_score;
 
   PetscBool   warm_start;
 

@@ -149,6 +149,8 @@ FLLOP_EXTERN PetscErrorCode SVMGetModelScore(SVM,ModelScore,PetscReal *);
 
 FLLOP_EXTERN PetscErrorCode SVMCrossValidate(SVM);
 FLLOP_EXTERN PetscErrorCode SVMGridSearch(SVM);
+FLLOP_EXTERN PetscErrorCode SVMSetCrossValidationScoreType(SVM,ModelScore);
+FLLOP_EXTERN PetscErrorCode SVMGetCrossValidationScoreType(SVM,ModelScore *);
 FLLOP_EXTERN PetscErrorCode SVMCrossValidation(SVM,PetscReal [],PetscInt,PetscReal []);
 
 FLLOP_EXTERN PetscErrorCode SVMSetQPS(SVM,QPS);

@@ -41,8 +41,9 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
   svm->LogCMax    = 2.;
   svm->loss_type  = SVM_L1;
 
-  svm->nfolds     = 5;
-  svm->warm_start = PETSC_FALSE;
+  svm->cv_model_score = MODEL_ACCURACY;
+  svm->nfolds         = 5;
+  svm->warm_start     = PETSC_FALSE;
 
   svm->setupcalled          = PETSC_FALSE;
   svm->setfromoptionscalled = PETSC_FALSE;
@@ -1286,6 +1287,54 @@ PetscErrorCode SVMGridSearch(SVM svm)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   TRY( svm->ops->gridsearch(svm) );
   PetscFunctionReturnI(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetCrossValidationScoreType"
+/*@
+  SVMSetCrossValidationScoreType - Sets score type for evaluating performance of model during cross validation.
+
+  Logically Colective on SVM
+
+  Input Parameters:
++ svm - SVM context
+- type - type of model score
+
+.seealso SVMGetCrossValidationScoreType(), ModelScore
+@*/
+PetscErrorCode SVMSetCrossValidationScoreType(SVM svm,ModelScore type)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveEnum(svm,type,2);
+  svm->cv_model_score = type;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetCrossValidationScoreType"
+/*@
+  SVMGetCrossValidationScoreType - Returns score type for evaluating performance of model during cross validation.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. type - type of model score
+
+.seealso SVMGetCrossValidationScoreType(), ModelScore
+@*/
+PetscErrorCode SVMGetCrossValidationScoreType(SVM svm,ModelScore *type)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidPointer(type,2);
+  *type = svm->cv_model_score;
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
