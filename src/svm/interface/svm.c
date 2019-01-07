@@ -1083,10 +1083,21 @@ PetscErrorCode SVMTrain(SVM svm)
 @*/
 PetscErrorCode SVMPostTrain(SVM svm)
 {
+  PetscBool view;
+  PetscViewer v;
+  PetscViewerFormat format;
 
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   TRY( svm->ops->posttrain(svm) );
+
+  TRY( PetscOptionsGetViewer(((PetscObject) svm)->comm,((PetscObject) svm)->prefix,"-svm_view",&v,&format,&view) );
+  if (view) {
+    TRY( PetscViewerPushFormat(v,format) );
+    TRY( SVMView(svm,v) );
+    TRY( PetscViewerPopFormat(v) );
+    TRY( PetscViewerDestroy(&v) );
+  }
   PetscFunctionReturnI(0);
 }
 
@@ -1239,10 +1250,21 @@ PetscErrorCode SVMPredict(SVM svm,Mat Xt_pred,Vec *y_pred)
 @*/
 PetscErrorCode SVMTest(SVM svm)
 {
+  PetscViewer       v;
+  PetscViewerFormat format;
+  PetscBool         view_score;
 
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   TRY( svm->ops->test(svm) );
+
+  TRY( PetscOptionsGetViewer(((PetscObject)svm)->comm,((PetscObject)svm)->prefix,"-svm_view_score",&v,&format,&view_score) );
+  if (view_score) {
+    TRY( PetscViewerPushFormat(v,format) );
+    TRY( SVMViewScore(svm,v) );
+    TRY( PetscViewerPopFormat(v) );
+    TRY( PetscViewerDestroy(&v) );
+  }
   PetscFunctionReturnI(0);
 }
 
@@ -1260,7 +1282,7 @@ PetscErrorCode SVMTest(SVM svm)
   Output Parameter:
 . s - score value
 
-.seealso ModelScore
+.seealso ModelScore, SVMComputeModelScores()
 @*/
 PetscErrorCode SVMGetModelScore(SVM svm,ModelScore score_type,PetscReal *s)
 {
@@ -1369,4 +1391,81 @@ PetscErrorCode SVMCrossValidation(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   TRY( svm->ops->crossvalidation(svm,c_arr,m,score) );
   PetscFunctionReturnI(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMComputeModelScores"
+/*@
+  SVMComputeModelScores - Evaluates performance scores of model.
+
+  Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+. y_pred - predicted labels of tested samples
+- y_known - tested samples
+
+  Level: intermediate
+
+.seealso SVMTrain(), SVMTest(), SVMGetModelScores()
+@*/
+PetscErrorCode SVMComputeModelScores(SVM svm,Vec y_pred,Vec y_known)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  if (svm->ops->computemodelscores) {
+    TRY( svm->ops->computemodelscores(svm,y_pred,y_known) );
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMComputeHingeLoss"
+/*@
+  SVMComputeHingeLoss - Computes hinge loss function.
+
+  Collective on SVM
+
+  Input Parameter:
+. svm - SVM context
+
+  Level: advanced
+
+.seealso: SVMLossType, SVM_L1, SVM_L2
+@*/
+PetscErrorCode SVMComputeHingeLoss(SVM svm)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  if (svm->ops->computehingeloss) {
+    TRY( svm->ops->computehingeloss(svm) );
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMComputeModelParams"
+/*@
+ SVMComputeModelParams - Computes parameters of model
+
+  Collective on SVM
+
+  Input Parameter:
+. svm - SVM context
+
+  Level: intermediate
+
+.seealso SVMTrain(), SVMTest()
+@*/
+PetscErrorCode SVMComputeModelParams(SVM svm)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  if (svm->ops->computemodelparams) {
+    TRY( svm->ops->computemodelparams(svm) );
+  }
+  PetscFunctionReturn(0);
 }

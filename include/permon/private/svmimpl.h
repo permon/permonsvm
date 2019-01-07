@@ -20,6 +20,9 @@ struct _SVMOps {
   PetscErrorCode (*crossvalidation)(SVM,PetscReal [],PetscInt,PetscReal []);
   PetscErrorCode (*view)(SVM,PetscViewer);
   PetscErrorCode (*viewscore)(SVM,PetscViewer);
+  PetscErrorCode (*computemodelscores)(SVM,Vec,Vec);
+  PetscErrorCode (*computehingeloss)(SVM);
+  PetscErrorCode (*computemodelparams)(SVM);
 };
 
 struct _p_SVM {
