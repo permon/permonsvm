@@ -1057,25 +1057,12 @@ PetscErrorCode SVMTest_Binary(SVM svm)
   Vec y_known;
   Vec y_pred;
 
-  PetscViewer       v;
-  PetscViewerFormat format;
-  PetscBool         view_score;
-
   PetscFunctionBegin;
   TRY( SVMGetTestDataset(svm,&Xt_test,&y_known) );
   TRY( SVMPredict(svm,Xt_test,&y_pred) );
 
   /* Evaluation of model performance scores */
   TRY( SVMEvaluateModelScores_Binary_Private(svm,y_pred,y_known) );
-
-  TRY( PetscOptionsGetViewer(((PetscObject)svm)->comm,((PetscObject)svm)->prefix,"-svm_view_score",&v,&format,&view_score) );
-  if (view_score) {
-    TRY( PetscViewerPushFormat(v,format) );
-    TRY( SVMViewScore(svm,v) );
-    TRY( PetscViewerPopFormat(v) );
-    TRY( PetscViewerDestroy(&v) );
-  }
-
   TRY( VecDestroy(&y_pred) );
   PetscFunctionReturn(0);
 }

@@ -1250,10 +1250,21 @@ PetscErrorCode SVMPredict(SVM svm,Mat Xt_pred,Vec *y_pred)
 @*/
 PetscErrorCode SVMTest(SVM svm)
 {
+  PetscViewer       v;
+  PetscViewerFormat format;
+  PetscBool         view_score;
 
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   TRY( svm->ops->test(svm) );
+
+  TRY( PetscOptionsGetViewer(((PetscObject)svm)->comm,((PetscObject)svm)->prefix,"-svm_view_score",&v,&format,&view_score) );
+  if (view_score) {
+    TRY( PetscViewerPushFormat(v,format) );
+    TRY( SVMViewScore(svm,v) );
+    TRY( PetscViewerPopFormat(v) );
+    TRY( PetscViewerDestroy(&v) );
+  }
   PetscFunctionReturnI(0);
 }
 
