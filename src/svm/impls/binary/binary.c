@@ -982,8 +982,8 @@ PetscErrorCode SVMPredict_Binary(SVM svm,Mat Xt_pred,Vec *y_out)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMEvaluateModelScores_Binary_Private"
-PetscErrorCode SVMEvaluateModelScores_Binary_Private(SVM svm,Vec y_pred,Vec y_known)
+#define __FUNCT__ "SVMComputeModelScores_Binary"
+PetscErrorCode SVMComputeModelScores_Binary(SVM svm,Vec y_pred,Vec y_known)
 {
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
@@ -1060,7 +1060,7 @@ PetscErrorCode SVMTest_Binary(SVM svm)
   TRY( SVMPredict(svm,Xt_test,&y_pred) );
 
   /* Evaluation of model performance scores */
-  TRY( SVMEvaluateModelScores_Binary_Private(svm,y_pred,y_known) );
+  TRY( SVMComputeModelScores(svm,y_pred,y_known) );
   TRY( VecDestroy(&y_pred) );
   PetscFunctionReturn(0);
 }
@@ -1294,6 +1294,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm->ops->gridsearch         = SVMGridSearch_Binary;
   svm->ops->view               = SVMView_Binary;
   svm->ops->viewscore          = SVMViewScore_Binary;
+  svm->ops->computemodelscores = SVMComputeModelScores_Binary;
   svm->ops->computehingeloss   = SVMComputeHingeLoss_Binary;
   svm->ops->computemodelparams = SVMComputeModelParams_Binary;
 

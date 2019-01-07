@@ -1282,7 +1282,7 @@ PetscErrorCode SVMTest(SVM svm)
   Output Parameter:
 . s - score value
 
-.seealso ModelScore
+.seealso ModelScore, SVMComputeModelScores()
 @*/
 PetscErrorCode SVMGetModelScore(SVM svm,ModelScore score_type,PetscReal *s)
 {
@@ -1394,13 +1394,40 @@ PetscErrorCode SVMCrossValidation(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMComputeModelScores"
+/*@
+  SVMComputeModelScores - Evaluates performance scores of model.
+
+  Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+. y_pred - predicted labels of tested samples
+- y_known - tested samples
+
+  Level: intermediate
+
+.seealso SVMTrain(), SVMTest(), SVMGetModelScores()
+@*/
+PetscErrorCode SVMComputeModelScores(SVM svm,Vec y_pred,Vec y_known)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  if (svm->ops->computemodelscores) {
+    TRY( svm->ops->computemodelscores(svm,y_pred,y_known) );
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMComputeHingeLoss"
 /*@
   SVMComputeHingeLoss - Computes hinge loss function.
 
   Collective on SVM
 
-  Input Parameters:
+  Input Parameter:
 . svm - SVM context
 
   Level: advanced
@@ -1425,7 +1452,7 @@ PetscErrorCode SVMComputeHingeLoss(SVM svm)
 
   Collective on SVM
 
-  Input Parameters:
+  Input Parameter:
 . svm - SVM context
 
   Level: intermediate
