@@ -750,8 +750,8 @@ PetscErrorCode SVMGetBias_Binary(SVM svm,PetscReal *b)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMComputeModelParams_Binary_Private"
-PetscErrorCode SVMComputeModelParams_Binary_Private(SVM svm)
+#define __FUNCT__ "SVMComputeModelParams_Binary"
+PetscErrorCode SVMComputeModelParams_Binary(SVM svm)
 {
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
@@ -906,7 +906,7 @@ PetscErrorCode SVMPostTrain_Binary(SVM svm)
 
   TRY( SVMReconstructHyperplane_Binary_Private(svm) );
   TRY( SVMComputeObjFuncValues_Binary_Private(svm) );
-  TRY( SVMComputeModelParams_Binary_Private(svm) );
+  TRY( SVMComputeModelParams(svm) );
 
   svm->posttraincalled = PETSC_TRUE;
   PetscFunctionReturn(0);
@@ -1282,19 +1282,20 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
     svm_binary->work[i] = NULL;
   }
 
-  svm->ops->setup            = SVMSetUp_Binary;
-  svm->ops->reset            = SVMReset_Binary;
-  svm->ops->destroy          = SVMDestroy_Binary;
-  svm->ops->setfromoptions   = SVMSetFromOptions_Binary;
-  svm->ops->train            = SVMTrain_Binary;
-  svm->ops->posttrain        = SVMPostTrain_Binary;
-  svm->ops->predict          = SVMPredict_Binary;
-  svm->ops->test             = SVMTest_Binary;
-  svm->ops->crossvalidation  = SVMCrossValidation_Binary;
-  svm->ops->gridsearch       = SVMGridSearch_Binary;
-  svm->ops->view             = SVMView_Binary;
-  svm->ops->viewscore        = SVMViewScore_Binary;
-  svm->ops->computehingeloss = SVMComputeHingeLoss_Binary;
+  svm->ops->setup              = SVMSetUp_Binary;
+  svm->ops->reset              = SVMReset_Binary;
+  svm->ops->destroy            = SVMDestroy_Binary;
+  svm->ops->setfromoptions     = SVMSetFromOptions_Binary;
+  svm->ops->train              = SVMTrain_Binary;
+  svm->ops->posttrain          = SVMPostTrain_Binary;
+  svm->ops->predict            = SVMPredict_Binary;
+  svm->ops->test               = SVMTest_Binary;
+  svm->ops->crossvalidation    = SVMCrossValidation_Binary;
+  svm->ops->gridsearch         = SVMGridSearch_Binary;
+  svm->ops->view               = SVMView_Binary;
+  svm->ops->viewscore          = SVMViewScore_Binary;
+  svm->ops->computehingeloss   = SVMComputeHingeLoss_Binary;
+  svm->ops->computemodelparams = SVMComputeModelParams_Binary;
 
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingDataset_C",SVMSetTrainingDataset_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C",SVMGetTrainingDataset_Binary) );

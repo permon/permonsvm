@@ -1411,8 +1411,34 @@ PetscErrorCode SVMComputeHingeLoss(SVM svm)
 {
 
   PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   if (svm->ops->computehingeloss) {
     TRY( svm->ops->computehingeloss(svm) );
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMComputeModelParams"
+/*@
+ SVMComputeModelParams - Computes parameters of model
+
+  Collective on SVM
+
+  Input Parameters:
+. svm - SVM context
+
+  Level: intermediate
+
+.seealso SVMTrain(), SVMTest()
+@*/
+PetscErrorCode SVMComputeModelParams(SVM svm)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  if (svm->ops->computemodelparams) {
+    TRY( svm->ops->computemodelparams(svm) );
   }
   PetscFunctionReturn(0);
 }

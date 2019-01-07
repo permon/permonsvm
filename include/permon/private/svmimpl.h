@@ -21,6 +21,7 @@ struct _SVMOps {
   PetscErrorCode (*view)(SVM,PetscViewer);
   PetscErrorCode (*viewscore)(SVM,PetscViewer);
   PetscErrorCode (*computehingeloss)(SVM);
+  PetscErrorCode (*computemodelparams)(SVM);
 };
 
 struct _p_SVM {
