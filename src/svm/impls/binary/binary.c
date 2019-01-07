@@ -21,6 +21,9 @@ typedef struct {
 
   PetscInt    confusion_matrix[4];
   PetscReal   model_scores[5];
+
+  /* Work vecs */
+  Vec         work[3]; /* xi, c, Xtw */
 } SVM_Binary;
 
 typedef struct {
@@ -37,6 +40,7 @@ PetscErrorCode SVMReset_Binary(SVM svm)
 {
   SVM_Binary *svm_binary;
 
+  PetscInt i;
   PetscFunctionBegin;
   svm_binary = (SVM_Binary *) svm->data;
 
@@ -63,6 +67,11 @@ PetscErrorCode SVMReset_Binary(SVM svm)
   svm_binary->D           = NULL;
 
   svm_binary->svm_mod     = 2;
+
+  for (i = 0; i < 3; ++i) {
+    TRY( VecDestroy(&svm_binary->work[i]) );
+    svm_binary->work[i] = NULL;
+  }
   PetscFunctionReturn(0);
 }
 
@@ -175,7 +184,7 @@ PetscErrorCode SVMSetTrainingDataset_Binary(SVM svm,Mat Xt_training,Vec y_traini
   svm_binary->y_training = y_training;
   TRY( PetscObjectReference((PetscObject) y_training) );
 
-  svm->setupcalled = PETSC_FALSE;
+  svm->setupcalled = PETSC_FALSE; /* TODO delete this line */
   PetscFunctionReturn(0);
 }
 
@@ -1051,6 +1060,8 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
 {
   SVM_Binary *svm_binary;
 
+  PetscInt   i;
+
   PetscFunctionBegin;
   TRY( PetscNewLog(svm,&svm_binary) );
   svm->data = (void *) svm_binary;
@@ -1068,6 +1079,10 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   TRY( PetscMemzero(svm_binary->y_map,2 * sizeof(PetscScalar)) );
   TRY( PetscMemzero(svm_binary->confusion_matrix,4 * sizeof(PetscInt)) );
   TRY( PetscMemzero(svm_binary->model_scores,5 * sizeof(PetscReal)) );
+
+  for (i = 0; i < 3; ++i) {
+    svm_binary->work[i] = NULL;
+  }
 
   svm->ops->setup           = SVMSetUp_Binary;
   svm->ops->reset           = SVMReset_Binary;
