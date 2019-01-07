@@ -26,6 +26,9 @@ typedef struct {
 
   /* Work vecs */
   Vec         work[3]; /* xi, c, Xtw */
+
+  /* Valuess of primal and dual objective functions */
+  PetscReal   primalObj,dualObj;
 } SVM_Binary;
 
 typedef struct {
@@ -490,6 +493,10 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   TRY( VecDestroy(&lb) );
   TRY( VecDestroy(&ub) );
 
+  /* create work vecs */
+  TRY( MatCreateVecs(Xt_training,NULL,&svm_binary->work[0]) );
+  TRY( VecDuplicate(svm_binary->work[0],&svm_binary->work[1]) );
+  
   svm->setupcalled = PETSC_TRUE;
   PetscFunctionReturn(0);
 }
@@ -711,10 +718,12 @@ PetscErrorCode SVMComputeHingeLoss_Binary(SVM svm)
   if (!svm_binary->work[2]) {
     TRY( SVMGetSeparatingHyperplane(svm,&w,NULL) );
     if (!w) {
+      /* TODO fix implementation: remove last flag */
       TRY( SVMReconstructHyperplane_Binary_Private(svm,&w,&b,PETSC_FALSE) );
       TRY( SVMSetSeparatingHyperplane(svm,w,b) );
       TRY( VecDestroy(&w) );
     }
+    TRY( MatCreateVecs(Xt,NULL,&svm_binary->work[2]) );
     TRY( MatMult(Xt,w,svm_binary->work[2]) ); /* Xtw = X^t * w */
   }
 
@@ -736,8 +745,57 @@ PetscErrorCode SVMComputeHingeLoss_Binary(SVM svm)
   if (loss_type == SVM_L1) {
     TRY( VecSum(svm_binary->work[0],&svm_binary->hinge_loss) ); /* hinge_loss = sum(xi) */
   } else {
-    TRY( VecDot(svm_binary->work[0],svm_binary->work[0],&svm_binary->hinge_loss) ); /* hinge_loss = sum(xi*xi) */
+    TRY( VecDot(svm_binary->work[0],svm_binary->work[0],&svm_binary->hinge_loss) ); /* hinge_loss = sum(xi^2) */
   }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMComputeObjFuncValues_Binary_Private"
+PetscErrorCode SVMComputeObjFuncValues_Binary_Private(SVM svm)
+{
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
+  Vec         w;
+  SVMLossType loss_type;
+
+  QPS         qps,qps_inner;
+  QP          qp;
+  Vec         rhs,x;
+
+  PetscBool   issmalxe;
+
+
+  PetscFunctionBegin;
+  TRY( SVMGetLossType(svm,&loss_type) );
+  TRY( SVMComputeHingeLoss(svm) );
+
+  /* Compute value of primal objective function */
+  TRY( SVMGetSeparatingHyperplane(svm,&w,NULL) );
+  TRY( VecDot(w,w,&svm_binary->primalObj) );
+  svm_binary->primalObj *= 0.5;
+
+  if (loss_type == SVM_L1) {
+    svm_binary->primalObj += svm->C * svm_binary->hinge_loss;
+  } else {
+    svm_binary->primalObj += svm->C * svm_binary->hinge_loss / 2.;
+  }
+
+  /* Compute value of dual objective function */
+  TRY( SVMGetQPS(svm,&qps) );
+  TRY( QPSGetQP(qps,&qp) );
+  TRY( QPGetRhs(qp,&rhs) );
+  TRY( QPGetSolutionVector(qp,&x) );
+
+  TRY( PetscObjectTypeCompare((PetscObject) qps,QPSSMALXE,&issmalxe) );
+  if (issmalxe) {
+    TRY( QPSSMALXEGetInnerQPS(qps,&qps_inner) );
+    qps = qps_inner;
+  }
+
+  TRY( VecWAXPY(svm_binary->work[1],-1.,rhs,qps->work[3]) );
+  TRY( VecDot(x,svm_binary->work[1],&svm_binary->dualObj ) );
+  svm_binary->dualObj *= -.5;
   PetscFunctionReturn(0);
 }
 
@@ -754,6 +812,7 @@ PetscErrorCode SVMPostTrain_Binary(SVM svm)
   TRY( SVMReconstructHyperplane_Binary_Private(svm,&w,&b,PETSC_TRUE) );
   TRY( SVMSetSeparatingHyperplane(svm,w,b) );
   TRY( VecDestroy(&w) );
+  TRY( SVMComputeObjFuncValues_Binary_Private(svm) );
 
   svm->posttraincalled = PETSC_TRUE;
   PetscFunctionReturn(0);
