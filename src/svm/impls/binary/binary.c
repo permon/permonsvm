@@ -813,21 +813,19 @@ PetscErrorCode SVMComputeHingeLoss_Binary(SVM svm)
   TRY( SVMGetLossType(svm,&loss_type) );
   TRY( SVMGetTrainingDataset(svm,&Xt,&y) );
 
-  if (!svm_binary->work[2]) {
+  TRY( SVMGetSeparatingHyperplane(svm,&w,NULL) );
+  if (!w) {
+    TRY( SVMReconstructHyperplane_Binary_Private(svm) );
     TRY( SVMGetSeparatingHyperplane(svm,&w,NULL) );
-    if (!w) {
-      TRY( SVMReconstructHyperplane_Binary_Private(svm) );
-    }
-    TRY( MatCreateVecs(Xt,NULL,&svm_binary->work[2]) );
-    TRY( MatMult(Xt,w,svm_binary->work[2]) ); /* Xtw = X^t * w */
   }
 
   if (svm_mod == 1) {
     TRY( SVMGetSeparatingHyperplane(svm,NULL,&b) );
     TRY( VecSet(svm_binary->work[1],-b) );
+    TRY( VecCopy(svm_binary->work[2],svm_binary->work[0]) );
     TRY( VecAYPX(svm_binary->work[0],1.,svm_binary->work[1]) ); /* xi = Xtw - b */
   } else {
-    VecCopy(svm_binary->work[1],svm_binary->work[0]); /* xi = Xtw */
+    TRY( MatMult(Xt,w,svm_binary->work[0]) ); /* xi = Xtw */
   }
 
   TRY( VecPointwiseMult(svm_binary->work[0],y,svm_binary->work[0]) ); /* xi = y .* xi */
