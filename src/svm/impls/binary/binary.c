@@ -617,7 +617,7 @@ PetscErrorCode SVMTrain_Binary(SVM svm)
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMReconstructHyperplane_Binary_Private"
-PetscErrorCode SVMReconstructHyperplane_Binary_Private(SVM svm,Vec *w,PetscReal *b,PetscBool callpostsolve)
+PetscErrorCode SVMReconstructHyperplane_Binary_Private(SVM svm,Vec *w,PetscReal *b)
 {
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
@@ -639,9 +639,6 @@ PetscErrorCode SVMReconstructHyperplane_Binary_Private(SVM svm,Vec *w,PetscReal 
   TRY( SVMGetMod(svm,&svm_mod) );
 
   TRY( SVMGetQPS(svm,&qps) );
-  if (callpostsolve) {
-    TRY( QPSPostSolve(qps) );
-  }
   TRY( QPSGetQP(qps,&qp) );
 
   TRY( SVMGetTrainingDataset(svm,&Xt,NULL) );
@@ -776,8 +773,7 @@ PetscErrorCode SVMComputeModelParams_Binary_Private(SVM svm)
 
   TRY( SVMGetSeparatingHyperplane(svm,&w,NULL) );
   if (!w) {
-    /* TODO fix implementation: remove last flag */
-    TRY( SVMReconstructHyperplane_Binary_Private(svm,&w,&b,PETSC_FALSE) );
+    TRY( SVMReconstructHyperplane_Binary_Private(svm,&w,&b) );
     TRY( SVMSetSeparatingHyperplane(svm,w,b) );
     TRY( VecDestroy(&w) );
   }
@@ -821,8 +817,7 @@ PetscErrorCode SVMComputeHingeLoss_Binary(SVM svm)
   if (!svm_binary->work[2]) {
     TRY( SVMGetSeparatingHyperplane(svm,&w,NULL) );
     if (!w) {
-      /* TODO fix implementation: remove last flag */
-      TRY( SVMReconstructHyperplane_Binary_Private(svm,&w,&b,PETSC_FALSE) );
+      TRY( SVMReconstructHyperplane_Binary_Private(svm,&w,&b) );
       TRY( SVMSetSeparatingHyperplane(svm,w,b) );
       TRY( VecDestroy(&w) );
     }
@@ -906,13 +901,18 @@ PetscErrorCode SVMComputeObjFuncValues_Binary_Private(SVM svm)
 #define __FUNCT__ "SVMPostTrain_Binary"
 PetscErrorCode SVMPostTrain_Binary(SVM svm)
 {
+  QPS       qps;
+
   Vec       w;
   PetscReal b;
 
   PetscFunctionBegin;
   if (svm->posttraincalled) PetscFunctionReturn(0);
 
-  TRY( SVMReconstructHyperplane_Binary_Private(svm,&w,&b,PETSC_TRUE) );
+  TRY( SVMGetQPS(svm,&qps) );
+  TRY( QPSPostSolve(qps)  );
+
+  TRY( SVMReconstructHyperplane_Binary_Private(svm,&w,&b) );
   TRY( SVMSetSeparatingHyperplane(svm,w,b) );
   TRY( VecDestroy(&w) );
   TRY( SVMComputeObjFuncValues_Binary_Private(svm) );
@@ -1388,7 +1388,7 @@ PetscErrorCode SVMMonitorDefault_Binary(QPS qps,PetscInt it,PetscReal rnorm,void
 
   TRY( SVMGetLossType(svm_inner,&loss_type) );
 
-  TRY( SVMReconstructHyperplane_Binary_Private(svm_inner,&w_inner,&b_inner,PETSC_FALSE) );
+  TRY( SVMReconstructHyperplane_Binary_Private(svm_inner,&w_inner,&b_inner) );
   TRY( VecNorm(w_inner,NORM_2,&norm_w) );
   margin = 2.0 / norm_w;
 
