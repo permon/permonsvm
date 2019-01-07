@@ -455,6 +455,9 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
       TRY( QPSGetQP(qps,&qp) );
       TRY( QPGetBox(qp,NULL,NULL,&ub) );
       TRY( VecSet(ub,C) );
+      TRY( QPGetSolutionVector(qp,&x_init) );
+      TRY( VecScale(x_init,1 / svm->C_old) );
+      TRY( VecScale(x_init,svm->C) );
     } else {
       TRY( MatScale(svm_binary->D,svm->C_old) );
       TRY( MatScale(svm_binary->D,1. / C) );
