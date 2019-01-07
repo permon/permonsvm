@@ -16,6 +16,8 @@ typedef struct {
   Vec         w;
   PetscScalar b;
 
+  PetscScalar hinge_loss;
+
   QPS         qps;
   PetscInt    svm_mod;
 
@@ -676,13 +678,66 @@ PetscErrorCode SVMSetBias_Binary(SVM svm,PetscReal b)
 }
 
 #undef __FUNCT__
-#define _FUNCT__ "SVMGetBias_Binary"
+#define __FUNCT__ "SVMGetBias_Binary"
 PetscErrorCode SVMGetBias_Binary(SVM svm,PetscReal *b)
 {
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
   PetscFunctionBegin;
   *b = svm_binary->b;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMComputeHingeLoss_Binary"
+PetscErrorCode SVMComputeHingeLoss_Binary(SVM svm)
+{
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
+  Mat         Xt;
+  Vec         y;
+
+  Vec         w;
+  PetscScalar b;
+
+  PetscInt    svm_mod;
+  SVMLossType loss_type;
+
+  PetscFunctionBegin;
+  TRY( SVMGetMod(svm,&svm_mod) );
+  TRY( SVMGetLossType(svm,&loss_type) );
+  TRY( SVMGetTrainingDataset(svm,&Xt,&y) );
+
+  if (!svm_binary->work[2]) {
+    TRY( SVMGetSeparatingHyperplane(svm,&w,NULL) );
+    if (!w) {
+      TRY( SVMReconstructHyperplane_Binary_Private(svm,&w,&b,PETSC_FALSE) );
+      TRY( SVMSetSeparatingHyperplane(svm,w,b) );
+      TRY( VecDestroy(&w) );
+    }
+    TRY( MatMult(Xt,w,svm_binary->work[2]) ); /* Xtw = X^t * w */
+  }
+
+  if (svm_mod == 1) {
+    TRY( SVMGetSeparatingHyperplane(svm,NULL,&b) );
+    TRY( VecSet(svm_binary->work[1],-b) );
+    TRY( VecAYPX(svm_binary->work[0],1.,svm_binary->work[1]) ); /* xi = Xtw - b */
+  } else {
+    VecCopy(svm_binary->work[1],svm_binary->work[0]); /* xi = Xtw */
+  }
+
+  TRY( VecPointwiseMult(svm_binary->work[0],y,svm_binary->work[0]) ); /* xi = y .* xi */
+
+  TRY( VecSet(svm_binary->work[1],1.) );
+  TRY( VecAYPX(svm_binary->work[0],-1.,svm_binary->work[1]) );       /* xi = 1 - xi */
+  TRY( VecSet(svm_binary->work[1],0.) );
+  TRY( VecPointwiseMax(svm_binary->work[0],svm_binary->work[1],svm_binary->work[0]) ); /* max(0,xi) */
+
+  if (loss_type == SVM_L1) {
+    TRY( VecSum(svm_binary->work[0],&svm_binary->hinge_loss) ); /* hinge_loss = sum(xi) */
+  } else {
+    TRY( VecDot(svm_binary->work[0],svm_binary->work[0],&svm_binary->hinge_loss) ); /* hinge_loss = sum(xi*xi) */
+  }
   PetscFunctionReturn(0);
 }
 
@@ -1084,18 +1139,19 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
     svm_binary->work[i] = NULL;
   }
 
-  svm->ops->setup           = SVMSetUp_Binary;
-  svm->ops->reset           = SVMReset_Binary;
-  svm->ops->destroy         = SVMDestroy_Binary;
-  svm->ops->setfromoptions  = SVMSetFromOptions_Binary;
-  svm->ops->train           = SVMTrain_Binary;
-  svm->ops->posttrain       = SVMPostTrain_Binary;
-  svm->ops->predict         = SVMPredict_Binary;
-  svm->ops->test            = SVMTest_Binary;
-  svm->ops->crossvalidation = SVMCrossValidation_Binary;
-  svm->ops->gridsearch      = SVMGridSearch_Binary;
-  svm->ops->view            = SVMView_Binary;
-  svm->ops->viewscore       = SVMViewScore_Binary;
+  svm->ops->setup            = SVMSetUp_Binary;
+  svm->ops->reset            = SVMReset_Binary;
+  svm->ops->destroy          = SVMDestroy_Binary;
+  svm->ops->setfromoptions   = SVMSetFromOptions_Binary;
+  svm->ops->train            = SVMTrain_Binary;
+  svm->ops->posttrain        = SVMPostTrain_Binary;
+  svm->ops->predict          = SVMPredict_Binary;
+  svm->ops->test             = SVMTest_Binary;
+  svm->ops->crossvalidation  = SVMCrossValidation_Binary;
+  svm->ops->gridsearch       = SVMGridSearch_Binary;
+  svm->ops->view             = SVMView_Binary;
+  svm->ops->viewscore        = SVMViewScore_Binary;
+  svm->ops->computehingeloss = SVMComputeHingeLoss_Binary;
 
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingDataset_C",SVMSetTrainingDataset_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C",SVMGetTrainingDataset_Binary) );
