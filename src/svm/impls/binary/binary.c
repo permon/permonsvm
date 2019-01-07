@@ -555,6 +555,7 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   /* create work vecs */
   TRY( MatCreateVecs(Xt_training,NULL,&svm_binary->work[0]) );
   TRY( VecDuplicate(svm_binary->work[0],&svm_binary->work[1]) );
+  TRY( VecDuplicate(svm_binary->work[0],&svm_binary->work[2]) );
 
   svm->setupcalled = PETSC_TRUE;
   PetscFunctionReturn(0);
@@ -617,7 +618,7 @@ PetscErrorCode SVMTrain_Binary(SVM svm)
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMReconstructHyperplane_Binary_Private"
-PetscErrorCode SVMReconstructHyperplane_Binary_Private(SVM svm,Vec *w,PetscReal *b)
+PetscErrorCode SVMReconstructHyperplane_Binary_Private(SVM svm)
 {
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
@@ -626,11 +627,10 @@ PetscErrorCode SVMReconstructHyperplane_Binary_Private(SVM svm,Vec *w,PetscReal 
   Vec       lb,ub;
 
   Mat       Xt;
-  Vec       x,y,yx,y_sv,t,w_inner;
-  Vec       Xtw,Xtw_sv;
+  Vec       x,y,yx,y_sv,t;
+  Vec       Xtw_sv;
 
-  IS        is_sv;
-  PetscInt  nsv;
+  Vec       w_inner;
   PetscReal b_inner;
 
   PetscInt  svm_mod;
@@ -656,35 +656,33 @@ PetscErrorCode SVMReconstructHyperplane_Binary_Private(SVM svm,Vec *w,PetscReal 
   if (svm_mod == 1) {
     TRY( QPGetBox(qp,NULL,&lb,&ub) );
 
+    TRY( ISDestroy(&svm_binary->is_sv) );
     if (svm->loss_type == SVM_L1) {
-      TRY( VecWhichBetween(lb,x,ub,&is_sv) );
+      TRY( VecWhichBetween(lb,x,ub,&svm_binary->is_sv) );
     } else {
-      TRY( VecWhichGreaterThan(x,lb,&is_sv) );
+      TRY( VecWhichGreaterThan(x,lb,&svm_binary->is_sv) );
     }
-    TRY( ISGetSize(is_sv,&nsv) );
+    TRY( ISGetSize(svm_binary->is_sv,&svm_binary->nsv) );
 
-    TRY( MatCreateVecs(Xt,NULL,&Xtw) );
-    TRY( MatMult(Xt,w_inner,Xtw) );
+    TRY( MatMult(Xt,w_inner,svm_binary->work[2]) );
 
-    TRY( VecGetSubVector(y,is_sv,&y_sv) );     /* y_sv = y(is_sv) */
-    TRY( VecGetSubVector(Xtw,is_sv,&Xtw_sv) ); /* Xtw_sv = Xt(is_sv) */
+    TRY( VecGetSubVector(y,svm_binary->is_sv,&y_sv) );     /* y_sv = y(is_sv) */
+    TRY( VecGetSubVector(svm_binary->work[2],svm_binary->is_sv,&Xtw_sv) ); /* Xtw_sv = Xt(is_sv) */
     TRY( VecDuplicate(y_sv,&t) );
     TRY( VecWAXPY(t,-1.,Xtw_sv,y_sv) );
-    TRY( VecRestoreSubVector(y,is_sv,&y_sv) );
-    TRY( VecRestoreSubVector(Xtw,is_sv,&Xtw_sv) );
+    TRY( VecRestoreSubVector(y,svm_binary->is_sv,&y_sv) );
+    TRY( VecRestoreSubVector(svm_binary->work[2],svm_binary->is_sv,&Xtw_sv) );
     TRY( VecSum(t,&b_inner) );
 
-    b_inner /= nsv;
+    b_inner /= svm_binary->nsv;
 
-    TRY( ISDestroy(&is_sv) );
-    TRY( VecDestroy(&Xtw) );
     TRY( VecDestroy(&t) );
   } else {
     b_inner = 0.;
   }
 
-  *w = w_inner;
-  *b = b_inner;
+  svm_binary->w = w_inner;
+  svm_binary->b = b_inner;
 
   TRY( VecDestroy(&yx) );
   PetscFunctionReturn(0);
@@ -762,20 +760,19 @@ PetscErrorCode SVMComputeModelParams_Binary_Private(SVM svm)
   Vec         x,lb,ub;
 
   Vec         w;
-  PetscScalar b;
 
   SVMLossType loss_type;
+  PetscInt    svm_mod;
 
   PetscFunctionBegin;
   TRY( SVMGetQPS(svm,&qps) );
   TRY( QPSGetQP(qps,&qp) );
   TRY( SVMGetLossType(svm,&loss_type) );
+  TRY( SVMGetMod(svm,&svm_mod) );
 
   TRY( SVMGetSeparatingHyperplane(svm,&w,NULL) );
   if (!w) {
-    TRY( SVMReconstructHyperplane_Binary_Private(svm,&w,&b) );
-    TRY( SVMSetSeparatingHyperplane(svm,w,b) );
-    TRY( VecDestroy(&w) );
+    TRY( SVMReconstructHyperplane_Binary_Private(svm) );
   }
 
   TRY( VecNorm(w,NORM_2,&svm_binary->norm_w) );
@@ -784,13 +781,15 @@ PetscErrorCode SVMComputeModelParams_Binary_Private(SVM svm)
   TRY( QPGetSolutionVector(qp,&x) );
   TRY( QPGetBox(qp,NULL,&lb,&ub) );
 
-  TRY( ISDestroy(&svm_binary->is_sv) );
-  if (loss_type == SVM_L1) {
-    TRY( VecWhichBetween(lb,x,ub,&svm_binary->is_sv) );
-  } else {
-    TRY( VecWhichGreaterThan(x,lb,&svm_binary->is_sv));
+  if (svm_mod == 2) {
+    TRY( ISDestroy(&svm_binary->is_sv) );
+    if (loss_type == SVM_L1) {
+      TRY( VecWhichBetween(lb, x, ub, &svm_binary->is_sv) );
+    } else {
+      TRY( VecWhichGreaterThan(x, lb, &svm_binary->is_sv) );
+    }
+    TRY( ISGetSize(svm_binary->is_sv, &svm_binary->nsv) );
   }
-  TRY( ISGetSize(svm_binary->is_sv,&svm_binary->nsv) );
   PetscFunctionReturn(0);
 }
 
@@ -817,9 +816,7 @@ PetscErrorCode SVMComputeHingeLoss_Binary(SVM svm)
   if (!svm_binary->work[2]) {
     TRY( SVMGetSeparatingHyperplane(svm,&w,NULL) );
     if (!w) {
-      TRY( SVMReconstructHyperplane_Binary_Private(svm,&w,&b) );
-      TRY( SVMSetSeparatingHyperplane(svm,w,b) );
-      TRY( VecDestroy(&w) );
+      TRY( SVMReconstructHyperplane_Binary_Private(svm) );
     }
     TRY( MatCreateVecs(Xt,NULL,&svm_binary->work[2]) );
     TRY( MatMult(Xt,w,svm_binary->work[2]) ); /* Xtw = X^t * w */
@@ -903,18 +900,13 @@ PetscErrorCode SVMPostTrain_Binary(SVM svm)
 {
   QPS       qps;
 
-  Vec       w;
-  PetscReal b;
-
   PetscFunctionBegin;
   if (svm->posttraincalled) PetscFunctionReturn(0);
 
   TRY( SVMGetQPS(svm,&qps) );
   TRY( QPSPostSolve(qps)  );
 
-  TRY( SVMReconstructHyperplane_Binary_Private(svm,&w,&b) );
-  TRY( SVMSetSeparatingHyperplane(svm,w,b) );
-  TRY( VecDestroy(&w) );
+  TRY( SVMReconstructHyperplane_Binary_Private(svm) );
   TRY( SVMComputeObjFuncValues_Binary_Private(svm) );
   TRY( SVMComputeModelParams_Binary_Private(svm) );
 
@@ -1388,7 +1380,8 @@ PetscErrorCode SVMMonitorDefault_Binary(QPS qps,PetscInt it,PetscReal rnorm,void
 
   TRY( SVMGetLossType(svm_inner,&loss_type) );
 
-  TRY( SVMReconstructHyperplane_Binary_Private(svm_inner,&w_inner,&b_inner) );
+  TRY( SVMReconstructHyperplane_Binary_Private(svm_inner) );
+  TRY( SVMGetSeparatingHyperplane(svm_inner,&w_inner,&b_inner) );
   TRY( VecNorm(w_inner,NORM_2,&norm_w) );
   margin = 2.0 / norm_w;
 
