@@ -199,13 +199,16 @@ PetscErrorCode SVMViewScore_Binary(SVM svm,PetscViewer v)
     TRY( PetscObjectPrintClassNamePrefixType((PetscObject) svm,v) );
 
     TRY( PetscViewerASCIIPushTab(v) );
-    TRY( PetscViewerASCIIPrintf(v,"model performance score\n") );
-    TRY( PetscViewerASCIIPrintf(v,"training parameters: C=%.3f, mod=%d, loss=%s\n",C,mod,SVMLossTypes[loss_type]) );
-    TRY( PetscViewerASCIIPrintf(v,"Confusion matrix:\n") );
+    TRY( PetscViewerASCIIPrintf(v,"model performance score with training parameters C=%.3f, mod=%d, loss=%s:\n",C,mod,SVMLossTypes[loss_type]) );
+
     TRY( PetscViewerASCIIPushTab(v) );
 
-    TRY( PetscViewerASCIIPrintf(v,"TP = %4d\tFP = %4d\n",svm_binary->confusion_matrix[0],svm_binary->confusion_matrix[1]) );
-    TRY( PetscViewerASCIIPrintf(v,"FN = %4d\tTN = %4d\n",svm_binary->confusion_matrix[2],svm_binary->confusion_matrix[3]) );
+    TRY( PetscViewerASCIIPrintf(v,"Confusion matrix:\n") );
+    TRY( PetscViewerASCIIPushTab(v) );
+    TRY( PetscViewerASCIIPrintf(v,"TP = %4d",svm_binary->confusion_matrix[0]) );
+    TRY( PetscViewerASCIIPrintf(v,"FP = %4d\n",svm_binary->confusion_matrix[1]) );
+    TRY( PetscViewerASCIIPrintf(v,"FN = %4d",svm_binary->confusion_matrix[2]) );
+    TRY( PetscViewerASCIIPrintf(v,"TN = %4d\n",svm_binary->confusion_matrix[3]) );
     TRY( PetscViewerASCIIPopTab(v) );
 
     TRY( PetscViewerASCIIPrintf(v,"accuracy=%.2f%%",svm_binary->model_scores[0] * 100.) );
@@ -214,6 +217,9 @@ PetscErrorCode SVMViewScore_Binary(SVM svm,PetscViewer v)
     TRY( PetscViewerASCIIPrintf(v,"F1.0_score=%.2f",svm_binary->model_scores[3]) );
     TRY( PetscViewerASCIIPrintf(v,"mmc=%.2f\n",svm_binary->model_scores[4]) );
     TRY( PetscViewerASCIIPopTab(v) );
+
+    TRY( PetscViewerASCIIPopTab(v) );
+
     TRY( PetscViewerASCIIPrintf(v,"=====================\n") );
   } else {
     FLLOP_SETERRQ1(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewScore", ((PetscObject)v)->type_name);
