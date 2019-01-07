@@ -1381,3 +1381,27 @@ PetscErrorCode SVMCrossValidation(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal
   TRY( svm->ops->crossvalidation(svm,c_arr,m,score) );
   PetscFunctionReturnI(0);
 }
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMComputeHingeLoss"
+/*@
+  SVMComputeHingeLoss - Computes hinge loss function.
+
+  Collective on SVM
+
+  Input Parameters:
+. svm - SVM context
+
+  Level: advanced
+
+.seealso: SVMLossType, SVM_L1, SVM_L2
+@*/
+PetscErrorCode SVMComputeHingeLoss(SVM svm)
+{
+
+  PetscFunctionBegin;
+  if (svm->ops->computehingeloss) {
+    TRY( svm->ops->computehingeloss(svm) );
+  }
+  PetscFunctionReturn(0);
+}
