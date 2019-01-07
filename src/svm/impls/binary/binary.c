@@ -18,6 +18,12 @@ typedef struct {
 
   PetscScalar hinge_loss;
 
+  PetscReal   norm_w;
+  PetscReal   margin;
+
+  IS          is_sv;
+  PetscInt    nsv;
+
   QPS         qps;
   PetscInt    svm_mod;
 
@@ -70,6 +76,10 @@ PetscErrorCode SVMReset_Binary(SVM svm)
   svm_binary->y_training  = NULL;
   svm_binary->y_inner     = NULL;
   svm_binary->D           = NULL;
+
+  svm_binary->nsv         = 0;
+  TRY( ISDestroy(&svm_binary->is_sv) );
+  svm_binary->is_sv       = NULL;
 
   svm_binary->svm_mod     = 2;
 
@@ -496,7 +506,7 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   /* create work vecs */
   TRY( MatCreateVecs(Xt_training,NULL,&svm_binary->work[0]) );
   TRY( VecDuplicate(svm_binary->work[0],&svm_binary->work[1]) );
-  
+
   svm->setupcalled = PETSC_TRUE;
   PetscFunctionReturn(0);
 }
@@ -696,6 +706,50 @@ PetscErrorCode SVMGetBias_Binary(SVM svm,PetscReal *b)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMComputeModelParams_Binary_Private"
+PetscErrorCode SVMComputeModelParams_Binary_Private(SVM svm)
+{
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
+  QP          qp;
+  QPS         qps;
+  Vec         x,lb,ub;
+
+  Vec         w;
+  PetscScalar b;
+
+  SVMLossType loss_type;
+
+  PetscFunctionBegin;
+  TRY( SVMGetQPS(svm,&qps) );
+  TRY( QPSGetQP(qps,&qp) );
+  TRY( SVMGetLossType(svm,&loss_type) );
+
+  TRY( SVMGetSeparatingHyperplane(svm,&w,NULL) );
+  if (!w) {
+    /* TODO fix implementation: remove last flag */
+    TRY( SVMReconstructHyperplane_Binary_Private(svm,&w,&b,PETSC_FALSE) );
+    TRY( SVMSetSeparatingHyperplane(svm,w,b) );
+    TRY( VecDestroy(&w) );
+  }
+
+  TRY( VecNorm(w,NORM_2,&svm_binary->norm_w) );
+  svm_binary->margin = 2. / svm_binary->norm_w;
+
+  TRY( QPGetSolutionVector(qp,&x) );
+  TRY( QPGetBox(qp,NULL,&lb,&ub) );
+
+  TRY( ISDestroy(&svm_binary->is_sv) );
+  if (loss_type == SVM_L1) {
+    TRY( VecWhichBetween(lb,x,ub,&svm_binary->is_sv) );
+  } else {
+    TRY( VecWhichGreaterThan(x,lb,&svm_binary->is_sv));
+  }
+  TRY( ISGetSize(svm_binary->is_sv,&svm_binary->nsv) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMComputeHingeLoss_Binary"
 PetscErrorCode SVMComputeHingeLoss_Binary(SVM svm)
 {
@@ -813,6 +867,7 @@ PetscErrorCode SVMPostTrain_Binary(SVM svm)
   TRY( SVMSetSeparatingHyperplane(svm,w,b) );
   TRY( VecDestroy(&w) );
   TRY( SVMComputeObjFuncValues_Binary_Private(svm) );
+  TRY( SVMComputeModelParams_Binary_Private(svm) );
 
   svm->posttraincalled = PETSC_TRUE;
   PetscFunctionReturn(0);
@@ -1187,6 +1242,9 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm_binary->D           = NULL;
   svm_binary->y_training  = NULL;
   svm_binary->y_inner     = NULL;
+
+  svm_binary->nsv         = 0;
+  svm_binary->is_sv       = NULL;
 
   svm_binary->svm_mod     = 2;
 
