@@ -449,19 +449,20 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   TRY( SVMGetC(svm,&C) );
 
   if (svm->warm_start && svm->posttraincalled) {
+    TRY( SVMGetQPS(svm,&qps) );
+    TRY( QPSGetQP(qps,&qp) );
     if (loss_type == SVM_L1)
     {
-      TRY( SVMGetQPS(svm,&qps) );
-      TRY( QPSGetQP(qps,&qp) );
       TRY( QPGetBox(qp,NULL,NULL,&ub) );
       TRY( VecSet(ub,C) );
-      TRY( QPGetSolutionVector(qp,&x_init) );
-      TRY( VecScale(x_init,1 / svm->C_old) );
-      TRY( VecScale(x_init,svm->C) );
     } else {
       TRY( MatScale(svm_binary->D,svm->C_old) );
       TRY( MatScale(svm_binary->D,1. / C) );
     }
+    TRY( QPGetSolutionVector(qp,&x_init) );
+    TRY( VecScale(x_init,1 / svm->C_old) );
+    TRY( VecScale(x_init,svm->C) );
+
     svm->posttraincalled = PETSC_FALSE;
     svm->setupcalled = PETSC_TRUE;
     PetscFunctionReturn(0);
