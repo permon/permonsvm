@@ -22,10 +22,12 @@ PetscErrorCode SVMRunBinaryClassification() {
   TRY( SVMSetFromOptions(svm) );
 
   TRY( SVMLoadTrainingDataset(svm,training_file) );
-  TRY( SVMTrain(svm) );
-
   if (test_file_set) {
     TRY( SVMLoadTestDataset(svm,test_file) );
+  }
+
+  TRY( SVMTrain(svm) );
+  if (test_file_set) {
     TRY( SVMTest(svm) );
   }
 

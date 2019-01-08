@@ -1208,6 +1208,30 @@ PetscErrorCode SVMGetBias(SVM svm,PetscReal *bias)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMReconstructHyperplane"
+/*@
+  SVMReconstructHyperplane - Performs reconstruction from dual to primal for normal vector and bias.
+
+  Collective on SVM
+
+  Input Parameter:
+. svm - SVM context
+
+.seealso SVMTrain(), SVMPredict(), SVMTest()
+@*/
+PetscErrorCode SVMReconstructHyperplane(SVM svm)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+
+  if (svm->ops->reconstructhyperplane) {
+    TRY( svm->ops->reconstructhyperplane(svm) );
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMPredict"
 /*@
   SVMPredict - Predicts labels of tested samples.

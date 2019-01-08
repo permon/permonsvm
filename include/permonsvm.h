@@ -141,6 +141,7 @@ FLLOP_EXTERN PetscErrorCode SVMGetBias(SVM,PetscReal *);
 
 FLLOP_EXTERN PetscErrorCode SVMTrain(SVM);
 FLLOP_EXTERN PetscErrorCode SVMPostTrain(SVM);
+FLLOP_EXTERN PetscErrorCode SVMReconstructHyperplane(SVM);
 FLLOP_EXTERN PetscErrorCode SVMSetAutoPostTrain(SVM,PetscBool);
 FLLOP_EXTERN PetscErrorCode SVMPredict(SVM,Mat,Vec *);
 FLLOP_EXTERN PetscErrorCode SVMTest(SVM);
