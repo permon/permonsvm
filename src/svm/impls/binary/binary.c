@@ -60,8 +60,14 @@ PetscErrorCode SVMReset_Binary(SVM svm)
   svm_binary = (SVM_Binary *) svm->data;
 
   if (svm_binary->qps) {
+    if (svm_binary->svm_mod == 1) {
+      QPS  qps_inner;
+      TRY( QPSSMALXEGetInnerQPS(svm_binary->qps,&qps_inner) );
+      TRY( QPSMonitorCancel(qps_inner) );
+    } else {
+      TRY( QPSMonitorCancel(svm_binary->qps) );
+    }
     TRY( QPSReset(svm_binary->qps) );
-    TRY( QPSMonitorCancel(svm_binary->qps) );
   }
   TRY( VecDestroy(&svm_binary->w) );
   TRY( MatDestroy(&svm_binary->Xt_training) );
@@ -543,17 +549,35 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   TRY( PetscOptionsHasName(NULL,((PetscObject) svm)->prefix,"-svm_monitor",&svm_monitor_set) );
   if (svm_monitor_set) {
     TRY( SVMMonitorCreateCtx_Binary(&mctx,svm) );
-    TRY( QPSMonitorSet(qps,SVMMonitorDefault_Binary,mctx,SVMMonitorDestroyCtx_Binary) );
+    if (svm_mod == 1) {
+      QPS qps_inner;
+      TRY( QPSSMALXEGetInnerQPS(qps,&qps_inner) );
+      TRY( QPSMonitorSet(qps_inner,SVMMonitorDefault_Binary,mctx,SVMMonitorDestroyCtx_Binary) );
+    } else {
+      TRY( QPSMonitorSet(qps,SVMMonitorDefault_Binary,mctx,SVMMonitorDestroyCtx_Binary) );
+    }
   }
   TRY( PetscOptionsHasName(NULL,((PetscObject) svm)->prefix,"-svm_monitor_obj_funcs",&svm_monitor_set) );
   if (svm_monitor_set) {
     TRY( SVMMonitorCreateCtx_Binary(&mctx,svm) );
-    TRY( QPSMonitorSet(qps,SVMMonitorObjFuncs_Binary,mctx,SVMMonitorDestroyCtx_Binary) );
+    if (svm_mod == 1) {
+      QPS qps_inner;
+      TRY( QPSSMALXEGetInnerQPS(qps,&qps_inner) );
+      TRY( QPSMonitorSet(qps_inner,SVMMonitorObjFuncs_Binary,mctx,SVMMonitorDestroyCtx_Binary) );
+    } else {
+      TRY( QPSMonitorSet(qps,SVMMonitorObjFuncs_Binary,mctx,SVMMonitorDestroyCtx_Binary) );
+    }
   }
   TRY( PetscOptionsHasName(NULL,((PetscObject) svm)->prefix,"-svm_monitor_training_scores",&svm_monitor_set) );
   if (svm_monitor_set) {
     TRY( SVMMonitorCreateCtx_Binary(&mctx,svm) );
-    TRY( QPSMonitorSet(qps,SVMMonitorTrainingScores_Binary,mctx,SVMMonitorDestroyCtx_Binary) );
+    if (svm_mod == 1) {
+      QPS qps_inner;
+      TRY( QPSSMALXEGetInnerQPS(qps,&qps_inner) );
+      TRY( QPSMonitorSet(qps_inner,SVMMonitorTrainingScores_Binary,mctx,SVMMonitorDestroyCtx_Binary) );
+    } else {
+      TRY( QPSMonitorSet(qps,SVMMonitorTrainingScores_Binary,mctx,SVMMonitorDestroyCtx_Binary) );
+    }
   }
   TRY( PetscOptionsHasName(NULL,((PetscObject) svm)->prefix,"-svm_monitor_scores",&svm_monitor_set) );
   if (svm_monitor_set) {
@@ -565,7 +589,13 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
       FLLOP_SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_NULL,"Test dataset must be set for using -svm_monitor_scores.");
     }
     TRY( SVMMonitorCreateCtx_Binary(&mctx,svm) );
-    TRY( QPSMonitorSet(qps,SVMMonitorScores_Binary,mctx,SVMMonitorDestroyCtx_Binary) );
+    if (svm_mod == 1) {
+      QPS qps_inner;
+      TRY( QPSSMALXEGetInnerQPS(qps,&qps_inner) );
+      TRY( QPSMonitorSet(qps_inner,SVMMonitorScores_Binary,mctx,SVMMonitorDestroyCtx_Binary) );
+    } else {
+      TRY( QPSMonitorSet(qps,SVMMonitorScores_Binary,mctx,SVMMonitorDestroyCtx_Binary) );
+    }
   }
 
   if (svm->setfromoptionscalled) {
