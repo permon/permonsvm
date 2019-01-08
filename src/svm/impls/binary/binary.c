@@ -41,9 +41,11 @@ typedef struct {
   SVM svm_inner;
 } SVM_Binary_mctx;
 
-static PetscErrorCode SVMMonitorCreateMCtx_Binary(void **,SVM);
-static PetscErrorCode SVMMonitorDestroyMCtx_Binary(void **);
+static PetscErrorCode SVMMonitorCreateCtx_Binary(void **,SVM);
+static PetscErrorCode SVMMonitorDestroyCtx_Binary(void **);
+
 static PetscErrorCode SVMMonitorDefault_Binary(QPS,PetscInt,PetscReal,void *);
+static PetscErrorCode SVMMonitorObjFuncs_Binary(QPS,PetscInt,PetscReal,void *);
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMReset_Binary"
@@ -474,8 +476,6 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   }
   TRY( SVMGetTrainingDataset(svm,&Xt_training,NULL) );
 
-  TRY( PetscOptionsHasName(NULL,((PetscObject) svm)->prefix,"-svm_monitor",&svm_monitor_set) );
-
   /* Set QP and QPS solver */
   TRY( SVMGetQPS(svm,&qps) );
   TRY( QPSGetQP(qps,&qp) );
@@ -537,9 +537,15 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   TRY( QPSetOperator(qp,H) );
   TRY( QPSetBox(qp,NULL,lb,ub) );
 
+  TRY( PetscOptionsHasName(NULL,((PetscObject) svm)->prefix,"-svm_monitor",&svm_monitor_set) );
   if (svm_monitor_set) {
-    TRY( SVMMonitorCreateMCtx_Binary(&mctx,svm) );
-    TRY( QPSMonitorSet(qps,SVMMonitorDefault_Binary,mctx,SVMMonitorDestroyMCtx_Binary) );
+    TRY( SVMMonitorCreateCtx_Binary(&mctx,svm) );
+    TRY( QPSMonitorSet(qps,SVMMonitorDefault_Binary,mctx,SVMMonitorDestroyCtx_Binary) );
+  }
+  TRY( PetscOptionsHasName(NULL,((PetscObject) svm)->prefix,"-svm_monitor_obj_funcs",&svm_monitor_set) );
+  if (svm_monitor_set) {
+    TRY( SVMMonitorCreateCtx_Binary(&mctx,svm) );
+    TRY( QPSMonitorSet(qps,SVMMonitorObjFuncs_Binary,mctx,SVMMonitorDestroyCtx_Binary) );
   }
 
   if (svm->setfromoptionscalled) {
@@ -1322,7 +1328,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMMonitorCreateMCtx_Binary"
-PetscErrorCode SVMMonitorCreateMCtx_Binary(void **mctx,SVM svm)
+PetscErrorCode SVMMonitorCreateCtx_Binary(void **mctx,SVM svm)
 {
   SVM_Binary_mctx *mctx_inner;
 
@@ -1338,7 +1344,7 @@ PetscErrorCode SVMMonitorCreateMCtx_Binary(void **mctx,SVM svm)
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMMonitorDestroyMCtx_Binary"
-PetscErrorCode SVMMonitorDestroyMCtx_Binary(void **mctx)
+PetscErrorCode SVMMonitorDestroyCtx_Binary(void **mctx)
 {
   SVM_Binary_mctx *mctx_inner = (SVM_Binary_mctx *) *mctx;
 
@@ -1350,10 +1356,11 @@ PetscErrorCode SVMMonitorDestroyMCtx_Binary(void **mctx)
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMMonitorDefault_Binary"
-PetscErrorCode SVMMonitorDefault_Binary(QPS qps,PetscInt it,PetscReal rnorm,void *mctx) {
+PetscErrorCode SVMMonitorDefault_Binary(QPS qps,PetscInt it,PetscReal rnorm,void *mctx)
+{
   MPI_Comm comm;
 
-  SVM svm_inner;
+  SVM         svm_inner;
   SVM_Binary *svm_binary;
 
   PetscViewer v;
@@ -1372,5 +1379,39 @@ PetscErrorCode SVMMonitorDefault_Binary(QPS qps,PetscInt it,PetscReal rnorm,void
   TRY( PetscViewerASCIIPrintf(v,",\tmargin=%.10e",svm_binary->margin) );
   TRY( PetscViewerASCIIPrintf(v,",\tbias=%.10e",svm_binary->b) );
   TRY( PetscViewerASCIIPrintf(v,",\tNSV=%3D\n",svm_binary->nsv) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__
+PetscErrorCode SVMMonitorObjFuncs_Binary(QPS qps,PetscInt it,PetscReal rnorm,void *mctx)
+{
+  MPI_Comm comm;
+
+  SVM svm_inner;
+  SVM_Binary *svm_binary;
+
+  PetscViewer v;
+
+  SVMLossType loss_type;
+
+  PetscFunctionBegin;
+  svm_inner  = ((SVM_Binary_mctx *) mctx)->svm_inner;
+  svm_binary = (SVM_Binary *) svm_inner->data;
+
+  TRY( SVMGetLossType(svm_inner,&loss_type) );
+
+  TRY( SVMReconstructHyperplane(svm_inner) );
+  TRY( SVMComputeObjFuncValues_Binary_Private(svm_inner) );
+
+  comm = PetscObjectComm((PetscObject) svm_inner);
+  v = PETSC_VIEWER_STDOUT_(comm);
+
+  TRY( PetscViewerASCIIPrintf(v,"%3D SVM primalObj=%.10e,",it,svm_binary->primalObj) );
+  TRY( PetscViewerASCIIPushTab(v) );
+  TRY( PetscViewerASCIIPrintf(v,"dualObj=%.10e,",svm_binary->dualObj) );
+  TRY( PetscViewerASCIIPrintf(v,"gap=%.10e,",svm_binary->primalObj - svm_binary->dualObj) );
+  TRY( PetscViewerASCIIPrintf(v,"%s-HingeLoss=%.10e\n",SVMLossTypes[loss_type],svm_binary->hinge_loss) );
+  TRY( PetscViewerASCIIPopTab(v) );
   PetscFunctionReturn(0);
 }
