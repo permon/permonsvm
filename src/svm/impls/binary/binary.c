@@ -621,8 +621,8 @@ PetscErrorCode SVMTrain_Binary(SVM svm)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMReconstructHyperplane_Binary_Private"
-PetscErrorCode SVMReconstructHyperplane_Binary_Private(SVM svm)
+#define __FUNCT__ "SVMReconstructHyperplane_Binary"
+PetscErrorCode SVMReconstructHyperplane_Binary(SVM svm)
 {
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
@@ -685,9 +685,9 @@ PetscErrorCode SVMReconstructHyperplane_Binary_Private(SVM svm)
     b_inner = 0.;
   }
 
-  svm_binary->w = w_inner;
-  svm_binary->b = b_inner;
+  TRY( SVMSetSeparatingHyperplane(svm,w_inner,b_inner) );
 
+  TRY( VecDestroy(&w_inner) );
   TRY( VecDestroy(&yx) );
   PetscFunctionReturn(0);
 }
@@ -776,7 +776,7 @@ PetscErrorCode SVMComputeModelParams_Binary(SVM svm)
 
   TRY( SVMGetSeparatingHyperplane(svm,&w,NULL) );
   if (!w) {
-    TRY( SVMReconstructHyperplane_Binary_Private(svm) );
+    TRY( SVMReconstructHyperplane(svm) );
   }
 
   TRY( VecNorm(w,NORM_2,&svm_binary->norm_w) );
@@ -819,7 +819,7 @@ PetscErrorCode SVMComputeHingeLoss_Binary(SVM svm)
 
   TRY( SVMGetSeparatingHyperplane(svm,&w,NULL) );
   if (!w) {
-    TRY( SVMReconstructHyperplane_Binary_Private(svm) );
+    TRY( SVMReconstructHyperplane(svm) );
     TRY( SVMGetSeparatingHyperplane(svm,&w,NULL) );
   }
 
@@ -908,7 +908,7 @@ PetscErrorCode SVMPostTrain_Binary(SVM svm)
   TRY( SVMGetQPS(svm,&qps) );
   TRY( QPSPostSolve(qps)  );
 
-  TRY( SVMReconstructHyperplane_Binary_Private(svm) );
+  TRY( SVMReconstructHyperplane(svm) );
   TRY( SVMComputeObjFuncValues_Binary_Private(svm) );
   TRY( SVMComputeModelParams(svm) );
 
@@ -1286,21 +1286,22 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
     svm_binary->work[i] = NULL;
   }
 
-  svm->ops->setup              = SVMSetUp_Binary;
-  svm->ops->reset              = SVMReset_Binary;
-  svm->ops->destroy            = SVMDestroy_Binary;
-  svm->ops->setfromoptions     = SVMSetFromOptions_Binary;
-  svm->ops->train              = SVMTrain_Binary;
-  svm->ops->posttrain          = SVMPostTrain_Binary;
-  svm->ops->predict            = SVMPredict_Binary;
-  svm->ops->test               = SVMTest_Binary;
-  svm->ops->crossvalidation    = SVMCrossValidation_Binary;
-  svm->ops->gridsearch         = SVMGridSearch_Binary;
-  svm->ops->view               = SVMView_Binary;
-  svm->ops->viewscore          = SVMViewScore_Binary;
-  svm->ops->computemodelscores = SVMComputeModelScores_Binary;
-  svm->ops->computehingeloss   = SVMComputeHingeLoss_Binary;
-  svm->ops->computemodelparams = SVMComputeModelParams_Binary;
+  svm->ops->setup                 = SVMSetUp_Binary;
+  svm->ops->reset                 = SVMReset_Binary;
+  svm->ops->destroy               = SVMDestroy_Binary;
+  svm->ops->setfromoptions        = SVMSetFromOptions_Binary;
+  svm->ops->train                 = SVMTrain_Binary;
+  svm->ops->posttrain             = SVMPostTrain_Binary;
+  svm->ops->reconstructhyperplane = SVMReconstructHyperplane_Binary;
+  svm->ops->predict               = SVMPredict_Binary;
+  svm->ops->test                  = SVMTest_Binary;
+  svm->ops->crossvalidation       = SVMCrossValidation_Binary;
+  svm->ops->gridsearch            = SVMGridSearch_Binary;
+  svm->ops->view                  = SVMView_Binary;
+  svm->ops->viewscore             = SVMViewScore_Binary;
+  svm->ops->computemodelscores    = SVMComputeModelScores_Binary;
+  svm->ops->computehingeloss      = SVMComputeHingeLoss_Binary;
+  svm->ops->computemodelparams    = SVMComputeModelParams_Binary;
 
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingDataset_C",SVMSetTrainingDataset_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C",SVMGetTrainingDataset_Binary) );
@@ -1371,7 +1372,7 @@ PetscErrorCode SVMMonitorDefault_Binary(QPS qps,PetscInt it,PetscReal rnorm,void
 
   TRY( SVMGetLossType(svm_inner,&loss_type) );
 
-  TRY( SVMReconstructHyperplane_Binary_Private(svm_inner) );
+  TRY( SVMReconstructHyperplane(svm_inner) );
   TRY( SVMGetSeparatingHyperplane(svm_inner,&w_inner,&b_inner) );
   TRY( VecNorm(w_inner,NORM_2,&norm_w) );
   margin = 2.0 / norm_w;
