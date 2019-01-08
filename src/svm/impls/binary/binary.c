@@ -1352,52 +1352,25 @@ PetscErrorCode SVMMonitorDestroyMCtx_Binary(void **mctx)
 #define __FUNCT__ "SVMMonitorDefault_Binary"
 PetscErrorCode SVMMonitorDefault_Binary(QPS qps,PetscInt it,PetscReal rnorm,void *mctx) {
   MPI_Comm comm;
+
   SVM svm_inner;
-
-  QP qp;
-
-  Vec       lb,ub,w_inner,x;
-  PetscReal b_inner,norm_w,margin;
-
-  IS       is_sv;
-  PetscInt nsv;
-
-  SVMLossType loss_type;
+  SVM_Binary *svm_binary;
 
   PetscViewer v;
 
   PetscFunctionBegin;
   svm_inner = ((SVM_Binary_mctx *) mctx)->svm_inner;
-  comm = PetscObjectComm((PetscObject) svm_inner);
-
-  TRY( SVMGetLossType(svm_inner,&loss_type) );
+  svm_binary = (SVM_Binary *) svm_inner->data;
 
   TRY( SVMReconstructHyperplane(svm_inner) );
-  TRY( SVMGetSeparatingHyperplane(svm_inner,&w_inner,&b_inner) );
-  TRY( VecNorm(w_inner,NORM_2,&norm_w) );
-  margin = 2.0 / norm_w;
+  TRY( SVMComputeModelParams(svm_inner) );
 
-  /* Get number of support vectors */
-  TRY( SVMGetQPS(svm_inner,&qps) );
-  TRY( QPSGetQP(qps,&qp) );
-  TRY( QPGetBox(qp,NULL,&lb,&ub) );
-  TRY( QPGetSolutionVector(qp,&x) );
-
-  if (loss_type == SVM_L1) {
-    TRY( QPGetBox(qp,NULL,&lb,&ub) );
-    TRY( VecWhichBetween(lb,x,ub,&is_sv) );
-  } else {
-    TRY( VecWhichGreaterThan(x,lb,&is_sv));
-  }
-  TRY( ISGetSize(is_sv,&nsv) );
-
+  comm = PetscObjectComm((PetscObject) svm_inner);
   v = PETSC_VIEWER_STDOUT_(comm);
-  TRY( PetscViewerASCIIPrintf(v,"%3D SVM ||w||=%.10e",it,norm_w) );
-  TRY( PetscViewerASCIIPrintf(v,",\tmargin=%.10e",margin) );
-  TRY( PetscViewerASCIIPrintf(v,",\tbias=%.10e",b_inner) );
-  TRY( PetscViewerASCIIPrintf(v,",\tNSV=%3D\n",nsv) );
 
-  TRY( VecDestroy(&w_inner) );
-  TRY( ISDestroy(&is_sv) );
+  TRY( PetscViewerASCIIPrintf(v,"%3D SVM ||w||=%.10e",it,svm_binary->norm_w) );
+  TRY( PetscViewerASCIIPrintf(v,",\tmargin=%.10e",svm_binary->margin) );
+  TRY( PetscViewerASCIIPrintf(v,",\tbias=%.10e",svm_binary->b) );
+  TRY( PetscViewerASCIIPrintf(v,",\tNSV=%3D\n",svm_binary->nsv) );
   PetscFunctionReturn(0);
 }
