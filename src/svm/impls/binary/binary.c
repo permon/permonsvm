@@ -1485,7 +1485,11 @@ PetscErrorCode SVMMonitorScores_Binary(QPS qps,PetscInt it,PetscReal rnorm,void 
   svm_binary = (SVM_Binary *) svm_inner->data;
 
   TRY( SVMGetTestDataset(svm_inner,&Xt_test,&y_known) );
+
+  svm_inner->posttraincalled = PETSC_TRUE;
+  TRY( SVMReconstructHyperplane(svm_inner) );
   TRY( SVMPredict(svm_inner,Xt_test,&y_pred) );
+  svm_inner->posttraincalled = PETSC_FALSE;
 
   /* Evaluation of model performance scores */
   TRY( SVMComputeModelScores(svm_inner,y_pred,y_known) );
@@ -1525,7 +1529,11 @@ PetscErrorCode SVMMonitorTrainingScores_Binary(QPS qps,PetscInt it,PetscReal rno
   svm_binary = (SVM_Binary *) svm_inner->data;
 
   TRY( SVMGetTrainingDataset(svm_inner,&Xt_training,&y_known) );
+
+  svm_inner->posttraincalled = PETSC_TRUE;
+  TRY( SVMReconstructHyperplane(svm_inner) );
   TRY( SVMPredict(svm_inner,Xt_training,&y_pred) );
+  svm_inner->posttraincalled = PETSC_FALSE;
 
   /* Evaluation of model performance scores */
   TRY( SVMComputeModelScores(svm_inner,y_pred,y_known) );
