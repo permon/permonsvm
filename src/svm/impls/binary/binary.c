@@ -1230,7 +1230,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm->ops->reconstructhyperplane = SVMReconstructHyperplane_Binary;
   svm->ops->predict               = SVMPredict_Binary;
   svm->ops->test                  = SVMTest_Binary;
-  svm->ops->crossvalidation       = SVMKFoldCrossValidation_Binary;
+  svm->ops->crossvalidation       = SVMCrossValidation_Binary;
   svm->ops->gridsearch            = SVMGridSearch_Binary;
   svm->ops->view                  = SVMView_Binary;
   svm->ops->viewscore             = SVMViewScore_Binary;

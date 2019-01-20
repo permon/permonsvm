@@ -5,8 +5,15 @@
 #define __FUNCT__ "SVMCrossValidation_Binary"
 PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal score[])
 {
+  CrossValidationType cv_type;
 
   PetscFunctionBegin;
+  TRY( SVMGetCrossValidationType(svm,&cv_type) );
+  if (cv_type == CROSS_VALIDATION_KFOLD) {
+    TRY( SVMKFoldCrossValidation(svm,c_arr,m,score) );
+  } else {
+    TRY( SVMStratifiedKFoldCrossValidation(svm,c_arr,m,score) );
+  }
   PetscFunctionReturn(0);
 }
 
