@@ -41,6 +41,7 @@ typedef struct {
   SVM svm_inner;
 } SVM_Binary_mctx;
 
+FLLOP_EXTERN PetscErrorCode SVMCrossValidation_Binary(SVM,PetscReal [],PetscInt,PetscReal []);
 FLLOP_EXTERN PetscErrorCode SVMKFoldCrossValidation_Binary(SVM,PetscReal [],PetscInt,PetscReal []);
 
 static PetscErrorCode SVMMonitorCreateCtx_Binary(void **,SVM);

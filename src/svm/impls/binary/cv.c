@@ -2,6 +2,15 @@
 #include <permon/private/svmimpl.h>
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMCrossValidation_Binary"
+PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal score[])
+{
+
+  PetscFunctionBegin;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMKFoldCrossValidation_Binary"
 PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal score[]) {
   MPI_Comm    comm;
