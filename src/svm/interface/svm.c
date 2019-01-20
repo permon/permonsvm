@@ -1381,7 +1381,7 @@ PetscErrorCode SVMGetCrossValidationScoreType(SVM svm,ModelScore *type)
 #undef __FUNCT__
 #define __FUNCT__ "SVMCrossValidation"
 /*@
-  SVMCrossValidation - Performs k-folds cross validation.
+  SVMKFoldCrossValidation - Performs cross validation.
 
   Collective on SVM
 
@@ -1395,7 +1395,7 @@ PetscErrorCode SVMGetCrossValidationScoreType(SVM svm,ModelScore *type)
 
   Level: beginner
 
-.seealso: SVMGridSearch(), SVMSetNfolds(), SVM
+.seealso: SVMKFoldCrossValidation(), SVMStratifiedKFoldCrossValidation(), SVMGridSearch(), SVMSetNfolds(), SVM
 @*/
 PetscErrorCode SVMCrossValidation(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal score[])
 {
@@ -1403,6 +1403,34 @@ PetscErrorCode SVMCrossValidation(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   TRY( svm->ops->crossvalidation(svm,c_arr,m,score) );
+  PetscFunctionReturnI(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMKFoldCrossValidation"
+/*@
+  SVMKFoldCrossValidation - Performs k-folds cross validation.
+
+  Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+. c_arr - manually specified set of penalty C values
+- m - size of c_arr
+
+  Output Parameter:
+. score - array of scores for each penalty C
+
+  Level: beginner
+
+.seealso: SVMStratifiedKFoldCrossValidation(), SVMGridSearch(), SVMSetNfolds(), SVM
+@*/
+PetscErrorCode SVMKFoldCrossValidation(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal score[])
+{
+
+  PetscFunctionBeginI;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( PetscTryMethod(svm,"SVMKFoldCrossValidation_C",(SVM,PetscReal [],PetscInt, PetscReal []),(svm,c_arr,m,score)) );
   PetscFunctionReturnI(0);
 }
 
