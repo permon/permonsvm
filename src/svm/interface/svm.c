@@ -77,16 +77,6 @@ PetscErrorCode SVMReset(SVM svm)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
-  svm->C          = 1.;
-  svm->C_old      = 1.;
-  svm->LogCBase   = 2.;
-  svm->LogCMin    = -2.;
-  svm->LogCMax    = 2.;
-  svm->loss_type  = SVM_L1;
-
-  svm->nfolds     = 5;
-  svm->warm_start = PETSC_FALSE;
-
   TRY( MatDestroy(&svm->Xt_test) );
   svm->Xt_test = NULL;
   TRY( VecDestroy(&svm->y_test) );
@@ -95,7 +85,6 @@ PetscErrorCode SVMReset(SVM svm)
   TRY( (*svm->ops->reset)(svm) );
 
   svm->setupcalled          = PETSC_FALSE;
-  svm->autoposttrain        = PETSC_TRUE;
   svm->posttraincalled      = PETSC_FALSE;
   PetscFunctionReturn(0);
 }

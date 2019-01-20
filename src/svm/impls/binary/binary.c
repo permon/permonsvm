@@ -79,8 +79,6 @@ PetscErrorCode SVMReset_Binary(SVM svm)
   TRY( PetscMemzero(svm_binary->confusion_matrix,4 * sizeof(PetscInt)) );
   TRY( PetscMemzero(svm_binary->model_scores,5 * sizeof(PetscReal)) );
 
-  svm_binary->b = 1.;
-
   svm_binary->w           = NULL;
   svm_binary->Xt_training = NULL;
   svm_binary->y_training  = NULL;
@@ -90,8 +88,6 @@ PetscErrorCode SVMReset_Binary(SVM svm)
   svm_binary->nsv         = 0;
   TRY( ISDestroy(&svm_binary->is_sv) );
   svm_binary->is_sv       = NULL;
-
-  svm_binary->svm_mod     = 2;
 
   for (i = 0; i < 3; ++i) {
     TRY( VecDestroy(&svm_binary->work[i]) );
