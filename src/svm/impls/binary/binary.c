@@ -41,7 +41,7 @@ typedef struct {
   SVM svm_inner;
 } SVM_Binary_mctx;
 
-FLLOP_EXTERN PetscErrorCode SVMCrossValidation_Binary(SVM,PetscReal [],PetscInt,PetscReal []);
+FLLOP_EXTERN PetscErrorCode SVMKFoldCrossValidation_Binary(SVM,PetscReal [],PetscInt,PetscReal []);
 
 static PetscErrorCode SVMMonitorCreateCtx_Binary(void **,SVM);
 static PetscErrorCode SVMMonitorDestroyCtx_Binary(void **);
@@ -1229,7 +1229,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm->ops->reconstructhyperplane = SVMReconstructHyperplane_Binary;
   svm->ops->predict               = SVMPredict_Binary;
   svm->ops->test                  = SVMTest_Binary;
-  svm->ops->crossvalidation       = SVMCrossValidation_Binary;
+  svm->ops->crossvalidation       = SVMKFoldCrossValidation_Binary;
   svm->ops->gridsearch            = SVMGridSearch_Binary;
   svm->ops->view                  = SVMView_Binary;
   svm->ops->viewscore             = SVMViewScore_Binary;

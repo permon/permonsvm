@@ -2,9 +2,8 @@
 #include <permon/private/svmimpl.h>
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMCrossValidation_Binary"
-PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal score[])
-{
+#define __FUNCT__ "SVMKFoldCrossValidation_Binary"
+PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal score[]) {
   MPI_Comm    comm;
   SVM         cross_svm;
 
@@ -96,10 +95,9 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
 
       TRY( SVMGetModelScore(cross_svm,model_score,&s) );
       score[j] += s;
-
-      TRY( SVMGetQPS(cross_svm,&qps) );
     }
     TRY( SVMReset(cross_svm) );
+    TRY( SVMGetQPS(cross_svm,&qps) );
     TRY( QPSResetStatistics(qps) );
 
     TRY( VecRestoreSubVector(y,is_training,&y_training) );
