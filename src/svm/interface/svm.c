@@ -1407,6 +1407,20 @@ PetscErrorCode SVMCrossValidation(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMStratifiedKFoldCrossValidation"
+/*@
+
+@*/
+PetscErrorCode SVMStratifiedKFoldCrossValidation(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal score[])
+{
+
+  PetscFunctionBeginI;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( PetscTryMethod(svm,"SVMStratifiedKFoldCrossValidation_C",(SVM,PetscReal [],PetscInt, PetscReal []),(svm,c_arr,m,score)) );
+  PetscFunctionReturnI(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMComputeModelScores"
 /*@
   SVMComputeModelScores - Evaluates performance scores of model.
