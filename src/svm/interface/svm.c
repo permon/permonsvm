@@ -1367,7 +1367,7 @@ PetscErrorCode SVMSetCrossValidationScoreType(SVM svm,ModelScore type)
   Output Parameter:
 . type - type of model score
 
-.seealso SVMGetCrossValidationScoreType(), ModelScore
+.seealso SVMSetCrossValidationScoreType(), ModelScore
 @*/
 PetscErrorCode SVMGetCrossValidationScoreType(SVM svm,ModelScore *type)
 {
@@ -1376,6 +1376,54 @@ PetscErrorCode SVMGetCrossValidationScoreType(SVM svm,ModelScore *type)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidPointer(type,2);
   *type = svm->cv_model_score;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetCrossValidationType"
+/*@
+  SVMSetCrossValidationType - Sets type of cross validation.
+
+  Logically Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+- type - type of cross validation
+
+.seealso SVMGetCrossValidationType(), CrossValidationType
+@*/
+PetscErrorCode SVMSetCrossValidationType(SVM svm,CrossValidationType type)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveEnum(svm,type,2);
+  svm->cv_type = type;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetCrossValidationType"
+/*@
+  SVMGetCrossValidationType - Returns type of cross validation.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. type - type of cross validation
+
+.seealso SVMSetCrossValidationType(), CrossValidationType
+@*/
+PetscErrorCode SVMGetCrossValidationType(SVM svm,CrossValidationType *type)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidPointer(type,2);
+  *type = svm->cv_type;
   PetscFunctionReturn(0);
 }
 

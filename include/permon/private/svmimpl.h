@@ -29,22 +29,23 @@ struct _SVMOps {
 struct _p_SVM {
   PETSCHEADER(struct _SVMOps);
 
-  PetscReal C,C_old;
-  PetscReal LogCMin,LogCMax,LogCBase;
-  PetscInt  nfolds;
+  Mat                 Xt_test;
+  Vec                 y_test;
 
-  SVMLossType loss_type;
-  ModelScore  cv_model_score;
+  ModelScore          cv_model_score;
+  CrossValidationType cv_type;
+  PetscReal           C,C_old;
+  PetscReal           LogCMin,LogCMax,LogCBase;
+  PetscInt            nfolds;
 
-  PetscBool   warm_start;
+  SVMLossType         loss_type;
 
-  PetscBool autoposttrain;
-  PetscBool posttraincalled;
-  PetscBool setupcalled;
-  PetscBool setfromoptionscalled;
+  PetscBool           warm_start;
 
-  Mat Xt_test;
-  Vec y_test;
+  PetscBool           autoposttrain;
+  PetscBool           posttraincalled;
+  PetscBool           setupcalled;
+  PetscBool           setfromoptionscalled;
 
   void *data;
 };
