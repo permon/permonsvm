@@ -129,3 +129,12 @@ PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt
   TRY( SVMDestroy(&cross_svm) );
   PetscFunctionReturn(0);
 }
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMStratifiedKFoldCrossValidation_Binary"
+PetscErrorCode SVMStratifiedKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal score[])
+{
+
+  PetscFunctionBegin;
+  PetscFunctionReturn(0);
+}
