@@ -97,6 +97,32 @@ M*/
 .seealso ModelScore, MODEL_ACCURACY, MODEL_PRECISION, MODEL_SENSTIVITY, MODEL_F1, SVMGetModelScore()
 M*/
 
+/*E
+  CrossValidationType - type of cross validation.
+
+  Level: beginner
+
+.seealso: CROSS_VALIDATION_KFOLD, CROSS_VALIDATION_STRATIFIED_KFOLD
+E*/
+typedef enum {CROSS_VALIDATION_KFOLD,CROSS_VALIDATION_STRATIFIED_KFOLD} CrossValidationType;
+FLLOP_EXTERN const char *const CrossValidationTypes[];
+
+/*MC
+  CROSS_VALIDATION_KFOLD - k-fold cross validation.
+
+  Level: intermediate
+
+.seealso CrossValidationType, CROSS_VALIDATION_STRATIFIED_KFOLD
+M*/
+
+/*MC
+  CROSS_VALIDATION_STRATIFIED_KFOLD - stratified k-fold cross validation.
+
+  Level: intermediate
+
+.seealso CrossValidationType, CROSS_VALIDATION_KFOLD
+M*/
+
 FLLOP_EXTERN PetscErrorCode SVMInitializePackage();
 FLLOP_EXTERN PetscErrorCode SVMFinalizePackage();
 
