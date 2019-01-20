@@ -164,15 +164,16 @@ PetscErrorCode SVMDestroy(SVM *svm)
 @*/
 PetscErrorCode SVMSetFromOptions(SVM svm)
 {
-  PetscErrorCode ierr;
+  PetscErrorCode      ierr;
 
-  PetscReal      C,logC_min,logC_max,logC_base;
-  PetscBool      flg,warm_start;
+  PetscReal           C,logC_min,logC_max,logC_base;
+  PetscBool           flg,warm_start;
 
-  SVMLossType    loss_type;
+  SVMLossType         loss_type;
 
-  ModelScore     model_score;
-  PetscInt       nfolds;
+  ModelScore          model_score;
+  CrossValidationType cv_type;
+  PetscInt            nfolds;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
@@ -205,6 +206,10 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   TRY( PetscOptionsEnum("-svm_cv_model_score_type","Specify the model score type for evaluating performance of model during cross-validation.","SVMSetCrossValidationScoreType",ModelScores,(PetscEnum)svm->cv_model_score,(PetscEnum*)&model_score,&flg) );
   if (flg) {
     TRY( SVMSetCrossValidationScoreType(svm,model_score) );
+  }
+  TRY( PetscOptionsEnum("-svm_cv_type","Specify the type of cross validation.","SVMSetCrossValidationType",CrossValidationTypes,(PetscEnum)svm->cv_type,(PetscEnum*)&cv_type,&flg) );
+  if (flg) {
+    TRY( SVMSetCrossValidationType(svm,cv_type) );
   }
   TRY( PetscOptionsBool("-svm_warm_start","Specify whether warm start is used in cross-validation.","SVMSetWarmStart",svm->warm_start,&warm_start,&flg) );
   if (flg) {
