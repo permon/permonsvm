@@ -42,6 +42,7 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
   svm->LogCMax    = 2.;
   svm->loss_type  = SVM_L1;
 
+  svm->cv_type        = CROSS_VALIDATION_KFOLD;
   svm->cv_model_score = MODEL_ACCURACY;
   svm->nfolds         = 5;
   svm->warm_start     = PETSC_FALSE;
