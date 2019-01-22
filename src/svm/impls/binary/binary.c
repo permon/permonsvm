@@ -335,6 +335,11 @@ PetscErrorCode SVMCreateQPS_Binary_Private(SVM svm,QPS *qps) {
   PetscInt svm_mod;
 
   PetscFunctionBegin;
+  if (svm_binary->qps) {
+    *qps = svm_binary->qps;
+    PetscFunctionReturn(0);
+  }
+
   rtol = 1e-1;
   divtol = 1e100;
   max_it = 10000;
