@@ -425,6 +425,15 @@ PetscErrorCode SVMGetMod_Binary(SVM svm,PetscInt *mod)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMUpdate_Binary_Private"
+PetscErrorCode SVMUpdate_Binary_Private(SVM svm)
+{
+
+  PetscFunctionBegin;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetUp_Binary"
 PetscErrorCode SVMSetUp_Binary(SVM svm)
 {
