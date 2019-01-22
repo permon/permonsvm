@@ -4,6 +4,7 @@
 PetscClassId SVM_CLASSID;
 
 const char *const ModelScores[]={"accuracy","precision","sensitivity","F1","mcc","ModelScore","model_",0};
+const char *const CrossValidationTypes[]={"kfold","stratified_kfold","CrossValidationType","cv_",0};
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMCreate"
@@ -41,6 +42,7 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
   svm->LogCMax    = 2.;
   svm->loss_type  = SVM_L1;
 
+  svm->cv_type        = CROSS_VALIDATION_KFOLD;
   svm->cv_model_score = MODEL_ACCURACY;
   svm->nfolds         = 5;
   svm->warm_start     = PETSC_FALSE;
@@ -163,15 +165,16 @@ PetscErrorCode SVMDestroy(SVM *svm)
 @*/
 PetscErrorCode SVMSetFromOptions(SVM svm)
 {
-  PetscErrorCode ierr;
+  PetscErrorCode      ierr;
 
-  PetscReal      C,logC_min,logC_max,logC_base;
-  PetscBool      flg,warm_start;
+  PetscReal           C,logC_min,logC_max,logC_base;
+  PetscBool           flg,warm_start;
 
-  SVMLossType    loss_type;
+  SVMLossType         loss_type;
 
-  ModelScore     model_score;
-  PetscInt       nfolds;
+  ModelScore          model_score;
+  CrossValidationType cv_type;
+  PetscInt            nfolds;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
@@ -204,6 +207,10 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   TRY( PetscOptionsEnum("-svm_cv_model_score_type","Specify the model score type for evaluating performance of model during cross-validation.","SVMSetCrossValidationScoreType",ModelScores,(PetscEnum)svm->cv_model_score,(PetscEnum*)&model_score,&flg) );
   if (flg) {
     TRY( SVMSetCrossValidationScoreType(svm,model_score) );
+  }
+  TRY( PetscOptionsEnum("-svm_cv_type","Specify the type of cross validation.","SVMSetCrossValidationType",CrossValidationTypes,(PetscEnum)svm->cv_type,(PetscEnum*)&cv_type,&flg) );
+  if (flg) {
+    TRY( SVMSetCrossValidationType(svm,cv_type) );
   }
   TRY( PetscOptionsBool("-svm_warm_start","Specify whether warm start is used in cross-validation.","SVMSetWarmStart",svm->warm_start,&warm_start,&flg) );
   if (flg) {
@@ -1366,7 +1373,7 @@ PetscErrorCode SVMSetCrossValidationScoreType(SVM svm,ModelScore type)
   Output Parameter:
 . type - type of model score
 
-.seealso SVMGetCrossValidationScoreType(), ModelScore
+.seealso SVMSetCrossValidationScoreType(), ModelScore
 @*/
 PetscErrorCode SVMGetCrossValidationScoreType(SVM svm,ModelScore *type)
 {
@@ -1379,9 +1386,57 @@ PetscErrorCode SVMGetCrossValidationScoreType(SVM svm,ModelScore *type)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMSetCrossValidationType"
+/*@
+  SVMSetCrossValidationType - Sets type of cross validation.
+
+  Logically Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+- type - type of cross validation
+
+.seealso SVMGetCrossValidationType(), CrossValidationType
+@*/
+PetscErrorCode SVMSetCrossValidationType(SVM svm,CrossValidationType type)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveEnum(svm,type,2);
+  svm->cv_type = type;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetCrossValidationType"
+/*@
+  SVMGetCrossValidationType - Returns type of cross validation.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. type - type of cross validation
+
+.seealso SVMSetCrossValidationType(), CrossValidationType
+@*/
+PetscErrorCode SVMGetCrossValidationType(SVM svm,CrossValidationType *type)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidPointer(type,2);
+  *type = svm->cv_type;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMCrossValidation"
 /*@
-  SVMCrossValidation - Performs k-folds cross validation.
+  SVMKFoldCrossValidation - Performs cross validation.
 
   Collective on SVM
 
@@ -1395,7 +1450,7 @@ PetscErrorCode SVMGetCrossValidationScoreType(SVM svm,ModelScore *type)
 
   Level: beginner
 
-.seealso: SVMGridSearch(), SVMSetNfolds(), SVM
+.seealso: SVMKFoldCrossValidation(), SVMStratifiedKFoldCrossValidation(), SVMGridSearch(), SVMSetNfolds(), SVM
 @*/
 PetscErrorCode SVMCrossValidation(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal score[])
 {
@@ -1403,6 +1458,48 @@ PetscErrorCode SVMCrossValidation(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   TRY( svm->ops->crossvalidation(svm,c_arr,m,score) );
+  PetscFunctionReturnI(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMKFoldCrossValidation"
+/*@
+  SVMKFoldCrossValidation - Performs k-folds cross validation.
+
+  Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+. c_arr - manually specified set of penalty C values
+- m - size of c_arr
+
+  Output Parameter:
+. score - array of scores for each penalty C
+
+  Level: beginner
+
+.seealso: SVMStratifiedKFoldCrossValidation(), SVMGridSearch(), SVMSetNfolds(), SVM
+@*/
+PetscErrorCode SVMKFoldCrossValidation(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal score[])
+{
+
+  PetscFunctionBeginI;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( PetscTryMethod(svm,"SVMKFoldCrossValidation_C",(SVM,PetscReal [],PetscInt, PetscReal []),(svm,c_arr,m,score)) );
+  PetscFunctionReturnI(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMStratifiedKFoldCrossValidation"
+/*@
+
+@*/
+PetscErrorCode SVMStratifiedKFoldCrossValidation(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal score[])
+{
+
+  PetscFunctionBeginI;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  TRY( PetscTryMethod(svm,"SVMStratifiedKFoldCrossValidation_C",(SVM,PetscReal [],PetscInt, PetscReal []),(svm,c_arr,m,score)) );
   PetscFunctionReturnI(0);
 }
 

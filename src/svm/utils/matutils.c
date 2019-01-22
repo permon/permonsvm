@@ -126,13 +126,13 @@ PetscErrorCode MatMultTranspose_Biased(Mat A,Vec x,Vec y)
 #define __FUNCT__ "MatCreateSubMatrix_Biased"
 PetscErrorCode MatCreateSubMatrix_Biased(Mat mat,IS isrow,IS iscol,MatReuse cll,Mat *newmat)
 {
-  MPI_Comm    comm;
-  PetscMPIInt comm_size,comm_rank;
+  MPI_Comm     comm;
+  PetscMPIInt  comm_size,comm_rank;
 
-  Mat      Xt_sub;
-  PetscInt m,n,M,N;
+  Mat          Xt_sub;
+  PetscInt     m,n,M,N;
 
-  Mat      newmat_inner;
+  Mat          newmat_inner;
 
   void         *ptr = NULL;
   MatBiasedCtx *ctx = NULL;
@@ -146,7 +146,7 @@ PetscErrorCode MatCreateSubMatrix_Biased(Mat mat,IS isrow,IS iscol,MatReuse cll,
   TRY( MPI_Comm_size(comm,&comm_size) );
   TRY( MPI_Comm_rank(comm,&comm_rank) );
 
-  TRY( MatCreateSubMatrix(ctx->Xt,isrow,iscol,cll,&Xt_sub) );
+  TRY( MatCreateSubMatrix(ctx->Xt,isrow,NULL,cll,&Xt_sub) );
 
   TRY( PetscNew(&newctx) );
   newctx->Xt   = Xt_sub;
@@ -155,9 +155,12 @@ PetscErrorCode MatCreateSubMatrix_Biased(Mat mat,IS isrow,IS iscol,MatReuse cll,
   TRY( MatGetLocalSize(Xt_sub,&m,&n) );
   TRY( MatGetSize(Xt_sub,&M,&N) );
 
-  if (comm_rank == comm_size - 1) n += 1;
+  if (comm_rank == comm_size - 1) {
+      n += 1;
+  }
+  N += 1;
 
-  TRY( MatCreateShell(comm,m,n,M,N+1,newctx,&newmat_inner) );
+  TRY( MatCreateShell(comm,m,n,M,N,newctx,&newmat_inner) );
   TRY( MatShellSetOperation(newmat_inner,MATOP_DESTROY,(void(*)(void))MatDestroy_Biased) );
   TRY( MatShellSetOperation(newmat_inner,MATOP_MULT,(void(*)(void))MatMult_Biased) );
   TRY( MatShellSetOperation(newmat_inner,MATOP_MULT_TRANSPOSE,(void(*)(void))MatMultTranspose_Biased) );

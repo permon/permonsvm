@@ -97,6 +97,32 @@ M*/
 .seealso ModelScore, MODEL_ACCURACY, MODEL_PRECISION, MODEL_SENSTIVITY, MODEL_F1, SVMGetModelScore()
 M*/
 
+/*E
+  CrossValidationType - type of cross validation.
+
+  Level: beginner
+
+.seealso: CROSS_VALIDATION_KFOLD, CROSS_VALIDATION_STRATIFIED_KFOLD
+E*/
+typedef enum {CROSS_VALIDATION_KFOLD,CROSS_VALIDATION_STRATIFIED_KFOLD} CrossValidationType;
+FLLOP_EXTERN const char *const CrossValidationTypes[];
+
+/*MC
+  CROSS_VALIDATION_KFOLD - k-fold cross validation.
+
+  Level: intermediate
+
+.seealso CrossValidationType, CROSS_VALIDATION_STRATIFIED_KFOLD
+M*/
+
+/*MC
+  CROSS_VALIDATION_STRATIFIED_KFOLD - stratified k-fold cross validation.
+
+  Level: intermediate
+
+.seealso CrossValidationType, CROSS_VALIDATION_KFOLD
+M*/
+
 FLLOP_EXTERN PetscErrorCode SVMInitializePackage();
 FLLOP_EXTERN PetscErrorCode SVMFinalizePackage();
 
@@ -154,7 +180,11 @@ FLLOP_EXTERN PetscErrorCode SVMComputeModelParams(SVM svm);
 FLLOP_EXTERN PetscErrorCode SVMGridSearch(SVM);
 FLLOP_EXTERN PetscErrorCode SVMSetCrossValidationScoreType(SVM,ModelScore);
 FLLOP_EXTERN PetscErrorCode SVMGetCrossValidationScoreType(SVM,ModelScore *);
+FLLOP_EXTERN PetscErrorCode SVMSetCrossValidationType(SVM,CrossValidationType);
+FLLOP_EXTERN PetscErrorCode SVMGetCrossValidationType(SVM,CrossValidationType *);
 FLLOP_EXTERN PetscErrorCode SVMCrossValidation(SVM,PetscReal [],PetscInt,PetscReal []);
+FLLOP_EXTERN PetscErrorCode SVMKFoldCrossValidation(SVM,PetscReal [],PetscInt,PetscReal []);
+FLLOP_EXTERN PetscErrorCode SVMStratifiedKFoldCrossValidation(SVM,PetscReal [],PetscInt,PetscReal []);
 
 FLLOP_EXTERN PetscErrorCode SVMSetQPS(SVM,QPS);
 FLLOP_EXTERN PetscErrorCode SVMGetQPS(SVM,QPS *);
