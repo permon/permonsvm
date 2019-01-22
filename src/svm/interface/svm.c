@@ -188,6 +188,14 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   if (flg) {
     TRY( SVMSetC(svm,C) );
   }
+  TRY( PetscOptionsReal("-svm_Cp","Set SVM Cp (Cp).","SVMSetCp",svm->Cp,&C,&flg) );
+  if (flg) {
+    TRY( SVMSetCp(svm,C) );
+  }
+  TRY( PetscOptionsReal("-svm_Cn","Set SVM Cn (Cn).","SVMSetCn",svm->Cn,&C,&flg) );
+  if (flg) {
+    TRY( SVMSetCn(svm,C) );
+  }
   TRY( PetscOptionsReal("-svm_logC_min","Set SVM minimal C value (LogCMin).","SVMSetLogCMin",svm->LogCMin,&logC_min,&flg) );
   if (flg) {
     TRY( SVMSetLogCMin(svm,logC_min) );
