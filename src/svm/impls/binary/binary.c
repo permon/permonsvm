@@ -335,11 +335,6 @@ PetscErrorCode SVMCreateQPS_Binary_Private(SVM svm,QPS *qps) {
   PetscInt svm_mod;
 
   PetscFunctionBegin;
-  if (svm_binary->qps) {
-    *qps = svm_binary->qps;
-    PetscFunctionReturn(0);
-  }
-
   rtol = 1e-1;
   divtol = 1e100;
   max_it = 10000;
@@ -463,9 +458,10 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   TRY( SVMGetMod(svm,&svm_mod) );
   TRY( SVMGetC(svm,&C) );
 
-  if (svm->warm_start && svm->posttraincalled) {
+  if (svm->posttraincalled) {
     TRY( SVMGetQPS(svm,&qps) );
     TRY( QPSGetQP(qps,&qp) );
+    /* Update Hessian and upper boundary */
     if (loss_type == SVM_L1)
     {
       TRY( QPGetBox(qp,NULL,NULL,&ub) );
@@ -474,9 +470,15 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
       TRY( MatScale(svm_binary->D,svm->C_old) );
       TRY( MatScale(svm_binary->D,1. / C) );
     }
+
+    /* Update initial guess */
     TRY( QPGetSolutionVector(qp,&x_init) );
-    TRY( VecScale(x_init,1 / svm->C_old) );
-    TRY( VecScale(x_init,svm->C) );
+    if (svm->warm_start) {
+      TRY( VecScale(x_init,1 / svm->C_old) );
+      TRY( VecScale(x_init,svm->C) );
+    } else {
+      TRY( VecSet(x_init,C - 100 * PETSC_MACHINE_EPSILON) );
+    }
 
     svm->posttraincalled = PETSC_FALSE;
     svm->setupcalled = PETSC_TRUE;

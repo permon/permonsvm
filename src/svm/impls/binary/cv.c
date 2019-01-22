@@ -24,11 +24,10 @@ PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt
   MPI_Comm    comm;
   SVM         cross_svm;
 
-  QP          qp;
   QPS         qps;
 
   Mat         Xt,Xt_training,Xt_test;
-  Vec         x,y,y_training,y_test;
+  Vec         y,y_training,y_test;
 
   PetscInt    lo,hi,first,n;
   PetscInt    i,j,nfolds;
@@ -90,34 +89,17 @@ PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt
     TRY( SVMSetTrainingDataset(cross_svm,Xt_training,y_training) );
     TRY( SVMSetTestDataset(cross_svm,Xt_test,y_test) );
 
+    /* Test C values on fold */
+    TRY( SVMGetQPS(cross_svm,&qps) );
+    qps->max_it = 1e7;
     for (j = 0; j < m; ++j) {
       TRY( SVMSetC(cross_svm,c_arr[j]) );
-
-      /* TODO fix */
-      if (!cross_svm->warm_start && j > 0) {
-        TRY( SVMGetQPS(cross_svm,&qps) );
-        TRY( QPSGetSolvedQP(qps,&qp) );
-        if (qp) {
-          Vec ub;
-          TRY( QPGetSolutionVector(qp,&x) );
-          TRY( VecSet(x,c_arr[j] - 100 * PETSC_MACHINE_EPSILON) );
-          TRY( QPGetBox(qp,NULL,NULL,&ub) );
-          if (ub) { TRY( VecSet(ub,c_arr[j]) ); }
-        }
-        cross_svm->posttraincalled = PETSC_FALSE;
-        cross_svm->setupcalled = PETSC_TRUE;
-      }
-
       TRY( SVMTrain(cross_svm) );
       TRY( SVMTest(cross_svm) );
-
       TRY( SVMGetModelScore(cross_svm,model_score,&s) );
       score[j] += s;
     }
     TRY( SVMReset(cross_svm) );
-    /* TODO reset */
-    TRY( SVMGetQPS(cross_svm,&qps) );
-    TRY( QPSResetStatistics(qps) );
 
     TRY( VecRestoreSubVector(y,is_training,&y_training) );
     TRY( MatDestroy(&Xt_training) );
@@ -176,9 +158,7 @@ PetscErrorCode SVMStratifiedKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[
   MPI_Comm    comm;
   SVM         cross_svm;
 
-  QP          qp;
   QPS         qps;
-  Vec         x;
 
   Mat         Xt,Xt_training,Xt_test;
   Vec         y,y_training,y_test;
@@ -275,25 +255,8 @@ PetscErrorCode SVMStratifiedKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[
     qps->max_it = 1e7;
     for (j = 0; j < m; ++j) {
       TRY( SVMSetC(cross_svm,c_arr[j]) );
-
-      /* TODO fix */
-      if (!cross_svm->warm_start && j > 0) {
-        TRY( SVMGetQPS(cross_svm,&qps) );
-        TRY( QPSGetSolvedQP(qps,&qp) );
-        if (qp) {
-          Vec ub;
-          TRY( QPGetSolutionVector(qp,&x) );
-          TRY( VecSet(x,c_arr[j] - 100 * PETSC_MACHINE_EPSILON) );
-          TRY( QPGetBox(qp,NULL,NULL,&ub) );
-          if (ub) { TRY( VecSet(ub,c_arr[j]) ); }
-        }
-        cross_svm->posttraincalled = PETSC_FALSE;
-        cross_svm->setupcalled = PETSC_TRUE;
-      }
-
       TRY( SVMTrain(cross_svm) );
       TRY( SVMTest(cross_svm) );
-
       TRY( SVMGetModelScore(cross_svm,model_score,&s) );
       score[j] += s;
     }
