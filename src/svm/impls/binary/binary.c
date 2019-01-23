@@ -9,6 +9,7 @@ typedef struct {
   Mat         Xt_training;
   Vec         y_training;
   Vec         y_inner;
+  IS          is_p,is_n;
 
   PetscScalar y_map[2];
   Mat         D;
@@ -78,6 +79,8 @@ PetscErrorCode SVMReset_Binary(SVM svm)
   TRY( MatDestroy(&svm_binary->D) );
   TRY( VecDestroy(&svm_binary->y_training) );
   TRY( VecDestroy(&svm_binary->y_inner) );
+  TRY( ISDestroy(&svm_binary->is_p) );
+  TRY( ISDestroy(&svm_binary->is_n) );
 
   TRY( PetscMemzero(svm_binary->y_map,2 * sizeof(PetscScalar)) );
   TRY( PetscMemzero(svm_binary->confusion_matrix,4 * sizeof(PetscInt)) );
@@ -87,6 +90,8 @@ PetscErrorCode SVMReset_Binary(SVM svm)
   svm_binary->Xt_training = NULL;
   svm_binary->y_training  = NULL;
   svm_binary->y_inner     = NULL;
+  svm_binary->is_p        = NULL;
+  svm_binary->is_n        = NULL;
   svm_binary->D           = NULL;
 
   svm_binary->nsv         = 0;
@@ -243,6 +248,10 @@ PetscErrorCode SVMSetTrainingDataset_Binary(SVM svm,Mat Xt_training,Vec y_traini
 {
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
+  PetscReal  max;
+  PetscInt   lo,hi;
+  Vec        tmp;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidHeaderSpecific(Xt_training,MAT_CLASSID,2);
@@ -258,7 +267,21 @@ PetscErrorCode SVMSetTrainingDataset_Binary(SVM svm,Mat Xt_training,Vec y_traini
   svm_binary->y_training = y_training;
   TRY( PetscObjectReference((PetscObject) y_training) );
 
-  svm->setupcalled = PETSC_FALSE; /* TODO delete this line */
+  TRY( VecGetOwnershipRange(y_training,&lo,&hi) );
+  TRY( VecMax(y_training,NULL,&max) );
+  TRY( VecDuplicate(y_training,&tmp) );
+  TRY( VecSet(tmp,max) );
+
+  /* Index set for positive samples */
+  TRY( ISDestroy(&svm_binary->is_p) );
+  TRY( VecWhichEqual(y_training,tmp,&svm_binary->is_p) );
+
+  /* Index set for negative samples */
+  TRY( ISDestroy(&svm_binary->is_n) );
+  TRY( ISComplement(svm_binary->is_p,lo,hi,&svm_binary->is_n) );
+
+  /* Free memory */
+  TRY( VecDestroy(&tmp) );
   PetscFunctionReturn(0);
 }
 
@@ -1224,6 +1247,8 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm_binary->D           = NULL;
   svm_binary->y_training  = NULL;
   svm_binary->y_inner     = NULL;
+  svm_binary->is_p        = NULL;
+  svm_binary->is_n        = NULL;
 
   svm_binary->nsv         = 0;
   svm_binary->is_sv       = NULL;
