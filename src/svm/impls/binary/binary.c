@@ -12,6 +12,7 @@ typedef struct {
   IS          is_p,is_n;
 
   PetscScalar y_map[2];
+  Vec         diag;
   Mat         D;
 
   Vec         w;
@@ -77,6 +78,7 @@ PetscErrorCode SVMReset_Binary(SVM svm)
   TRY( VecDestroy(&svm_binary->w) );
   TRY( MatDestroy(&svm_binary->Xt_training) );
   TRY( MatDestroy(&svm_binary->D) );
+  TRY( VecDestroy(&svm_binary->diag) );
   TRY( VecDestroy(&svm_binary->y_training) );
   TRY( VecDestroy(&svm_binary->y_inner) );
   TRY( ISDestroy(&svm_binary->is_p) );
@@ -93,6 +95,7 @@ PetscErrorCode SVMReset_Binary(SVM svm)
   svm_binary->is_p        = NULL;
   svm_binary->is_n        = NULL;
   svm_binary->D           = NULL;
+  svm_binary->diag        = NULL;
 
   svm_binary->nsv         = 0;
   TRY( ISDestroy(&svm_binary->is_sv) );
@@ -1245,6 +1248,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm_binary->qps         = NULL;
   svm_binary->Xt_training = NULL;
   svm_binary->D           = NULL;
+  svm_binary->diag        = NULL;
   svm_binary->y_training  = NULL;
   svm_binary->y_inner     = NULL;
   svm_binary->is_p        = NULL;
