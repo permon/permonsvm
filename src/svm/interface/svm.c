@@ -415,8 +415,16 @@ PetscErrorCode SVMSetC(SVM svm,PetscReal C)
     FLLOP_SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
   }
 
-  svm->C_old = svm->C;
-  svm->C     = C;
+  if (svm->C != 0.) {
+    svm->C_old = svm->C;
+  } else {
+    svm->C_old = C;
+  }
+  svm->C      = C;
+  svm->Cp     = 0.;
+  svm->Cp_old = 0.;
+  svm->Cn     = 0.;
+  svm->Cn_old = 0.;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
