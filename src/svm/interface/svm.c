@@ -490,6 +490,8 @@ PetscErrorCode SVMSetCp(SVM svm,PetscReal Cp)
     svm->Cp_old = Cp;
   }
   svm->Cp          = Cp;
+  svm->C           = 0.;
+  svm->C_old       = 0.;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
@@ -555,6 +557,8 @@ PetscErrorCode SVMSetCn(SVM svm,PetscReal Cn)
     svm->Cn_old = Cn;
   }
   svm->Cn          = Cn;
+  svm->C           = 0.;
+  svm->C_old       = 0.;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
