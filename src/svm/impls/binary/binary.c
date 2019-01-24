@@ -454,8 +454,88 @@ PetscErrorCode SVMGetMod_Binary(SVM svm,PetscInt *mod)
 #define __FUNCT__ "SVMUpdate_Binary_Private"
 PetscErrorCode SVMUpdate_Binary_Private(SVM svm)
 {
+  SVM_Binary  *svm_binary = (SVM_Binary *) svm->data;
+
+  QP          qp;
+  QPS         qps;
+  Vec         ub,ub_p,ub_n;
+  Vec         diag_p,diag_n;
+  Vec         x_init,x_init_p,x_init_n;
+
+  PetscReal   C,Cn,Cp;
+  SVMLossType loss_type;
 
   PetscFunctionBegin;
+  TRY( SVMGetC(svm,&C) );
+  TRY( SVMGetCp(svm,&Cp) );
+  TRY( SVMGetCn(svm,&Cn) );
+  TRY( SVMGetLossType(svm,&loss_type) );
+
+  TRY( SVMGetQPS(svm,&qps) );
+  TRY( QPSGetQP(qps,&qp) );
+  /* Update upper boundary or Hessian */
+  if (loss_type == SVM_L1) {
+    TRY( QPGetBox(qp,NULL,NULL,&ub) );
+    /* Update upper boundary */
+    if (C > 0.) {
+      TRY( VecSet(ub,C) );
+    } else {
+      TRY( VecGetSubVector(ub,svm_binary->is_p,&ub_p) );
+      TRY( VecSet(ub_p,Cp) );
+      TRY( VecRestoreSubVector(ub,svm_binary->is_p,&ub_p) );
+
+      TRY( VecGetSubVector(ub,svm_binary->is_n,&ub_n) );
+      TRY( VecSet(ub_n,Cn) );
+      TRY( VecRestoreSubVector(ub,svm_binary->is_n,&ub_n) );
+    }
+  } else {
+    /* Update Hessian */
+    if (C > 0.) {
+      TRY( VecSet(svm_binary->diag,1. / C) );
+    } else {
+      TRY( VecGetSubVector(svm_binary->diag,svm_binary->is_p,&diag_p) );
+      TRY( VecSet(diag_p,1. / Cp) );
+      TRY( VecRestoreSubVector(svm_binary->diag,svm_binary->is_p,&diag_p) );
+
+      TRY( VecGetSubVector(svm_binary->diag,svm_binary->is_n,&diag_n) );
+      TRY( VecSet(diag_n,1. / Cn) );
+      TRY( VecRestoreSubVector(svm_binary->diag,svm_binary->is_n,&diag_n) );
+    }
+    TRY( MatDiagonalSet(svm_binary->D,svm_binary->diag,INSERT_VALUES) );
+  }
+
+  /* Update initial guess */
+  TRY( QPGetSolutionVector(qp,&x_init) );
+  if (svm->warm_start) {
+    if (C > 0.) {
+      TRY( VecScale(x_init,1. / svm->C_old) );
+      TRY( VecScale(x_init,C) );
+    } else {
+      TRY( VecGetSubVector(x_init,svm_binary->is_p,&x_init_p) );
+      TRY( VecScale(x_init_p,1. / svm->Cp_old) );
+      TRY( VecScale(x_init_p,Cp) );
+      TRY( VecRestoreSubVector(x_init,svm_binary->is_p,&x_init_p) );
+
+      TRY( VecGetSubVector(x_init,svm_binary->is_n,&x_init_n) );
+      TRY( VecScale(x_init_n,1. / svm->Cn_old) );
+      TRY( VecScale(x_init_n,Cn) );
+      TRY( VecRestoreSubVector(x_init,svm_binary->is_n,&x_init_n) );
+    }
+  } else {
+    if (C > 0.) {
+      TRY( VecSet(x_init,C - 100 * PETSC_MACHINE_EPSILON) );
+    } else {
+      TRY( VecGetSubVector(x_init,svm_binary->is_p,&x_init_p) );
+      TRY( VecSet(x_init_p,Cp - 100 * PETSC_MACHINE_EPSILON) );
+      TRY( VecRestoreSubVector(x_init,svm_binary->is_p,&x_init_p) );
+
+      TRY( VecGetSubVector(x_init,svm_binary->is_n,&x_init_n) );
+      TRY( VecSet(x_init_n,Cn - 100 * PETSC_MACHINE_EPSILON) );
+      TRY( VecRestoreSubVector(x_init,svm_binary->is_n,&x_init_n) );
+    }
+  }
+  svm->setupcalled     = PETSC_TRUE;
+  svm->posttraincalled = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
 
