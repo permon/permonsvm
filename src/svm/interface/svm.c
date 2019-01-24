@@ -37,6 +37,10 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
 
   svm->C          = 1.;
   svm->C_old      = 1.;
+  svm->Cp         = 0.;
+  svm->Cp_old     = 0.;
+  svm->Cn         = 0.;
+  svm->Cn_old     = 0.;
   svm->LogCBase   = 2.;
   svm->LogCMin    = -2.;
   svm->LogCMax    = 2.;
@@ -433,6 +437,136 @@ PetscErrorCode SVMGetC(SVM svm,PetscReal *C)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidRealPointer(C,2);
   *C = svm->C;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetCp"
+/*@
+  SVMSetCp - Sets the value of penalty C for positive samples.
+
+  Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+- Cp - the value of penalty C for positive samples
+
+  Level: intermediate
+
+.seealso SVMGetCp(), SVMSetCn(), SVMGetCn(), SVMGridSearch()
+@*/
+PetscErrorCode SVMSetCp(SVM svm,PetscReal Cp)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveReal(svm,Cp,2);
+
+  if (svm->Cp == Cp) PetscFunctionReturn(0);
+
+  if (Cp <= 0 && Cp != PETSC_DECIDE && Cp != PETSC_DEFAULT) {
+    FLLOP_SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
+  }
+
+  if (svm->Cp_old != 0.) {
+    svm->Cp_old = svm->Cp;
+  } else {
+    svm->Cp_old = Cp;
+  }
+  svm->Cp          = Cp;
+  svm->setupcalled = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetCp"
+/*@
+  SVMGetCp - Returns the value of penalty C for positive samples.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. Cp - the value of penalty C for positive samples
+
+  Level: intermediate
+
+.seealso SVMSetCp(), SVMSetCn(), SVMGetCn(), SVMGridSearch()
+@*/
+PetscErrorCode SVMGetCp(SVM svm,PetscReal *Cp)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidRealPointer(Cp,2);
+  *Cp = svm->Cp;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetCn"
+/*@
+  SVMSetCn - Sets the value of penalty C for negative samples.
+
+  Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+- Cp - the value of penalty C for negative samples
+
+  Level: intermediate
+
+.seealso SVMSetCp(), SVMGetCp(), SVMGetCn(), SVMGridSearch()
+@*/
+PetscErrorCode SVMSetCn(SVM svm,PetscReal Cn)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveReal(svm,Cn,2);
+
+  if (svm->Cn == Cn) PetscFunctionReturn(0);
+
+  if (Cn <= 0 && Cn != PETSC_DECIDE && Cn != PETSC_DEFAULT) {
+    FLLOP_SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
+  }
+
+  if (svm->Cn_old != 0.) {
+    svm->Cn_old = svm->Cn;
+  } else {
+    svm->Cn_old = Cn;
+  }
+  svm->Cn          = Cn;
+  svm->setupcalled = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetCn"
+/*@
+  SVMGetCn - Returns the value of penalty C for negative samples.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. Cn - the value of penalty C for negative samples
+
+  Level: intermediate
+
+.seealso SVMSetCp(), SVMSetCn(), SVMSetCn(), SVMGridSearch()
+@*/
+PetscErrorCode SVMGetCn(SVM svm,PetscReal *Cn)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidRealPointer(Cn,2);
+  *Cn = svm->Cn;
   PetscFunctionReturn(0);
 }
 
