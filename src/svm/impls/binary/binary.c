@@ -1243,6 +1243,15 @@ PetscErrorCode SVMGetModelScore_Binary(SVM svm,ModelScore score_type,PetscReal *
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMInitGridSearch_Binary_Private"
+PetscErrorCode SVMInitGridSearch_Binary_Private(SVM svm,PetscInt *n,PetscInt *m,PetscReal *c_arr[])
+{
+
+  PetscFunctionBegin;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMGridSearch_Binary"
 PetscErrorCode SVMGridSearch_Binary(SVM svm)
 {
