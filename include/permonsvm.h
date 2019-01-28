@@ -178,6 +178,8 @@ FLLOP_EXTERN PetscErrorCode SVMGetModelScore(SVM,ModelScore,PetscReal *);
 FLLOP_EXTERN PetscErrorCode SVMComputeHingeLoss(SVM svm);
 FLLOP_EXTERN PetscErrorCode SVMComputeModelParams(SVM svm);
 
+FLLOP_EXTERN PetscErrorCode SVMSetHyperOpt(SVM,PetscBool);
+
 FLLOP_EXTERN PetscErrorCode SVMGridSearch(SVM);
 FLLOP_EXTERN PetscErrorCode SVMSetLogCMin(SVM,PetscReal);
 FLLOP_EXTERN PetscErrorCode SVMGetLogCMin(SVM,PetscReal *);

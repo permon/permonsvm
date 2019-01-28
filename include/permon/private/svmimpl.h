@@ -47,6 +47,7 @@ struct _p_SVM {
 
   PetscBool           warm_start;
 
+  PetscBool           hyperoptset;
   PetscBool           autoposttrain;
   PetscBool           posttraincalled;
   PetscBool           setupcalled;

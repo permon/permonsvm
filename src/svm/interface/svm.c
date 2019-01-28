@@ -53,6 +53,7 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
   svm->loss_type  = SVM_L1;
 
   svm->penalty_type   = 1;
+  svm->hyperoptset    = PETSC_FALSE;
   svm->cv_type        = CROSS_VALIDATION_KFOLD;
   svm->cv_model_score = MODEL_ACCURACY;
   svm->nfolds         = 5;
@@ -1923,6 +1924,30 @@ PetscErrorCode SVMGetModelScore(SVM svm,ModelScore score_type,PetscReal *s)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
   TRY( PetscUseMethod(svm,"SVMGetModelScore_C",(SVM,ModelScore,PetscReal *),(svm,score_type,s)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetHyperOpt"
+/*@
+  SVMSetHyperOpt - Set flag specifying whether optimization of hyperparameter will be performed.
+  It is set to PETSC_FALSE by default.
+
+  Collective on SVM
+
+  InputParameters:
++ svm - SVM context
+- flg - flg
+
+.seealso SVMGridSearch(), SVMCrossValidation(), SVM
+@*/
+PetscErrorCode SVMSetHyperOpt(SVM svm,PetscBool flg)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveBool(svm,2,flg);
+  svm->hyperoptset = flg;
   PetscFunctionReturn(0);
 }
 
