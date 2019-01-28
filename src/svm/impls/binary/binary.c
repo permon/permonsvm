@@ -1330,8 +1330,9 @@ PetscErrorCode SVMGridSearch_Binary(SVM svm)
 
   TRY( PetscMalloc1((n / m),&score) );
   TRY( PetscMemzero(score,(n / m) * sizeof(PetscReal)) );
-  /*TRY( SVMCrossValidation(svm,c_arr,n,score) );
-  svm->C = C_best;*/
+
+  TRY( SVMCrossValidation(svm,c_arr,n,score) );
+
   TRY( PetscFree(c_arr) );
   TRY( PetscFree(score) );
   PetscFunctionReturn(0);
