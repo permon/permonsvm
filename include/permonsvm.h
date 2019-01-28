@@ -190,6 +190,12 @@ FLLOP_EXTERN PetscErrorCode SVMSetLogCpMax(SVM,PetscReal);
 FLLOP_EXTERN PetscErrorCode SVMGetLogCpMax(SVM,PetscReal *);
 FLLOP_EXTERN PetscErrorCode SVMSetLogCpBase(SVM,PetscReal);
 FLLOP_EXTERN PetscErrorCode SVMGetLogCpBase(SVM,PetscReal *);
+FLLOP_EXTERN PetscErrorCode SVMSetLogCnMin(SVM,PetscReal);
+FLLOP_EXTERN PetscErrorCode SVMGetLogCnMin(SVM,PetscReal *);
+FLLOP_EXTERN PetscErrorCode SVMSetLogCnMax(SVM,PetscReal);
+FLLOP_EXTERN PetscErrorCode SVMGetLogCnMax(SVM,PetscReal *);
+FLLOP_EXTERN PetscErrorCode SVMSetLogCnBase(SVM,PetscReal);
+FLLOP_EXTERN PetscErrorCode SVMGetLogCnBase(SVM,PetscReal *);
 
 FLLOP_EXTERN PetscErrorCode SVMSetCrossValidationScoreType(SVM,ModelScore);
 FLLOP_EXTERN PetscErrorCode SVMGetCrossValidationScoreType(SVM,ModelScore *);
