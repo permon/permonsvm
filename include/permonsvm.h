@@ -152,6 +152,7 @@ FLLOP_EXTERN PetscErrorCode SVMSetLossType(SVM,SVMLossType);
 FLLOP_EXTERN PetscErrorCode SVMGetLossType(SVM,SVMLossType *);
 FLLOP_EXTERN PetscErrorCode SVMSetPenaltyType(SVM,PetscInt);
 FLLOP_EXTERN PetscErrorCode SVMGetPenaltyType(SVM,PetscInt *);
+FLLOP_EXTERN PetscErrorCode SVMSetPenalty(SVM,PetscInt,PetscReal []);
 FLLOP_EXTERN PetscErrorCode SVMSetC(SVM,PetscReal);
 FLLOP_EXTERN PetscErrorCode SVMGetC(SVM,PetscReal *);
 FLLOP_EXTERN PetscErrorCode SVMSetCp(SVM,PetscReal);

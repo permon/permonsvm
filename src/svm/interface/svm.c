@@ -673,6 +673,53 @@ PetscErrorCode SVMGetCn(SVM svm,PetscReal *Cn)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMSetPenalty"
+/*@
+  SVMSetPenalty - Sets C or Cp and Cn values.
+
+  Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+. m - number of penalties
+- p - values of penalties
+
+  Level: intermediate
+
+  Notes:
+    m == 1: C = p[0] or Cp = p[0] and Cn = p[0]
+    m == 2: Cp = p[0] and Cn = p[1]
+
+.seealso SVMSetC(), SVMSetCp(), SVMSetCn(), SVM
+@*/
+PetscErrorCode SVMSetPenalty(SVM svm,PetscInt m,PetscReal p[])
+{
+  PetscInt penalty_type;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  if (m > 2) FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be 1 or 2");
+  PetscValidLogicalCollectiveInt(svm,m,2);
+  PetscValidLogicalCollectiveReal(svm,p[0],3);
+  if (m == 2) PetscValidLogicalCollectiveReal(svm,p[1],3);
+
+  TRY( SVMGetPenaltyType(svm,&penalty_type) );
+
+  if (penalty_type == 1) {
+    TRY( SVMSetC(svm,p[0]) );
+  } else {
+    if (m == 1) {
+      TRY( SVMSetCp(svm,p[0]) );
+      TRY( SVMSetCn(svm,p[0]) );
+    } else {
+      TRY( SVMSetCp(svm,p[0]) );
+      TRY( SVMSetCn(svm,p[1]) );
+    }
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetLogCBase"
 /*@
   SVMSetLogCBase - Sets the value of penalty C step.
