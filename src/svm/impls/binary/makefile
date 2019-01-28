@@ -3,7 +3,7 @@ ALL: lib
 
 CFLAGS   =
 FFLAGS   =
-SOURCEC  = binary.c cv.c
+SOURCEC  = binary.c crossvalidation.c
 SOURCEF  =
 SOURCEH  = binaryimpl.h
 OBJSC    = ${SOURCEC:.c=.o}
