@@ -424,13 +424,18 @@ PetscErrorCode SVMUpdate_Binary_Private(SVM svm)
   Vec         diag_p,diag_n;
   Vec         x_init,x_init_p,x_init_n;
 
+  PetscInt    p;
   PetscReal   C,Cn,Cp;
   SVMLossType loss_type;
 
   PetscFunctionBegin;
-  TRY( SVMGetC(svm,&C) );
-  TRY( SVMGetCp(svm,&Cp) );
-  TRY( SVMGetCn(svm,&Cn) );
+  TRY( SVMGetPenaltyType(svm,&p) );
+  if (p == 1) {
+    TRY( SVMGetC(svm,&C) );
+  } else {
+    TRY( SVMGetCp(svm, &Cp) );
+    TRY( SVMGetCn(svm, &Cn) );
+  }
   TRY( SVMGetLossType(svm,&loss_type) );
 
   TRY( SVMGetQPS(svm,&qps) );
@@ -439,7 +444,7 @@ PetscErrorCode SVMUpdate_Binary_Private(SVM svm)
   if (loss_type == SVM_L1) {
     TRY( QPGetBox(qp,NULL,NULL,&ub) );
     /* Update upper boundary */
-    if (C > 0.) {
+    if (p == 1) {
       TRY( VecSet(ub,C) );
     } else {
       TRY( VecGetSubVector(ub,svm_binary->is_p,&ub_p) );
@@ -452,7 +457,7 @@ PetscErrorCode SVMUpdate_Binary_Private(SVM svm)
     }
   } else {
     /* Update Hessian */
-    if (C > 0.) {
+    if (p == 1) {
       TRY( VecSet(svm_binary->diag,1. / C) );
     } else {
       TRY( VecGetSubVector(svm_binary->diag,svm_binary->is_p,&diag_p) );
@@ -469,7 +474,7 @@ PetscErrorCode SVMUpdate_Binary_Private(SVM svm)
   /* Update initial guess */
   TRY( QPGetSolutionVector(qp,&x_init) );
   if (svm->warm_start) {
-    if (C > 0.) {
+    if (p == 1) {
       TRY( VecScale(x_init,1. / svm->C_old) );
       TRY( VecScale(x_init,C) );
     } else {
@@ -484,7 +489,7 @@ PetscErrorCode SVMUpdate_Binary_Private(SVM svm)
       TRY( VecRestoreSubVector(x_init,svm_binary->is_n,&x_init_n) );
     }
   } else {
-    if (C > 0.) {
+    if (p == 1) {
       TRY( VecSet(x_init,C - 100 * PETSC_MACHINE_EPSILON) );
     } else {
       TRY( VecGetSubVector(x_init,svm_binary->is_p,&x_init_p) );
@@ -525,6 +530,7 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   PetscInt    n,m,N;
 
   PetscReal   C,Cp,Cn;
+  PetscInt    p;        /* penalty type */
   PetscInt    svm_mod;
   SVMLossType loss_type;
 
@@ -536,20 +542,20 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
 
   TRY( SVMGetLossType(svm,&loss_type) );
   TRY( SVMGetMod(svm,&svm_mod) );
-  TRY( SVMGetC(svm,&C) );
-  TRY( SVMGetCp(svm,&Cp) );
-  TRY( SVMGetCn(svm,&Cn) );
+  TRY( SVMGetPenaltyType(svm,&p) );
 
   if (svm->posttraincalled) {
     TRY( SVMUpdate_Binary_Private(svm) );
     PetscFunctionReturn(0);
   }
 
-  if (C == PETSC_DECIDE) {
+  if (svm->hyperoptset) {
     TRY( SVMGridSearch(svm) );
+  }
+
+  if (p == 1) {
     TRY( SVMGetC(svm,&C) );
-  } else if (Cp == PETSC_DECIDE && Cn == PETSC_DECIDE) {
-    TRY( SVMGridSearch(svm) );
+  } else {
     TRY( SVMGetCp(svm,&Cp) );
     TRY( SVMGetCn(svm,&Cn) );
   }
@@ -587,7 +593,7 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
 
   if (loss_type == SVM_L1) {
     TRY( VecDuplicate(lb,&ub) );
-    if (C > 0) {
+    if (p == 1) {
       TRY( VecSet(ub,C) );
     } else {
       TRY( VecGetSubVector(ub,svm_binary->is_p,&ub_p) );
@@ -610,7 +616,7 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
     /* Set values of diagonal matrix */
     TRY( VecDuplicate(lb,&svm_binary->diag) );
     diag = svm_binary->diag;
-    if (C > 0) {
+    if (p == 1) {
       TRY( VecSet(diag,1. / C) );
     } else {
       TRY( VecGetSubVector(diag,svm_binary->is_p,&diag_p) );
@@ -632,7 +638,7 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   }
 
   TRY( VecDuplicate(lb,&x_init) );
-  if (C > 0) {
+  if (p == 1) {
     TRY( VecSet(x_init,C - 100 * PETSC_MACHINE_EPSILON) );
   } else {
     TRY( VecGetSubVector(x_init,svm_binary->is_p,&x_init_p) );
