@@ -1327,8 +1327,8 @@ PetscErrorCode SVMInitGridSearch_Binary_Private(SVM svm,PetscInt *n,PetscReal *c
 PetscErrorCode SVMGridSearch_Binary(SVM svm)
 {
   PetscReal *c_arr,*score;
-  PetscReal score_max,C_best;
-  PetscInt  m,n,i;
+  PetscReal score_best;
+  PetscInt  m,n,i,p;
 
   PetscFunctionBegin;
   TRY( SVMInitGridSearch_Binary_Private(svm,&n,&c_arr) );
@@ -1338,6 +1338,18 @@ PetscErrorCode SVMGridSearch_Binary(SVM svm)
   TRY( PetscMemzero(score,(n / m) * sizeof(PetscReal)) );
 
   TRY( SVMCrossValidation(svm,c_arr,n,score) );
+
+  /* Select penalty */
+  n /= m;
+  score_best = score[0];
+  p = 0;
+  for (i = 1; i < n; ++i) {
+    if (score[i] > score_best) {
+      p = i;
+      score_best = score[i];
+    }
+  }
+  TRY( SVMSetPenalty(svm,m,&c_arr[p * m]) );
 
   TRY( PetscFree(c_arr) );
   TRY( PetscFree(score) );
