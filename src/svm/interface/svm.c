@@ -171,6 +171,7 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
 {
   PetscErrorCode      ierr;
 
+  PetscInt            penalty_type;
   PetscReal           C,logC_min,logC_max,logC_base;
   PetscBool           flg,warm_start;
 
@@ -184,6 +185,10 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
   ierr = PetscObjectOptionsBegin((PetscObject)svm);CHKERRQ(ierr);
+  TRY( PetscOptionsInt("-svm_penalty_type","Set type of misclasification error penalty.","SVMSetPenaltyType",svm->penalty_type,&penalty_type,&flg) );
+  if (flg) {
+    TRY( SVMSetPenaltyType(svm,penalty_type) );
+  }
   TRY( PetscOptionsReal("-svm_C","Set SVM C (C).","SVMSetC",svm->C,&C,&flg) );
   if (flg) {
     TRY( SVMSetC(svm,C) );
