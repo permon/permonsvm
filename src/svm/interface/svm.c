@@ -810,6 +810,167 @@ PetscErrorCode SVMGetLogCMax(SVM svm,PetscReal *LogCMax)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMSetLogCpBase"
+/*@
+  SVMSetLogCpBase - Sets the value of penalty Cp step.
+
+  Logically Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+- LogCpBase - the value of penalty Cp step
+
+  Level: beginner
+
+.seealso SVMSetCp(), SVMGetLogCpBase(), SVMSetLogCpMin(), SVMSetLogCpMax(), SVMGridSearch()
+@*/
+PetscErrorCode SVMSetLogCpBase(SVM svm,PetscReal LogCpBase)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveReal(svm,LogCpBase,2);
+
+  if (LogCpBase <= 0) FLLOP_SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
+  svm->LogCpBase = LogCpBase;
+  svm->setupcalled = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetLogCpBase"
+/*@
+  SVMGetLogCpBase - Returns the value of penalty Cp step.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. LogCpBase - the value of penalty Cp step
+
+  Level: beginner
+
+.seealso SVMGetCp(), SVMGetLogCpMin(), SVMGetLogCpMax(), SVMGridSearch()
+@*/
+PetscErrorCode SVMGetLogCpBase(SVM svm,PetscReal *LogCpBase)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidRealPointer(LogCpBase,2);
+  *LogCpBase = svm->LogCpBase;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetLogCpMin"
+/*@
+  SVMSetLogCpMin - Sets the minimum value of log Cp penalty.
+
+  Logically Collective on SVM
+
+  Input Parameter:
++ svm - SVM context
+- LogCpMin - the minimum value of log C penalty
+
+  Level: beginner
+
+.seealso SVMSetCp(), SVMSetLogCpBase(), SVMSetLogCpMax(), SVMGridSearch()
+@*/
+PetscErrorCode SVMSetLogCpMin(SVM svm,PetscReal LogCpMin)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveReal(svm,LogCpMin,2);
+  svm->LogCpMin = LogCpMin;
+  svm->setupcalled = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetLogCpMin"
+/*@
+  SVMGetLogCpMin - Returns the minimum value of log Cp penalty.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. LogCpMin - the minimum value of log Cp penalty
+
+  Level: beginner
+
+.seealso SVMGetCp(), SVMGetLogCpBase(), SVMGetLogCpMax(), SVMGridSearch()
+@*/
+PetscErrorCode SVMGetLogCpMin(SVM svm,PetscReal *LogCpMin)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidRealPointer(LogCpMin,2);
+  *LogCpMin = svm->LogCpMin;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetLogCpMax"
+/*@
+  SVMSetLogCpMax - Sets the maximum value of log Cp penalty.
+
+  Logically Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+- LogCpMax - the maximum value of log Cp penalty
+
+  Level: beginner
+
+.seealso SVMSetCp(), SVMSetLogCpBase(), SVMSetLogCpMin(), SVMGridSearch()
+@*/
+PetscErrorCode SVMSetLogCpMax(SVM svm,PetscReal LogCpMax)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveReal(svm,LogCpMax,2);
+  svm->LogCpMax = LogCpMax;
+  svm->setupcalled = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetLogCpMax"
+/*@
+  SVMGetLogCpMax - Returns the maximum value of log Cp penalty.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. LogCMax - the maximum value of log Cp penalty
+
+  Level: beginner
+
+.seealso SVMGetCp(), SVMGetLogCpBase(), SVMGetLogCpMin(), SVMGridSearch()
+@*/
+PetscErrorCode SVMGetLogCpMax(SVM svm,PetscReal *LogCpMax)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidRealPointer(LogCpMax,2);
+  *LogCpMax = svm->LogCpMax;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetLossType"
 /*@
    SVMSetLossType - Sets the type of the hinge loss function.
