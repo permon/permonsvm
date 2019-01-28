@@ -40,6 +40,7 @@ struct _p_SVM {
   PetscReal           Cn,Cn_old;
   PetscReal           LogCMin,LogCMax,LogCBase;
   PetscReal           LogCpMin,LogCpMax,LogCpBase;
+  PetscReal           LogCnMin,LogCnMax,LogCnBase;
   PetscInt            nfolds;
 
   SVMLossType         loss_type;
