@@ -180,6 +180,7 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   PetscErrorCode      ierr;
 
   PetscInt            penalty_type;
+  PetscBool           hyperoptset;
   PetscReal           C,logC_min,logC_max,logC_base;
   PetscBool           flg,warm_start;
 
@@ -196,6 +197,10 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   TRY( PetscOptionsInt("-svm_penalty_type","Set type of misclasification error penalty.","SVMSetPenaltyType",svm->penalty_type,&penalty_type,&flg) );
   if (flg) {
     TRY( SVMSetPenaltyType(svm,penalty_type) );
+  }
+  TRY( PetscOptionsBool("-svm_hyper_opt","Specify whether hyperparameter optimization will be performed.","SVMSetHyperOpt",svm->hyperoptset,&hyperoptset,&flg) );
+  if (flg) {
+    TRY( SVMSetHyperOpt(svm,hyperoptset) );
   }
   TRY( PetscOptionsReal("-svm_C","Set SVM C (C).","SVMSetC",svm->C,&C,&flg) );
   if (flg) {
