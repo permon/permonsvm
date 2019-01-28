@@ -44,6 +44,12 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
   svm->LogCBase   = 2.;
   svm->LogCMin    = -2.;
   svm->LogCMax    = 2.;
+  svm->LogCpBase  = 2.;
+  svm->LogCpMin   = -2.;
+  svm->LogCpMax   = 2.;
+  svm->LogCnBase  = 2.;
+  svm->LogCnMin   = -2.;
+  svm->LogCnMax   = 2.;
   svm->loss_type  = SVM_L1;
 
   svm->cv_type        = CROSS_VALIDATION_KFOLD;
