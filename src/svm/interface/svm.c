@@ -213,6 +213,18 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   if (flg) {
     TRY( SVMSetLogCBase(svm,logC_base) );
   }
+  TRY( PetscOptionsReal("-svm_logCp_min","Set SVM minimal Cp value (LogCpMin).","SVMSetLogCpMin",svm->LogCpMin,&logC_min,&flg) );
+  if (flg) {
+    TRY( SVMSetLogCpMin(svm,logC_min) );
+  }
+  TRY( PetscOptionsReal("-svm_logCp_max","Set SVM maximal Cp value (LogCpMax).","SVMSetLogCpMax",svm->LogCpMax,&logC_max,&flg) );
+  if (flg) {
+    TRY( SVMSetLogCpMax(svm,logC_max) );
+  }
+  TRY( PetscOptionsReal("-svm_logCp_base","Set power base of SVM parameter Cp (LogCpBase).","SVMSetLogCpBase",svm->LogCpBase,&logC_base,&flg) );
+  if (flg) {
+    TRY( SVMSetLogCpBase(svm,logC_base) );
+  }
   TRY( PetscOptionsInt("-svm_nfolds","Set number of folds (nfolds).","SVMSetNfolds",svm->nfolds,&nfolds,&flg) );
   if (flg) {
     TRY( SVMSetNfolds(svm,nfolds) );
