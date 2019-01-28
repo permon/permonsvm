@@ -158,9 +158,10 @@ PetscErrorCode SVMViewScore_Binary(SVM svm,PetscViewer v)
 {
   MPI_Comm  comm;
 
-  PetscReal   C;
+  PetscReal   C,Cp,Cn;
   PetscInt    mod;
   SVMLossType loss_type;
+  PetscInt    p; /* penalty type */
 
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
   PetscBool isascii;
@@ -171,7 +172,7 @@ PetscErrorCode SVMViewScore_Binary(SVM svm,PetscViewer v)
 
   TRY( PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERASCII,&isascii) );
   if (isascii) {
-    TRY( SVMGetC(svm,&C) );
+    TRY( SVMGetPenaltyType(svm,&p) );
     TRY( SVMGetMod(svm,&mod) );
     TRY( SVMGetLossType(svm,&loss_type) );
 
@@ -179,8 +180,14 @@ PetscErrorCode SVMViewScore_Binary(SVM svm,PetscViewer v)
     TRY( PetscObjectPrintClassNamePrefixType((PetscObject) svm,v) );
 
     TRY( PetscViewerASCIIPushTab(v) );
-    TRY( PetscViewerASCIIPrintf(v,"model performance score with training parameters C=%.3f, mod=%d, loss=%s:\n",C,mod,SVMLossTypes[loss_type]) );
-
+    if (p == 1) {
+      TRY( SVMGetC(svm,&C) );
+      TRY( PetscViewerASCIIPrintf(v,"model performance score with training parameters C=%.3f, mod=%d, loss=%s:\n",C,mod,SVMLossTypes[loss_type]) );
+    } else {
+      TRY( SVMGetCp(svm,&Cp) );
+      TRY( SVMGetCn(svm,&Cn) );
+      TRY( PetscViewerASCIIPrintf(v,"model performance score with training parameters C+=%.3f, C-=%.3f, mod=%d, loss=%s:\n",Cp,Cn,mod,SVMLossTypes[loss_type]) );
+    }
     TRY( PetscViewerASCIIPushTab(v) );
 
     TRY( PetscViewerASCIIPrintf(v,"Confusion matrix:\n") );
