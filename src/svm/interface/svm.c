@@ -37,10 +37,10 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
 
   svm->C          = 1.;
   svm->C_old      = 1.;
-  svm->Cp         = 0.;
-  svm->Cp_old     = 0.;
-  svm->Cn         = 0.;
-  svm->Cn_old     = 0.;
+  svm->Cp         = 2.;
+  svm->Cp_old     = 2.;
+  svm->Cn         = 1.;
+  svm->Cn_old     = 1.;
   svm->LogCBase   = 2.;
   svm->LogCMin    = -2.;
   svm->LogCMax    = 2.;
@@ -506,20 +506,12 @@ PetscErrorCode SVMSetC(SVM svm,PetscReal C)
 
   if (svm->C == C) PetscFunctionReturn(0);
 
-  if (C <= 0 && C != PETSC_DECIDE && C != PETSC_DEFAULT) {
+  if (C <= 0) {
     FLLOP_SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
   }
 
-  if (svm->C != 0.) {
-    svm->C_old = svm->C;
-  } else {
-    svm->C_old = C;
-  }
-  svm->C      = C;
-  svm->Cp     = 0.;
-  svm->Cp_old = 0.;
-  svm->Cn     = 0.;
-  svm->Cn_old = 0.;
+  svm->C_old = svm->C;
+  svm->C     = C;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
@@ -575,18 +567,12 @@ PetscErrorCode SVMSetCp(SVM svm,PetscReal Cp)
 
   if (svm->Cp == Cp) PetscFunctionReturn(0);
 
-  if (Cp <= 0 && Cp != PETSC_DECIDE && Cp != PETSC_DEFAULT) {
+  if (Cp <= 0) {
     FLLOP_SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
   }
 
-  if (svm->Cp_old != 0.) {
-    svm->Cp_old = svm->Cp;
-  } else {
-    svm->Cp_old = Cp;
-  }
-  svm->Cp          = Cp;
-  svm->C           = 0.;
-  svm->C_old       = 0.;
+  svm->Cp_old = svm->Cp;
+  svm->Cp     = Cp;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
@@ -642,18 +628,12 @@ PetscErrorCode SVMSetCn(SVM svm,PetscReal Cn)
 
   if (svm->Cn == Cn) PetscFunctionReturn(0);
 
-  if (Cn <= 0 && Cn != PETSC_DECIDE && Cn != PETSC_DEFAULT) {
+  if (Cn <= 0) {
     FLLOP_SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
   }
 
-  if (svm->Cn_old != 0.) {
-    svm->Cn_old = svm->Cn;
-  } else {
-    svm->Cn_old = Cn;
-  }
-  svm->Cn          = Cn;
-  svm->C           = 0.;
-  svm->C_old       = 0.;
+  svm->Cn_old = svm->Cn;
+  svm->Cn     = Cn;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
