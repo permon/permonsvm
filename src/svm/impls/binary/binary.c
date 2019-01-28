@@ -1244,7 +1244,7 @@ PetscErrorCode SVMGetModelScore_Binary(SVM svm,ModelScore score_type,PetscReal *
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMInitGridSearch_Binary_Private"
-PetscErrorCode SVMInitGridSearch_Binary_Private(SVM svm,PetscInt *n,PetscInt *m,PetscReal *c_arr[])
+PetscErrorCode SVMInitGridSearch_Binary_Private(SVM svm,PetscInt *n,PetscReal *c_arr[])
 {
   PetscInt  penalty_type;
 
@@ -1311,7 +1311,6 @@ PetscErrorCode SVMInitGridSearch_Binary_Private(SVM svm,PetscInt *n,PetscInt *m,
     }
   }
 
-  *m = penalty_type;
   *n = n_inner;
   *c_arr = c_arr_inner;
   PetscFunctionReturn(0);
@@ -1321,27 +1320,17 @@ PetscErrorCode SVMInitGridSearch_Binary_Private(SVM svm,PetscInt *n,PetscInt *m,
 #define __FUNCT__ "SVMGridSearch_Binary"
 PetscErrorCode SVMGridSearch_Binary(SVM svm)
 {
-
   PetscReal *c_arr,*score;
   PetscReal score_max,C_best;
   PetscInt  m,n,i;
 
   PetscFunctionBegin;
-  TRY( SVMInitGridSearch_Binary_Private(svm,&n,&m,&c_arr) );
+  TRY( SVMInitGridSearch_Binary_Private(svm,&n,&c_arr) );
+  TRY( SVMGetPenaltyType(svm,&m) );
 
-  TRY( PetscMalloc1(n,&score) );
-  TRY( PetscMemzero(score,n * sizeof(PetscReal)) );
+  TRY( PetscMalloc1((n / m),&score) );
+  TRY( PetscMemzero(score,(n / m) * sizeof(PetscReal)) );
   /*TRY( SVMCrossValidation(svm,c_arr,n,score) );
-
-  C_best = c_arr[0];
-  score_max = score[0];
-  for (i = 1; i < n; ++i) {
-    if (score[i] > score_max) {
-      score_max = score[i];
-      C_best = c_arr[i];
-    }
-  }
-
   svm->C = C_best;*/
   TRY( PetscFree(c_arr) );
   TRY( PetscFree(score) );
