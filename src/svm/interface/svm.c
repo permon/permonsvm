@@ -388,6 +388,59 @@ PetscErrorCode SVMGetNfolds(SVM svm,PetscInt *nfolds)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMSetPenaltyType"
+/*@
+  SVMSetPenaltyType - Sets type of penalty that penalizes misclassification error.
+
+  Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+- type - penalty type
+
+.seealso SVMSetC(), SVMSetCp(), SVMSetCn(), SVM
+@*/
+PetscErrorCode SVMSetPenaltyType(SVM svm,PetscInt type)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveInt(svm,type,2);
+  if (svm->penalty_type == type) PetscFunctionReturn(0);
+
+  if (type != 1 && type != 2) FLLOP_SETERRQ1(((PetscObject) svm)->comm,PETSC_ERR_SUP,"Type of penalty (%d) is not supported. It must be 1 or 2",type);
+
+  svm->penalty_type = type;
+  svm->setupcalled = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetPenaltyType"
+/*@
+  SVMGetPenaltyType - Returns type of penalty that penalizes misclassification error.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. type - penalty type
+
+.seealso SVMSetC(), SVMSetCp(), SVMSetCn(), SVM
+@*/
+PetscErrorCode SVMGetPenaltyType(SVM svm,PetscInt *type)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidRealPointer(type,2);
+  *type = svm->penalty_type;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetC"
 /*@
   SVMSetC - Sets the value of penalty C.

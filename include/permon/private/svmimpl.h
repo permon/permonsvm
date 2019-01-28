@@ -34,6 +34,7 @@ struct _p_SVM {
 
   ModelScore          cv_model_score;
   CrossValidationType cv_type;
+  PetscInt            penalty_type;
   PetscReal           C,C_old;
   PetscReal           Cp,Cp_old;
   PetscReal           Cn,Cn_old;
