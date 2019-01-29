@@ -28,14 +28,8 @@ PetscErrorCode SVMReset_Binary(SVM svm)
   svm_binary = (SVM_Binary *) svm->data;
 
   if (svm_binary->qps) {
-    if (svm_binary->svm_mod == 1) {
-      QPS  qps_inner;
-      TRY( QPSSMALXEGetInnerQPS(svm_binary->qps,&qps_inner) );
-      TRY( QPSMonitorCancel(qps_inner) );
-    } else {
-      TRY( QPSMonitorCancel(svm_binary->qps) );
-    }
-    TRY( QPSReset(svm_binary->qps) );
+    TRY( QPSDestroy(&svm_binary->qps) );
+    svm_binary->qps = NULL;
   }
   TRY( VecDestroy(&svm_binary->w) );
   TRY( MatDestroy(&svm_binary->Xt_training) );
@@ -780,12 +774,9 @@ PetscErrorCode SVMAppendOptionsPrefix_Binary(SVM svm,const char prefix[])
 #define __FUNCT__ "SVMGetOptionsPrefix_Binary"
 PetscErrorCode SVMGetOptionsPrefix_Binary(SVM svm,const char *prefix[])
 {
-  QPS qps;
 
   PetscFunctionBegin;
   TRY( PetscObjectGetOptionsPrefix((PetscObject) svm,prefix) );
-  TRY( SVMGetQPS(svm,&qps) );
-  TRY( QPSGetOptionsPrefix(qps,prefix) );
   PetscFunctionReturn(0);
 }
 
