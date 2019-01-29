@@ -1618,8 +1618,9 @@ PetscErrorCode SVMMonitorScores_Binary(QPS qps,PetscInt it,PetscReal rnorm,void 
   TRY( PetscViewerASCIIPushTab(v) );
   TRY( PetscViewerASCIIPrintf(v,"precision_test=%.2f%%,",svm_binary->model_scores[1] * 100.) );
   TRY( PetscViewerASCIIPrintf(v,"sensitivity_test=%.2f%%,",svm_binary->model_scores[2] * 100.) );
-  TRY( PetscViewerASCIIPrintf(v,"F1.0_score_test=%.2f,",svm_binary->model_scores[3]) );
-  TRY( PetscViewerASCIIPrintf(v,"mmc_test=%.2f\n",svm_binary->model_scores[4]) );
+  TRY( PetscViewerASCIIPrintf(v,"F1_test=%.2f,",svm_binary->model_scores[3]) );
+  TRY( PetscViewerASCIIPrintf(v,"MCC_test=%.2f",svm_binary->model_scores[4]) );
+  TRY( PetscViewerASCIIPrintf(v,"AUC_ROC_test=%.2f\n",svm_binary->model_scores[5]) );
   TRY( PetscViewerASCIIPopTab(v) );
 
   TRY( VecDestroy(&y_pred) );
@@ -1662,8 +1663,9 @@ PetscErrorCode SVMMonitorTrainingScores_Binary(QPS qps,PetscInt it,PetscReal rno
   TRY( PetscViewerASCIIPushTab(v) );
   TRY( PetscViewerASCIIPrintf(v,"precision_training=%.2f%%,",svm_binary->model_scores[1] * 100.) );
   TRY( PetscViewerASCIIPrintf(v,"sensitivity_training=%.2f%%,",svm_binary->model_scores[2] * 100.) );
-  TRY( PetscViewerASCIIPrintf(v,"F1.0_score_training=%.2f,",svm_binary->model_scores[3]) );
-  TRY( PetscViewerASCIIPrintf(v,"mmc_training=%.2f\n",svm_binary->model_scores[4]) );
+  TRY( PetscViewerASCIIPrintf(v,"F1_training=%.2f,",svm_binary->model_scores[3]) );
+  TRY( PetscViewerASCIIPrintf(v,"MCC_training=%.2f",svm_binary->model_scores[4]) );
+  TRY( PetscViewerASCIIPrintf(v,"AUC_ROC_training=%.2f\n",svm_binary->model_scores[5]) );
   TRY( PetscViewerASCIIPopTab(v) );
 
   TRY( VecDestroy(&y_pred) );
