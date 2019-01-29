@@ -17,7 +17,7 @@ typedef struct {
     Vec         w;
     PetscScalar b;
 
-    PetscScalar hinge_loss;
+    PetscScalar hinge_loss,hinge_loss_p,hinge_loss_n;
 
     PetscReal   norm_w;
     PetscReal   margin;

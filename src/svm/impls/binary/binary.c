@@ -982,12 +982,15 @@ PetscErrorCode SVMComputeHingeLoss_Binary(SVM svm)
   Vec         w;
   PetscScalar b;
 
+  PetscInt    p;        /* penalty type */
   PetscInt    svm_mod;
+  Vec         work_p,work_n;
   SVMLossType loss_type;
 
   PetscFunctionBegin;
   TRY( SVMGetMod(svm,&svm_mod) );
   TRY( SVMGetLossType(svm,&loss_type) );
+  TRY( SVMGetPenaltyType(svm,&p) );
   TRY( SVMGetTrainingDataset(svm,&Xt,&y) );
 
   TRY( SVMGetSeparatingHyperplane(svm,&w,NULL) );
@@ -1013,9 +1016,29 @@ PetscErrorCode SVMComputeHingeLoss_Binary(SVM svm)
   TRY( VecPointwiseMax(svm_binary->work[0],svm_binary->work[1],svm_binary->work[0]) ); /* max(0,xi) */
 
   if (loss_type == SVM_L1) {
-    TRY( VecSum(svm_binary->work[0],&svm_binary->hinge_loss) ); /* hinge_loss = sum(xi) */
+    if (p == 1) {
+      TRY( VecSum(svm_binary->work[0],&svm_binary->hinge_loss) ); /* hinge_loss = sum(xi) */
+    } else {
+      TRY( VecGetSubVector(svm_binary->work[0],svm_binary->is_p,&work_p) );
+      TRY( VecSum(work_p,&svm_binary->hinge_loss_p) ); /* hinge_loss_p = sum(xi_p) */
+      TRY( VecRestoreSubVector(svm_binary->work[0],svm_binary->is_p,&work_p) );
+
+      TRY( VecGetSubVector(svm_binary->work[0],svm_binary->is_n,&work_n) );
+      TRY( VecSum(work_n,&svm_binary->hinge_loss_n) ); /* hinge_loss_n = sum(xi_n) */
+      TRY( VecRestoreSubVector(svm_binary->work[0],svm_binary->is_n,&work_n) );
+    }
   } else {
-    TRY( VecDot(svm_binary->work[0],svm_binary->work[0],&svm_binary->hinge_loss) ); /* hinge_loss = sum(xi^2) */
+    if (p == 1) {
+      TRY( VecDot(svm_binary->work[0],svm_binary->work[0],&svm_binary->hinge_loss) ); /* hinge_loss = sum(xi^2) */
+    } else {
+      TRY( VecGetSubVector(svm_binary->work[0],svm_binary->is_p,&work_p) );
+      TRY( VecDot(work_p,work_p,&svm_binary->hinge_loss_p) ); /* hinge_loss_p = sum(xi_p^2) */
+      TRY( VecRestoreSubVector(svm_binary->work[0],svm_binary->is_p,&work_p) );
+
+      TRY( VecGetSubVector(svm_binary->work[0],svm_binary->is_n,&work_n) );
+      TRY( VecDot(work_n,work_n,&svm_binary->hinge_loss_n) ); /* hinge_loss_n = sum(xi_n^2) */
+      TRY( VecRestoreSubVector(svm_binary->work[0],svm_binary->is_n,&work_n) );
+    }
   }
   PetscFunctionReturn(0);
 }
@@ -1026,8 +1049,13 @@ PetscErrorCode SVMComputeObjFuncValues_Binary_Private(SVM svm)
 {
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
+  PetscInt    p;        /* penalty type */
+  PetscReal   C,Cp,Cn;
+
   Vec         w;
   SVMLossType loss_type;
+
+  PetscReal   tmp;
 
   QPS         qps,qps_inner;
   QP          qp;
@@ -1035,20 +1063,33 @@ PetscErrorCode SVMComputeObjFuncValues_Binary_Private(SVM svm)
 
   PetscBool   issmalxe;
 
-
   PetscFunctionBegin;
   TRY( SVMGetLossType(svm,&loss_type) );
+  TRY( SVMGetPenaltyType(svm,&p) );
+
   TRY( SVMComputeHingeLoss(svm) );
 
   /* Compute value of primal objective function */
   TRY( SVMGetSeparatingHyperplane(svm,&w,NULL) );
+
   TRY( VecDot(w,w,&svm_binary->primalObj) );
   svm_binary->primalObj *= 0.5;
+  if (p == 1) {
+    TRY( SVMGetC(svm,&C) );
+
+    tmp = C * svm_binary->hinge_loss;
+  } else {
+    TRY( SVMGetCp(svm,&Cp) );
+    TRY( SVMGetCn(svm,&Cn) );
+
+    tmp = Cp * svm_binary->hinge_loss_p;
+    tmp += Cn * svm_binary->hinge_loss_n;
+  }
 
   if (loss_type == SVM_L1) {
-    svm_binary->primalObj += svm->C * svm_binary->hinge_loss;
+    svm_binary->primalObj += tmp;
   } else {
-    svm_binary->primalObj += svm->C * svm_binary->hinge_loss / 2.;
+    svm_binary->primalObj += tmp / 2.;
   }
 
   /* Compute value of dual objective function */
