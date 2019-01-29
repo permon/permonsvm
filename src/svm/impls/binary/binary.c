@@ -1201,6 +1201,11 @@ PetscErrorCode SVMComputeModelScores_Binary(SVM svm,Vec y_pred,Vec y_known)
   IS        is_label,is_eq;
 
   PetscInt  TP,FP,TN,FN,N;
+  /* AUC ROC */
+  PetscReal specifity;
+  PetscReal TPR,FPR;
+  PetscReal x[3],y[3],dx;
+  PetscInt  i;
 
   PetscFunctionBegin;
   TRY( VecDuplicate(y_known,&label) );
@@ -1252,7 +1257,19 @@ PetscErrorCode SVMComputeModelScores_Binary(SVM svm,Vec y_pred,Vec y_known)
   /* Matthews correlation coefficient */
   svm_binary->model_scores[4] = (PetscReal) (TP * TN - FP * FN);
   svm_binary->model_scores[4] /= (PetscSqrtReal(TP + FP) * PetscSqrtReal(TP + FN) * PetscSqrtReal(TN + FP) * PetscSqrtReal(TN + FN) );
+  /* Area Under Curve (AUC) Receiver Operating Characteristics (ROC) */
+  TPR = svm_binary->model_scores[2];
+  specifity = (PetscReal) TN / (PetscReal) (TN + FP);
+  FPR = 1 - specifity;
+  /* Area under curve (trapezoidal rule) */
+  x[0] = 0; x[1] = FPR; x[2] = 1;
+  y[0] = 0; y[1] = TPR; y[2] = 1;
 
+  svm_binary->model_scores[5] = 0.;
+  for (i = 0; i < 2; ++i) {
+    dx = x[i+1] - x[i];
+    svm_binary->model_scores[5] += ((y[i] + y[i+1]) / 2.) * dx;
+  }
   TRY( VecDestroy(&label) );
   PetscFunctionReturn(0);
 }
