@@ -1060,11 +1060,9 @@ PetscErrorCode SVMComputeObjFuncValues_Binary_Private(SVM svm)
 
   PetscReal   tmp;
 
-  QPS         qps,qps_inner;
+  QPS         qps;
   QP          qp;
-  Vec         rhs,x;
-
-  PetscBool   issmalxe;
+  Vec         x;
 
   PetscFunctionBegin;
   TRY( SVMGetLossType(svm,&loss_type) );
@@ -1098,18 +1096,9 @@ PetscErrorCode SVMComputeObjFuncValues_Binary_Private(SVM svm)
   /* Compute value of dual objective function */
   TRY( SVMGetQPS(svm,&qps) );
   TRY( QPSGetQP(qps,&qp) );
-  TRY( QPGetRhs(qp,&rhs) );
   TRY( QPGetSolutionVector(qp,&x) );
-
-  TRY( PetscObjectTypeCompare((PetscObject) qps,QPSSMALXE,&issmalxe) );
-  if (issmalxe) {
-    TRY( QPSSMALXEGetInnerQPS(qps,&qps_inner) );
-    qps = qps_inner;
-  }
-
-  TRY( VecWAXPY(svm_binary->work[1],-1.,rhs,qps->work[3]) );
-  TRY( VecDot(x,svm_binary->work[1],&svm_binary->dualObj ) );
-  svm_binary->dualObj *= -.5;
+  TRY( QPComputeObjective(qp,x,&svm_binary->dualObj) );
+  svm_binary->dualObj *= -1.;
   PetscFunctionReturn(0);
 }
 
