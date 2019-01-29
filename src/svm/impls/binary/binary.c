@@ -104,6 +104,7 @@ PetscErrorCode SVMView_Binary(SVM svm,PetscViewer v)
 
   MPI_Comm    comm;
   SVMLossType loss_type;
+  PetscInt    p;
   PetscBool   isascii;
 
   PetscFunctionBegin;
@@ -127,12 +128,23 @@ PetscErrorCode SVMView_Binary(SVM svm,PetscViewer v)
     TRY( PetscViewerASCIIPopTab(v) );
 
     TRY( SVMGetLossType(svm,&loss_type) );
+    TRY( SVMGetPenaltyType(svm,&p) );
     TRY( PetscViewerASCIIPrintf(v,"%s hinge loss:\n",SVMLossTypes[loss_type]) );
     TRY( PetscViewerASCIIPushTab(v) );
-    if (loss_type == SVM_L1) {
-      TRY( PetscViewerASCIIPrintf(v,"sum(xi_i)=%.4f\n",svm_binary->hinge_loss) );
+    if (p == 1) {
+      if (loss_type == SVM_L1) {
+        TRY( PetscViewerASCIIPrintf(v,"sum(xi_i)=%.4f\n",svm_binary->hinge_loss) );
+      } else {
+        TRY( PetscViewerASCIIPrintf(v,"sum(xi_i^2)=%.4f\n",svm_binary->hinge_loss) );
+      }
     } else {
-      TRY( PetscViewerASCIIPrintf(v,"sum(xi_i^2)=%.4f\n",svm_binary->hinge_loss) );
+      if (loss_type == SVM_L1) {
+        TRY( PetscViewerASCIIPrintf(v,"sum(xi_i+)=%.4f",svm_binary->hinge_loss_p) );
+        TRY( PetscViewerASCIIPrintf(v,"sum(xi_i-)=%.4f\n",svm_binary->hinge_loss_n) );
+      } else {
+        TRY( PetscViewerASCIIPrintf(v,"sum(xi_i+^2)=%.4f",svm_binary->hinge_loss_n) );
+        TRY( PetscViewerASCIIPrintf(v,"sum(xi_i-^2)=%.4f\n",svm_binary->hinge_loss_n) );
+      }
     }
     TRY( PetscViewerASCIIPopTab(v) );
 
