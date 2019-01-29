@@ -504,7 +504,10 @@ PetscErrorCode SVMSetC(SVM svm,PetscReal C)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidLogicalCollectiveReal(svm,C,2);
 
-  if (svm->C == C) PetscFunctionReturn(0);
+  if (svm->C == C) {
+    svm->C_old = C;
+    PetscFunctionReturn(0);
+  }
 
   if (C <= 0) {
     FLLOP_SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
@@ -565,7 +568,10 @@ PetscErrorCode SVMSetCp(SVM svm,PetscReal Cp)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidLogicalCollectiveReal(svm,Cp,2);
 
-  if (svm->Cp == Cp) PetscFunctionReturn(0);
+  if (svm->Cp == Cp) {
+    svm->Cp_old = Cp;
+    PetscFunctionReturn(0);
+  }
 
   if (Cp <= 0) {
     FLLOP_SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
@@ -626,7 +632,10 @@ PetscErrorCode SVMSetCn(SVM svm,PetscReal Cn)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidLogicalCollectiveReal(svm,Cn,2);
 
-  if (svm->Cn == Cn) PetscFunctionReturn(0);
+  if (svm->Cn == Cn) {
+    svm->Cn_old = Cn;
+    PetscFunctionReturn(0);
+  }
 
   if (Cn <= 0) {
     FLLOP_SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
