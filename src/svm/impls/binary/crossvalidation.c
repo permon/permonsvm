@@ -43,6 +43,8 @@ PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt
 
   PetscBool   info_set;
 
+  const char *prefix;
+
   PetscFunctionBegin;
   TRY( PetscObjectGetComm((PetscObject) svm,&comm) );
   TRY( SVMGetLossType(svm,&svm_loss) );
@@ -60,7 +62,8 @@ PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt
   TRY( SVMAppendOptionsPrefix(cross_svm,"cross_") );
   TRY( SVMSetFromOptions(cross_svm) );
 
-  TRY( PetscOptionsHasName(NULL,((PetscObject)cross_svm)->prefix,"-svm_info",&info_set) );
+  TRY( SVMGetOptionsPrefix(cross_svm,&prefix) );
+  TRY( PetscOptionsHasName(NULL,prefix,"-svm_info",&info_set) );
 
   TRY( SVMGetTrainingDataset(svm,&Xt,&y) );
   TRY( MatGetOwnershipRange(Xt,&lo,&hi) );
@@ -104,6 +107,7 @@ PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt
       score[k++] += s;
     }
     TRY( SVMReset(cross_svm) );
+    TRY( SVMSetOptionsPrefix(cross_svm,prefix) );
 
     TRY( VecRestoreSubVector(y,is_training,&y_training) );
     TRY( MatDestroy(&Xt_training) );
@@ -190,6 +194,8 @@ PetscErrorCode SVMStratifiedKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[
   PetscReal   s;
   ModelScore  model_score;
 
+  const char *prefix;
+
   PetscFunctionBegin;
   TRY( PetscObjectGetComm((PetscObject) svm,&comm) );
   TRY( SVMGetLossType(svm,&svm_loss) );
@@ -207,7 +213,8 @@ PetscErrorCode SVMStratifiedKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[
   TRY( SVMAppendOptionsPrefix(cross_svm,"cross_") );
   TRY( SVMSetFromOptions(cross_svm) );
 
-  TRY( PetscOptionsHasName(NULL,((PetscObject)cross_svm)->prefix,"-svm_info",&info_set) );
+  TRY( SVMGetOptionsPrefix(cross_svm,&prefix) );
+  TRY( PetscOptionsHasName(NULL,prefix,"-svm_info",&info_set) );
 
   TRY( SVMGetTrainingDataset(svm,&Xt,&y) );
   /* Split positive and negative training samples */
@@ -264,6 +271,7 @@ PetscErrorCode SVMStratifiedKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[
       score[k++] += s;
     }
     TRY( SVMReset(cross_svm) );
+    TRY( SVMSetOptionsPrefix(cross_svm,prefix) );
 
     /* Free memory */
     TRY( MatDestroy(&Xt_training) );
