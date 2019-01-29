@@ -207,8 +207,9 @@ PetscErrorCode SVMViewScore_Binary(SVM svm,PetscViewer v)
     TRY( PetscViewerASCIIPrintf(v,"accuracy=%.2f%%",svm_binary->model_scores[0] * 100.) );
     TRY( PetscViewerASCIIPrintf(v,"precision=%.2f%%",svm_binary->model_scores[1] * 100.) );
     TRY( PetscViewerASCIIPrintf(v,"sensitivity=%.2f%%\n",svm_binary->model_scores[2] * 100.) );
-    TRY( PetscViewerASCIIPrintf(v,"F1.0_score=%.2f",svm_binary->model_scores[3]) );
-    TRY( PetscViewerASCIIPrintf(v,"mmc=%.2f\n",svm_binary->model_scores[4]) );
+    TRY( PetscViewerASCIIPrintf(v,"F1=%.2f",svm_binary->model_scores[3]) );
+    TRY( PetscViewerASCIIPrintf(v,"MCC=%.2f",svm_binary->model_scores[4]) );
+    TRY( PetscViewerASCIIPrintf(v,"AUC_ROC=%.2f\n",svm_binary->model_scores[5]) );
     TRY( PetscViewerASCIIPopTab(v) );
 
     TRY( PetscViewerASCIIPopTab(v) );
