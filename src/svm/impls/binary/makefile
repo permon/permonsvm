@@ -3,9 +3,9 @@ ALL: lib
 
 CFLAGS   =
 FFLAGS   =
-SOURCEC  = binary.c cv.c
+SOURCEC  = binary.c crossvalidation.c
 SOURCEF  =
-SOURCEH  =
+SOURCEH  = binaryimpl.h
 OBJSC    = ${SOURCEC:.c=.o}
 OBJSF    =
 LIBBASE  = libpermon

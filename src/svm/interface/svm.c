@@ -37,11 +37,23 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
 
   svm->C          = 1.;
   svm->C_old      = 1.;
+  svm->Cp         = 2.;
+  svm->Cp_old     = 2.;
+  svm->Cn         = 1.;
+  svm->Cn_old     = 1.;
   svm->LogCBase   = 2.;
   svm->LogCMin    = -2.;
   svm->LogCMax    = 2.;
+  svm->LogCpBase  = 2.;
+  svm->LogCpMin   = -2.;
+  svm->LogCpMax   = 2.;
+  svm->LogCnBase  = 2.;
+  svm->LogCnMin   = -2.;
+  svm->LogCnMax   = 2.;
   svm->loss_type  = SVM_L1;
 
+  svm->penalty_type   = 1;
+  svm->hyperoptset    = PETSC_FALSE;
   svm->cv_type        = CROSS_VALIDATION_KFOLD;
   svm->cv_model_score = MODEL_ACCURACY;
   svm->nfolds         = 5;
@@ -167,6 +179,8 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
 {
   PetscErrorCode      ierr;
 
+  PetscInt            penalty_type;
+  PetscBool           hyperoptset;
   PetscReal           C,logC_min,logC_max,logC_base;
   PetscBool           flg,warm_start;
 
@@ -180,9 +194,25 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
   ierr = PetscObjectOptionsBegin((PetscObject)svm);CHKERRQ(ierr);
+  TRY( PetscOptionsInt("-svm_penalty_type","Set type of misclasification error penalty.","SVMSetPenaltyType",svm->penalty_type,&penalty_type,&flg) );
+  if (flg) {
+    TRY( SVMSetPenaltyType(svm,penalty_type) );
+  }
+  TRY( PetscOptionsBool("-svm_hyper_opt","Specify whether hyperparameter optimization will be performed.","SVMSetHyperOpt",svm->hyperoptset,&hyperoptset,&flg) );
+  if (flg) {
+    TRY( SVMSetHyperOpt(svm,hyperoptset) );
+  }
   TRY( PetscOptionsReal("-svm_C","Set SVM C (C).","SVMSetC",svm->C,&C,&flg) );
   if (flg) {
     TRY( SVMSetC(svm,C) );
+  }
+  TRY( PetscOptionsReal("-svm_Cp","Set SVM Cp (Cp).","SVMSetCp",svm->Cp,&C,&flg) );
+  if (flg) {
+    TRY( SVMSetCp(svm,C) );
+  }
+  TRY( PetscOptionsReal("-svm_Cn","Set SVM Cn (Cn).","SVMSetCn",svm->Cn,&C,&flg) );
+  if (flg) {
+    TRY( SVMSetCn(svm,C) );
   }
   TRY( PetscOptionsReal("-svm_logC_min","Set SVM minimal C value (LogCMin).","SVMSetLogCMin",svm->LogCMin,&logC_min,&flg) );
   if (flg) {
@@ -195,6 +225,30 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   TRY( PetscOptionsReal("-svm_logC_base","Set power base of SVM parameter C (LogCBase).","SVMSetLogCBase",svm->LogCBase,&logC_base,&flg) );
   if (flg) {
     TRY( SVMSetLogCBase(svm,logC_base) );
+  }
+  TRY( PetscOptionsReal("-svm_logCp_min","Set SVM minimal Cp value (LogCpMin).","SVMSetLogCpMin",svm->LogCpMin,&logC_min,&flg) );
+  if (flg) {
+    TRY( SVMSetLogCpMin(svm,logC_min) );
+  }
+  TRY( PetscOptionsReal("-svm_logCp_max","Set SVM maximal Cp value (LogCpMax).","SVMSetLogCpMax",svm->LogCpMax,&logC_max,&flg) );
+  if (flg) {
+    TRY( SVMSetLogCpMax(svm,logC_max) );
+  }
+  TRY( PetscOptionsReal("-svm_logCp_base","Set power base of SVM parameter Cp (LogCpBase).","SVMSetLogCpBase",svm->LogCpBase,&logC_base,&flg) );
+  if (flg) {
+    TRY( SVMSetLogCpBase(svm,logC_base) );
+  }
+  TRY( PetscOptionsReal("-svm_logCn_min","Set SVM minimal Cn value (LogCnMin).","SVMSetLogCnMin",svm->LogCnMin,&logC_min,&flg) );
+  if (flg) {
+    TRY( SVMSetLogCnMin(svm,logC_min) );
+  }
+  TRY( PetscOptionsReal("-svm_logCn_max","Set SVM maximal Cn value (LogCnMax).","SVMSetLogCnMax",svm->LogCnMax,&logC_max,&flg) );
+  if (flg) {
+    TRY( SVMSetLogCnMax(svm,logC_max) );
+  }
+  TRY( PetscOptionsReal("-svm_logCn_base","Set power base of SVM parameter Cn (LogCnBase).","SVMSetLogCnBase",svm->LogCnBase,&logC_base,&flg) );
+  if (flg) {
+    TRY( SVMSetLogCnBase(svm,logC_base) );
   }
   TRY( PetscOptionsInt("-svm_nfolds","Set number of folds (nfolds).","SVMSetNfolds",svm->nfolds,&nfolds,&flg) );
   if (flg) {
@@ -376,6 +430,59 @@ PetscErrorCode SVMGetNfolds(SVM svm,PetscInt *nfolds)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMSetPenaltyType"
+/*@
+  SVMSetPenaltyType - Sets type of penalty that penalizes misclassification error.
+
+  Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+- type - penalty type
+
+.seealso SVMSetC(), SVMSetCp(), SVMSetCn(), SVM
+@*/
+PetscErrorCode SVMSetPenaltyType(SVM svm,PetscInt type)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveInt(svm,type,2);
+  if (svm->penalty_type == type) PetscFunctionReturn(0);
+
+  if (type != 1 && type != 2) FLLOP_SETERRQ1(((PetscObject) svm)->comm,PETSC_ERR_SUP,"Type of penalty (%d) is not supported. It must be 1 or 2",type);
+
+  svm->penalty_type = type;
+  svm->setupcalled = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetPenaltyType"
+/*@
+  SVMGetPenaltyType - Returns type of penalty that penalizes misclassification error.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. type - penalty type
+
+.seealso SVMSetC(), SVMSetCp(), SVMSetCn(), SVM
+@*/
+PetscErrorCode SVMGetPenaltyType(SVM svm,PetscInt *type)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidRealPointer(type,2);
+  *type = svm->penalty_type;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetC"
 /*@
   SVMSetC - Sets the value of penalty C.
@@ -397,9 +504,12 @@ PetscErrorCode SVMSetC(SVM svm,PetscReal C)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidLogicalCollectiveReal(svm,C,2);
 
-  if (svm->C == C) PetscFunctionReturn(0);
+  if (svm->C == C) {
+    svm->C_old = C;
+    PetscFunctionReturn(0);
+  }
 
-  if (C <= 0 && C != PETSC_DECIDE && C != PETSC_DEFAULT) {
+  if (C <= 0) {
     FLLOP_SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
   }
 
@@ -433,6 +543,181 @@ PetscErrorCode SVMGetC(SVM svm,PetscReal *C)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidRealPointer(C,2);
   *C = svm->C;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetCp"
+/*@
+  SVMSetCp - Sets the value of penalty C for positive samples.
+
+  Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+- Cp - the value of penalty C for positive samples
+
+  Level: intermediate
+
+.seealso SVMGetCp(), SVMSetCn(), SVMGetCn(), SVMGridSearch()
+@*/
+PetscErrorCode SVMSetCp(SVM svm,PetscReal Cp)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveReal(svm,Cp,2);
+
+  if (svm->Cp == Cp) {
+    svm->Cp_old = Cp;
+    PetscFunctionReturn(0);
+  }
+
+  if (Cp <= 0) {
+    FLLOP_SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
+  }
+
+  svm->Cp_old = svm->Cp;
+  svm->Cp     = Cp;
+  svm->setupcalled = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetCp"
+/*@
+  SVMGetCp - Returns the value of penalty C for positive samples.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. Cp - the value of penalty C for positive samples
+
+  Level: intermediate
+
+.seealso SVMSetCp(), SVMSetCn(), SVMGetCn(), SVMGridSearch()
+@*/
+PetscErrorCode SVMGetCp(SVM svm,PetscReal *Cp)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidRealPointer(Cp,2);
+  *Cp = svm->Cp;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetCn"
+/*@
+  SVMSetCn - Sets the value of penalty C for negative samples.
+
+  Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+- Cp - the value of penalty C for negative samples
+
+  Level: intermediate
+
+.seealso SVMSetCp(), SVMGetCp(), SVMGetCn(), SVMGridSearch()
+@*/
+PetscErrorCode SVMSetCn(SVM svm,PetscReal Cn)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveReal(svm,Cn,2);
+
+  if (svm->Cn == Cn) {
+    svm->Cn_old = Cn;
+    PetscFunctionReturn(0);
+  }
+
+  if (Cn <= 0) {
+    FLLOP_SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
+  }
+
+  svm->Cn_old = svm->Cn;
+  svm->Cn     = Cn;
+  svm->setupcalled = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetCn"
+/*@
+  SVMGetCn - Returns the value of penalty C for negative samples.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. Cn - the value of penalty C for negative samples
+
+  Level: intermediate
+
+.seealso SVMSetCp(), SVMSetCn(), SVMSetCn(), SVMGridSearch()
+@*/
+PetscErrorCode SVMGetCn(SVM svm,PetscReal *Cn)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidRealPointer(Cn,2);
+  *Cn = svm->Cn;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetPenalty"
+/*@
+  SVMSetPenalty - Sets C or Cp and Cn values.
+
+  Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+. m - number of penalties
+- p - values of penalties
+
+  Level: intermediate
+
+  Notes:
+    m == 1: C = p[0] or Cp = p[0] and Cn = p[0]
+    m == 2: Cp = p[0] and Cn = p[1]
+
+.seealso SVMSetC(), SVMSetCp(), SVMSetCn(), SVM
+@*/
+PetscErrorCode SVMSetPenalty(SVM svm,PetscInt m,PetscReal p[])
+{
+  PetscInt penalty_type;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  if (m > 2) FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be 1 or 2");
+  PetscValidLogicalCollectiveInt(svm,m,2);
+  PetscValidLogicalCollectiveReal(svm,p[0],3);
+  if (m == 2) PetscValidLogicalCollectiveReal(svm,p[1],3);
+
+  TRY( SVMGetPenaltyType(svm,&penalty_type) );
+
+  if (penalty_type == 1) {
+    TRY( SVMSetC(svm,p[0]) );
+  } else {
+    if (m == 1) {
+      TRY( SVMSetCp(svm,p[0]) );
+      TRY( SVMSetCn(svm,p[0]) );
+    } else {
+      TRY( SVMSetCp(svm,p[0]) );
+      TRY( SVMSetCn(svm,p[1]) );
+    }
+  }
   PetscFunctionReturn(0);
 }
 
@@ -594,6 +879,328 @@ PetscErrorCode SVMGetLogCMax(SVM svm,PetscReal *LogCMax)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidRealPointer(LogCMax,2);
   *LogCMax = svm->LogCMax;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetLogCpBase"
+/*@
+  SVMSetLogCpBase - Sets the value of penalty Cp step.
+
+  Logically Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+- LogCpBase - the value of penalty Cp step
+
+  Level: beginner
+
+.seealso SVMSetCp(), SVMGetLogCpBase(), SVMSetLogCpMin(), SVMSetLogCpMax(), SVMGridSearch()
+@*/
+PetscErrorCode SVMSetLogCpBase(SVM svm,PetscReal LogCpBase)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveReal(svm,LogCpBase,2);
+
+  if (LogCpBase <= 0) FLLOP_SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
+  svm->LogCpBase = LogCpBase;
+  svm->setupcalled = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetLogCpBase"
+/*@
+  SVMGetLogCpBase - Returns the value of penalty Cp step.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. LogCpBase - the value of penalty Cp step
+
+  Level: beginner
+
+.seealso SVMGetCp(), SVMGetLogCpMin(), SVMGetLogCpMax(), SVMGridSearch()
+@*/
+PetscErrorCode SVMGetLogCpBase(SVM svm,PetscReal *LogCpBase)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidRealPointer(LogCpBase,2);
+  *LogCpBase = svm->LogCpBase;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetLogCpMin"
+/*@
+  SVMSetLogCpMin - Sets the minimum value of log Cp penalty.
+
+  Logically Collective on SVM
+
+  Input Parameter:
++ svm - SVM context
+- LogCpMin - the minimum value of log C penalty
+
+  Level: beginner
+
+.seealso SVMSetCp(), SVMSetLogCpBase(), SVMSetLogCpMax(), SVMGridSearch()
+@*/
+PetscErrorCode SVMSetLogCpMin(SVM svm,PetscReal LogCpMin)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveReal(svm,LogCpMin,2);
+  svm->LogCpMin = LogCpMin;
+  svm->setupcalled = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetLogCpMin"
+/*@
+  SVMGetLogCpMin - Returns the minimum value of log Cp penalty.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. LogCpMin - the minimum value of log Cp penalty
+
+  Level: beginner
+
+.seealso SVMGetCp(), SVMGetLogCpBase(), SVMGetLogCpMax(), SVMGridSearch()
+@*/
+PetscErrorCode SVMGetLogCpMin(SVM svm,PetscReal *LogCpMin)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidRealPointer(LogCpMin,2);
+  *LogCpMin = svm->LogCpMin;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetLogCpMax"
+/*@
+  SVMSetLogCpMax - Sets the maximum value of log Cp penalty.
+
+  Logically Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+- LogCpMax - the maximum value of log Cp penalty
+
+  Level: beginner
+
+.seealso SVMSetCp(), SVMSetLogCpBase(), SVMSetLogCpMin(), SVMGridSearch()
+@*/
+PetscErrorCode SVMSetLogCpMax(SVM svm,PetscReal LogCpMax)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveReal(svm,LogCpMax,2);
+  svm->LogCpMax = LogCpMax;
+  svm->setupcalled = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetLogCpMax"
+/*@
+  SVMGetLogCpMax - Returns the maximum value of log Cp penalty.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. LogCMax - the maximum value of log Cp penalty
+
+  Level: beginner
+
+.seealso SVMGetCp(), SVMGetLogCpBase(), SVMGetLogCpMin(), SVMGridSearch()
+@*/
+PetscErrorCode SVMGetLogCpMax(SVM svm,PetscReal *LogCpMax)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidRealPointer(LogCpMax,2);
+  *LogCpMax = svm->LogCpMax;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetLogCnBase"
+/*@
+  SVMSetLogCnBase - Sets the value of penalty Cn step.
+
+  Logically Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+- LogCnBase - the value of penalty Cn step
+
+  Level: beginner
+
+.seealso SVMSetCn(), SVMGetLogCnBase(), SVMSetLogCnMin(), SVMSetLogCnMax(), SVMGridSearch()
+@*/
+PetscErrorCode SVMSetLogCnBase(SVM svm,PetscReal LogCnBase)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveReal(svm,LogCnBase,2);
+
+  if (LogCnBase <= 0) FLLOP_SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
+  svm->LogCnBase = LogCnBase;
+  svm->setupcalled = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetLogCnBase"
+/*@
+  SVMGetLogCnBase - Returns the value of penalty Cn step.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. LogCnBase - the value of penalty Cn step
+
+  Level: beginner
+
+.seealso SVMGetCn(), SVMGetLogCnMin(), SVMGetLogCnMax(), SVMGridSearch()
+@*/
+PetscErrorCode SVMGetLogCnBase(SVM svm,PetscReal *LogCnBase)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidRealPointer(LogCnBase,2);
+  *LogCnBase = svm->LogCnBase;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetLogCnMin"
+/*@
+  SVMSetLogCnMin - Sets the minimum value of log Cn penalty.
+
+  Logically Collective on SVM
+
+  Input Parameter:
++ svm - SVM context
+- LogCnMin - the minimum value of log Cn penalty
+
+  Level: beginner
+
+.seealso SVMSetCn(), SVMSetLogCnBase(), SVMSetLogCnMax(), SVMGridSearch()
+@*/
+PetscErrorCode SVMSetLogCnMin(SVM svm,PetscReal LogCnMin)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveReal(svm,LogCnMin,2);
+  svm->LogCnMin = LogCnMin;
+  svm->setupcalled = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetLogCnMin"
+/*@
+  SVMGetLogCnMin - Returns the minimum value of log Cn penalty.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. LogCnMin - the minimum value of log Cn penalty
+
+  Level: beginner
+
+.seealso SVMGetCn(), SVMGetLogCnBase(), SVMGetLogCnMax(), SVMGridSearch()
+@*/
+PetscErrorCode SVMGetLogCnMin(SVM svm,PetscReal *LogCnMin)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidRealPointer(LogCnMin,2);
+  *LogCnMin = svm->LogCnMin;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetLogCnMax"
+/*@
+  SVMSetLogCnMax - Sets the maximum value of log Cn penalty.
+
+  Logically Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+- LogCnMax - the maximum value of log Cn penalty
+
+  Level: beginner
+
+.seealso SVMSetCn(), SVMSetLogCnBase(), SVMSetLogCnMin(), SVMGridSearch()
+@*/
+PetscErrorCode SVMSetLogCnMax(SVM svm,PetscReal LogCnMax)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveReal(svm,LogCnMax,2);
+  svm->LogCnMax = LogCnMax;
+  svm->setupcalled = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetLogCnMax"
+/*@
+  SVMGetLogCnMax - Returns the maximum value of log Cn penalty.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. LogCnMax - the maximum value of log Cn penalty
+
+  Level: beginner
+
+.seealso SVMGetCn(), SVMGetLogCnBase(), SVMGetLogCnMin(), SVMGridSearch()
+@*/
+PetscErrorCode SVMGetLogCnMax(SVM svm,PetscReal *LogCnMax)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidRealPointer(LogCnMax,2);
+  *LogCnMax = svm->LogCnMax;
   PetscFunctionReturn(0);
 }
 
@@ -1311,6 +1918,30 @@ PetscErrorCode SVMGetModelScore(SVM svm,ModelScore score_type,PetscReal *s)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
   TRY( PetscUseMethod(svm,"SVMGetModelScore_C",(SVM,ModelScore,PetscReal *),(svm,score_type,s)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetHyperOpt"
+/*@
+  SVMSetHyperOpt - Set flag specifying whether optimization of hyperparameter will be performed.
+  It is set to PETSC_FALSE by default.
+
+  Collective on SVM
+
+  InputParameters:
++ svm - SVM context
+- flg - flg
+
+.seealso SVMGridSearch(), SVMCrossValidation(), SVM
+@*/
+PetscErrorCode SVMSetHyperOpt(SVM svm,PetscBool flg)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveBool(svm,2,flg);
+  svm->hyperoptset = flg;
   PetscFunctionReturn(0);
 }
 

@@ -34,14 +34,20 @@ struct _p_SVM {
 
   ModelScore          cv_model_score;
   CrossValidationType cv_type;
+  PetscInt            penalty_type;
   PetscReal           C,C_old;
+  PetscReal           Cp,Cp_old;
+  PetscReal           Cn,Cn_old;
   PetscReal           LogCMin,LogCMax,LogCBase;
+  PetscReal           LogCpMin,LogCpMax,LogCpBase;
+  PetscReal           LogCnMin,LogCnMax,LogCnBase;
   PetscInt            nfolds;
 
   SVMLossType         loss_type;
 
   PetscBool           warm_start;
 
+  PetscBool           hyperoptset;
   PetscBool           autoposttrain;
   PetscBool           posttraincalled;
   PetscBool           setupcalled;
