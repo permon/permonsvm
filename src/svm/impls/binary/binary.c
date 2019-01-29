@@ -774,12 +774,9 @@ PetscErrorCode SVMAppendOptionsPrefix_Binary(SVM svm,const char prefix[])
 #define __FUNCT__ "SVMGetOptionsPrefix_Binary"
 PetscErrorCode SVMGetOptionsPrefix_Binary(SVM svm,const char *prefix[])
 {
-  QPS qps;
 
   PetscFunctionBegin;
   TRY( PetscObjectGetOptionsPrefix((PetscObject) svm,prefix) );
-  TRY( SVMGetQPS(svm,&qps) );
-  TRY( QPSGetOptionsPrefix(qps,prefix) );
   PetscFunctionReturn(0);
 }
 
