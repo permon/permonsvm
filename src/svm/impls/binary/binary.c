@@ -1536,6 +1536,7 @@ PetscErrorCode SVMMonitorObjFuncs_Binary(QPS qps,PetscInt it,PetscReal rnorm,voi
 
   PetscViewer v;
 
+  PetscInt    p;        /* penalty type */
   SVMLossType loss_type;
 
   PetscFunctionBegin;
@@ -1543,6 +1544,7 @@ PetscErrorCode SVMMonitorObjFuncs_Binary(QPS qps,PetscInt it,PetscReal rnorm,voi
   svm_binary = (SVM_Binary *) svm_inner->data;
 
   TRY( SVMGetLossType(svm_inner,&loss_type) );
+  TRY( SVMGetPenaltyType(svm_inner,&p) );
 
   TRY( SVMReconstructHyperplane(svm_inner) );
   TRY( SVMComputeObjFuncValues_Binary_Private(svm_inner) );
@@ -1554,7 +1556,11 @@ PetscErrorCode SVMMonitorObjFuncs_Binary(QPS qps,PetscInt it,PetscReal rnorm,voi
   TRY( PetscViewerASCIIPushTab(v) );
   TRY( PetscViewerASCIIPrintf(v,"dualObj=%.10e,",svm_binary->dualObj) );
   TRY( PetscViewerASCIIPrintf(v,"gap=%.10e,",svm_binary->primalObj - svm_binary->dualObj) );
-  TRY( PetscViewerASCIIPrintf(v,"%s-HingeLoss=%.10e\n",SVMLossTypes[loss_type],svm_binary->hinge_loss) );
+  if (p == 1) {
+    TRY( PetscViewerASCIIPrintf(v,"%s-HingeLoss=%.10e\n",SVMLossTypes[loss_type],svm_binary->hinge_loss));
+  } else {
+    TRY( PetscViewerASCIIPrintf(v,"%s-HingeLoss+=%.10e %s-HingeLoss-=%.10e\n",SVMLossTypes[loss_type],svm_binary->hinge_loss_p, SVMLossTypes[loss_type],svm_binary->hinge_loss_n) );
+  }
   TRY( PetscViewerASCIIPopTab(v) );
   PetscFunctionReturn(0);
 }
