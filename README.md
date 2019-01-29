@@ -30,6 +30,8 @@ Features
 	- specifity
 	- F1
 	- Matthews correlation coefficient 
+	- Area Under Curve (AUC) Receiver Operating Characteristics (ROC)
+	- Gini coefficient
 - Parallel SVMLight format loader
 
 Quick guide to PermonSVM installation

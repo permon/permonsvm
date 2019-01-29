@@ -54,7 +54,7 @@ M*/
 
 .seealso SVMGetModelScore()
 E*/
-typedef enum {MODEL_ACCURACY, MODEL_PRECISION, MODEL_SENSITIVITY, MODEL_F1, MODEL_MCC} ModelScore;
+typedef enum {MODEL_ACCURACY, MODEL_PRECISION, MODEL_SENSITIVITY, MODEL_F1, MODEL_MCC, MODEL_AUC_ROC, MODEL_G1} ModelScore;
 FLLOP_EXTERN const char *const ModelScores[];
 
 /*MC
@@ -62,7 +62,7 @@ FLLOP_EXTERN const char *const ModelScores[];
 
   Level: beginner
 
-.seealso ModelScore, MODEL_PRECISION, MODEL_SENSTIVITY, MODEL_F1, MODEL_MCC, SVMGetModelScore()
+.seealso ModelScore, MODEL_PRECISION, MODEL_SENSTIVITY, MODEL_F1, MODEL_MCC, MODEL_AUC_ROC, MODEL_G1 SVMGetModelScore()
 M*/
 
 /*MC
@@ -70,7 +70,7 @@ M*/
 
   Level: beginner
 
-.seealso ModelScore, MODEL_ACCURACY, MODEL_SENSTIVITY, MODEL_F1, MODEL_MCC, SVMGetModelScore()
+.seealso ModelScore, MODEL_ACCURACY, MODEL_SENSTIVITY, MODEL_F1, MODEL_MCC, MODEL_AUC_ROC, MODEL_G1 SVMGetModelScore()
 M*/
 
 /*MC
@@ -78,7 +78,7 @@ M*/
 
   Level: beginner
 
-.seealso ModelScore, MODEL_ACCURACY, MODEL_PRECISION, MODEL_F1, MODEL_MCC, SVMGetModelScore()
+.seealso ModelScore, MODEL_ACCURACY, MODEL_PRECISION, MODEL_F1, MODEL_MCC, MODEL_AUC_ROC, MODEL_G1 SVMGetModelScore()
 M*/
 
 /*MC
@@ -86,7 +86,7 @@ M*/
 
   Level: beginner
 
-.seealso ModelScore, MODEL_ACCURACY, MODEL_PRECISION, MODEL_SENSTIVITY, MODEL_MCC, SVMGetModelScore()
+.seealso ModelScore, MODEL_ACCURACY, MODEL_PRECISION, MODEL_SENSTIVITY, MODEL_MCC, MODEL_AUC_ROC, MODEL_G1 SVMGetModelScore()
 M*/
 
 /*MC
@@ -94,7 +94,23 @@ M*/
 
   Level: beginner
 
-.seealso ModelScore, MODEL_ACCURACY, MODEL_PRECISION, MODEL_SENSTIVITY, MODEL_F1, SVMGetModelScore()
+.seealso ModelScore, MODEL_ACCURACY, MODEL_PRECISION, MODEL_SENSTIVITY, MODEL_F1, MODEL_AUC_ROC, MODEL_G1 SVMGetModelScore()
+M*/
+
+/*MC
+  MODEL_AUC_ROC - Area Under Curve (AUC) Receiver Operating Characteristics (ROC)
+
+  Level: beginner
+
+.seealso ModelScore, MODEL_ACCURACY, MODEL_PRECISION, MODEL_SENSTIVITY, MODEL_F1, MODEL_MCC, MODEL_G1 SVMGetModelScore()
+M*/
+
+/*MC
+  MODEL_G1 - Gini coefficient
+
+  Level: beginner
+
+.seealso ModelScore, MODEL_ACCURACY, MODEL_PRECISION, MODEL_SENSTIVITY, MODEL_F1, MODEL_MCC, MODEL_AUC_ROC SVMGetModelScore()
 M*/
 
 /*E
