@@ -11,19 +11,23 @@ Features
 --------
 
 - The scalable parallel solution for the linear C-SVM 
-- The PermonSVM supports bias (standard) and no-bias binary classifications
-- Misclassification error quantification by means _l1_ and _l2_ hinge loss functions
+- Supported classifications:	
+	- binary classification
+	- no-bias binary classification
+- Misclassification error quantification:
+	- _l1_ hinge-loss function
+	- _l2_ hinge-loss function
 - Bias classification solvers: 
-	-  SMALXE + MPRGP (active-set method) 
+	-  SMALXE + MPRGP (active-set method for bound constrained problems) 
 	-  SMALXE + [The Toolkit for Advance Optimization](https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/Tao/index.html) (TAO) solvers for minimization with bound constraints
 - No-bias classification solvers:
 	- MPRGP
 	- TAO solvers for minimization with bound constraints 
+- Warm start  
 - Grid search
 - Cross validation types:
 	- k-fold 
 	- stratified k-fold
-- Warm start (mostly used during cross validation)
 - Model perfomance scores:
 	- accuracy
 	- sensitivity
