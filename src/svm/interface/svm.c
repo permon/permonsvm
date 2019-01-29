@@ -3,7 +3,7 @@
 
 PetscClassId SVM_CLASSID;
 
-const char *const ModelScores[]={"accuracy","precision","sensitivity","F1","mcc","ModelScore","model_",0};
+const char *const ModelScores[]={"accuracy","precision","sensitivity","F1","mcc","aucroc","ModelScore","model_",0};
 const char *const CrossValidationTypes[]={"kfold","stratified_kfold","CrossValidationType","cv_",0};
 
 #undef __FUNCT__

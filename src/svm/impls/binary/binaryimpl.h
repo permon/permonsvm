@@ -29,7 +29,7 @@ typedef struct {
     PetscInt    svm_mod;
 
     PetscInt    confusion_matrix[4];
-    PetscReal   model_scores[5];
+    PetscReal   model_scores[6];
 
     /* Work vecs */
     Vec         work[3]; /* xi, c, Xtw */
