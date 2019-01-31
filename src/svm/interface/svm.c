@@ -52,12 +52,15 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
   svm->LogCnMax   = 2.;
   svm->loss_type  = SVM_L1;
 
-  svm->penalty_type   = 1;
-  svm->hyperoptset    = PETSC_FALSE;
-  svm->cv_type        = CROSS_VALIDATION_KFOLD;
-  svm->cv_model_score = MODEL_ACCURACY;
-  svm->nfolds         = 5;
-  svm->warm_start     = PETSC_FALSE;
+  TRY( PetscMemzero(svm->hopt_score_types,7 * sizeof(ModelScore)) );
+
+  svm->penalty_type        = 1;
+  svm->hyperoptset         = PETSC_FALSE;
+  svm->hopt_score_types[0] = MODEL_ACCURACY;
+  svm->hopt_nscore_types   = 1;
+  svm->cv_type             = CROSS_VALIDATION_KFOLD;
+  svm->nfolds              = 5;
+  svm->warm_start          = PETSC_FALSE;
 
   svm->setupcalled          = PETSC_FALSE;
   svm->setfromoptionscalled = PETSC_FALSE;
@@ -179,14 +182,17 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
 {
   PetscErrorCode      ierr;
 
-  PetscInt            penalty_type;
+
   PetscBool           hyperoptset;
+  ModelScore          hyperopt_score_types[7];
+  PetscInt            n;
+
+  PetscInt            penalty_type;
   PetscReal           C,logC_min,logC_max,logC_base;
   PetscBool           flg,warm_start;
 
   SVMLossType         loss_type;
 
-  ModelScore          model_score;
   CrossValidationType cv_type;
   PetscInt            nfolds;
 
@@ -198,7 +204,7 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   if (flg) {
     TRY( SVMSetPenaltyType(svm,penalty_type) );
   }
-  TRY( PetscOptionsBool("-svm_hyper_opt","Specify whether hyperparameter optimization will be performed.","SVMSetHyperOpt",svm->hyperoptset,&hyperoptset,&flg) );
+  TRY( PetscOptionsBool("-svm_hyperopt","Specify whether hyperparameter optimization will be performed.","SVMSetHyperOpt",svm->hyperoptset,&hyperoptset,&flg) );
   if (flg) {
     TRY( SVMSetHyperOpt(svm,hyperoptset) );
   }
@@ -258,9 +264,10 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   if (flg) {
     TRY( SVMSetLossType(svm,loss_type) );
   }
-  TRY( PetscOptionsEnum("-svm_cv_model_score_type","Specify the model score type for evaluating performance of model during cross-validation.","SVMSetCrossValidationScoreType",ModelScores,(PetscEnum)svm->cv_model_score,(PetscEnum*)&model_score,&flg) );
+  n = 7;
+  TRY( PetscOptionsEnumArray("-svm_hyperopt_score_types","Specify the score types for evaluating performance of model during hyperparameter optimization.","SVMSetHyperOptScoreTypes",ModelScores,(PetscEnum *) hyperopt_score_types,&n,&flg) );
   if (flg) {
-    TRY( SVMSetCrossValidationScoreType(svm,model_score) );
+    TRY( SVMSetHyperOptScoreTypes(svm,n,hyperopt_score_types) );
   }
   TRY( PetscOptionsEnum("-svm_cv_type","Specify the type of cross validation.","SVMSetCrossValidationType",CrossValidationTypes,(PetscEnum)svm->cv_type,(PetscEnum*)&cv_type,&flg) );
   if (flg) {
@@ -1971,30 +1978,32 @@ PetscErrorCode SVMGridSearch(SVM svm)
 #undef __FUNCT__
 #define __FUNCT__ "SVMSetCrossValidationScoreType"
 /*@
-  SVMSetCrossValidationScoreType - Sets score type for evaluating performance of model during cross validation.
+  SVMSetHyperOptScoreTypes - Sets score types for evaluating performance of model during hyperparameter optimization.
 
-  Logically Colective on SVM
+  Logically Collective on SVM
 
   Input Parameters:
 + svm - SVM context
 - type - type of model score
 
-.seealso SVMGetCrossValidationScoreType(), ModelScore
+.seealso SVMGetHyperOptScoreTypes(), ModelScore
 @*/
-PetscErrorCode SVMSetCrossValidationScoreType(SVM svm,ModelScore type)
+PetscErrorCode SVMSetHyperOptScoreTypes(SVM svm,PetscInt n,ModelScore types[])
 {
+  PetscInt i;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveEnum(svm,type,2);
-  svm->cv_model_score = type;
+  for (i = 0; i < n; ++i) PetscValidLogicalCollectiveEnum(svm,types[i],2);
+  TRY( PetscMemcpy(svm->hopt_score_types,types,n * sizeof(ModelScore)) );
+  svm->hopt_nscore_types = n;
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMGetCrossValidationScoreType"
+#define __FUNCT__ "SVMGetHyperOptNScoreTypes"
 /*@
-  SVMGetCrossValidationScoreType - Returns score type for evaluating performance of model during cross validation.
+  SVMGetHyperOptNScoreTypes - Returns count of score types specified for hyperparameter optimization.
 
   Not Collective
 
@@ -2002,17 +2011,42 @@ PetscErrorCode SVMSetCrossValidationScoreType(SVM svm,ModelScore type)
 . svm - SVM context
 
   Output Parameter:
-. type - type of model score
+. n - count of score types
 
-.seealso SVMSetCrossValidationScoreType(), ModelScore
+seealso SVMSetHyperOptScoreTypes, ModelScore
 @*/
-PetscErrorCode SVMGetCrossValidationScoreType(SVM svm,ModelScore *type)
+PetscErrorCode SVMGetHyperOptNScoreTypes(SVM svm,PetscInt *n)
 {
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidPointer(type,2);
-  *type = svm->cv_model_score;
+  PetscValidPointer(n,2);
+  *n = svm->hopt_nscore_types;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetHyperOptScoreTypes"
+/*@
+  SVMGetHyperOptScoreTypes - Returns array of score types specified for evaluating performance of model during hyperparameter optimization.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. types - types of model score
+
+.seealso SVMSetHyperOptScoreTypes(), ModelScore
+@*/
+PetscErrorCode SVMGetHyperOptScoreTypes(SVM svm,const ModelScore *types[])
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidPointer(types,2);
+  *types = svm->hopt_score_types;
   PetscFunctionReturn(0);
 }
 

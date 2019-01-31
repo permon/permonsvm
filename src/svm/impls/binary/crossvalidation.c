@@ -21,29 +21,30 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
 #define __FUNCT__ "SVMKFoldCrossValidation_Binary"
 PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal score[])
 {
-  MPI_Comm    comm;
-  SVM         cross_svm;
+  MPI_Comm          comm;
+  SVM               cross_svm;
 
-  QPS         qps;
+  QPS               qps;
 
-  Mat         Xt,Xt_training,Xt_test;
-  Vec         y,y_training,y_test;
+  Mat               Xt,Xt_training,Xt_test;
+  Vec               y,y_training,y_test;
 
-  PetscInt    lo,hi,first,n;
-  PetscInt    i,j,k,nfolds;
-  PetscReal   s;
+  PetscInt          lo,hi,first,n;
+  PetscInt          i,j,k,l,nfolds;
 
-  IS          is_training,is_test;
+  IS                is_training,is_test;
 
-  PetscInt    p;       /* penalty type */
-  PetscInt    svm_mod;
-  SVMLossType svm_loss;
+  PetscInt          p;       /* penalty type */
+  PetscInt          svm_mod;
+  SVMLossType       svm_loss;
 
-  ModelScore  model_score;
+  PetscReal         s;
+  const ModelScore  *model_scores;
+  PetscInt          nscores;
 
-  PetscBool   info_set;
+  PetscBool         info_set;
 
-  const char *prefix;
+  const char        *prefix;
 
   PetscFunctionBegin;
   TRY( PetscObjectGetComm((PetscObject) svm,&comm) );
@@ -71,7 +72,8 @@ PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt
   TRY( ISCreate(PetscObjectComm((PetscObject) svm),&is_test) );
   TRY( ISSetType(is_test,ISSTRIDE) );
 
-  TRY( SVMGetCrossValidationScoreType(svm,&model_score) );
+  TRY( SVMGetHyperOptNScoreTypes(svm,&nscores) );
+  TRY( SVMGetHyperOptScoreTypes(svm,&model_scores) );
   TRY( SVMGetNfolds(svm,&nfolds) );
   for (i = 0; i < nfolds; ++i) {
     if (info_set) {
@@ -103,8 +105,11 @@ PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt
       TRY( SVMSetPenalty(cross_svm,p,&c_arr[j]) );
       TRY( SVMTrain(cross_svm) );
       TRY( SVMTest(cross_svm) );
-      TRY( SVMGetModelScore(cross_svm,model_score,&s) );
-      score[k++] += s;
+      for (l = 0; l < nscores; ++l) {
+        TRY( SVMGetModelScore(cross_svm,model_scores[l],&s) );
+        score[k] += s;
+      }
+      ++k;
     }
     TRY( SVMReset(cross_svm) );
     TRY( SVMSetOptionsPrefix(cross_svm,prefix) );
@@ -117,7 +122,7 @@ PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt
   }
 
   n = m / p;
-  for (i = 0; i < n; ++i) score[i] /= (PetscReal) nfolds;
+  for (i = 0; i < n; ++i) score[i] /= (PetscReal) nscores * nfolds;
 
   TRY( ISDestroy(&is_test) );
   TRY( SVMDestroy(&cross_svm) );
@@ -166,35 +171,36 @@ PetscErrorCode SVMStratifiedKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[
 {
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
-  MPI_Comm    comm;
-  SVM         cross_svm;
+  MPI_Comm         comm;
+  SVM              cross_svm;
 
-  QPS         qps;
+  QPS              qps;
 
-  Mat         Xt,Xt_training,Xt_test;
-  Vec         y,y_training,y_test;
-  IS          is_training,is_test;
+  Mat              Xt,Xt_training,Xt_test;
+  Vec              y,y_training,y_test;
+  IS               is_training,is_test;
 
-  IS          is_p,is_n;
-  Vec         idx_p,idx_n;
+  IS               is_p,is_n;
+  Vec              idx_p,idx_n;
 
-  IS          is_idx_p,is_idx_n;
-  IS          is_training_p,is_test_p;
-  IS          is_training_n,is_test_n;
+  IS               is_idx_p,is_idx_n;
+  IS               is_training_p,is_test_p;
+  IS               is_training_n,is_test_n;
 
-  PetscInt    nfolds;
-  PetscInt    i,j,k;
+  PetscInt         nfolds;
+  PetscInt         i,j,k,l;
 
-  PetscInt    p;
-  PetscInt    svm_mod;
-  SVMLossType svm_loss;
+  PetscInt         p;
+  PetscInt         svm_mod;
+  SVMLossType      svm_loss;
 
-  PetscBool   info_set;
+  PetscBool        info_set;
 
-  PetscReal   s;
-  ModelScore  model_score;
+  PetscReal        s;
+  const ModelScore *model_scores;
+  PetscInt         nscores;
 
-  const char *prefix;
+  const char       *prefix;
 
   PetscFunctionBegin;
   TRY( PetscObjectGetComm((PetscObject) svm,&comm) );
@@ -232,7 +238,8 @@ PetscErrorCode SVMStratifiedKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[
   TRY( ISSetType(is_idx_n,ISSTRIDE) );
 
   /* Perform cross validation */
-  TRY( SVMGetCrossValidationScoreType(svm,&model_score) );
+  TRY( SVMGetHyperOptNScoreTypes(svm,&nscores) );
+  TRY( SVMGetHyperOptScoreTypes(svm,&model_scores) );
   TRY( SVMGetNfolds(svm,&nfolds) );
   for (i = 0; i < nfolds; ++i) {
     if (info_set) {
@@ -267,8 +274,12 @@ PetscErrorCode SVMStratifiedKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[
       TRY( SVMSetPenalty(cross_svm,p,&c_arr[j]) );
       TRY( SVMTrain(cross_svm) );
       TRY( SVMTest(cross_svm) );
-      TRY( SVMGetModelScore(cross_svm,model_score,&s) );
-      score[k++] += s;
+      /* Get model scores */
+      for (l = 0; l < nscores; ++l) {
+        TRY( SVMGetModelScore(cross_svm,model_scores[l],&s) );
+        score[k] += s;
+      }
+      ++k;
     }
     TRY( SVMReset(cross_svm) );
     TRY( SVMSetOptionsPrefix(cross_svm,prefix) );
@@ -287,7 +298,7 @@ PetscErrorCode SVMStratifiedKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[
   }
 
   k = m / p;
-  for (i = 0; i < k; ++i) score[i] /= (PetscReal) nfolds;
+  for (i = 0; i < k; ++i) score[i] /= (PetscReal) nscores * nfolds;
 
   /* Free memory */
   TRY( ISDestroy(&is_idx_n) );
