@@ -52,6 +52,8 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
   svm->LogCnMax   = 2.;
   svm->loss_type  = SVM_L1;
 
+  TRY( PetscMemzero(svm->hopt_score_types,7 * sizeof(ModelScore)) );
+
   svm->penalty_type        = 1;
   svm->hyperoptset         = PETSC_FALSE;
   svm->hopt_score_types[0] = MODEL_ACCURACY;
