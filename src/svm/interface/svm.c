@@ -180,14 +180,17 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
 {
   PetscErrorCode      ierr;
 
-  PetscInt            penalty_type;
+
   PetscBool           hyperoptset;
+  ModelScore          hyperopt_score_types[7];
+  PetscInt            n;
+
+  PetscInt            penalty_type;
   PetscReal           C,logC_min,logC_max,logC_base;
   PetscBool           flg,warm_start;
 
   SVMLossType         loss_type;
 
-  ModelScore          model_score;
   CrossValidationType cv_type;
   PetscInt            nfolds;
 
@@ -199,7 +202,7 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   if (flg) {
     TRY( SVMSetPenaltyType(svm,penalty_type) );
   }
-  TRY( PetscOptionsBool("-svm_hyper_opt","Specify whether hyperparameter optimization will be performed.","SVMSetHyperOpt",svm->hyperoptset,&hyperoptset,&flg) );
+  TRY( PetscOptionsBool("-svm_hyperopt","Specify whether hyperparameter optimization will be performed.","SVMSetHyperOpt",svm->hyperoptset,&hyperoptset,&flg) );
   if (flg) {
     TRY( SVMSetHyperOpt(svm,hyperoptset) );
   }
@@ -259,9 +262,10 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   if (flg) {
     TRY( SVMSetLossType(svm,loss_type) );
   }
-  TRY( PetscOptionsEnum("-svm_cv_model_score_type","Specify the model score type for evaluating performance of model during cross-validation.","SVMSetCrossValidationScoreType",ModelScores,(PetscEnum)svm->cv_model_score,(PetscEnum*)&model_score,&flg) );
+  n = 7;
+  TRY( PetscOptionsEnumArray("-svm_hyperopt_score_types","Specify the score types for evaluating performance of model during hyperparameter optimization.","SVMSetHyperOptScoreTypes",ModelScores,(PetscEnum *) hyperopt_score_types,&n,&flg) );
   if (flg) {
-    TRY( SVMSetCrossValidationScoreType(svm,model_score) );
+    TRY( SVMSetHyperOptScoreTypes(svm,n,hyperopt_score_types) );
   }
   TRY( PetscOptionsEnum("-svm_cv_type","Specify the type of cross validation.","SVMSetCrossValidationType",CrossValidationTypes,(PetscEnum)svm->cv_type,(PetscEnum*)&cv_type,&flg) );
   if (flg) {
