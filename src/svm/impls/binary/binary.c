@@ -1432,9 +1432,17 @@ PetscErrorCode SVMInitGridSearch_Binary_Private(SVM svm,PetscInt *n,PetscReal *c
 #define __FUNCT__ "SVMGridSearch_Binary"
 PetscErrorCode SVMGridSearch_Binary(SVM svm)
 {
-  PetscReal *c_arr,*score;
-  PetscReal score_best;
-  PetscInt  m,n,i,p;
+  MPI_Comm   comm;
+
+  PetscReal  *c_arr,*score;
+  PetscReal  score_best;
+  PetscInt   m,n,i,p;
+
+  PetscBool  info_set;
+  const char *prefix;
+
+  const ModelScore *hyperopt_score_types;
+  PetscInt   nscores;
 
   PetscFunctionBegin;
   TRY( SVMInitGridSearch_Binary_Private(svm,&n,&c_arr) );
@@ -1457,6 +1465,30 @@ PetscErrorCode SVMGridSearch_Binary(SVM svm)
   }
   TRY( SVMSetPenalty(svm,m,&c_arr[p * m]) );
 
+  TRY( SVMGetOptionsPrefix(svm,&prefix) );
+  TRY( PetscOptionsHasName(NULL,prefix,"-svm_info",&info_set) );
+
+  if (info_set) {
+    TRY( PetscObjectGetComm((PetscObject) svm,&comm) );
+    TRY( SVMGetHyperOptScoreTypes(svm,&hyperopt_score_types) );
+    TRY( SVMGetHyperOptNScoreTypes(svm,&nscores) );
+    TRY( PetscPrintf(comm,"SVM (grid-search): selected ") );
+    if (m == 1) {
+      TRY( PetscPrintf(comm,"C_best=%f, ",c_arr[p]) );
+    } else {
+      TRY( PetscPrintf(comm,"C+_best=%f, ",c_arr[p * m]) );
+      TRY( PetscPrintf(comm,"C-_best=%f, ",c_arr[p * m + 1]) );
+    }
+    TRY( PetscPrintf(comm,"acc_score=%f (",score_best) );
+    for (i = 0; i < nscores; ++i) {
+      TRY( PetscPrintf(comm,"%s",ModelScores[hyperopt_score_types[i]]) );
+      if (i < nscores - 1) {
+        TRY( PetscPrintf(comm,",") );
+      } else {
+        TRY( PetscPrintf(comm,")\n") );
+      }
+    }
+  }
   TRY( PetscFree(c_arr) );
   TRY( PetscFree(score) );
   PetscFunctionReturn(0);
