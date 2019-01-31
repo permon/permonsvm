@@ -1980,7 +1980,7 @@ PetscErrorCode SVMGridSearch(SVM svm)
 + svm - SVM context
 - type - type of model score
 
-.seealso SVMGetCrossValidationScoreType(), ModelScore
+.seealso SVMGetHyperOptScoreTypes(), ModelScore
 @*/
 PetscErrorCode SVMSetHyperOptScoreTypes(SVM svm,PetscInt n,ModelScore types[])
 {
@@ -2020,9 +2020,9 @@ PetscErrorCode SVMGetHyperOptNScoreTypes(SVM svm,PetscInt *n)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMGetCrossValidationScoreType"
+#define __FUNCT__ "SVMGetHyperOptScoreTypes"
 /*@
-  SVMGetCrossValidationScoreType - Returns score type for evaluating performance of model during cross validation.
+  SVMGetHyperOptScoreTypes - Returns array of score types specified for evaluating performance of model during hyperparameter optimization.
 
   Not Collective
 
@@ -2030,17 +2030,17 @@ PetscErrorCode SVMGetHyperOptNScoreTypes(SVM svm,PetscInt *n)
 . svm - SVM context
 
   Output Parameter:
-. type - type of model score
+. types - types of model score
 
-.seealso SVMSetCrossValidationScoreType(), ModelScore
+.seealso SVMSetHyperOptScoreTypes(), ModelScore
 @*/
-PetscErrorCode SVMGetCrossValidationScoreType(SVM svm,ModelScore *type)
+PetscErrorCode SVMGetHyperOptScoreTypes(SVM svm,const ModelScore *types[])
 {
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidPointer(type,2);
-  *type = svm->cv_model_score;
+  PetscValidPointer(types,2);
+  *types = svm->hopt_score_types;
   PetscFunctionReturn(0);
 }
 
