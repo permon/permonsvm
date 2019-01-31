@@ -195,6 +195,8 @@ FLLOP_EXTERN PetscErrorCode SVMComputeHingeLoss(SVM svm);
 FLLOP_EXTERN PetscErrorCode SVMComputeModelParams(SVM svm);
 
 FLLOP_EXTERN PetscErrorCode SVMSetHyperOpt(SVM,PetscBool);
+FLLOP_EXTERN PetscErrorCode SVMSetHyperOptScoreTypes(SVM,PetscInt,ModelScore []);
+FLLOP_EXTERN PetscErrorCode SVMGetCrossValidationScoreType(SVM,ModelScore *);
 
 FLLOP_EXTERN PetscErrorCode SVMGridSearch(SVM);
 FLLOP_EXTERN PetscErrorCode SVMSetLogCMin(SVM,PetscReal);
@@ -216,8 +218,6 @@ FLLOP_EXTERN PetscErrorCode SVMGetLogCnMax(SVM,PetscReal *);
 FLLOP_EXTERN PetscErrorCode SVMSetLogCnBase(SVM,PetscReal);
 FLLOP_EXTERN PetscErrorCode SVMGetLogCnBase(SVM,PetscReal *);
 
-FLLOP_EXTERN PetscErrorCode SVMSetCrossValidationScoreType(SVM,ModelScore);
-FLLOP_EXTERN PetscErrorCode SVMGetCrossValidationScoreType(SVM,ModelScore *);
 FLLOP_EXTERN PetscErrorCode SVMSetCrossValidationType(SVM,CrossValidationType);
 FLLOP_EXTERN PetscErrorCode SVMGetCrossValidationType(SVM,CrossValidationType *);
 FLLOP_EXTERN PetscErrorCode SVMCrossValidation(SVM,PetscReal [],PetscInt,PetscReal []);

@@ -1972,9 +1972,9 @@ PetscErrorCode SVMGridSearch(SVM svm)
 #undef __FUNCT__
 #define __FUNCT__ "SVMSetCrossValidationScoreType"
 /*@
-  SVMSetCrossValidationScoreType - Sets score type for evaluating performance of model during cross validation.
+  SVMSetHyperOptScoreTypes - Sets score types for evaluating performance of model during hyperparameter optimization.
 
-  Logically Colective on SVM
+  Logically Collective on SVM
 
   Input Parameters:
 + svm - SVM context
@@ -1982,13 +1982,15 @@ PetscErrorCode SVMGridSearch(SVM svm)
 
 .seealso SVMGetCrossValidationScoreType(), ModelScore
 @*/
-PetscErrorCode SVMSetCrossValidationScoreType(SVM svm,ModelScore type)
+PetscErrorCode SVMSetHyperOptScoreTypes(SVM svm,PetscInt n,ModelScore types[])
 {
+  PetscInt i;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveEnum(svm,type,2);
-  svm->cv_model_score = type;
+  for (i = 0; i < n; ++i) PetscValidLogicalCollectiveEnum(svm,types[i],2);
+  TRY( PetscMemcpy(svm->hopt_score_types,types,n * sizeof(ModelScore)) );
+  svm->hopt_nscore_types = n;
   PetscFunctionReturn(0);
 }
 
