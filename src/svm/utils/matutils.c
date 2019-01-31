@@ -123,6 +123,20 @@ PetscErrorCode MatMultTranspose_Biased(Mat A,Vec x,Vec y)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "MatGetOwnershipIS_Biased"
+PetscErrorCode MatGetOwnershipIS_Biased(Mat mat,IS *rows,IS *cols)
+{
+  void         *ptr;
+  MatBiasedCtx *ctx;
+
+  PetscFunctionBegin;
+  TRY( MatShellGetContext(mat,&ptr) );
+  ctx = (MatBiasedCtx *) ptr;
+  TRY( MatGetOwnershipIS(ctx->Xt,rows,cols) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "MatCreateSubMatrix_Biased"
 PetscErrorCode MatCreateSubMatrix_Biased(Mat mat,IS isrow,IS iscol,MatReuse cll,Mat *newmat)
 {
@@ -146,7 +160,7 @@ PetscErrorCode MatCreateSubMatrix_Biased(Mat mat,IS isrow,IS iscol,MatReuse cll,
   TRY( MPI_Comm_size(comm,&comm_size) );
   TRY( MPI_Comm_rank(comm,&comm_rank) );
 
-  TRY( MatCreateSubMatrix(ctx->Xt,isrow,NULL,cll,&Xt_sub) );
+  TRY( MatCreateSubMatrix(ctx->Xt,isrow,iscol,cll,&Xt_sub) );
 
   TRY( PetscNew(&newctx) );
   newctx->Xt   = Xt_sub;
@@ -165,6 +179,7 @@ PetscErrorCode MatCreateSubMatrix_Biased(Mat mat,IS isrow,IS iscol,MatReuse cll,
   TRY( MatShellSetOperation(newmat_inner,MATOP_MULT,(void(*)(void))MatMult_Biased) );
   TRY( MatShellSetOperation(newmat_inner,MATOP_MULT_TRANSPOSE,(void(*)(void))MatMultTranspose_Biased) );
   TRY( MatShellSetOperation(newmat_inner,MATOP_CREATE_SUBMATRIX,(void(*)(void))MatCreateSubMatrix_Biased) );
+  TRY( PetscObjectComposeFunction((PetscObject) newmat_inner,"MatGetOwnershipIS_C",MatGetOwnershipIS_Biased) );
 
   *newmat = newmat_inner;
   PetscFunctionReturn(0);
@@ -201,6 +216,7 @@ PetscErrorCode MatCreate_Biased(Mat Xt,PetscReal bias,Mat *Xt_biased)
   TRY( MatShellSetOperation(Xt_biased_inner,MATOP_MULT,(void(*)(void))MatMult_Biased) );
   TRY( MatShellSetOperation(Xt_biased_inner,MATOP_MULT_TRANSPOSE,(void(*)(void))MatMultTranspose_Biased) );
   TRY( MatShellSetOperation(Xt_biased_inner,MATOP_CREATE_SUBMATRIX,(void(*)(void))MatCreateSubMatrix_Biased) );
+  TRY( PetscObjectComposeFunction((PetscObject) Xt_biased_inner,"MatGetOwnershipIS_C",MatGetOwnershipIS_Biased) );
 
   *Xt_biased = Xt_biased_inner;
   PetscFunctionReturn(0);

@@ -1156,12 +1156,19 @@ PetscErrorCode SVMPredict_Binary(SVM svm,Mat Xt_pred,Vec *y_out)
 {
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
-  Vec        Xtw_pred,y,w;
-  PetscReal  b;
-  PetscInt   i,m;
+  Mat               Xt_training;
+  Vec               Xtw_pred,y,w;
+  PetscReal         b;
+  PetscInt          i,m;
+
+  PetscInt          N_training,N_predict;
+  IS                is_rows = NULL,is_cols = NULL;
+  Vec               w_inner,w_sub;
+  Mat               Xt_pred_inner,Xt_pred_sub;
+  PetscBool         c;
 
   const PetscScalar *Xtw_pred_arr;
-  PetscScalar *y_pred_arr;
+  PetscScalar       *y_pred_arr;
 
   PetscFunctionBegin;
   if (!svm->posttraincalled) {
@@ -1169,14 +1176,40 @@ PetscErrorCode SVMPredict_Binary(SVM svm,Mat Xt_pred,Vec *y_out)
   }
   TRY( SVMGetSeparatingHyperplane(svm,&w,&b) );
 
-  TRY( MatCreateVecs(Xt_pred,NULL,&Xtw_pred) );
-  TRY( MatMult(Xt_pred,w,Xtw_pred) );
+  /* Check dimension (number of features) of samples */
+  TRY( VecGetSize(w,&N_training) );
+  TRY( MatGetSize(Xt_pred,NULL,&N_predict) );
+  if (N_training > N_predict) {
+    TRY( MatGetOwnershipIS(Xt_pred,NULL,&is_cols) );
+    TRY( VecGetSubVector(w,is_cols,&w_sub) );
+
+    w_inner = w_sub;
+    Xt_pred_inner = Xt_pred;
+    c = PETSC_TRUE;
+  } else if (N_training < N_predict) {
+    TRY( SVMGetTrainingDataset(svm,&Xt_training,NULL) );
+    TRY( MatGetOwnershipIS(Xt_training,NULL,&is_cols) );
+    TRY( MatGetOwnershipIS(Xt_pred,&is_rows,NULL) );
+    TRY( MatCreateSubMatrix(Xt_pred,is_rows,is_cols,MAT_INITIAL_MATRIX,&Xt_pred_sub) );
+
+    w_inner = w;
+    Xt_pred_inner = Xt_pred_sub;
+    c = PETSC_TRUE;
+  } else {
+    w_inner = w;
+    Xt_pred_inner = Xt_pred;
+    c = PETSC_FALSE;
+  }
+
+  /* Predict labels of samples */
+  TRY( MatCreateVecs(Xt_pred_inner,NULL,&Xtw_pred) );
+  TRY( MatMult(Xt_pred_inner,w_inner,Xtw_pred) );
 
   TRY( VecDuplicate(Xtw_pred,&y) );
   TRY( VecGetLocalSize(y,&m) );
 
-  TRY( VecGetArrayRead(Xtw_pred, &Xtw_pred_arr) );
-  TRY( VecGetArray(y, &y_pred_arr) );
+  TRY( VecGetArrayRead(Xtw_pred,&Xtw_pred_arr) );
+  TRY( VecGetArray(y,&y_pred_arr) );
   for (i = 0; i < m; ++i) {
     if (Xtw_pred_arr[i] + b > 0.0) {
       y_pred_arr[i] = svm_binary->y_map[1];
@@ -1189,6 +1222,17 @@ PetscErrorCode SVMPredict_Binary(SVM svm,Mat Xt_pred,Vec *y_out)
 
   *y_out = y;
 
+  /* Free memory */
+  if (c) {
+    if (N_training > N_predict) {
+      TRY( VecRestoreSubVector(w,is_cols,&w_sub) );
+    } else {
+      TRY( MatDestroy(&Xt_pred_sub) );
+    }
+
+    TRY( ISDestroy(&is_cols) );
+    TRY( ISDestroy(&is_rows) );
+  }
   TRY( VecDestroy(&Xtw_pred) );
   PetscFunctionReturn(0);
 }
