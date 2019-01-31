@@ -52,12 +52,13 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
   svm->LogCnMax   = 2.;
   svm->loss_type  = SVM_L1;
 
-  svm->penalty_type   = 1;
-  svm->hyperoptset    = PETSC_FALSE;
-  svm->cv_type        = CROSS_VALIDATION_KFOLD;
-  svm->cv_model_score = MODEL_ACCURACY;
-  svm->nfolds         = 5;
-  svm->warm_start     = PETSC_FALSE;
+  svm->penalty_type        = 1;
+  svm->hyperoptset         = PETSC_FALSE;
+  svm->hopt_score_types[0] = MODEL_ACCURACY;
+  svm->hopt_nscore_types   = 1;
+  svm->cv_type             = CROSS_VALIDATION_KFOLD;
+  svm->nfolds              = 5;
+  svm->warm_start          = PETSC_FALSE;
 
   svm->setupcalled          = PETSC_FALSE;
   svm->setfromoptionscalled = PETSC_FALSE;
