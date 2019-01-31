@@ -1995,6 +1995,31 @@ PetscErrorCode SVMSetHyperOptScoreTypes(SVM svm,PetscInt n,ModelScore types[])
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMGetHyperOptNScoreTypes"
+/*@
+  SVMGetHyperOptNScoreTypes - Returns count of score types specified for hyperparameter optimization.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. n - count of score types
+
+seealso SVMSetHyperOptScoreTypes, ModelScore
+@*/
+PetscErrorCode SVMGetHyperOptNScoreTypes(SVM svm,PetscInt *n)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidPointer(n,2);
+  *n = svm->hopt_nscore_types;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMGetCrossValidationScoreType"
 /*@
   SVMGetCrossValidationScoreType - Returns score type for evaluating performance of model during cross validation.

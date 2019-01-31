@@ -196,6 +196,7 @@ FLLOP_EXTERN PetscErrorCode SVMComputeModelParams(SVM svm);
 
 FLLOP_EXTERN PetscErrorCode SVMSetHyperOpt(SVM,PetscBool);
 FLLOP_EXTERN PetscErrorCode SVMSetHyperOptScoreTypes(SVM,PetscInt,ModelScore []);
+FLLOP_EXTERN PetscErrorCode SVMGetHyperOptNScoreTypes(SVM,PetscInt *);
 FLLOP_EXTERN PetscErrorCode SVMGetCrossValidationScoreType(SVM,ModelScore *);
 
 FLLOP_EXTERN PetscErrorCode SVMGridSearch(SVM);
