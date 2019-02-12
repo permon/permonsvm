@@ -326,8 +326,8 @@ PetscErrorCode SVMDatasetInfo(Mat,Vec,PetscInt,PetscViewer);
 PetscErrorCode SVMViewIO(SVM,const char *,const char *,PetscViewer);
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMLoadData"
-PetscErrorCode SVMLoadData(SVM svm,const char *filename,Mat *Xt,Vec *y) {
+#define __FUNCT__ "SVMLoadDataset_SVMLight"
+PetscErrorCode SVMLoadDataset_SVMLight(SVM svm,const char *filename,Mat *Xt,Vec *y) {
   MPI_Comm          comm;
 
   char              *chunk_buff = NULL;
