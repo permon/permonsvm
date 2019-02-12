@@ -1495,6 +1495,23 @@ PetscErrorCode SVMGridSearch_Binary(SVM svm)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMLoadTrainingDataset_Binary"
+PetscErrorCode SVMLoadTrainingDataset_Binary(SVM svm,PetscViewer v)
+{
+  Mat Xt_training;
+  Vec y_training;
+
+  PetscFunctionBegin;
+  TRY( SVMLoadDataset(svm,v,&Xt_training,&y_training) );
+  TRY( SVMSetTrainingDataset(svm,Xt_training,y_training) );
+
+  /* Free memory */
+  TRY( MatDestroy(&Xt_training) );
+  TRY( VecDestroy(&y_training) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMCreate_Binary"
 PetscErrorCode SVMCreate_Binary(SVM svm)
 {
@@ -1546,6 +1563,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm->ops->computemodelscores    = SVMComputeModelScores_Binary;
   svm->ops->computehingeloss      = SVMComputeHingeLoss_Binary;
   svm->ops->computemodelparams    = SVMComputeModelParams_Binary;
+  svm->ops->loadtrainingdataset   = SVMLoadTrainingDataset_Binary;
 
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingDataset_C",SVMSetTrainingDataset_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C",SVMGetTrainingDataset_Binary) );
