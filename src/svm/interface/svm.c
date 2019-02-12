@@ -2312,5 +2312,10 @@ PetscErrorCode SVMLoadTrainingDataset(SVM svm,PetscViewer v)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
 
+  if (svm->ops->loadtrainingdataset) {
+    TRY( svm->ops->loadtrainingdataset(svm,v) );
+  }
+
+  /* TODO view dataset */
   PetscFunctionReturn(0);
 }
