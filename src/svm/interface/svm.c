@@ -2244,3 +2244,25 @@ PetscErrorCode SVMComputeModelParams(SVM svm)
   }
   PetscFunctionReturn(0);
 }
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMLoadDataset"
+/*@
+  SVMLoadDataset - Loads dataset.
+
+  Input Parameters:
++ svm - SVM context
+- v - viewer
+
+  Output Parameters:
++ Xt - matrix of samples
+- y - known labels of samples
+
+.seealso SVM
+@*/
+PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat *Xt,Vec *y)
+{
+
+  PetscFunctionBegin;
+  PetscFunctionReturn(0);
+}
