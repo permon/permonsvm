@@ -1,5 +1,6 @@
 
 #include <permon/private/svmimpl.h>
+#include <permonsvmio.h>
 
 PetscClassId SVM_CLASSID;
 
@@ -2262,11 +2263,32 @@ PetscErrorCode SVMComputeModelParams(SVM svm)
 @*/
 PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat *Xt,Vec *y)
 {
+  MPI_Comm   comm;
+  const char *file_name = NULL;
+  const char *type_name = NULL;
+
+  PetscBool  isascii,ishdf5;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
+  PetscValidPointer(Xt,3);
+  PetscValidPointer(y,4);
 
+  TRY( PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERASCII,&isascii) );
+  TRY( PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERHDF5,&ishdf5) );
+
+  if (isascii) {
+    TRY( PetscViewerFileGetName(v,&file_name) );
+    TRY( SVMLoadDataset_SVMLight(svm,file_name,Xt,y) );
+  } else if (ishdf5) {
+    /* TODO implement loading data from HDF5 */
+  } else {
+    TRY( PetscObjectGetComm((PetscObject) v,&comm) );
+    TRY( PetscObjectGetType((PetscObject) v,&type_name) );
+
+    FLLOP_SETERRQ1(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMLoadDataset",type_name);
+  }
   PetscFunctionReturn(0);
 }
 
