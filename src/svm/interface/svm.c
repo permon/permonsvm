@@ -2264,5 +2264,31 @@ PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat *Xt,Vec *y)
 {
 
   PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
+
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMLoadTrainingDataset"
+/*@
+  SVMLoadTrainingDataset - Loads training dataset.
+
+  Input Parameters:
++ svm - SVM context
+- v - viewer
+
+  Level: intermediate
+
+.seealso SVMLoadTestDataset(), SVM
+@*/
+PetscErrorCode SVMLoadTrainingDataset(SVM svm,PetscViewer v)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
+
   PetscFunctionReturn(0);
 }
