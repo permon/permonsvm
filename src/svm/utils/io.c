@@ -45,8 +45,9 @@ struct ArrInt  DynamicArray_(PetscInt);
 struct ArrReal DynamicArray_(PetscReal);
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMLoadBuffer"
-PetscErrorCode SVMReadBuffer(MPI_Comm comm,const char *filename,char **chunk_buff) {
+#define __FUNCT__ "SVMReadBuffer"
+PetscErrorCode SVMReadBuffer(MPI_Comm comm,const char *filename,char **chunk_buff)
+{
   PetscMPIInt comm_size,comm_rank;
 
   MPI_File    fh;
@@ -160,7 +161,8 @@ PetscErrorCode SVMReadBuffer(MPI_Comm comm,const char *filename,char **chunk_buf
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMParseBuffer"
-PetscErrorCode SVMParseBuffer(MPI_Comm comm,char *buff,struct ArrInt *i,struct ArrInt *j,struct ArrReal *a,struct ArrInt *k,struct ArrReal *y,PetscInt *N) {
+PetscErrorCode SVMParseBuffer(MPI_Comm comm,char *buff,struct ArrInt *i,struct ArrInt *j,struct ArrReal *a,struct ArrInt *k,struct ArrReal *y,PetscInt *N)
+{
   struct ArrInt  i_in,j_in,k_in;
   struct ArrReal a_in,y_in;
 
@@ -282,8 +284,9 @@ PetscErrorCode SVMParseBuffer(MPI_Comm comm,char *buff,struct ArrInt *i,struct A
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMPAsseblyMatVec"
-PetscErrorCode SVMAsseblyMatVec(MPI_Comm comm,char *buff,Mat *Xt,Vec *labels) {
+#define __FUNCT__ "SVMAssemblyDataset"
+PetscErrorCode SVMAssemblyDataset(MPI_Comm comm,char *buff,Mat *Xt,Vec *labels)
+{
   struct ArrInt  i,j,k;
   struct ArrReal a,y;
 
@@ -327,25 +330,28 @@ PetscErrorCode SVMViewIO(SVM,const char *,const char *,PetscViewer);
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMLoadDataset_SVMLight"
-PetscErrorCode SVMLoadDataset_SVMLight(SVM svm,const char *filename,Mat *Xt,Vec *y) {
-  MPI_Comm          comm;
+PetscErrorCode SVMLoadDataset_SVMLight(SVM svm,PetscViewer v,Mat *Xt,Vec *y)
+{
+  MPI_Comm   comm;
+  const char *file_name = NULL;
 
-  char              *chunk_buff = NULL;
-  Mat               Xt_inner,Xt_biased;
+  char       *chunk_buff = NULL;
+  Mat        Xt_inner,Xt_biased;
 
-  PetscInt          svm_mod;
-  PetscReal         bias;
+  PetscInt   svm_mod;
+  PetscReal  bias;
 
   PetscFunctionBegin;
   PetscValidPointer(Xt,3);
   PetscValidPointer(y,4);
 
   TRY( PetscObjectGetComm((PetscObject) svm,&comm) );
+  TRY( PetscViewerFileGetName(v,&file_name) );
 
-  TRY( SVMReadBuffer(comm,filename,&chunk_buff) );
-  TRY( SVMAsseblyMatVec(comm,chunk_buff,&Xt_inner,y) );
+  TRY( SVMReadBuffer(comm,file_name,&chunk_buff) );
+  TRY( SVMAssemblyDataset(comm,chunk_buff,&Xt_inner,y) );
 
-  if (chunk_buff) TRY( PetscFree(chunk_buff) );
+  if (chunk_buff) { TRY( PetscFree(chunk_buff) ); }
 
   TRY( SVMGetMod(svm,&svm_mod) );
   if (svm_mod == 2) {
@@ -358,7 +364,7 @@ PetscErrorCode SVMLoadDataset_SVMLight(SVM svm,const char *filename,Mat *Xt,Vec 
   PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
+/* #undef __FUNCT__
 #define __FUNCT__ "SVMLoadTrainingDataset"
 PetscErrorCode SVMLoadTrainingDataset(SVM svm,const char *filename)
 {
@@ -493,4 +499,4 @@ PetscErrorCode SVMDatasetInfo(Mat Xt,Vec y,PetscInt svm_mod,PetscViewer v)
   TRY( VecDestroy(&y_max) );
   TRY( ISDestroy(&is_plus) );
   PetscFunctionReturn(0);
-}
+} */

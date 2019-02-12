@@ -2264,7 +2264,6 @@ PetscErrorCode SVMComputeModelParams(SVM svm)
 PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat *Xt,Vec *y)
 {
   MPI_Comm   comm;
-  const char *file_name = NULL;
   const char *type_name = NULL;
 
   PetscBool  isascii,ishdf5;
@@ -2279,8 +2278,7 @@ PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat *Xt,Vec *y)
   TRY( PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERHDF5,&ishdf5) );
 
   if (isascii) {
-    TRY( PetscViewerFileGetName(v,&file_name) );
-    TRY( SVMLoadDataset_SVMLight(svm,file_name,Xt,y) );
+    TRY( SVMLoadDataset_SVMLight(svm,v,Xt,y) );
   } else if (ishdf5) {
     /* TODO implement loading data from HDF5 */
   } else {
