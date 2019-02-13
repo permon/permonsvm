@@ -1510,7 +1510,9 @@ PetscErrorCode SVMLoadTrainingDataset_Binary(SVM svm,PetscViewer v)
   PetscFunctionBegin;
   TRY( PetscObjectGetComm((PetscObject) svm,&comm) );
   TRY( MatCreate(comm,&Xt_training) );
+  TRY( PetscObjectSetName((PetscObject) Xt_training,"Xt_training") );
   TRY( VecCreate(comm,&y_training) );
+  TRY( PetscObjectSetName((PetscObject) y_training,"y_training") );
 
   TRY( SVMLoadDataset(svm,v,Xt_training,y_training) );
   TRY( SVMGetMod(svm,&mod) );
