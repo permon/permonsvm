@@ -2,7 +2,7 @@
 #include <petsc/private/matimpl.h>
 #include <petsc/private/vecimpl.h>
 
-#include <permonsvmio.h>
+#include "io.h"
 
 #include <limits.h>
 #if defined(PETSC_HAVE_UNISTD_H)

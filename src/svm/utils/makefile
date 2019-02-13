@@ -4,7 +4,7 @@ CFLAGS   =
 FFLAGS   =
 SOURCEC  = io.c matutils.c
 SOURCEF  =
-SOURCEH  =
+SOURCEH  = io.h
 OBJSC    = ${SOURCEC:.c=.o}
 LIBBASE  = libpermon
 DIRS     =

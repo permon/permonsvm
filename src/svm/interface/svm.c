@@ -1,6 +1,6 @@
 
 #include <permon/private/svmimpl.h>
-#include <permonsvmio.h>
+#include "../utils/io.h"
 
 PetscClassId SVM_CLASSID;
 
