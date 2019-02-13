@@ -2261,7 +2261,7 @@ PetscErrorCode SVMComputeModelParams(SVM svm)
 
 .seealso SVM
 @*/
-PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat *Xt,Vec *y)
+PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat Xt,Vec y)
 {
   MPI_Comm   comm;
   const char *type_name = NULL;
@@ -2271,8 +2271,10 @@ PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat *Xt,Vec *y)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
-  PetscValidPointer(Xt,3);
-  PetscValidPointer(y,4);
+  PetscValidHeaderSpecific(Xt,MAT_CLASSID,3);
+  PetscCheckSameComm(svm,1,Xt,3);
+  PetscValidHeaderSpecific(y,VEC_CLASSID,3);
+  PetscCheckSameComm(svm,1,y,4);
 
   TRY( PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERASCII,&isascii) );
   TRY( PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERHDF5,&ishdf5) );

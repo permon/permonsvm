@@ -1,4 +1,7 @@
 #include <petsc/private/petscimpl.h>
+#include <petsc/private/matimpl.h>
+#include <petsc/private/vecimpl.h>
+
 #include <permonsvmio.h>
 
 #include <limits.h>
@@ -45,8 +48,8 @@ struct ArrInt  DynamicArray_(PetscInt);
 struct ArrReal DynamicArray_(PetscReal);
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMReadBuffer"
-PetscErrorCode SVMReadBuffer(MPI_Comm comm,const char *filename,char **chunk_buff)
+#define __FUNCT__ "SVMReadBuffer_Private"
+static PetscErrorCode SVMReadBuffer_Private(MPI_Comm comm,const char *filename,char **chunk_buff)
 {
   PetscMPIInt comm_size,comm_rank;
 
@@ -160,8 +163,8 @@ PetscErrorCode SVMReadBuffer(MPI_Comm comm,const char *filename,char **chunk_buf
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMParseBuffer"
-PetscErrorCode SVMParseBuffer(MPI_Comm comm,char *buff,struct ArrInt *i,struct ArrInt *j,struct ArrReal *a,struct ArrInt *k,struct ArrReal *y,PetscInt *N)
+#define __FUNCT__ "SVMParseBuffer_Private"
+static PetscErrorCode SVMParseBuffer_Private(MPI_Comm comm,char *buff,struct ArrInt *i,struct ArrInt *j,struct ArrReal *a,struct ArrInt *k,struct ArrReal *y,PetscInt *N)
 {
   struct ArrInt  i_in,j_in,k_in;
   struct ArrReal a_in,y_in;
@@ -284,16 +287,17 @@ PetscErrorCode SVMParseBuffer(MPI_Comm comm,char *buff,struct ArrInt *i,struct A
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMAssemblyDataset"
-PetscErrorCode SVMAssemblyDataset(MPI_Comm comm,char *buff,Mat *Xt,Vec *labels)
+#define __FUNCT__ "SVMAssemblyDataset_Private"
+static PetscErrorCode SVMAssemblyDataset_Private(MPI_Comm comm,char *buff,Mat Xt,Vec labels)
 {
   struct ArrInt  i,j,k;
   struct ArrReal a,y;
 
   PetscInt offset,m,N;
+  PetscInt rbs;
 
   PetscFunctionBegin;
-  TRY( SVMParseBuffer(comm,buff,&i,&j,&a,&k,&y,&N) );
+  TRY( SVMParseBuffer_Private(comm,buff,&i,&j,&a,&k,&y,&N) );
 
   m = (buff) ? i.size - 1 : 0;
   /*local to global: label vector indices*/
@@ -304,17 +308,21 @@ PetscErrorCode SVMAssemblyDataset(MPI_Comm comm,char *buff,Mat *Xt,Vec *labels)
     DynamicArrayAddValue(k,offset);
   }
 
-  TRY( MatCreate(comm,Xt) );
-  TRY( MatSetType(*Xt,MATAIJ) );
-  TRY( MatSetSizes(*Xt,m,PETSC_DECIDE,PETSC_DECIDE,N) );
+  TRY( MatSetType(Xt,MATAIJ) );
+  TRY( MatSetSizes(Xt,m,PETSC_DECIDE,PETSC_DECIDE,N) );
 
-  TRY( MatSeqAIJSetPreallocationCSR(*Xt,i.data,j.data,a.data) );
-  TRY( MatMPIAIJSetPreallocationCSR(*Xt,i.data,j.data,a.data) );
+  TRY( MatSeqAIJSetPreallocationCSR(Xt,i.data,j.data,a.data) );
+  TRY( MatMPIAIJSetPreallocationCSR(Xt,i.data,j.data,a.data) );
 
-  TRY( MatCreateVecs(*Xt,NULL,labels) );
-  if (y.data) TRY( VecSetValues(*labels,y.size,k.data,y.data,INSERT_VALUES) );
-  TRY( VecAssemblyBegin(*labels) );
-  TRY( VecAssemblyEnd(*labels) );
+  TRY( MatGetBlockSizes(Xt,&rbs,NULL) );
+  TRY( VecSetSizes(labels,Xt->rmap->n,PETSC_DETERMINE) );
+  TRY( VecSetBlockSize(labels,rbs) );
+  TRY( VecSetType(labels,Xt->defaultvectype) );
+  TRY( PetscLayoutReference(Xt->rmap,&labels->map) );
+
+  if (y.data) TRY( VecSetValues(labels,y.size,k.data,y.data,INSERT_VALUES) );
+  TRY( VecAssemblyBegin(labels) );
+  TRY( VecAssemblyEnd(labels) );
 
   if (y.data) DynamicArrayClear(y);
   if (k.data) DynamicArrayClear(k);
@@ -330,37 +338,21 @@ PetscErrorCode SVMViewIO(SVM,const char *,const char *,PetscViewer);
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMLoadDataset_SVMLight"
-PetscErrorCode SVMLoadDataset_SVMLight(SVM svm,PetscViewer v,Mat *Xt,Vec *y)
+PetscErrorCode SVMLoadDataset_SVMLight(SVM svm,PetscViewer v,Mat Xt,Vec y)
 {
   MPI_Comm   comm;
+
   const char *file_name = NULL;
-
   char       *chunk_buff = NULL;
-  Mat        Xt_inner,Xt_biased;
-
-  PetscInt   svm_mod;
-  PetscReal  bias;
 
   PetscFunctionBegin;
-  PetscValidPointer(Xt,3);
-  PetscValidPointer(y,4);
-
   TRY( PetscObjectGetComm((PetscObject) svm,&comm) );
   TRY( PetscViewerFileGetName(v,&file_name) );
 
-  TRY( SVMReadBuffer(comm,file_name,&chunk_buff) );
-  TRY( SVMAssemblyDataset(comm,chunk_buff,&Xt_inner,y) );
+  TRY( SVMReadBuffer_Private(comm,file_name,&chunk_buff) );
+  TRY( SVMAssemblyDataset_Private(comm,chunk_buff,Xt,y) );
 
   if (chunk_buff) { TRY( PetscFree(chunk_buff) ); }
-
-  TRY( SVMGetMod(svm,&svm_mod) );
-  if (svm_mod == 2) {
-    TRY( SVMGetBias(svm,&bias) );
-    TRY( MatCreate_Biased(Xt_inner,bias,&Xt_biased) );
-    Xt_inner = Xt_biased;
-  }
-
-  *Xt = Xt_inner;
   PetscFunctionReturn(0);
 }
 

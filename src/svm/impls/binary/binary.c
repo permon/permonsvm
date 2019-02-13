@@ -1498,11 +1498,27 @@ PetscErrorCode SVMGridSearch_Binary(SVM svm)
 #define __FUNCT__ "SVMLoadTrainingDataset_Binary"
 PetscErrorCode SVMLoadTrainingDataset_Binary(SVM svm,PetscViewer v)
 {
-  Mat Xt_training;
-  Vec y_training;
+  MPI_Comm  comm;
+
+  Mat       Xt_training;
+  Mat       Xt_biased;
+  Vec       y_training;
+
+  PetscReal bias;
+  PetscInt  mod;
 
   PetscFunctionBegin;
-  TRY( SVMLoadDataset(svm,v,&Xt_training,&y_training) );
+  TRY( PetscObjectGetComm((PetscObject) svm,&comm) );
+  TRY( MatCreate(comm,&Xt_training) );
+  TRY( VecCreate(comm,&y_training) );
+
+  TRY( SVMLoadDataset(svm,v,Xt_training,y_training) );
+  TRY( SVMGetMod(svm,&mod) );
+  if (mod == 2) {
+    TRY( SVMGetBias(svm,&bias) );
+    TRY( MatCreate_Biased(Xt_training,bias,&Xt_biased) );
+    Xt_training = Xt_biased;
+  }
   TRY( SVMSetTrainingDataset(svm,Xt_training,y_training) );
 
   /* Free memory */
