@@ -2319,3 +2319,50 @@ PetscErrorCode SVMLoadTrainingDataset(SVM svm,PetscViewer v)
   /* TODO view dataset */
   PetscFunctionReturn(0);
 }
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMLoadTestDataset"
+/*@
+  SVMLoadTestDataset - Loads test dataset.
+
+  Input Parameters:
++ svm - SVM context
+- v - viewer
+
+  Level: intermediate
+
+.seealso SVMLoadTrainingDataset(), SVM
+@*/
+PetscErrorCode SVMLoadTestDataset(SVM svm,PetscViewer v)
+{
+  MPI_Comm  comm;
+
+  Mat       Xt_test;
+  Mat       Xt_biased;
+  Vec       y_test;
+
+  PetscReal bias;
+  PetscInt  mod;
+
+  PetscFunctionBeginI;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
+
+  TRY( PetscObjectGetComm((PetscObject) svm,&comm) );
+  TRY( MatCreate(comm,&Xt_test) );
+  TRY( PetscObjectSetName((PetscObject) Xt_test,"Xt_test") );
+  TRY( VecCreate(comm,&y_test) );
+  TRY( PetscObjectSetName((PetscObject) y_test,"y_test") );
+
+  TRY( SVMLoadDataset(svm,v,Xt_test,y_test) );
+  TRY( SVMGetMod(svm,&mod) );
+  if (mod == 2) {
+    TRY( SVMGetBias(svm,&bias) );
+    TRY( MatCreate_Biased(Xt_test,bias,&Xt_biased) );
+    Xt_test = Xt_biased;
+  }
+  TRY( SVMSetTestDataset(svm,Xt_test,y_test) );
+
+  /* TODO view dataset */
+  PetscFunctionReturnI(0);
+}
