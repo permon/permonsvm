@@ -337,8 +337,8 @@ PetscErrorCode SVMDatasetInfo(Mat,Vec,PetscInt,PetscViewer);
 PetscErrorCode SVMViewIO(SVM,const char *,const char *,PetscViewer);
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMLoadDataset_SVMLight"
-PetscErrorCode SVMLoadDataset_SVMLight(SVM svm,PetscViewer v,Mat Xt,Vec y)
+#define __FUNCT__ "DatasetLoad_SVMLight"
+PetscErrorCode DatasetLoad_SVMLight(SVM svm,PetscViewer v,Mat Xt,Vec y)
 {
   MPI_Comm   comm;
 

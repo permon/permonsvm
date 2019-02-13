@@ -2280,7 +2280,7 @@ PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat Xt,Vec y)
   TRY( PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERHDF5,&ishdf5) );
 
   if (isascii) {
-    TRY( SVMLoadDataset_SVMLight(svm,v,Xt,y) );
+    TRY( DatasetLoad_SVMLight(svm,v,Xt,y) );
   } else if (ishdf5) {
     /* TODO implement loading data from HDF5 */
   } else {
