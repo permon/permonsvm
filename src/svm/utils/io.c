@@ -288,17 +288,20 @@ static PetscErrorCode SVMParseBuffer_Private(MPI_Comm comm,char *buff,struct Arr
 
 #undef __FUNCT__
 #define __FUNCT__ "DatasetAssembly_SVMLight_Private"
-static PetscErrorCode DatasetAssembly_SVMLight_Private(MPI_Comm comm,char *buff,Mat Xt,Vec labels)
+static PetscErrorCode DatasetAssembly_SVMLight_Private(Mat Xt,Vec labels,char *buff)
 {
-  struct ArrInt  i,j,k;
-  struct ArrReal a,y;
+  MPI_Comm comm;
+
+  struct   ArrInt  i,j,k;
+  struct   ArrReal a,y;
 
   PetscInt offset,m,N;
   PetscInt rbs;
 
   PetscFunctionBegin;
-  TRY( SVMParseBuffer_Private(comm,buff,&i,&j,&a,&k,&y,&N) );
+  TRY( PetscObjectGetComm((PetscObject) Xt,&comm) );
 
+  TRY( SVMParseBuffer_Private(comm,buff,&i,&j,&a,&k,&y,&N) );
   m = (buff) ? i.size - 1 : 0;
   /* local to global: label vector indices */
   offset = (k.data) ? k.size : 0;
@@ -308,12 +311,13 @@ static PetscErrorCode DatasetAssembly_SVMLight_Private(MPI_Comm comm,char *buff,
     DynamicArrayAddValue(k,offset);
   }
 
+  /* Assembly the Xt matrix */
   TRY( MatSetType(Xt,MATAIJ) );
   TRY( MatSetSizes(Xt,m,PETSC_DECIDE,PETSC_DECIDE,N) );
-
   TRY( MatSeqAIJSetPreallocationCSR(Xt,i.data,j.data,a.data) );
   TRY( MatMPIAIJSetPreallocationCSR(Xt,i.data,j.data,a.data) );
 
+  /* Assembly vector of labels */
   TRY( MatGetBlockSizes(Xt,&rbs,NULL) );
   TRY( VecSetSizes(labels,Xt->rmap->n,PETSC_DETERMINE) );
   TRY( VecSetBlockSize(labels,rbs) );
@@ -347,7 +351,7 @@ PetscErrorCode DatasetLoad_SVMLight(Mat Xt,Vec y,PetscViewer v)
   TRY( PetscViewerFileGetName(v,&file_name) );
 
   TRY( IOReadBuffer_SVMLight_Private(comm,file_name,&chunk_buff) );
-  TRY( DatasetAssembly_SVMLight_Private(comm,chunk_buff,Xt,y) );
+  TRY( DatasetAssembly_SVMLight_Private(Xt,y,chunk_buff) );
 
   if (chunk_buff) { TRY( PetscFree(chunk_buff) ); }
   PetscFunctionReturn(0);
