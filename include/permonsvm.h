@@ -240,5 +240,7 @@ FLLOP_EXTERN PetscErrorCode SVMViewTrainingDataset(SVM,PetscViewer);
 FLLOP_EXTERN PetscErrorCode SVMLoadTestDataset(SVM,PetscViewer);
 FLLOP_EXTERN PetscErrorCode SVMViewTestDataset(SVM,PetscViewer);
 
+FLLOP_EXTERN PetscErrorCode PetscViewerSVMLightOpen(MPI_Comm,const char [],PetscViewer *);
+
 FLLOP_EXTERN PetscErrorCode MatCreate_Biased(Mat,PetscReal,Mat *);
 #endif

@@ -356,3 +356,19 @@ PetscErrorCode DatasetLoad_SVMLight(Mat Xt,Vec y,PetscViewer v)
   if (chunk_buff) { TRY( PetscFree(chunk_buff) ); }
   PetscFunctionReturn(0);
 }
+
+#undef __FUNCT__
+#define __FUNCT__ "PetscViewerSVMLightOpen"
+PetscErrorCode PetscViewerSVMLightOpen(MPI_Comm comm,const char name[],PetscViewer *v)
+{
+  PetscViewer v_inner;
+
+  PetscFunctionBegin;
+  TRY( PetscViewerCreate(comm,&v_inner) );
+  TRY( PetscViewerSetType(v_inner,PETSCVIEWERASCII) );
+  TRY( PetscViewerFileSetMode(v_inner,FILE_MODE_READ) );
+  TRY( PetscViewerFileSetName(v_inner,name) );
+
+  *v = v_inner;
+  PetscFunctionReturn(0);
+}
