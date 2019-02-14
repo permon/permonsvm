@@ -163,8 +163,8 @@ static PetscErrorCode IOReadBuffer_SVMLight_Private(MPI_Comm comm,const char *fi
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMParseBuffer_Private"
-static PetscErrorCode SVMParseBuffer_Private(MPI_Comm comm,char *buff,struct ArrInt *i,struct ArrInt *j,struct ArrReal *a,struct ArrInt *k,struct ArrReal *y,PetscInt *N)
+#define __FUNCT__ "IOParseBuffer_SVMLight_Private"
+static PetscErrorCode IOParseBuffer_SVMLight_Private(MPI_Comm comm,char *buff,struct ArrInt *i,struct ArrInt *j,struct ArrReal *a,struct ArrInt *k,struct ArrReal *y,PetscInt *N)
 {
   struct ArrInt  i_in,j_in,k_in;
   struct ArrReal a_in,y_in;
@@ -187,10 +187,10 @@ static PetscErrorCode SVMParseBuffer_Private(MPI_Comm comm,char *buff,struct Arr
   array_grow_factor = DARRAY_GROW_FACTOR;
 
   TRY( PetscOptionsGetInt(NULL,NULL,"-svm_io_darray_init_size",&array_init_capacity,NULL) );
-  if (array_init_capacity <= 0) FLLOP_SETERRQ(comm, PETSC_ERR_ARG_OUTOFRANGE, "Initial size of dynamic array must be greater than zero");
+  if (array_init_capacity <= 0) FLLOP_SETERRQ(comm,PETSC_ERR_ARG_OUTOFRANGE,"Initial size of dynamic array must be greater than zero");
 
   TRY( PetscOptionsGetReal(NULL,NULL,"-svm_io_darray_grow_factor",&array_grow_factor,NULL) );
-  if (array_grow_factor <= 1.) FLLOP_SETERRQ(comm, PETSC_ERR_ARG_OUTOFRANGE, "Grow factor of dynamic array must be greater than one");
+  if (array_grow_factor <= 1.) FLLOP_SETERRQ(comm,PETSC_ERR_ARG_OUTOFRANGE,"Grow factor of dynamic array must be greater than one");
 
   DynamicArrayInit(i_in,array_init_capacity,array_grow_factor);
   DynamicArrayPushBack(i_in,0);
@@ -301,7 +301,7 @@ static PetscErrorCode DatasetAssembly_SVMLight_Private(Mat Xt,Vec labels,char *b
   PetscFunctionBegin;
   TRY( PetscObjectGetComm((PetscObject) Xt,&comm) );
 
-  TRY( SVMParseBuffer_Private(comm,buff,&i,&j,&a,&k,&y,&N) );
+  TRY( IOParseBuffer_SVMLight_Private(comm,buff,&i,&j,&a,&k,&y,&N) );
   m = (buff) ? i.size - 1 : 0;
   /* local to global: label vector indices */
   offset = (k.data) ? k.size : 0;
