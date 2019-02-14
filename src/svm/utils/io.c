@@ -287,8 +287,8 @@ static PetscErrorCode SVMParseBuffer_Private(MPI_Comm comm,char *buff,struct Arr
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMAssemblyDataset_Private"
-static PetscErrorCode SVMAssemblyDataset_Private(MPI_Comm comm,char *buff,Mat Xt,Vec labels)
+#define __FUNCT__ "DatasetAssembly_SVMLight_Private"
+static PetscErrorCode DatasetAssembly_SVMLight_Private(MPI_Comm comm,char *buff,Mat Xt,Vec labels)
 {
   struct ArrInt  i,j,k;
   struct ArrReal a,y;
@@ -300,7 +300,7 @@ static PetscErrorCode SVMAssemblyDataset_Private(MPI_Comm comm,char *buff,Mat Xt
   TRY( SVMParseBuffer_Private(comm,buff,&i,&j,&a,&k,&y,&N) );
 
   m = (buff) ? i.size - 1 : 0;
-  /*local to global: label vector indices*/
+  /* local to global: label vector indices */
   offset = (k.data) ? k.size : 0;
   TRY( MPI_Scan(MPI_IN_PLACE,&offset,1,MPIU_INT,MPI_SUM,comm) );
   if (k.data) {
@@ -333,9 +333,6 @@ static PetscErrorCode SVMAssemblyDataset_Private(MPI_Comm comm,char *buff,Mat Xt
   PetscFunctionReturn(0);
 }
 
-PetscErrorCode SVMDatasetInfo(Mat,Vec,PetscInt,PetscViewer);
-PetscErrorCode SVMViewIO(SVM,const char *,const char *,PetscViewer);
-
 #undef __FUNCT__
 #define __FUNCT__ "DatasetLoad_SVMLight"
 PetscErrorCode DatasetLoad_SVMLight(SVM svm,PetscViewer v,Mat Xt,Vec y)
@@ -350,7 +347,7 @@ PetscErrorCode DatasetLoad_SVMLight(SVM svm,PetscViewer v,Mat Xt,Vec y)
   TRY( PetscViewerFileGetName(v,&file_name) );
 
   TRY( SVMReadBuffer_Private(comm,file_name,&chunk_buff) );
-  TRY( SVMAssemblyDataset_Private(comm,chunk_buff,Xt,y) );
+  TRY( DatasetAssembly_SVMLight_Private(comm,chunk_buff,Xt,y) );
 
   if (chunk_buff) { TRY( PetscFree(chunk_buff) ); }
   PetscFunctionReturn(0);
