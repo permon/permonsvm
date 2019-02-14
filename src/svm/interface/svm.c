@@ -2311,6 +2311,10 @@ PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat Xt,Vec y)
 @*/
 PetscErrorCode SVMLoadTrainingDataset(SVM svm,PetscViewer v)
 {
+  MPI_Comm   comm;
+
+  const char *dataset_file;
+  PetscBool  view_io,view_dataset;
 
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
@@ -2320,8 +2324,31 @@ PetscErrorCode SVMLoadTrainingDataset(SVM svm,PetscViewer v)
     TRY( svm->ops->loadtrainingdataset(svm,v) );
   }
 
-  /* TODO view dataset */
+  TRY( PetscViewerFileGetName(v,&dataset_file) );
+  TRY( PetscStrcpy(svm->training_dataset_file,dataset_file) );
+
+  TRY( PetscOptionsHasName(NULL,NULL,"-svm_view_io",&view_io) );
+  TRY( PetscOptionsHasName(NULL,NULL,"-svm_view_training_dataset",&view_dataset) );
+  if (view_io || view_dataset) {
+    TRY( PetscObjectGetComm((PetscObject) v,&comm) );
+    TRY( SVMViewTrainingDataset(svm,PETSC_VIEWER_STDOUT_(comm)) );
+  }
   PetscFunctionReturnI(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMViewTrainingDataset"
+PetscErrorCode SVMViewTrainingDataset(SVM svm,PetscViewer v)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
+
+  if (svm->ops->viewtrainingdataset) {
+    TRY(svm->ops->viewtrainingdataset(svm,v) );
+  }
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -2339,14 +2366,17 @@ PetscErrorCode SVMLoadTrainingDataset(SVM svm,PetscViewer v)
 @*/
 PetscErrorCode SVMLoadTestDataset(SVM svm,PetscViewer v)
 {
-  MPI_Comm  comm;
+  MPI_Comm   comm;
 
-  Mat       Xt_test;
-  Mat       Xt_biased;
-  Vec       y_test;
+  Mat        Xt_test;
+  Mat        Xt_biased;
+  Vec        y_test;
 
-  PetscReal bias;
-  PetscInt  mod;
+  PetscReal  bias;
+  PetscInt   mod;
+
+  const char *dataset_file;
+  PetscBool  view_io,view_test_dataset;
 
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
@@ -2367,6 +2397,121 @@ PetscErrorCode SVMLoadTestDataset(SVM svm,PetscViewer v)
   }
   TRY( SVMSetTestDataset(svm,Xt_test,y_test) );
 
-  /* TODO view dataset */
+  TRY( PetscViewerFileGetName(v,&dataset_file) );
+  TRY( PetscStrcpy(svm->test_dataset_file,dataset_file) );
+
+  TRY( PetscOptionsHasName(NULL,NULL,"-svm_view_io",&view_io) );
+  TRY( PetscOptionsHasName(NULL,NULL,"-svm_view_test_dataset",&view_test_dataset) );
+  if (view_io || view_test_dataset) {
+    TRY( PetscObjectGetComm((PetscObject) v,&comm) );
+    TRY( SVMViewTestDataset(svm,PETSC_VIEWER_STDOUT_(comm)) );
+  }
   PetscFunctionReturnI(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMViewTestDataset"
+PetscErrorCode SVMViewTestDataset(SVM svm,PetscViewer v)
+{
+  MPI_Comm   comm;
+  const char *type_name = NULL;
+
+  Mat        Xt_test;
+  Vec        y_test;
+
+  PetscBool  isascii;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
+
+  TRY( SVMGetTestDataset(svm,&Xt_test,&y_test) );
+  if (!Xt_test || !y_test) {
+    TRY( PetscObjectGetComm((PetscObject) v,&comm) );
+    FLLOP_SETERRQ(comm,PETSC_ERR_ARG_NULL,"Test dataset is not set");
+  }
+
+  TRY( PetscObjectTypeCompare((PetscObject)v,PETSCVIEWERASCII,&isascii) );
+  if (isascii) {
+    TRY( PetscViewerASCIIPrintf(v, "=====================\n") );
+    TRY( PetscObjectPrintClassNamePrefixType((PetscObject) svm,v) );
+
+    TRY( PetscViewerASCIIPushTab(v) );
+    TRY( PetscViewerASCIIPrintf(v,"Test dataset from file \"%s\" was loaded successfully!\n",svm->test_dataset_file) );
+    TRY( PetscViewerASCIIPrintf(v,"Dataset contains:\n") );
+
+    TRY( PetscViewerASCIIPushTab(v) );
+    TRY( SVMDatasetInfo(svm,Xt_test,y_test,v) );
+    TRY( PetscViewerASCIIPopTab(v) );
+
+    TRY(PetscViewerASCIIPopTab(v));
+    TRY(PetscViewerASCIIPrintf(v,"=====================\n"));
+  } else {
+    TRY( PetscObjectGetComm((PetscObject) v,&comm) );
+    TRY( PetscObjectGetType((PetscObject) v,&type_name) );
+
+    FLLOP_SETERRQ1(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewTestDataset",type_name);
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMDatasetInfo"
+PetscErrorCode SVMDatasetInfo(SVM svm,Mat Xt,Vec y,PetscViewer v)
+{
+  MPI_Comm   comm;
+  const char *type_name = NULL;
+
+  PetscInt   M,M_plus,M_minus,N;
+  PetscReal  per_plus,per_minus;
+
+  PetscInt   svm_mod;
+
+  Vec        y_max;
+  PetscReal  max;
+
+  IS         is_plus;
+
+  PetscBool  isascii;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(Xt,MAT_CLASSID,2);
+  PetscValidHeaderSpecific(y,VEC_CLASSID,3);
+  PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,4);
+
+  TRY( PetscObjectTypeCompare((PetscObject)v,PETSCVIEWERASCII,&isascii) );
+  if (!isascii) {
+    TRY( PetscObjectGetComm((PetscObject) v,&comm) );
+    TRY( PetscObjectGetType((PetscObject) v,&type_name) );
+
+    FLLOP_SETERRQ1(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMDatasetInfo",type_name);
+  }
+
+  TRY( MatGetSize(Xt,&M,&N) );
+
+  TRY( VecDuplicate(y,&y_max) );
+  TRY( VecMax(y,NULL,&max) );
+  TRY( VecSet(y_max,max) );
+
+  TRY( VecWhichEqual(y,y_max,&is_plus) );
+  TRY( ISGetSize(is_plus,&M_plus) );
+
+  per_plus  = ((PetscReal) M_plus / (PetscReal) M) * 100.;
+  M_minus   = M - M_plus;
+  per_minus = 100 - per_plus;
+
+  TRY( SVMGetMod(svm,&svm_mod) );
+  if (svm_mod == 2) N -= 1;
+
+  TRY( PetscViewerASCIIPushTab(v) );
+  TRY( PetscViewerASCIIPrintf(v,"samples\t%5D\n",M) );
+  TRY( PetscViewerASCIIPrintf(v,"samples+\t%5D (%.2f%%)\n",M_plus,per_plus) );
+  TRY( PetscViewerASCIIPrintf(v,"samples-\t%5D (%.2f%%)\n",M_minus,per_minus) );
+  TRY( PetscViewerASCIIPrintf(v,"features\t%5D\n",N) );
+  TRY( PetscViewerASCIIPopTab(v) );
+
+  TRY( VecDestroy(&y_max) );
+  TRY( ISDestroy(&is_plus) );
+  PetscFunctionReturn(0);
 }

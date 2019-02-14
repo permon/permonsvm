@@ -234,8 +234,11 @@ FLLOP_EXTERN PetscErrorCode SVMAppendOptionsPrefix(SVM svm,const char []);
 FLLOP_EXTERN PetscErrorCode SVMGetOptionsPrefix(SVM svm,const char *[]);
 
 FLLOP_EXTERN PetscErrorCode SVMLoadDataset(SVM,PetscViewer,Mat,Vec);
+FLLOP_EXTERN PetscErrorCode SVMDatasetInfo(SVM,Mat,Vec,PetscViewer);
 FLLOP_EXTERN PetscErrorCode SVMLoadTrainingDataset(SVM,PetscViewer);
+FLLOP_EXTERN PetscErrorCode SVMViewTrainingDataset(SVM,PetscViewer);
 FLLOP_EXTERN PetscErrorCode SVMLoadTestDataset(SVM,PetscViewer);
+FLLOP_EXTERN PetscErrorCode SVMViewTestDataset(SVM,PetscViewer);
 
 FLLOP_EXTERN PetscErrorCode MatCreate_Biased(Mat,PetscReal,Mat *);
 #endif

@@ -1530,6 +1530,50 @@ PetscErrorCode SVMLoadTrainingDataset_Binary(SVM svm,PetscViewer v)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMViewTrainingDataset_Binary"
+PetscErrorCode SVMViewTrainingDataset_Binary(SVM svm,PetscViewer v)
+{
+  MPI_Comm   comm;
+  const char *type_name = NULL;
+
+  Mat        Xt_training;
+  Vec        y_training;
+
+  PetscBool  isascii;
+
+  PetscFunctionBegin;
+
+  TRY( SVMGetTrainingDataset(svm,&Xt_training,&y_training) );
+  if (!Xt_training || !y_training) {
+    TRY( PetscObjectGetComm((PetscObject) v,&comm) );
+    FLLOP_SETERRQ(comm,PETSC_ERR_ARG_NULL,"Training dataset is not set");
+  }
+
+  TRY( PetscObjectTypeCompare((PetscObject)v,PETSCVIEWERASCII,&isascii) );
+  if (isascii) {
+    TRY( PetscViewerASCIIPrintf(v, "=====================\n") );
+    TRY( PetscObjectPrintClassNamePrefixType((PetscObject) svm,v) );
+
+    TRY( PetscViewerASCIIPushTab(v) );
+    TRY( PetscViewerASCIIPrintf(v,"Training dataset from file \"%s\" was loaded successfully!\n",svm->training_dataset_file) );
+    TRY( PetscViewerASCIIPrintf(v,"Dataset contains:\n") );
+
+    TRY( PetscViewerASCIIPushTab(v) );
+    TRY( SVMDatasetInfo(svm,Xt_training,y_training,v) );
+    TRY( PetscViewerASCIIPopTab(v) );
+
+    TRY(PetscViewerASCIIPopTab(v));
+    TRY(PetscViewerASCIIPrintf(v,"=====================\n"));
+  } else {
+    TRY( PetscObjectGetComm((PetscObject) v,&comm) );
+    TRY( PetscObjectGetType((PetscObject) v,&type_name) );
+
+    FLLOP_SETERRQ1(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewTrainingDataset",type_name);
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMCreate_Binary"
 PetscErrorCode SVMCreate_Binary(SVM svm)
 {
@@ -1582,6 +1626,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm->ops->computehingeloss      = SVMComputeHingeLoss_Binary;
   svm->ops->computemodelparams    = SVMComputeModelParams_Binary;
   svm->ops->loadtrainingdataset   = SVMLoadTrainingDataset_Binary;
+  svm->ops->viewtrainingdataset   = SVMViewTrainingDataset_Binary;
 
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingDataset_C",SVMSetTrainingDataset_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C",SVMGetTrainingDataset_Binary) );

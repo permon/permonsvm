@@ -25,10 +25,14 @@ struct _SVMOps {
   PetscErrorCode (*computehingeloss)(SVM);
   PetscErrorCode (*computemodelparams)(SVM);
   PetscErrorCode (*loadtrainingdataset)(SVM,PetscViewer);
+  PetscErrorCode (*viewtrainingdataset)(SVM,PetscViewer);
 };
 
 struct _p_SVM {
   PETSCHEADER(struct _SVMOps);
+
+  char training_dataset_file[PETSC_MAX_PATH_LEN];
+  char test_dataset_file[PETSC_MAX_PATH_LEN];
 
   Mat                 Xt_test;
   Vec                 y_test;
