@@ -2402,7 +2402,7 @@ PetscErrorCode SVMLoadTestDataset(SVM svm,PetscViewer v)
   TRY( SVMGetMod(svm,&mod) );
   if (mod == 2) {
     TRY( SVMGetBias(svm,&bias) );
-    TRY( MatCreate_Biased(Xt_test,bias,&Xt_biased) );
+    TRY( MatBiasedCreate(Xt_test,bias,&Xt_biased) );
     Xt_test = Xt_biased;
   }
   TRY( SVMSetTestDataset(svm,Xt_test,y_test) );

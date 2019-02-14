@@ -1488,7 +1488,7 @@ PetscErrorCode SVMLoadTrainingDataset_Binary(SVM svm,PetscViewer v)
   TRY( SVMGetMod(svm,&mod) );
   if (mod == 2) {
     TRY( SVMGetBias(svm,&bias) );
-    TRY( MatCreate_Biased(Xt_training,bias,&Xt_biased) );
+    TRY( MatBiasedCreate(Xt_training,bias,&Xt_biased) );
     Xt_training = Xt_biased;
   }
   TRY( SVMSetTrainingDataset(svm,Xt_training,y_training) );
