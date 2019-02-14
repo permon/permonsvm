@@ -3,6 +3,6 @@
 
 #include <permonsvm.h>
 
-FLLOP_EXTERN PetscErrorCode DatasetLoad_SVMLight(SVM,PetscViewer,Mat,Vec);
+FLLOP_EXTERN PetscErrorCode DatasetLoad_SVMLight(Mat,Vec,PetscViewer);
 
 #endif

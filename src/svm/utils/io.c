@@ -335,7 +335,7 @@ static PetscErrorCode DatasetAssembly_SVMLight_Private(MPI_Comm comm,char *buff,
 
 #undef __FUNCT__
 #define __FUNCT__ "DatasetLoad_SVMLight"
-PetscErrorCode DatasetLoad_SVMLight(SVM svm,PetscViewer v,Mat Xt,Vec y)
+PetscErrorCode DatasetLoad_SVMLight(Mat Xt,Vec y,PetscViewer v)
 {
   MPI_Comm   comm;
 
@@ -343,7 +343,7 @@ PetscErrorCode DatasetLoad_SVMLight(SVM svm,PetscViewer v,Mat Xt,Vec y)
   char       *chunk_buff = NULL;
 
   PetscFunctionBegin;
-  TRY( PetscObjectGetComm((PetscObject) svm,&comm) );
+  TRY( PetscObjectGetComm((PetscObject) Xt,&comm) );
   TRY( PetscViewerFileGetName(v,&file_name) );
 
   TRY( SVMReadBuffer_Private(comm,file_name,&chunk_buff) );
