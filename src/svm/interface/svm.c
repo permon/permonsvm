@@ -52,7 +52,9 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
   svm->LogCnBase  = 2.;
   svm->LogCnMin   = -2.;
   svm->LogCnMax   = 2.;
+
   svm->loss_type  = SVM_L1;
+  svm->svm_mod    = 2;
 
   TRY( PetscMemzero(svm->hopt_score_types,7 * sizeof(ModelScore)) );
 
@@ -194,6 +196,7 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   PetscBool           flg,warm_start;
 
   SVMLossType         loss_type;
+  PetscInt            svm_mod;
 
   CrossValidationType cv_type;
   PetscInt            nfolds;
@@ -202,6 +205,10 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
   ierr = PetscObjectOptionsBegin((PetscObject)svm);CHKERRQ(ierr);
+  TRY( PetscOptionsInt("-svm_binary_mod","","SVMSetMod",svm->svm_mod,&svm_mod,&flg) );
+  if (flg) {
+    TRY( SVMSetMod(svm,svm_mod) );
+  }
   TRY( PetscOptionsInt("-svm_penalty_type","Set type of misclasification error penalty.","SVMSetPenaltyType",svm->penalty_type,&penalty_type,&flg) );
   if (flg) {
     TRY( SVMSetPenaltyType(svm,penalty_type) );
@@ -1289,7 +1296,10 @@ PetscErrorCode SVMSetMod(SVM svm,PetscInt mod)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidLogicalCollectiveInt(svm,mod,2);
-  TRY( PetscTryMethod(svm,"SVMSetMod_C",(SVM,PetscInt),(svm,mod)) );
+  if (svm->svm_mod != mod) {
+    svm->svm_mod = mod;
+    svm->setupcalled = PETSC_FALSE;
+  }
   PetscFunctionReturn(0);
 }
 
@@ -1315,7 +1325,7 @@ PetscErrorCode SVMGetMod(SVM svm,PetscInt *mod)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  TRY( PetscTryMethod(svm,"SVMGetMod_C",(SVM,PetscInt *),(svm,mod)) );
+  *mod = svm->svm_mod;
   PetscFunctionReturn(0);
 }
 

@@ -403,31 +403,6 @@ PetscErrorCode SVMSetQPS_Binary(SVM svm,QPS qps)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMSetMod_Binary"
-PetscErrorCode SVMSetMod_Binary(SVM svm,PetscInt mod)
-{
-  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
-
-  PetscFunctionBegin;
-  if (svm_binary->svm_mod != mod) {
-    svm_binary->svm_mod = mod;
-    svm->setupcalled = PETSC_FALSE;
-  }
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetMod_Binary"
-PetscErrorCode SVMGetMod_Binary(SVM svm,PetscInt *mod)
-{
-  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
-
-  PetscFunctionBegin;
-  *mod = svm_binary->svm_mod;
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
 #define __FUNCT__ "SVMUpdate_Binary_Private"
 PetscErrorCode SVMUpdate_Binary_Private(SVM svm)
 {
@@ -1132,16 +1107,11 @@ PetscErrorCode SVMSetFromOptions_Binary(PetscOptionItems *PetscOptionsObject,SVM
 
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
-  PetscInt  svm_mod;
   PetscReal b;
   PetscBool flg;
 
   PetscFunctionBegin;
   ierr = PetscObjectOptionsBegin((PetscObject) svm);CHKERRQ(ierr);
-  TRY( PetscOptionsInt("-svm_binary_mod","","SVMSetMod",svm_binary->svm_mod,&svm_mod,&flg) );
-  if (flg) {
-    TRY( SVMSetMod(svm,svm_mod) );
-  }
   TRY( PetscOptionsReal("-svm_bias","","SVMSetBias",svm_binary->b,&b,&flg) );
   if (flg) {
     TRY( SVMSetBias(svm,b) );
@@ -1599,8 +1569,6 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm_binary->nsv         = 0;
   svm_binary->is_sv       = NULL;
 
-  svm_binary->svm_mod     = 2;
-
   TRY( PetscMemzero(svm_binary->y_map,2 * sizeof(PetscScalar)) );
   TRY( PetscMemzero(svm_binary->confusion_matrix,4 * sizeof(PetscInt)) );
   TRY( PetscMemzero(svm_binary->model_scores,7 * sizeof(PetscReal)) );
@@ -1632,8 +1600,6 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C",SVMGetTrainingDataset_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetQPS_C",SVMSetQPS_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetQPS_C",SVMGetQPS_Binary) );
-  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetMod_C",SVMSetMod_Binary) );
-  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetMod_C",SVMGetMod_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetBias_C",SVMSetBias_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetBias_C",SVMGetBias_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetSeparatingHyperplane_C",SVMSetSeparatingHyperplane_Binary) );

@@ -26,7 +26,6 @@ typedef struct {
     PetscInt    nsv;
 
     QPS         qps;
-    PetscInt    svm_mod;
 
     PetscInt    confusion_matrix[4];
     PetscReal   model_scores[7];
