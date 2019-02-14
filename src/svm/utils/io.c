@@ -48,8 +48,8 @@ struct ArrInt  DynamicArray_(PetscInt);
 struct ArrReal DynamicArray_(PetscReal);
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMReadBuffer_Private"
-static PetscErrorCode SVMReadBuffer_Private(MPI_Comm comm,const char *filename,char **chunk_buff)
+#define __FUNCT__ "IOReadBuffer_SVMLight_Private"
+static PetscErrorCode IOReadBuffer_SVMLight_Private(MPI_Comm comm,const char *filename,char **chunk_buff)
 {
   PetscMPIInt comm_size,comm_rank;
 
@@ -346,7 +346,7 @@ PetscErrorCode DatasetLoad_SVMLight(Mat Xt,Vec y,PetscViewer v)
   TRY( PetscObjectGetComm((PetscObject) Xt,&comm) );
   TRY( PetscViewerFileGetName(v,&file_name) );
 
-  TRY( SVMReadBuffer_Private(comm,file_name,&chunk_buff) );
+  TRY( IOReadBuffer_SVMLight_Private(comm,file_name,&chunk_buff) );
   TRY( DatasetAssembly_SVMLight_Private(comm,chunk_buff,Xt,y) );
 
   if (chunk_buff) { TRY( PetscFree(chunk_buff) ); }
