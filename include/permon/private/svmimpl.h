@@ -57,5 +57,7 @@ struct _p_SVM {
 
   void *data;
 };
+
+FLLOP_EXTERN PetscLogEvent SVM_LoadDataset;
 #endif
 

@@ -2,7 +2,8 @@
 #include <permon/private/svmimpl.h>
 #include "../utils/io.h"
 
-PetscClassId SVM_CLASSID;
+PetscClassId  SVM_CLASSID;
+PetscLogEvent SVM_LoadDataset;
 
 const char *const ModelScores[]={"accuracy","precision","sensitivity","F1","mcc","aucroc","G1","ModelScore","model_",0};
 const char *const CrossValidationTypes[]={"kfold","stratified_kfold","CrossValidationType","cv_",0};
@@ -2273,12 +2274,13 @@ PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat Xt,Vec y)
   PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
   PetscValidHeaderSpecific(Xt,MAT_CLASSID,3);
   PetscCheckSameComm(svm,1,Xt,3);
-  PetscValidHeaderSpecific(y,VEC_CLASSID,3);
+  PetscValidHeaderSpecific(y,VEC_CLASSID,4);
   PetscCheckSameComm(svm,1,y,4);
 
   TRY( PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERASCII,&isascii) );
   TRY( PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERHDF5,&ishdf5) );
 
+  PetscLogEventBegin(SVM_LoadDataset,svm,0,0,0);
   if (isascii) {
     TRY( DatasetLoad_SVMLight(Xt,y,v) );
   } else if (ishdf5) {
@@ -2289,6 +2291,8 @@ PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat Xt,Vec y)
 
     FLLOP_SETERRQ1(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMLoadDataset",type_name);
   }
+  PetscLogEventEnd(SVM_LoadDataset,svm,0,0,0);
+
   PetscFunctionReturn(0);
 }
 
@@ -2308,7 +2312,7 @@ PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat Xt,Vec y)
 PetscErrorCode SVMLoadTrainingDataset(SVM svm,PetscViewer v)
 {
 
-  PetscFunctionBegin;
+  PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
 
@@ -2317,7 +2321,7 @@ PetscErrorCode SVMLoadTrainingDataset(SVM svm,PetscViewer v)
   }
 
   /* TODO view dataset */
-  PetscFunctionReturn(0);
+  PetscFunctionReturnI(0);
 }
 
 #undef __FUNCT__

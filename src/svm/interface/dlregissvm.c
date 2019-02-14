@@ -12,10 +12,12 @@ PetscErrorCode SVMInitializePackage()
   if (SVMPackageInitialized) PetscFunctionReturn(0);
   SVMPackageInitialized = PETSC_TRUE;
 
-  /*Register Classes*/
-  TRY( PetscClassIdRegister("SVM Problem",&SVM_CLASSID) );
-  /*Register constructors*/
+  /* Register Classes */
+  TRY( PetscClassIdRegister("SVM",&SVM_CLASSID) );
+  /* Register constructors */
   TRY( SVMRegisterAll() );
+  /* Register Events */
+  TRY( PetscLogEventRegister("SVMLoadDataset",SVM_CLASSID,&SVM_LoadDataset) );
 
   TRY( PetscRegisterFinalize(SVMFinalizePackage) );
   PetscFunctionReturn(0);
@@ -31,7 +33,7 @@ PetscErrorCode SVMFinalizePackage()
     TRY( PetscFunctionListDestroy(&SVMList) );
   }
 
-  SVMPackageInitialized = PETSC_FALSE;  
+  SVMPackageInitialized = PETSC_FALSE;
   SVMRegisterAllCalled = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
