@@ -38,3 +38,4 @@ GSYMS
 GTAGS
 nbproject/
 CMakeLists.txt
+arch-*
