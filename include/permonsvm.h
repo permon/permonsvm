@@ -3,6 +3,7 @@
 #define __PERMONSVM_H
 
 #include <permonqps.h>
+#include <petscviewerhdf5.h>
 
 /*S
   SVM - PERMON class for Support Vector Machines (SVM) classification on top of PermonQP solvers (QPS)
