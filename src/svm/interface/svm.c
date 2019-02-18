@@ -2294,7 +2294,7 @@ PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat Xt,Vec y)
   if (isascii) {
     TRY( DatasetLoad_SVMLight(Xt,y,v) );
   } else if (ishdf5) {
-    /* TODO implement loading data from HDF5 */
+    TRY( DatasetLoad_HDF5(Xt,y,v) );
   } else {
     TRY( PetscObjectGetComm((PetscObject) v,&comm) );
     TRY( PetscObjectGetType((PetscObject) v,&type_name) );

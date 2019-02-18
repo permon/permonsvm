@@ -372,3 +372,28 @@ PetscErrorCode PetscViewerSVMLightOpen(MPI_Comm comm,const char name[],PetscView
   *v = v_inner;
   PetscFunctionReturn(0);
 }
+
+#undef __FUNCT__
+#define __FUNCT__ "DatasetLoad_HDF5"
+PetscErrorCode DatasetLoad_HDF5(Mat Xt,Vec y,PetscViewer v)
+{
+  char       Xt_name[256];
+  const char *Xt_name_tmp;
+  char       y_name[256];
+  const char *y_name_tmp;
+
+  PetscFunctionBegin;
+  TRY( PetscObjectGetName((PetscObject) Xt,&Xt_name_tmp) );
+  TRY( PetscStrcpy(Xt_name,Xt_name_tmp) );
+  TRY( PetscObjectGetName((PetscObject) y,&y_name_tmp) );
+  TRY( PetscStrcpy(y_name,y_name_tmp) );
+
+  TRY( PetscObjectSetName((PetscObject) Xt,"X") );
+  TRY( MatLoad(Xt,v) );
+  TRY( PetscObjectSetName((PetscObject) y,"y") );
+  TRY( VecLoad(y,v) );
+
+  TRY( PetscObjectSetName((PetscObject) Xt,Xt_name) );
+  TRY( PetscObjectSetName((PetscObject) y,y_name) );
+  PetscFunctionReturn(0);
+}
