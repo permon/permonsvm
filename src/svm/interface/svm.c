@@ -1701,7 +1701,7 @@ PetscErrorCode SVMPostTrain(SVM svm)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   TRY( svm->ops->posttrain(svm) );
 
-  TRY( PetscOptionsGetViewer(((PetscObject) svm)->comm,((PetscObject) svm)->prefix,"-svm_view",&v,&format,&view) );
+  TRY( PetscOptionsGetViewer(((PetscObject) svm)->comm,NULL,((PetscObject) svm)->prefix,"-svm_view",&v,&format,&view) );
   if (view) {
     TRY( PetscViewerPushFormat(v,format) );
     TRY( SVMView(svm,v) );
@@ -1892,7 +1892,7 @@ PetscErrorCode SVMTest(SVM svm)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   TRY( svm->ops->test(svm) );
 
-  TRY( PetscOptionsGetViewer(((PetscObject)svm)->comm,((PetscObject)svm)->prefix,"-svm_view_score",&v,&format,&view_score) );
+  TRY( PetscOptionsGetViewer(((PetscObject)svm)->comm,NULL,((PetscObject)svm)->prefix,"-svm_view_score",&v,&format,&view_score) );
   if (view_score) {
     TRY( PetscViewerPushFormat(v,format) );
     TRY( SVMViewScore(svm,v) );
