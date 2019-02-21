@@ -2416,6 +2416,10 @@ PetscErrorCode SVMLoadTestDataset(SVM svm,PetscViewer v)
     TRY( PetscObjectGetComm((PetscObject) v,&comm) );
     TRY( SVMViewTestDataset(svm,PETSC_VIEWER_STDOUT_(comm)) );
   }
+
+  /* Free memory */
+  TRY( MatDestroy(&Xt_test) );
+  TRY( VecDestroy(&y_test) );
   PetscFunctionReturnI(0);
 }
 
