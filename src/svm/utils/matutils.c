@@ -186,14 +186,14 @@ PetscErrorCode MatCreateSubMatrix_Biased(Mat mat,IS isrow,IS iscol,MatReuse cll,
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "MatCreate_Biased"
-PetscErrorCode MatCreate_Biased(Mat Xt,PetscReal bias,Mat *Xt_biased)
+#define __FUNCT__ "MatBiasedCreate"
+PetscErrorCode MatBiasedCreate(Mat Xt,PetscReal bias,Mat *Xt_biased)
 {
   MPI_Comm    comm;
   PetscMPIInt comm_size,comm_rank;
 
-  Mat      Xt_biased_inner;
-  PetscInt m,n,M,N;
+  Mat          Xt_biased_inner;
+  PetscInt     m,n,M,N;
 
   MatBiasedCtx *ctx = NULL;
 

@@ -24,10 +24,15 @@ struct _SVMOps {
   PetscErrorCode (*computemodelscores)(SVM,Vec,Vec);
   PetscErrorCode (*computehingeloss)(SVM);
   PetscErrorCode (*computemodelparams)(SVM);
+  PetscErrorCode (*loadtrainingdataset)(SVM,PetscViewer);
+  PetscErrorCode (*viewtrainingdataset)(SVM,PetscViewer);
 };
 
 struct _p_SVM {
   PETSCHEADER(struct _SVMOps);
+
+  char training_dataset_file[PETSC_MAX_PATH_LEN];
+  char test_dataset_file[PETSC_MAX_PATH_LEN];
 
   Mat                 Xt_test;
   Vec                 y_test;
@@ -45,6 +50,7 @@ struct _p_SVM {
   PetscInt            nfolds;
 
   SVMLossType         loss_type;
+  PetscInt            svm_mod;
 
   PetscBool           warm_start;
 
@@ -56,5 +62,7 @@ struct _p_SVM {
 
   void *data;
 };
+
+FLLOP_EXTERN PetscLogEvent SVM_LoadDataset;
 #endif
 
