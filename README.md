@@ -36,7 +36,10 @@ Features
 	- Matthews correlation coefficient 
 	- Area Under Curve (AUC) Receiver Operating Characteristics (ROC)
 	- Gini coefficient
-- Parallel SVMLight format loader
+- Parallel loaders:
+	- PETSc binary
+	- HDF5 (AIJ matrices support)
+	- SVMLight
 
 Quick guide to PermonSVM installation
 -------------------------------------
@@ -45,7 +48,7 @@ Quick guide to PermonSVM installation
 2. set `PERMON_SVM_DIR` variable pointing to the PermonSVM directory (probably this file's parent directory)
 3. build PermonSVM simply using makefile (makes use of PETSc buildsystem):
    `make`
-4. if the build is successful, there is a new subdirectory named `$PETSC_ARCH` with the program library `$PETSC_ARCH/lib/libpermonsvm.{so,a}` and the executable `$PETSC_ARCH/bin/permonsvmfile`
+4. if the build is successful, there is a new subdirectory named `$PETSC_ARCH` with the program library `$PETSC_ARCH/lib/libpermonsvm.{dylib,so,a}` and the executable `$PETSC_ARCH/bin/permonsvmfile`
    - shared library (.so) is built just if PETSc has been configured with option `--with-shared-libraries`
    - all compiler settings are inherited from PETSc
 

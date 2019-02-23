@@ -374,8 +374,8 @@ PetscErrorCode PetscViewerSVMLightOpen(MPI_Comm comm,const char name[],PetscView
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "DatasetLoad_HDF5"
-PetscErrorCode DatasetLoad_HDF5(Mat Xt,Vec y,PetscViewer v)
+#define __FUNCT__ "DatasetLoad_Binary"
+PetscErrorCode DatasetLoad_Binary(Mat Xt,Vec y,PetscViewer v)
 {
   char       Xt_name[256];
   const char *Xt_name_tmp;
