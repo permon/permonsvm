@@ -2277,7 +2277,7 @@ PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat Xt,Vec y)
   MPI_Comm   comm;
   const char *type_name = NULL;
 
-  PetscBool  isascii,ishdf5;
+  PetscBool  isascii,ishdf5,isbinary;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
@@ -2289,12 +2289,13 @@ PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat Xt,Vec y)
 
   TRY( PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERASCII,&isascii) );
   TRY( PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERHDF5,&ishdf5) );
+  TRY( PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERBINARY,&isbinary) );
 
   PetscLogEventBegin(SVM_LoadDataset,svm,0,0,0);
   if (isascii) {
     TRY( DatasetLoad_SVMLight(Xt,y,v) );
-  } else if (ishdf5) {
-    TRY( DatasetLoad_HDF5(Xt,y,v) );
+  } else if (ishdf5 || isbinary) {
+    TRY( DatasetLoad_Binary(Xt,y,v) );
   } else {
     TRY( PetscObjectGetComm((PetscObject) v,&comm) );
     TRY( PetscObjectGetType((PetscObject) v,&type_name) );
