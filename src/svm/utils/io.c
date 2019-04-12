@@ -1,5 +1,8 @@
 #include <petsc/private/petscimpl.h>
-#include <permonsvmio.h>
+#include <petsc/private/matimpl.h>
+#include <petsc/private/vecimpl.h>
+
+#include "io.h"
 
 #include <limits.h>
 #if defined(PETSC_HAVE_UNISTD_H)
@@ -45,8 +48,9 @@ struct ArrInt  DynamicArray_(PetscInt);
 struct ArrReal DynamicArray_(PetscReal);
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMLoadBuffer"
-PetscErrorCode SVMReadBuffer(MPI_Comm comm,const char *filename,char **chunk_buff) {
+#define __FUNCT__ "IOReadBuffer_SVMLight_Private"
+static PetscErrorCode IOReadBuffer_SVMLight_Private(MPI_Comm comm,const char *filename,char **chunk_buff)
+{
   PetscMPIInt comm_size,comm_rank;
 
   MPI_File    fh;
@@ -159,8 +163,9 @@ PetscErrorCode SVMReadBuffer(MPI_Comm comm,const char *filename,char **chunk_buf
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMParseBuffer"
-PetscErrorCode SVMParseBuffer(MPI_Comm comm,char *buff,struct ArrInt *i,struct ArrInt *j,struct ArrReal *a,struct ArrInt *k,struct ArrReal *y,PetscInt *N) {
+#define __FUNCT__ "IOParseBuffer_SVMLight_Private"
+static PetscErrorCode IOParseBuffer_SVMLight_Private(MPI_Comm comm,char *buff,struct ArrInt *i,struct ArrInt *j,struct ArrReal *a,struct ArrInt *k,struct ArrReal *y,PetscInt *N)
+{
   struct ArrInt  i_in,j_in,k_in;
   struct ArrReal a_in,y_in;
 
@@ -182,10 +187,10 @@ PetscErrorCode SVMParseBuffer(MPI_Comm comm,char *buff,struct ArrInt *i,struct A
   array_grow_factor = DARRAY_GROW_FACTOR;
 
   TRY( PetscOptionsGetInt(NULL,NULL,"-svm_io_darray_init_size",&array_init_capacity,NULL) );
-  if (array_init_capacity <= 0) FLLOP_SETERRQ(comm, PETSC_ERR_ARG_OUTOFRANGE, "Initial size of dynamic array must be greater than zero");
+  if (array_init_capacity <= 0) FLLOP_SETERRQ(comm,PETSC_ERR_ARG_OUTOFRANGE,"Initial size of dynamic array must be greater than zero");
 
   TRY( PetscOptionsGetReal(NULL,NULL,"-svm_io_darray_grow_factor",&array_grow_factor,NULL) );
-  if (array_grow_factor <= 1.) FLLOP_SETERRQ(comm, PETSC_ERR_ARG_OUTOFRANGE, "Grow factor of dynamic array must be greater than one");
+  if (array_grow_factor <= 1.) FLLOP_SETERRQ(comm,PETSC_ERR_ARG_OUTOFRANGE,"Grow factor of dynamic array must be greater than one");
 
   DynamicArrayInit(i_in,array_init_capacity,array_grow_factor);
   DynamicArrayPushBack(i_in,0);
@@ -282,18 +287,23 @@ PetscErrorCode SVMParseBuffer(MPI_Comm comm,char *buff,struct ArrInt *i,struct A
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMPAsseblyMatVec"
-PetscErrorCode SVMAsseblyMatVec(MPI_Comm comm,char *buff,Mat *Xt,Vec *labels) {
-  struct ArrInt  i,j,k;
-  struct ArrReal a,y;
+#define __FUNCT__ "DatasetAssembly_SVMLight_Private"
+static PetscErrorCode DatasetAssembly_SVMLight_Private(Mat Xt,Vec labels,char *buff)
+{
+  MPI_Comm comm;
+
+  struct   ArrInt  i,j,k;
+  struct   ArrReal a,y;
 
   PetscInt offset,m,N;
+  PetscInt rbs;
 
   PetscFunctionBegin;
-  TRY( SVMParseBuffer(comm,buff,&i,&j,&a,&k,&y,&N) );
+  TRY( PetscObjectGetComm((PetscObject) Xt,&comm) );
 
+  TRY( IOParseBuffer_SVMLight_Private(comm,buff,&i,&j,&a,&k,&y,&N) );
   m = (buff) ? i.size - 1 : 0;
-  /*local to global: label vector indices*/
+  /* local to global: label vector indices */
   offset = (k.data) ? k.size : 0;
   TRY( MPI_Scan(MPI_IN_PLACE,&offset,1,MPIU_INT,MPI_SUM,comm) );
   if (k.data) {
@@ -301,17 +311,22 @@ PetscErrorCode SVMAsseblyMatVec(MPI_Comm comm,char *buff,Mat *Xt,Vec *labels) {
     DynamicArrayAddValue(k,offset);
   }
 
-  TRY( MatCreate(comm,Xt) );
-  TRY( MatSetType(*Xt,MATAIJ) );
-  TRY( MatSetSizes(*Xt,m,PETSC_DECIDE,PETSC_DECIDE,N) );
+  /* Assembly the Xt matrix */
+  TRY( MatSetType(Xt,MATAIJ) );
+  TRY( MatSetSizes(Xt,m,PETSC_DECIDE,PETSC_DECIDE,N) );
+  TRY( MatSeqAIJSetPreallocationCSR(Xt,i.data,j.data,a.data) );
+  TRY( MatMPIAIJSetPreallocationCSR(Xt,i.data,j.data,a.data) );
 
-  TRY( MatSeqAIJSetPreallocationCSR(*Xt,i.data,j.data,a.data) );
-  TRY( MatMPIAIJSetPreallocationCSR(*Xt,i.data,j.data,a.data) );
+  /* Assembly vector of labels */
+  TRY( MatGetBlockSizes(Xt,&rbs,NULL) );
+  TRY( VecSetSizes(labels,Xt->rmap->n,PETSC_DETERMINE) );
+  TRY( VecSetBlockSize(labels,rbs) );
+  TRY( VecSetType(labels,Xt->defaultvectype) );
+  TRY( PetscLayoutReference(Xt->rmap,&labels->map) );
 
-  TRY( MatCreateVecs(*Xt,NULL,labels) );
-  if (y.data) TRY( VecSetValues(*labels,y.size,k.data,y.data,INSERT_VALUES) );
-  TRY( VecAssemblyBegin(*labels) );
-  TRY( VecAssemblyEnd(*labels) );
+  if (y.data) TRY( VecSetValues(labels,y.size,k.data,y.data,INSERT_VALUES) );
+  TRY( VecAssemblyBegin(labels) );
+  TRY( VecAssemblyEnd(labels) );
 
   if (y.data) DynamicArrayClear(y);
   if (k.data) DynamicArrayClear(k);
@@ -322,175 +337,63 @@ PetscErrorCode SVMAsseblyMatVec(MPI_Comm comm,char *buff,Mat *Xt,Vec *labels) {
   PetscFunctionReturn(0);
 }
 
-PetscErrorCode SVMDatasetInfo(Mat,Vec,PetscInt,PetscViewer);
-PetscErrorCode SVMViewIO(SVM,const char *,const char *,PetscViewer);
-
 #undef __FUNCT__
-#define __FUNCT__ "SVMLoadData"
-PetscErrorCode SVMLoadData(SVM svm,const char *filename,Mat *Xt,Vec *y) {
-  MPI_Comm          comm;
+#define __FUNCT__ "DatasetLoad_SVMLight"
+PetscErrorCode DatasetLoad_SVMLight(Mat Xt,Vec y,PetscViewer v)
+{
+  MPI_Comm   comm;
 
-  char              *chunk_buff = NULL;
-  Mat               Xt_inner,Xt_biased;
-
-  PetscInt          svm_mod;
-  PetscReal         bias;
+  const char *file_name = NULL;
+  char       *chunk_buff = NULL;
 
   PetscFunctionBegin;
-  PetscValidPointer(Xt,3);
-  PetscValidPointer(y,4);
+  TRY( PetscObjectGetComm((PetscObject) Xt,&comm) );
+  TRY( PetscViewerFileGetName(v,&file_name) );
 
-  TRY( PetscObjectGetComm((PetscObject) svm,&comm) );
+  TRY( IOReadBuffer_SVMLight_Private(comm,file_name,&chunk_buff) );
+  TRY( DatasetAssembly_SVMLight_Private(Xt,y,chunk_buff) );
 
-  TRY( SVMReadBuffer(comm,filename,&chunk_buff) );
-  TRY( SVMAsseblyMatVec(comm,chunk_buff,&Xt_inner,y) );
-
-  if (chunk_buff) TRY( PetscFree(chunk_buff) );
-
-  TRY( SVMGetMod(svm,&svm_mod) );
-  if (svm_mod == 2) {
-    TRY( SVMGetBias(svm,&bias) );
-    TRY( MatCreate_Biased(Xt_inner,bias,&Xt_biased) );
-    Xt_inner = Xt_biased;
-  }
-
-  *Xt = Xt_inner;
+  if (chunk_buff) { TRY( PetscFree(chunk_buff) ); }
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMLoadTrainingDataset"
-PetscErrorCode SVMLoadTrainingDataset(SVM svm,const char *filename)
+#define __FUNCT__ "PetscViewerSVMLightOpen"
+PetscErrorCode PetscViewerSVMLightOpen(MPI_Comm comm,const char name[],PetscViewer *v)
 {
-  Mat Xt_training;
-  Vec y_training;
-
-  PetscBool view;
-
-  PetscFunctionBeginI;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-
-  TRY( SVMLoadData(svm,filename,&Xt_training,&y_training) );
-  TRY( PetscObjectSetName((PetscObject) Xt_training,"Xt_training") );
-  TRY( PetscObjectSetName((PetscObject) y_training,"y_training") );
-  TRY( SVMSetTrainingDataset(svm,Xt_training,y_training) );
-
-  TRY( PetscOptionsHasName(NULL,NULL,"-svm_view_io",&view) );
-  if (view) {
-    PetscViewer v = PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject) svm) );
-    TRY( SVMViewIO(svm,SVM_TRAINING_DATASET,filename,v) );
-  }
-
-  TRY( MatDestroy(&Xt_training) );
-  TRY( VecDestroy(&y_training) );
-  PetscFunctionReturnI(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "SVMLoadTestDataset"
-PetscErrorCode SVMLoadTestDataset(SVM svm,const char *filename)
-{
-  Mat Xt_test;
-  Vec y_test;
-
-  PetscBool view;
-
-  PetscFunctionBeginI;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-
-  TRY( SVMLoadData(svm,filename,&Xt_test,&y_test) );
-  TRY( PetscObjectSetName((PetscObject) Xt_test,"Xt_test") );
-  TRY( PetscObjectSetName((PetscObject) y_test,"y_test") );
-  TRY( SVMSetTestDataset(svm,Xt_test,y_test) );
-
-  TRY( PetscOptionsHasName(NULL,NULL,"-svm_view_io",&view) );
-  if (view) {
-    PetscViewer v = PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject) svm) );
-    TRY( SVMViewIO(svm,SVM_TEST_DATASET,filename,v) );
-  }
-
-  TRY( MatDestroy(&Xt_test) );
-  TRY( VecDestroy(&y_test) );
-  PetscFunctionReturnI(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "SVMViewIO"
-PetscErrorCode SVMViewIO(SVM svm,const char *dataset_type,const char *filename,PetscViewer v)
-{
-  Mat Xt;
-  Vec y;
-
-  PetscInt  svm_mod;
-
-  PetscBool iseq;
-  PetscBool isascii;
+  PetscViewer v_inner;
 
   PetscFunctionBegin;
-  TRY( PetscObjectTypeCompare((PetscObject)v,PETSCVIEWERASCII,&isascii) );
+  TRY( PetscViewerCreate(comm,&v_inner) );
+  TRY( PetscViewerSetType(v_inner,PETSCVIEWERASCII) );
+  TRY( PetscViewerFileSetMode(v_inner,FILE_MODE_READ) );
+  TRY( PetscViewerFileSetName(v_inner,name) );
 
-  if (isascii) {
-    TRY( SVMGetMod(svm,&svm_mod) );
-
-    TRY( PetscViewerASCIIPrintf(v, "=====================\n") );
-    TRY( PetscObjectPrintClassNamePrefixType((PetscObject) svm,v) );
-
-    TRY( PetscViewerASCIIPushTab(v) );
-    TRY( PetscViewerASCIIPrintf(v,"%s from source \"%s\" was loaded successfully!\n",dataset_type,filename) );
-    TRY( PetscViewerASCIIPrintf(v,"Dataset contains:\n") );
-
-    TRY( PetscStrcmp(dataset_type,SVM_TRAINING_DATASET,&iseq) );
-    if (iseq) {
-      TRY( SVMGetTrainingDataset(svm,&Xt,&y) );
-    }
-    TRY( PetscStrcmp(dataset_type,SVM_TEST_DATASET,&iseq) );
-    if (iseq) {
-      TRY( SVMGetTestDataset(svm,&Xt,&y) );
-    }
-
-    TRY( PetscViewerASCIIPushTab(v) );
-    TRY( SVMDatasetInfo(Xt,y,svm_mod,v) );
-    TRY( PetscViewerASCIIPopTab(v) );
-
-    TRY(PetscViewerASCIIPopTab(v));
-    TRY(PetscViewerASCIIPrintf(v,"=====================\n"));
-  }
+  *v = v_inner;
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMViewDatasetInfo"
-PetscErrorCode SVMDatasetInfo(Mat Xt,Vec y,PetscInt svm_mod,PetscViewer v)
+#define __FUNCT__ "DatasetLoad_Binary"
+PetscErrorCode DatasetLoad_Binary(Mat Xt,Vec y,PetscViewer v)
 {
-  PetscInt    M,N,M_plus,M_minus;
-  PetscReal   max,per_plus,per_minus;
-  Vec         y_max;
-  IS          is_plus;
+  char       Xt_name[256];
+  const char *Xt_name_tmp;
+  char       y_name[256];
+  const char *y_name_tmp;
 
   PetscFunctionBegin;
-  TRY( MatGetSize(Xt,&M,&N) );
+  TRY( PetscObjectGetName((PetscObject) Xt,&Xt_name_tmp) );
+  TRY( PetscStrcpy(Xt_name,Xt_name_tmp) );
+  TRY( PetscObjectGetName((PetscObject) y,&y_name_tmp) );
+  TRY( PetscStrcpy(y_name,y_name_tmp) );
 
-  TRY( VecDuplicate(y,&y_max) );
-  TRY( VecMax(y,NULL,&max) );
-  TRY( VecSet(y_max,max) );
+  TRY( PetscObjectSetName((PetscObject) Xt,"X") );
+  TRY( MatLoad(Xt,v) );
+  TRY( PetscObjectSetName((PetscObject) y,"y") );
+  TRY( VecLoad(y,v) );
 
-  TRY( VecWhichEqual(y,y_max,&is_plus) );
-  TRY( ISGetSize(is_plus,&M_plus) );
-
-  per_plus = ((PetscReal) M_plus / (PetscReal) M) * 100.;
-  M_minus = M - M_plus;
-  per_minus = 100 - per_plus;
-
-  if (svm_mod == 2) N -= 1;
-
-  TRY( PetscViewerASCIIPushTab(v) );
-  TRY( PetscViewerASCIIPrintf(v,"samples\t%5D\n",M) );
-  TRY( PetscViewerASCIIPrintf(v,"samples+\t%5D (%.2f%%)\n",M_plus,per_plus) );
-  TRY( PetscViewerASCIIPrintf(v,"samples-\t%5D (%.2f%%)\n",M_minus,per_minus) );
-  TRY( PetscViewerASCIIPrintf(v,"features\t%5D\n",N) );
-  TRY( PetscViewerASCIIPopTab(v) );
-
-  TRY( VecDestroy(&y_max) );
-  TRY( ISDestroy(&is_plus) );
+  TRY( PetscObjectSetName((PetscObject) Xt,Xt_name) );
+  TRY( PetscObjectSetName((PetscObject) y,y_name) );
   PetscFunctionReturn(0);
 }

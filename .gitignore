@@ -1,4 +1,4 @@
-.hg
+.hgi
 .hgignore
 .hgtags
 *.bin
@@ -38,3 +38,6 @@ GSYMS
 GTAGS
 nbproject/
 CMakeLists.txt
+arch-*
+.idea
+cmake-*
