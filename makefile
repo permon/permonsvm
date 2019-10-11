@@ -9,6 +9,7 @@ DIRS   = src include
 
 include lib/permonsvm/conf/permonsvm_variables
 include lib/permonsvm/conf/permonsvm_rules
+include lib/permonsvm/conf/permonsvm_test
 
 
 permonsvmfile:  ${PERMON_SVM_DIR}/${PETSC_ARCH}/bin/permonsvmfile
