@@ -48,7 +48,6 @@ PetscErrorCode SVMRunBinaryClassification()
   TRY( PetscStrcmp(extension,SVMLight,&issvmlight) );
   if (ishdf5) {
     TRY( PetscViewerHDF5Open(comm,training_file,FILE_MODE_READ,&viewer) );
-    TRY( PetscViewerHDF5SetAIJNames(viewer,"i","j","a","ncols") );
   } else if (isbinary) {
     TRY( PetscViewerBinaryOpen(comm,training_file,FILE_MODE_READ,&viewer) );
   } else if (issvmlight) {
@@ -67,7 +66,6 @@ PetscErrorCode SVMRunBinaryClassification()
     TRY( PetscStrcmp(extension,SVMLight,&issvmlight) );
     if (ishdf5) {
       TRY( PetscViewerHDF5Open(comm,test_file,FILE_MODE_READ,&viewer) );
-      TRY( PetscViewerHDF5SetAIJNames(viewer,"i","j","a","ncols") );
     } else if (isbinary) {
       TRY( PetscViewerBinaryOpen(comm,test_file,FILE_MODE_READ,&viewer) );
     } else if (issvmlight) {
