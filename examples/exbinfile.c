@@ -51,7 +51,11 @@ int main(int argc,char **argv)
   ierr = PetscStrcmp(extension,bin,&isbinary);CHKERRQ(ierr);
   ierr = PetscStrcmp(extension,SVMLight,&issvmlight);CHKERRQ(ierr);
   if (ishdf5) {
+#if defined(PETSC_HAVE_HDF5)
     ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,training_file,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
+#else
+    SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_SUP,"PETSc is not configured with HDF5");
+#endif
   } else if (isbinary) {
     ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,training_file,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
   } else if (issvmlight) {
@@ -69,7 +73,11 @@ int main(int argc,char **argv)
     ierr = PetscStrcmp(extension,bin,&isbinary);CHKERRQ(ierr);
     ierr = PetscStrcmp(extension,SVMLight,&issvmlight);CHKERRQ(ierr);
     if (ishdf5) {
+#if defined(PETSC_HAVE_HDF5)
       ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,test_file,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
+#else
+      SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_SUP,"PETSc is not configured with HDF5");
+#endif
     } else if (isbinary) {
       ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,test_file,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
     } else if (issvmlight) {
