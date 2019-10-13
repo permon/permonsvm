@@ -56,21 +56,21 @@ Example of PermonSVM usage
 --------------------------
 
 1. running SVM on 2 MPI processes with default settings (_l1_ hinge loss function, C = 1, no-bias classification)
-   `./runsvmmpi 2 -f_training examples/heart_scale -f_test examples/heart_scale.t`
+   `./runsvmmpi 2 -f_training examples/data/heart_scale.bin -f_test examples/data/heart_scale.t.bin`
 2. running PermonSVM on 2 MPI processes with grid search and k-fold cross validation
-   `./runsvmmpi 2 -f_training examples/heart_scale -f_test examples/heart_scale.t -svm_C -1`
+   `./runsvmmpi 2 -f_training examples/data/heart_scale.bin -f_test examples/data/heart_scale.t.bin -svm_C -1`
 3. running PermonSVM on 2 MPI processes with grid search (C = {0.1, 1, 10, 100}) and cross validation on 4 folds with warm start
-   `./runsvmmpi 2 -f_training examples/heart_scale -f_test examples/heart_scale.t -svm_C -1 -svm_nfolds 4 -svm_logC_base 10 -svm_logC_min -1 -svm_logC_max 2 -cross_svm_warm_start 1`
+   `./runsvmmpi 2 -f_training examples/data/heart_scale.bin -f_test examples/data/heart_scale.t.bin -svm_C -1 -svm_nfolds 4 -svm_logC_base 10 -svm_logC_min -1 -svm_logC_max 2 -cross_svm_warm_start 1`
 4. running PermonSVM on 2 MPI processes with grid search (C = {0.1, 1, 10, 100}) and stratified k-fold cross validation on 4 folds with warm start
-   `./runsvmmpi 2 -f_training examples/heart_scale -f_test examples/heart_scale.t -svm_C -1 -svm_nfolds 4 -svm_logC_base 10 -svm_logC_min -1 -svm_logC_max 2 -cross_svm_warm_start 1 -svm_cv_type stratified_kfold`   
+   `./runsvmmpi 2 -f_training examples/data/heart_scale.bin -f_test examples/data/heart_scale.t.bin -svm_C -1 -svm_nfolds 4 -svm_logC_base 10 -svm_logC_min -1 -svm_logC_max 2 -cross_svm_warm_start 1 -svm_cv_type stratified_kfold`   
 5. running PermonSVM on 2 MPI processes with C = 100
-   `./runsvmmpi 2 -f_training examples/heart_scale -f_test examples/heart_scale.t -svm_C 100`
+   `./runsvmmpi 2 -f_training examples/data/heart_scale.bin -f_test examples/data/heart_scale.t.bin -svm_C 100`
 6. running PermonSVM on 2 MPI processes with C = 0.01 and _l2_ hinge loss function
-   `./runsvmmpi 2 -f_training examples/heart_scale -f_test examples/heart_scale.t -svm_loss_type L2 -svm_C 1e-2`
+   `./runsvmmpi 2 -f_training examples/data/heart_scale.bin -f_test examples/data/heart_scale.t.bin -svm_loss_type L2 -svm_C 1e-2`
 7. running PermonSVM on 2 MPI processes with C = 0.01 and _l2_ hinge loss function (bias (standard) classification)
-	`./runsvmmpi 2 -f_training examples/heart_scale -f_test examples/heart_scale.t -svm_loss_type L2 -svm_C 1e-2 -svm_binary_mod 1`
+	`./runsvmmpi 2 -f_training examples/data/heart_scale.bin -f_test examples/data/heart_scale.t.bin -svm_loss_type L2 -svm_C 1e-2 -svm_binary_mod 1`
 
-The training dataset `examples/heart_scale` and testing dataset `examples/heart_scale.t` have been obtained by splitting the `heart_scale` dataset from the [LIBSVM dataset page](https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html#heart).
+The training dataset `examples/data/heart_scale` and testing dataset `examples/data/heart_scale.t` have been obtained by splitting the `heart_scale` dataset from the [LIBSVM dataset page](https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html#heart).
 
 Currently supported PERMON/PETSc versions
 ----------------------------------
