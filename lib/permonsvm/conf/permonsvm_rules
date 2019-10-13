@@ -1,8 +1,25 @@
 # -*- mode: makefile -*-
 
-#  Escape codes to change the text color on xterms and terminals
-PETSC_TEXT_HILIGHT ?= "\033[1;31m"
-PETSC_TEXT_NORMAL ?= "\033[0;39m\033[0;49m"
+#
+# Basic targets to build PERMONSVM library
+permonsvm-all: permonsvm_chk_all
+	@mkdir -p ./${PETSC_ARCH}/lib/permonsvm/conf
+	${OMAKE_PRINTDIR} PETSC_ARCH=${PETSC_ARCH} PETSC_DIR=${PETSC_DIR} PERMON_SVM_DIR=${PERMON_SVM_DIR} PERMON_PKG_DIR=${PERMON_PKG_DIR} permonsvm-all-local 2>&1 | tee ${PERMON_SVM_LOG};
+	@egrep -i "( error | error: |no such file or directory)" ${PERMON_SVM_LOG} | tee ${PERMON_SVM_ERRLOG} > /dev/null
+	+@if test -s ${PERMON_SVM_ERRLOG}; then \
+           printf ${PETSC_TEXT_HILIGHT}"*******************************ERROR************************************\n" 2>&1 | tee -a ${PERMON_SVM_LOG}; \
+           echo "  Error during compile, check ${PERMON_SVM_LOG}" 2>&1 | tee -a ${PERMON_SVM_LOG}; \
+           echo "  Send all contents of ./${PETSC_ARCH}/lib/permon/conf to permon@vsb.cz" 2>&1 | tee -a ${PERMON_SVM_LOG};\
+           printf "************************************************************************"${PETSC_TEXT_NORMAL}"\n" 2>&1 | tee -a ${PERMON_SVM_LOG}; \
+					 exit 1; \
+	 else \
+		 echo "Completed building libraries in ${PERMON_PKG_DIR}/${PETSC_ARCH}" | tee -a ${PERMON_SVM_LOG}; \
+ echo "=========================================" | tee -a ${PERMON_SVM_LOG}; \
+	 fi
+
+permonsvm-all-local: permonsvm_info permon_libs
+
+permonsvm_chk_all: chk_permon_pkg_dir chk_permon_dir_private chk_permon_petsc_dir chklib_dir
 
 # Check if PERMON_DIR variable specified is valid
 chk_permon_dir_private:
@@ -19,8 +36,36 @@ chk_permon_dir_private:
           printf "********************************************************************"${PETSC_TEXT_NORMAL}"\n"; \
 	  false; fi
 
-# This rule gets overridden if PERMON_DIR is correct
-permon-all-legacy: chk_permon_dir_private
+#
+# Prints information about the system and version of PERMON being compiled
+#
+permonsvm_info:
+	-@echo "=========================================="
+	-@echo Starting on `hostname` at `date`
+	-@echo Machine characteristics: `uname -a`
+	-@echo "-----------------------------------------"
+	-@echo "Using PERMON directory: ${PERMON_DIR}"
+	-@echo "Using PETSc directory: ${PETSC_DIR}"
+	-@echo "Using PETSc arch: ${PETSC_ARCH}"
+	-@echo "-----------------------------------------"
+	-@echo "Using PETSc configure options: ${CONFIGURE_OPTIONS}"
+	-@echo "-----------------------------------------"
+	-@echo "Using C/C++ include paths: ${PERMON_SVM_CC_INCLUDES}"
+	-@echo "Using C/C++ compiler: ${PCC} ${PCC_FLAGS} ${COPTFLAGS} ${CFLAGS}"
+	-@echo "-----------------------------------------"
+	-@echo "Using C/C++ linker: ${PCC_LINKER}"
+	-@echo "Using C/C++ flags: ${PCC_LINKER_FLAGS}"
+	-@echo "-----------------------------------------"
+	-@echo "Using libraries: ${PERMON_SVM_LIB}"
+	-@echo "------------------------------------------"
+	-@echo "Using mpiexec: ${MPIEXEC}"
+	-@echo "------------------------------------------"
+	-@echo "Using MAKEFLAGS: -j$(MAKE_NP) -l$(MAKE_LOAD) $(MAKEFLAGS)"
+	-@echo "=========================================="
 
--include ${PERMON_DIR}/lib/permon/conf/permon_rules
+# include PERMON rules at the end only if rules and petscrules files exist
+# - this is checked by the chk_permon_petsc_dir rule
+ifneq ("$(wildcard ${PERMON_DIR}/lib/permon/conf/permon_rules)","")
+include ${PERMON_DIR}/lib/permon/conf/permon_rules
+endif
 

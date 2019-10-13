@@ -47,8 +47,11 @@ PetscErrorCode SVMRunBinaryClassification()
   TRY( PetscStrcmp(extension,bin,&isbinary) );
   TRY( PetscStrcmp(extension,SVMLight,&issvmlight) );
   if (ishdf5) {
+#if defined(PETSC_HAVE_HDF5)
     TRY( PetscViewerHDF5Open(comm,training_file,FILE_MODE_READ,&viewer) );
-    TRY( PetscViewerHDF5SetAIJNames(viewer,"i","j","a","ncols") );
+#else
+    FLLOP_SETERRQ(comm,PETSC_ERR_SUP,"PETSc is not configured with HDF5");
+#endif
   } else if (isbinary) {
     TRY( PetscViewerBinaryOpen(comm,training_file,FILE_MODE_READ,&viewer) );
   } else if (issvmlight) {
@@ -66,8 +69,11 @@ PetscErrorCode SVMRunBinaryClassification()
     TRY( PetscStrcmp(extension,bin,&isbinary) );
     TRY( PetscStrcmp(extension,SVMLight,&issvmlight) );
     if (ishdf5) {
+#if defined(PETSC_HAVE_HDF5)
       TRY( PetscViewerHDF5Open(comm,test_file,FILE_MODE_READ,&viewer) );
-      TRY( PetscViewerHDF5SetAIJNames(viewer,"i","j","a","ncols") );
+#else
+      FLLOP_SETERRQ(comm,PETSC_ERR_SUP,"PETSc is not configured with HDF5");
+#endif
     } else if (isbinary) {
       TRY( PetscViewerBinaryOpen(comm,test_file,FILE_MODE_READ,&viewer) );
     } else if (issvmlight) {

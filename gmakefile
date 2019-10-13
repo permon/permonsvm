@@ -1,0 +1,177 @@
+# -*- mode: makefile-gmake -*-
+
+include ./lib/permonsvm/conf/permonsvm_variables
+
+# unlike PETSc, we get current version from git tags
+PERMON_SVM_VERSION_MAJOR    := $(shell git describe --tags | awk -F[.-] '{print substr($$1,2)}')
+PERMON_SVM_VERSION_MINOR    := $(shell git describe --tags | awk -F[.-] '{print $$2}')
+PERMON_SVM_VERSION_SUBMINOR := $(shell git describe --tags | awk -F[.-] '{print $$3}')
+PERMON_SVM_VERSION_RELEASE  := 0
+
+OBJDIR := ./$(PETSC_ARCH)/obj
+LIBDIR := ./$(PETSC_ARCH)/lib
+
+pkgs  := svm
+spkgs := svm
+
+# $(call SONAME_FUNCTION,libfoo,abiversion)
+SONAME_FUNCTION ?= $(1).$(SL_LINKER_SUFFIX).$(2)
+# $(call SL_LINKER_FUNCTION,libfoo,abiversion,libversion)
+SL_LINKER_FUNCTION ?= -shared -Wl,-soname,$(call SONAME_FUNCTION,$(notdir $(1)),$(2))
+
+libpermonsvm_abi_version := $(PERMON_SVM_VERSION_MAJOR).$(if $(filter $(PERMON_SVM_VERSION_RELEASE), 0 -2 -3 -4 -5),0)$(PERMON_SVM_VERSION_MINOR)
+libpermonavm_lib_version := $(libpermon_abi_version).$(PERMON_SVM_VERSION_SUBMINOR)
+soname_function = $(call SONAME_FUNCTION,$(1),$(libpermonsvm_abi_version))
+libname_function = $(call SONAME_FUNCTION,$(1),$(libpermonsvm_lib_version))
+absbasename_all = $(basename $(basename $(basename $(basename $(abspath $(1))))))# arch/lib/libpermonsvm.so.3.8.0 -> /path/to/arch/lib/libpermonsvm
+sl_linker_args = $(call SL_LINKER_FUNCTION,$(call absbasename_all,$@),$(libpermonsvm_abi_version),$(libpermonsvm_lib_version))
+
+libpermonsvm_shared  := $(LIBDIR)/libpermonsvm.$(SL_LINKER_SUFFIX)
+libpermonsvm_soname  := $(call soname_function,$(LIBDIR)/libpermonsvm)
+libpermonsvm_libname := $(call libname_function,$(LIBDIR)/libpermonsvm)
+libpermonsvm_static  := $(LIBDIR)/libpermonsvm.$(AR_LIB_SUFFIX)
+libpermonsvmpkgs_shared  := $(foreach pkg, $(pkgs), $(LIBDIR)/libpermonsvm$(pkg).$(SL_LINKER_SUFFIX))
+libpermonsvmpkgs_soname  := $(foreach pkg, $(pkgs), $(call soname_function,$(LIBDIR)/libpermonsvm$(pkg)))
+libpermonsvmpkgs_libname := $(foreach pkg, $(pkgs), $(call libname_function,$(LIBDIR)/libpermonsvm$(pkg)))
+libpermonsvmpkgs_static  := $(foreach pkg, $(pkgs), $(LIBDIR)/libpermonsvm$(pkg).$(AR_LIB_SUFFIX))
+
+ifeq ($(PETSC_WITH_EXTERNAL_LIB),)
+  libpermonsvmall_shared  := $(libpermonsvmpkgs_shared)
+  libpermonsvmall_soname  := $(libpermonsvmpkgs_soname)
+  libpermonsvmall_libname := $(libpermonsvmpkgs_libname)
+  libpermonsvmall_static  := $(libpermonsvmpkgs_static)
+else
+  libpermonsvmall_shared  := $(libpermonsvm_shared)
+  libpermonsvmall_soname  := $(libpermonsvm_soname)
+  libpermonsvmall_libname := $(libpermonsvm_libname)
+  libpermonsvmall_static  := $(libpermonsvm_static)
+endif
+libpermonsvmall := $(if $(filter-out no,$(BUILDSHAREDLIB)),$(libpermonsvmall_shared),$(libpermonsvmall_static))
+
+generated      := ./$(PETSC_ARCH)/lib/permonsvm/conf/files
+
+all : $(generated) $(libpermonsvmall)
+
+.SECONDEXPANSION:		# to expand $$(@D)/.DIR
+
+PETSCCONFIGDIR := $(PETSC_DIR)/config
+ifeq ($(wildcard $(PETSCCONFIGDIR)/gmakegen.py),)
+	PETSCCONFIGDIR := $(PETSC_DIR)/share/petsc/examples/config
+endif
+
+$(generated) : $(permonconf) $(permonvariables) $(PETSCCONFIGDIR)/gmakegen.py
+	$(PYTHON) $(PETSCCONFIGDIR)/gmakegen.py --petsc-arch=$(PETSC_ARCH) --petsc-arch=$(PETSC_ARCH) --pkg-dir=$(PERMON_SVM_DIR) --pkg-name=permonsvm --pkg-pkgs=$(spkgs)
+
+-include $(generated)
+
+# implies shared libraries with MS compilers
+ifeq ($(SL_LINKER_FUNCTION),-LD)
+$(OBJDIR)/%.o : CCPPFLAGS+=-Dpetsc_EXPORTS
+endif
+
+langs := cxx c
+concatlang = $(foreach lang, $(langs), $(srcs-$(1).$(lang):src/%.$(lang)=$(OBJDIR)/%.o))
+srcs.o := $(foreach pkg, $(pkgs), $(call concatlang,$(pkg)))
+
+define SHARED_RECIPE_DLL
+  @$(RM) $@ dllcmd.${PETSC_ARCH}
+  @cygpath -w $^ > dllcmd.${PETSC_ARCH}
+  $(call quiet,CLINKER) $(sl_linker_args) -o $@ @dllcmd.${PETSC_ARCH} $(PERMON_SVM_EXTERNAL_LIB)
+  @$(RM) dllcmd.${PETSC_ARCH}
+endef
+
+define SHARED_RECIPE_DEFAULT
+  $(call quiet,CLINKER) $(sl_linker_args) -o $@ $^ $(PERMON_SVM_EXTERNAL_LIB)
+endef
+
+SHARED_RECIPE = $(if $(findstring -LD,$(SL_LINKER_FUNCTION)),$(SHARED_RECIPE_DLL),$(SHARED_RECIPE_DEFAULT))
+
+# with-single-library=1 (default)
+$(libpermonsvm_libname) : $(srcs.o) | $$(@D)/.DIR
+	$(SHARED_RECIPE)
+ifneq ($(DSYMUTIL),true)
+	$(call quiet,DSYMUTIL) $@
+endif
+
+$(libpermonsvm_static) : obj := $(srcs.o)
+
+define ARCHIVE_RECIPE_WIN32FE_LIB
+  @$(RM) $@ $@.args
+  @cygpath -w $^ > $@.args
+  $(call quiet,AR) $(AR_FLAGS) $@ @$@.args
+  @$(RM) $@.args
+endef
+
+define ARCHIVE_RECIPE_DEFAULT
+  @$(RM) $@
+  $(call quiet,AR) $(AR_FLAGS) $@ $^
+  $(call quiet,RANLIB) $@
+endef
+
+%.$(AR_LIB_SUFFIX) : $$(obj) | $$(@D)/.DIR
+	$(if $(findstring win32fe lib,$(AR)),$(ARCHIVE_RECIPE_WIN32FE_LIB),$(ARCHIVE_RECIPE_DEFAULT))
+
+# with-single-library=0
+libpkg = $(foreach pkg, $1, $(LIBDIR)/libpermonsvm$(pkg).$(SL_LINKER_SUFFIX))
+define pkg_template
+  $(LIBDIR)/libpermonsvm$(1).$(AR_LIB_SUFFIX)  : $(call concatlang,$(1))
+  $(call libname_function,$(LIBDIR)/libpermonsvm$(1)) : $(call concatlang,$(1))
+endef
+$(foreach pkg,$(pkgs),$(eval $(call pkg_template,$(pkg))))
+#$(call libname_function,$(LIBDIR)/libslepceps) : libdep := $(call libpkg,sys)
+#$(call libname_function,$(LIBDIR)/libslepcsvd) : libdep := $(call libpkg,eps sys)
+#$(call libname_function,$(LIBDIR)/libslepcpep) : libdep := $(call libpkg,eps sys)
+#$(call libname_function,$(LIBDIR)/libslepcnep) : libdep := $(call libpkg,pep eps sys)
+#$(call libname_function,$(LIBDIR)/libslepcmfn) : libdep := $(call libpkg,sys)
+
+# The package libraries technically depend on each other (not just in an order-only way), but only
+# ABI changes like new or removed symbols requires relinking the dependent libraries.  ABI should
+# only occur when a header is changed, which would trigger recompilation and relinking anyway.
+# RELINK=1 causes dependent libraries to be relinked anyway.
+ifeq ($(RELINK),1)
+  libdep_true = $$(libdep)
+  libdep_order =
+else
+  libdep_true =
+  libdep_order = $$(libdep)
+endif
+$(libpermonsvmpkgs_libname) : $(libdep_true) | $(libdep_order) $$(@D)/.DIR
+	$(SHARED_RECIPE)
+ifneq ($(DSYMUTIL),true)
+	$(call quiet,DSYMUTIL) $@
+endif
+
+%.$(SL_LINKER_SUFFIX) : $(call libname_function,%) | $(call soname_function,%)
+	@ln -sf $(notdir $<) $@
+
+$(call soname_function,%) : $(call libname_function,%)
+	@ln -sf $(notdir $<) $@
+
+.PRECIOUS: $(call soname_function,%)
+
+$(OBJDIR)/%.o : src/%.c | $$(@D)/.DIR
+	$(PERMON_SVM_COMPILE.c) $(abspath $<) -o $@
+
+$(OBJDIR)/%.o : src/%.cxx | $$(@D)/.DIR
+	$(PERMON_SVM_COMPILE.cxx) $(abspath $<) -o $@
+
+
+# all sources should get recompiled when permonvariables changes (i.e when configure is rerun or when permonvariables is manually edited.)
+$(srcs.o) : $(permonsvmvariables)
+
+.PHONY: clean all
+
+clean:
+	$(RM) -rf $(OBJDIR) $(LIBDIR)/libpermonsvm* $(generated)
+
+allobj.d := $(srcs.o:%.o=%.d)
+# Tell make that allobj.d are all up to date.  Without this, the include
+# below has quadratic complexity, taking more than one second for a
+# do-nothing build of PETSc (much worse for larger projects)
+$(allobj.d) : ;
+
+-include $(allobj.d)
+
+# Handle test framework (also defines compilation lines for both lib and test)
+# Also load definitions of quite() PETSC_COMPILE.c PETSC_COMPILE.cxx %/.DIR
+include $(PERMON_SVM_DIR)/gmakefile.test        # This must be below the all target

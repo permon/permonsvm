@@ -1,5 +1,5 @@
 #
-# This is the makefile for installing PermonDummy, the PERMON template package <http://permon.it4i.cz/>.
+# This is the makefile for installing PERMONSVM <http://permon.vsb.cz/>.
 #
 
 ALL: all
@@ -9,11 +9,8 @@ DIRS   = src include
 
 include lib/permonsvm/conf/permonsvm_variables
 include lib/permonsvm/conf/permonsvm_rules
+include lib/permonsvm/conf/permonsvm_test
 
-# turn off gmake build explicitly as it is not implemented in this PERMON package
-MAKE_IS_GNUMAKE :=
-
-permonsvm-all: chk_permon_dir permon-all
 
 permonsvmfile:  ${PERMON_SVM_DIR}/${PETSC_ARCH}/bin/permonsvmfile
 

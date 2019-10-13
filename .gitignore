@@ -1,9 +1,7 @@
 .hgi
 .hgignore
 .hgtags
-*.bin
 *.bkp
-*.info
 *.gcov
 *.gcna
 *.gcno
