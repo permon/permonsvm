@@ -24,7 +24,7 @@ PetscErrorCode SVMRunBinaryClassification()
 {
   SVM         svm;
 
-  char        training_file[PETSC_MAX_PATH_LEN] = "examples/heart_scale.bin";
+  char        training_file[PETSC_MAX_PATH_LEN] = "examples/data/heart_scale.bin";
   char        test_file[PETSC_MAX_PATH_LEN]     = "";
   PetscBool   test_file_set = PETSC_FALSE;
 
