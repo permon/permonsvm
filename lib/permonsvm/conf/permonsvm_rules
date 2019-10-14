@@ -19,7 +19,7 @@ permonsvm-all: permonsvm_chk_all
 
 permonsvm-all-local: permonsvm_info permon_libs
 
-permonsvm_chk_all: chk_permon_pkg_dir chk_permon_dir_private chk_permon_petsc_dir chklib_dir
+permonsvm_chk_all: chk_permon_dir_private chk_permon_pkg_dir chk_permon_petsc_dir chklib_dir
 
 # Check if PERMON_DIR variable specified is valid
 chk_permon_dir_private:

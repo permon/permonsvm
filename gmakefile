@@ -20,7 +20,7 @@ SONAME_FUNCTION ?= $(1).$(SL_LINKER_SUFFIX).$(2)
 SL_LINKER_FUNCTION ?= -shared -Wl,-soname,$(call SONAME_FUNCTION,$(notdir $(1)),$(2))
 
 libpermonsvm_abi_version := $(PERMON_SVM_VERSION_MAJOR).$(if $(filter $(PERMON_SVM_VERSION_RELEASE), 0 -2 -3 -4 -5),0)$(PERMON_SVM_VERSION_MINOR)
-libpermonavm_lib_version := $(libpermon_abi_version).$(PERMON_SVM_VERSION_SUBMINOR)
+libpermonsvm_lib_version := $(libpermonsvm_abi_version).$(PERMON_SVM_VERSION_SUBMINOR)
 soname_function = $(call SONAME_FUNCTION,$(1),$(libpermonsvm_abi_version))
 libname_function = $(call SONAME_FUNCTION,$(1),$(libpermonsvm_lib_version))
 absbasename_all = $(basename $(basename $(basename $(basename $(abspath $(1))))))# arch/lib/libpermonsvm.so.3.8.0 -> /path/to/arch/lib/libpermonsvm
