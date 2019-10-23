@@ -1174,12 +1174,54 @@ PetscErrorCode SVMGetHyperplaneSubNormal_Binary_Private(SVM svm,Mat Xt_predict,I
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMCreateSubPredictDataset_Binary_Private"
+PetscErrorCode SVMCreateSubPredictDataset_Binary_Private(SVM svm,Mat Xt_predict,Mat *Xt_out)
+{
+  MPI_Comm  comm;
+
+  Vec       w;
+  PetscInt  lo,hi;
+  PetscInt  N,tmp;
+
+  PetscInt  mod;
+
+  Mat       Xt_sub;
+  IS        is_cols,is_rows;
+
+  PetscFunctionBegin;
+  tmp = 0;
+
+  TRY( SVMGetMod(svm,&mod) );
+
+  TRY( SVMGetSeparatingHyperplane(svm,&w,NULL) );
+
+  TRY( VecGetOwnershipRange(w,&lo,&hi) );
+  TRY( PetscObjectGetComm((PetscObject) Xt_predict,&comm) );
+
+  TRY( MatGetOwnershipIS(Xt_predict,&is_rows,NULL) );
+  if (mod == 2) {
+    TRY( VecGetSize(w,&N) );
+    tmp = (hi == N) ? 1 : 0;
+  }
+  TRY( ISCreateStride(comm,hi - lo - tmp,lo,1,&is_cols) );
+
+  TRY( MatCreateSubMatrix(Xt_predict,is_rows,is_cols,MAT_INITIAL_MATRIX,&Xt_sub) );
+
+  *Xt_out = Xt_sub;
+
+  /* Free memory */
+  TRY( ISDestroy(&is_rows) );
+  TRY( ISDestroy(&is_cols) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMPredict_Binary"
 PetscErrorCode SVMPredict_Binary(SVM svm,Mat Xt_pred,Vec *y_out)
 {
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
-  Mat               Xt_training;
+  Mat               Xt_training,Xtp_sub;
   Vec               Xtw_pred,y,w;
   PetscReal         b;
   PetscInt          i,m;
@@ -1206,7 +1248,7 @@ PetscErrorCode SVMPredict_Binary(SVM svm,Mat Xt_pred,Vec *y_out)
   if (N_training > N_predict) {
     TRY( SVMGetHyperplaneSubNormal_Binary_Private(svm,Xt_pred,&is_w,&w) );
   } else if (N_training < N_predict) {
-    /* TODO implement */
+    TRY( SVMCreateSubPredictDataset_Binary_Private(svm,Xt_pred,&Xtp_sub) );
   } else {
     TRY( SVMGetSeparatingHyperplane(svm,&w,NULL) );
   }
