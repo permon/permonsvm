@@ -23,10 +23,10 @@ def ml_tool_libsvm_hdf5(file_libsvm, file_hdf5, path=""):
     with h5py.File(output_file_h5_path, 'w') as hf:
         hf.create_dataset("y", data=y)
         grp = hf.create_group("X")
-        grp.attrs["ncols"] = nfeatures
-        grp.create_dataset("a", data=Xs.data)
-        grp.create_dataset("i", data=Xs.indptr)
-        grp.create_dataset("j", data=Xs.indices)
+        grp.attrs["MATLAB_sparse"] = nfeatures
+        grp.create_dataset("data", data=Xs.data)
+        grp.create_dataset("jc", data=Xs.indptr)
+        grp.create_dataset("ir", data=Xs.indices)
 
 
 if __name__ == "__main__":
