@@ -699,6 +699,7 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   }
 
   if (svm->setfromoptionscalled) {
+    TRY( QPTFromOptions(qp) );
     TRY( QPSSetFromOptions(qps) );
   }
 
