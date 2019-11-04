@@ -1121,89 +1121,173 @@ PetscErrorCode SVMSetFromOptions_Binary(PetscOptionItems *PetscOptionsObject,SVM
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMGetHyperplaneSubNormal_Binary_Private"
+PetscErrorCode SVMGetHyperplaneSubNormal_Binary_Private(SVM svm,Mat Xt_predict,IS *is_sub,Vec *w_sub)
+{
+  MPI_Comm  comm;
+
+  Vec       w,w_sub_inner;
+  IS        is,is_last,is_tmp;
+
+  PetscInt  mod;
+
+  PetscInt  n,lo,hi;
+  PetscInt  N,N_predict;
+
+  PetscFunctionBegin;
+  TRY( SVMGetMod(svm,&mod) );
+
+  TRY( MatGetSize(Xt_predict,NULL,&N_predict) );
+  TRY( MatGetOwnershipRangeColumn(Xt_predict,&lo,&hi) );
+
+  TRY( SVMGetSeparatingHyperplane(svm,&w,NULL) );
+  TRY( PetscObjectGetComm((PetscObject) w,&comm) );
+
+  n = 0;
+  N_predict += (1 - mod);
+  if (hi < N_predict) {
+    n = hi - lo;
+  } else if (lo < N_predict) {
+    n = N_predict - lo;
+  }
+  TRY( ISCreateStride(comm,n,lo,1,&is) );
+
+  if (mod == 2) {
+    TRY( VecGetSize(w,&N) );
+    TRY( VecGetOwnershipRange(w,NULL,&hi) );
+
+    TRY( ISCreateStride(comm,(hi == N) ? 1 : 0,hi - 1,1,&is_last) );
+    /* Concatenate is and is_last */
+    TRY( ISExpand(is,is_last,&is_tmp) );
+    /* Free memory */
+    TRY( ISDestroy(&is) );
+    TRY( ISDestroy(&is_last) );
+
+    is = is_tmp;
+  }
+
+  TRY( VecGetSubVector(w,is,&w_sub_inner) );
+
+  *w_sub = w_sub_inner;
+  *is_sub = is;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMCreateSubPredictDataset_Binary_Private"
+PetscErrorCode SVMCreateSubPredictDataset_Binary_Private(SVM svm,Mat Xt_predict,Mat *Xt_out)
+{
+  MPI_Comm  comm;
+
+  Vec       w;
+  PetscInt  lo,hi;
+  PetscInt  N,tmp;
+
+  PetscInt  mod;
+
+  Mat       Xt_sub;
+  IS        is_cols,is_rows;
+
+  PetscFunctionBegin;
+  tmp = 0;
+
+  TRY( SVMGetMod(svm,&mod) );
+
+  TRY( SVMGetSeparatingHyperplane(svm,&w,NULL) );
+
+  TRY( VecGetOwnershipRange(w,&lo,&hi) );
+  TRY( PetscObjectGetComm((PetscObject) Xt_predict,&comm) );
+
+  TRY( MatGetOwnershipIS(Xt_predict,&is_rows,NULL) );
+  if (mod == 2) {
+    TRY( VecGetSize(w,&N) );
+    tmp = (hi == N) ? 1 : 0;
+  }
+  TRY( ISCreateStride(comm,hi - lo - tmp,lo,1,&is_cols) );
+
+  TRY( MatCreateSubMatrix(Xt_predict,is_rows,is_cols,MAT_INITIAL_MATRIX,&Xt_sub) );
+
+  *Xt_out = Xt_sub;
+
+  /* Free memory */
+  TRY( ISDestroy(&is_rows) );
+  TRY( ISDestroy(&is_cols) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMPredict_Binary"
 PetscErrorCode SVMPredict_Binary(SVM svm,Mat Xt_pred,Vec *y_out)
 {
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
-  Mat               Xt_training;
-  Vec               Xtw_pred,y,w;
-  PetscReal         b;
-  PetscInt          i,m;
+  /* Hyperplane */
+  Vec       w,w_tmp;
+  PetscReal b;
 
-  PetscInt          N_training,N_predict;
-  IS                is_rows = NULL,is_cols = NULL;
-  Vec               w_inner,w_sub;
-  Mat               Xt_pred_inner,Xt_pred_sub;
-  PetscBool         c;
+  Mat       Xt_training,Xt_sub;
+  PetscInt  N_training,N_predict;
+  PetscInt  lo,hi;
 
-  const PetscScalar *Xtw_pred_arr;
-  PetscScalar       *y_pred_arr;
+  Vec       Xtw,y,sub_y;
+  Vec       o;
+  IS        is_p,is_n,is_w;
 
   PetscFunctionBegin;
   if (!svm->posttraincalled) {
-   TRY( SVMPostTrain(svm) );
+    TRY( SVMPostTrain(svm) );
   }
-  TRY( SVMGetSeparatingHyperplane(svm,&w,&b) );
+  TRY( SVMGetSeparatingHyperplane(svm,NULL,&b) );
+  TRY( SVMGetTrainingDataset(svm,&Xt_training,NULL) );
 
-  /* Check dimension (number of features) of samples */
-  TRY( VecGetSize(w,&N_training) );
+  TRY( MatGetSize(Xt_training,NULL,&N_training) );
   TRY( MatGetSize(Xt_pred,NULL,&N_predict) );
+  /* Check number of features */
   if (N_training > N_predict) {
-    TRY( MatGetOwnershipIS(Xt_pred,NULL,&is_cols) );
-    TRY( VecGetSubVector(w,is_cols,&w_sub) );
-
-    w_inner = w_sub;
-    Xt_pred_inner = Xt_pred;
-    c = PETSC_TRUE;
-  } else if (N_training < N_predict) {
-    TRY( SVMGetTrainingDataset(svm,&Xt_training,NULL) );
-    TRY( MatGetOwnershipIS(Xt_training,NULL,&is_cols) );
-    TRY( MatGetOwnershipIS(Xt_pred,&is_rows,NULL) );
-    TRY( MatCreateSubMatrix(Xt_pred,is_rows,is_cols,MAT_INITIAL_MATRIX,&Xt_pred_sub) );
-
-    w_inner = w;
-    Xt_pred_inner = Xt_pred_sub;
-    c = PETSC_TRUE;
+    TRY( SVMGetHyperplaneSubNormal_Binary_Private(svm,Xt_pred,&is_w,&w) );
   } else {
-    w_inner = w;
-    Xt_pred_inner = Xt_pred;
-    c = PETSC_FALSE;
-  }
-
-  /* Predict labels of samples */
-  TRY( MatCreateVecs(Xt_pred_inner,NULL,&Xtw_pred) );
-  TRY( MatMult(Xt_pred_inner,w_inner,Xtw_pred) );
-
-  TRY( VecDuplicate(Xtw_pred,&y) );
-  TRY( VecGetLocalSize(y,&m) );
-
-  TRY( VecGetArrayRead(Xtw_pred,&Xtw_pred_arr) );
-  TRY( VecGetArray(y,&y_pred_arr) );
-  for (i = 0; i < m; ++i) {
-    if (Xtw_pred_arr[i] + b > 0.0) {
-      y_pred_arr[i] = svm_binary->y_map[1];
-    } else {
-      y_pred_arr[i] = svm_binary->y_map[0];
+    TRY( SVMGetSeparatingHyperplane(svm,&w,NULL) );
+    if (N_training < N_predict) {
+      TRY( SVMCreateSubPredictDataset_Binary_Private(svm,Xt_pred,&Xt_sub) );
+      Xt_pred = Xt_sub;
     }
   }
-  TRY( VecRestoreArrayRead(Xtw_pred,&Xtw_pred_arr) );
-  TRY( VecRestoreArray(y,&y_pred_arr) );
+
+  /* Predict labels of unseen samples */
+  TRY( MatCreateVecs(Xt_pred,NULL,&Xtw) );
+  TRY( VecGetOwnershipRange(Xtw,&lo,&hi) );
+  TRY( VecDuplicate(Xtw,&y) );
+  TRY( VecDuplicate(Xtw,&o) );
+  TRY( VecSet(o,0) );
+
+  TRY( MatMult(Xt_pred,w,Xtw) );
+  TRY( VecShift(Xtw,b) ); /* shifting is not performed in case of b = 0 (inner implementation) */
+
+  TRY( VecWhichGreaterThan(Xtw,o,&is_p) );
+  TRY( ISComplement(is_p,lo,hi,&is_n) );
+
+  TRY( VecGetSubVector(y,is_n,&sub_y) );
+  TRY( VecSet(sub_y,svm_binary->y_map[0]) );
+  TRY( VecRestoreSubVector(y,is_n,&sub_y) );
+
+  TRY( VecGetSubVector(y,is_p,&sub_y) );
+  TRY( VecSet(sub_y,svm_binary->y_map[1]) );
+  TRY( VecRestoreSubVector(y,is_p,&sub_y) );
 
   *y_out = y;
 
   /* Free memory */
-  if (c) {
-    if (N_training > N_predict) {
-      TRY( VecRestoreSubVector(w,is_cols,&w_sub) );
-    } else {
-      TRY( MatDestroy(&Xt_pred_sub) );
-    }
-
-    TRY( ISDestroy(&is_cols) );
-    TRY( ISDestroy(&is_rows) );
+  TRY( VecDestroy(&Xtw) );
+  TRY( VecDestroy(&o) );
+  TRY( ISDestroy(&is_n) );
+  TRY( ISDestroy(&is_p) );
+  if (N_training > N_predict) {
+    TRY( SVMGetSeparatingHyperplane(svm,&w_tmp,NULL) );
+    TRY( VecRestoreSubVector(w_tmp,is_w,&w) );
+    TRY( ISDestroy(&is_w) );
+  } else if (N_training < N_predict) {
+    TRY( MatDestroy(&Xt_pred) );
   }
-  TRY( VecDestroy(&Xtw_pred) );
   PetscFunctionReturn(0);
 }
 
