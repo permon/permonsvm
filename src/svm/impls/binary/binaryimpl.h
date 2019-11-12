@@ -14,6 +14,8 @@ typedef struct {
     Vec         diag;
     Mat         D;
 
+    Mat         G;
+
     Vec         w;
     PetscScalar b;
 

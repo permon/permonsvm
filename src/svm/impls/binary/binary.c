@@ -33,6 +33,7 @@ PetscErrorCode SVMReset_Binary(SVM svm)
   }
   TRY( VecDestroy(&svm_binary->w) );
   TRY( MatDestroy(&svm_binary->Xt_training) );
+  TRY( MatDestroy(&svm_binary->G) );
   TRY( MatDestroy(&svm_binary->D) );
   TRY( VecDestroy(&svm_binary->diag) );
   TRY( VecDestroy(&svm_binary->y_training) );
@@ -50,6 +51,7 @@ PetscErrorCode SVMReset_Binary(SVM svm)
   svm_binary->y_inner     = NULL;
   svm_binary->is_p        = NULL;
   svm_binary->is_n        = NULL;
+  svm_binary->G           = NULL;
   svm_binary->D           = NULL;
   svm_binary->diag        = NULL;
 
@@ -72,6 +74,8 @@ PetscErrorCode SVMDestroy_Binary(SVM svm)
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
   PetscFunctionBegin;
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetMatGramian_C",NULL) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetMatGramian_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingDataset_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetQPS_C",NULL) );
@@ -223,6 +227,46 @@ PetscErrorCode SVMViewScore_Binary(SVM svm,PetscViewer v)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMSetMatGramian_Binary"
+PetscErrorCode SVMSetMatGramian_Binary(SVM svm,Mat G)
+{
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
+  Mat        Xt;
+  PetscInt   m,n;
+
+  PetscFunctionBegin;
+  /* Checking that Gramian is rectangular */
+  TRY( MatGetSize(G,&m,&n) );
+  if (m != n) {
+    FLLOP_SETERRQ2(PetscObjectComm((PetscObject) G),PETSC_ERR_ARG_SIZ,"Gramian (kernel) matrix must be rectangular, G(%D,%D)",m,n);
+  }
+  /* Checking dimension compatibility between training data matrix and Gramian */
+  TRY( SVMGetTrainingDataset(svm,&Xt,NULL) );
+  if (Xt) {
+    TRY( MatGetSize(Xt,&n,NULL) );
+    if (m != n) {
+      FLLOP_SETERRQ2(PetscObjectComm((PetscObject) G),PETSC_ERR_ARG_SIZ,"Matrix dimensions are incompatible, G(%D,) != X_training(%D,)",m,n);
+    }
+  }
+  TRY( MatDestroy(&svm_binary->G) );
+  TRY( PetscObjectReference((PetscObject) G) );
+  svm_binary->G = G;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetMatGramian_Binary"
+PetscErrorCode SVMGetMatGramian_Binary(SVM svm,Mat *G)
+{
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
+  PetscFunctionBegin;
+  *G = svm_binary->G;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetTrainingDataset"
 PetscErrorCode SVMSetTrainingDataset_Binary(SVM svm,Mat Xt_training,Vec y_training)
 {
@@ -230,14 +274,25 @@ PetscErrorCode SVMSetTrainingDataset_Binary(SVM svm,Mat Xt_training,Vec y_traini
 
   PetscReal  max;
   PetscInt   lo,hi;
+  PetscInt   m,n;
+
+  Mat        G;
   Vec        tmp;
 
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidHeaderSpecific(Xt_training,MAT_CLASSID,2);
-  PetscCheckSameComm(svm,1,Xt_training,2);
-  PetscValidHeaderSpecific(y_training,VEC_CLASSID,3);
-  PetscCheckSameComm(svm,1,y_training,3);
+  TRY( MatGetSize(Xt_training,&m,NULL) );
+  TRY( VecGetSize(y_training,&n) );
+  if (m != n) {
+    FLLOP_SETERRQ2(PetscObjectComm((PetscObject) Xt_training),PETSC_ERR_ARG_SIZ,"Dimensions are incompatible, X_training(%D,) != y_training(%D)",m,n);
+  }
+
+  TRY( SVMGetMatGramian(svm,&G) );
+  if (G) {
+    TRY( MatGetSize(G,&n,NULL) );
+    if (m != n) {
+      FLLOP_SETERRQ2(PetscObjectComm((PetscObject) G),PETSC_ERR_ARG_SIZ,"Matrix dimensions are incompatible, X_training(%D,) != G(%D,)",m,n);
+    }
+  }
 
   TRY( MatDestroy(&svm_binary->Xt_training) );
   svm_binary->Xt_training = Xt_training;
@@ -247,6 +302,7 @@ PetscErrorCode SVMSetTrainingDataset_Binary(SVM svm,Mat Xt_training,Vec y_traini
   svm_binary->y_training = y_training;
   TRY( PetscObjectReference((PetscObject) y_training) );
 
+  /* Determine index sets of positive and negative samples */
   TRY( VecGetOwnershipRange(y_training,&lo,&hi) );
   TRY( VecMax(y_training,NULL,&max) );
   TRY( VecDuplicate(y_training,&tmp) );
@@ -1644,6 +1700,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm_binary->b           = 1.;
   svm_binary->qps         = NULL;
   svm_binary->Xt_training = NULL;
+  svm_binary->G           = NULL;
   svm_binary->D           = NULL;
   svm_binary->diag        = NULL;
   svm_binary->y_training  = NULL;
@@ -1681,6 +1738,8 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm->ops->loadtrainingdataset   = SVMLoadTrainingDataset_Binary;
   svm->ops->viewtrainingdataset   = SVMViewTrainingDataset_Binary;
 
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetMatGramian_C",SVMSetMatGramian_Binary) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetMatGramian_C",SVMGetMatGramian_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingDataset_C",SVMSetTrainingDataset_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C",SVMGetTrainingDataset_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetQPS_C",SVMSetQPS_Binary) );
