@@ -158,6 +158,9 @@ FLLOP_EXTERN PetscErrorCode SVMSetUp(SVM);
 FLLOP_EXTERN PetscErrorCode SVMView(SVM,PetscViewer);
 FLLOP_EXTERN PetscErrorCode SVMViewScore(SVM,PetscViewer);
 
+FLLOP_EXTERN PetscErrorCode SVMSetMatGramian(SVM,Mat);
+FLLOP_EXTERN PetscErrorCode SVMGetMatGramian(SVM,Mat *);
+
 FLLOP_EXTERN PetscErrorCode SVMSetTrainingDataset(SVM,Mat,Vec);
 FLLOP_EXTERN PetscErrorCode SVMGetTrainingDataset(SVM,Mat *,Vec *);
 FLLOP_EXTERN PetscErrorCode SVMSetTestDataset(SVM,Mat,Vec);

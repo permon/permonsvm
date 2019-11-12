@@ -1512,6 +1512,56 @@ PetscErrorCode SVMViewScore(SVM svm,PetscViewer v)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMSetMatGramian"
+/*@
+  SVMSetMatGramian - Set precomputed Gramian (kernel) matrix.
+
+  Input Parameters:
++ svm - SVM context
+- G - precomputed Gramian matrix
+
+  Level: intermediate
+
+.seealso SVM, SVMGetMatGramian(), SVMLoadMatGramian()
+@*/
+PetscErrorCode SVMSetMatGramian(SVM svm,Mat G)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(G,MAT_CLASSID,2);
+
+  TRY( PetscTryMethod(svm,"SVMSetMatGramian_C",(SVM,Mat),(svm,G)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetMatGramian"
+/*@
+  SVMGetMatGramian - Get pracomputed Gramian (kernel) matrix.
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. G - precomputed Gramian matrix
+
+  Level: intermediate
+
+.seealso SVM, SVMSetMatGramian()
+@*/
+PetscErrorCode SVMGetMatGramian(SVM svm,Mat *G)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidPointer(G,2);
+
+  TRY( PetscTryMethod(svm,"SVMGetMatGramian_C",(SVM,Mat *),(svm,G)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetTrainingDataset"
 /*@
   SVMSetTrainingDataset - Sets the training samples and labels.
@@ -1532,6 +1582,10 @@ PetscErrorCode SVMSetTrainingDataset(SVM svm,Mat Xt_training,Vec y_training)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(Xt_training,MAT_CLASSID,2);
+  PetscCheckSameComm(svm,1,Xt_training,2);
+  PetscValidHeaderSpecific(y_training,VEC_CLASSID,3);
+  PetscCheckSameComm(svm,1,y_training,3);
 
   TRY( PetscTryMethod(svm,"SVMSetTrainingDataset_C",(SVM,Mat,Vec),(svm,Xt_training,y_training)) );
   PetscFunctionReturn(0);
