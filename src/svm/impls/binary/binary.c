@@ -462,66 +462,82 @@ PetscErrorCode SVMSetQPS_Binary(SVM svm,QPS qps)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMUpdateOperator_Binary_Private"
+PetscErrorCode SVMUpdateOperator_Binary_Private(SVM svm)
+{
+  SVM_Binary  *svm_binary = (SVM_Binary *) svm->data;
+
+  Vec         diag_p,diag_n;
+
+  PetscInt    p;
+  SVMLossType loss_type;
+
+  PetscReal   C,Cn,Cp;
+
+  PetscFunctionBegin;
+  TRY( SVMGetLossType(svm,&loss_type) );
+  if (loss_type == SVM_L1) PetscFunctionReturn(0);
+
+  /* Update regularization of Hessian */
+  TRY( SVMGetPenaltyType(svm,&p) );
+  if (p == 1) {
+    TRY( SVMGetC(svm,&C) );
+
+    TRY( MatScale(svm_binary->J,0.) );
+    TRY( MatShift(svm_binary->J,1. / C) );
+  } else {
+    TRY( SVMGetCp(svm,&Cp) );
+    TRY( SVMGetCn(svm,&Cn) );
+
+    TRY( VecGetSubVector(svm_binary->diag,svm_binary->is_p,&diag_p) );
+    TRY( VecSet(diag_p,1. / Cp) );
+    TRY( VecRestoreSubVector(svm_binary->diag,svm_binary->is_p,&diag_p) );
+
+    TRY( VecGetSubVector(svm_binary->diag,svm_binary->is_n,&diag_n) );
+    TRY( VecSet(diag_n,1. / Cn) );
+    TRY( VecRestoreSubVector(svm_binary->diag,svm_binary->is_n,&diag_n) );
+  }
+  PetscFunctionReturn(0);
+}
+
+/* TODO implement SVMUpdateInitialVector_Binary_Private */
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMUpdate_Binary_Private"
 PetscErrorCode SVMUpdate_Binary_Private(SVM svm)
 {
   SVM_Binary  *svm_binary = (SVM_Binary *) svm->data;
 
-  QP          qp;
   QPS         qps;
-  Vec         ub,ub_p,ub_n;
-  Vec         diag_p,diag_n;
+  QP          qp;
+
   Vec         x_init,x_init_p,x_init_n;
+  Vec         ub = NULL,ub_p,ub_n;
 
   PetscInt    p;
-  PetscReal   C,Cn,Cp;
   SVMLossType loss_type;
 
+  PetscReal   C,Cn,Cp;
+
   PetscFunctionBegin;
+  TRY( SVMUpdateOperator_Binary_Private(svm) );
+
+  /* TODO implementation SVMGetQP */
+  TRY( SVMGetQPS(svm,&qps) );
+  TRY( QPSGetQP(qps,&qp) );
+
   TRY( SVMGetPenaltyType(svm,&p) );
   if (p == 1) {
     TRY( SVMGetC(svm,&C) );
   } else {
-    TRY( SVMGetCp(svm, &Cp) );
-    TRY( SVMGetCn(svm, &Cn) );
-  }
-  TRY( SVMGetLossType(svm,&loss_type) );
-
-  TRY( SVMGetQPS(svm,&qps) );
-  TRY( QPSGetQP(qps,&qp) );
-  /* Update upper boundary or Hessian */
-  if (loss_type == SVM_L1) {
-    TRY( QPGetBox(qp,NULL,NULL,&ub) );
-    /* Update upper boundary */
-    if (p == 1) {
-      TRY( VecSet(ub,C) );
-    } else {
-      TRY( VecGetSubVector(ub,svm_binary->is_p,&ub_p) );
-      TRY( VecSet(ub_p,Cp) );
-      TRY( VecRestoreSubVector(ub,svm_binary->is_p,&ub_p) );
-
-      TRY( VecGetSubVector(ub,svm_binary->is_n,&ub_n) );
-      TRY( VecSet(ub_n,Cn) );
-      TRY( VecRestoreSubVector(ub,svm_binary->is_n,&ub_n) );
-    }
-  } else {
-    /* Update Hessian */
-    if (p == 1) {
-      TRY( VecSet(svm_binary->diag,1. / C) );
-    } else {
-      TRY( VecGetSubVector(svm_binary->diag,svm_binary->is_p,&diag_p) );
-      TRY( VecSet(diag_p,1. / Cp) );
-      TRY( VecRestoreSubVector(svm_binary->diag,svm_binary->is_p,&diag_p) );
-
-      TRY( VecGetSubVector(svm_binary->diag,svm_binary->is_n,&diag_n) );
-      TRY( VecSet(diag_n,1. / Cn) );
-      TRY( VecRestoreSubVector(svm_binary->diag,svm_binary->is_n,&diag_n) );
-    }
-    TRY( MatDiagonalSet(svm_binary->J,svm_binary->diag,INSERT_VALUES) );
+    TRY( SVMGetCp(svm,&Cp) );
+    TRY( SVMGetCn(svm,&Cn) );
   }
 
   /* Update initial guess */
   TRY( QPGetSolutionVector(qp,&x_init) );
+
+  /* TODO SVMUpdateInitialVector_Binary_Private */
   if (svm->warm_start) {
     if (p == 1) {
       TRY( VecScale(x_init,1. / svm->C_old) );
@@ -550,6 +566,24 @@ PetscErrorCode SVMUpdate_Binary_Private(SVM svm)
       TRY( VecRestoreSubVector(x_init,svm_binary->is_n,&x_init_n) );
     }
   }
+
+  /* Update upper bound vector */
+  TRY( SVMGetLossType(svm,&loss_type) );
+  if (loss_type == SVM_L2) PetscFunctionReturn(0);
+
+  TRY( QPGetBox(qp,NULL,NULL,&ub) );
+  if (p == 1) {
+    TRY( VecSet(ub,C) );
+  } else {
+    TRY( VecGetSubVector(ub,svm_binary->is_p,&ub_p) );
+    TRY( VecSet(ub_p,Cp) );
+    TRY( VecRestoreSubVector(ub,svm_binary->is_p,&ub_p) );
+
+    TRY( VecGetSubVector(ub,svm_binary->is_n,&ub_n) );
+    TRY( VecSet(ub_n,Cn) );
+    TRY( VecRestoreSubVector(ub,svm_binary->is_n,&ub_n) );
+  }
+
   svm->setupcalled     = PETSC_TRUE;
   svm->posttraincalled = PETSC_FALSE;
   PetscFunctionReturn(0);
@@ -692,7 +726,7 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   if (svm->setupcalled) PetscFunctionReturn(0);
 
   if (svm->posttraincalled) {
-    /* TRY( SVMUpdate_Binary_Private(svm) ); */
+    TRY( SVMUpdate_Binary_Private(svm) );
     PetscFunctionReturn(0);
   }
 
