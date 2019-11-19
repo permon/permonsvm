@@ -1709,6 +1709,73 @@ PetscErrorCode SVMGridSearch_Binary(SVM svm)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMLoadMatGramian_Binary"
+PetscErrorCode SVMLoadMatGramian_Binary(SVM svm,PetscViewer v)
+{
+  MPI_Comm comm;
+  Mat      G;
+
+  PetscFunctionBegin;
+  TRY( PetscObjectGetComm((PetscObject) svm,&comm) );
+
+  /* Create matrix */
+  TRY( MatCreate(comm,&G) );
+  TRY( MatSetType(G,MATDENSE) );
+  TRY( PetscObjectSetName((PetscObject) G,"G") );
+  TRY( PetscObjectSetOptionsPrefix((PetscObject) G,"gramian_") );
+  TRY( MatSetFromOptions(G) );
+
+  TRY( MatLoad(G,v) );
+  TRY( SVMSetMatGramian(svm,G) );
+
+  /* Free memory */
+  TRY( MatDestroy(&G) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMViewMatGramian_Binary"
+PetscErrorCode SVMViewMatGramian_Binary(SVM svm,PetscViewer v)
+{
+  MPI_Comm   comm;
+  const char *type_name = NULL;
+
+  Mat        G;
+  PetscInt   M,N;
+
+  PetscBool  isascii;
+
+  PetscFunctionBegin;
+  TRY( SVMGetMatGramian(svm,&G) );
+  if (!G) {
+    TRY( PetscObjectGetComm((PetscObject) v,&comm) );
+    FLLOP_SETERRQ(comm,PETSC_ERR_ARG_NULL,"Gramian (kernel) matrix is not specified");
+  }
+
+  TRY( PetscObjectTypeCompare((PetscObject)v,PETSCVIEWERASCII,&isascii) );
+  if (isascii) {
+    TRY( PetscObjectPrintClassNamePrefixType((PetscObject) svm,v) );
+
+    TRY( PetscViewerASCIIPushTab(v) );
+    TRY( PetscViewerASCIIPrintf(v,"Gramian (kernel) matrix was loaded from file \"%s\" successfully!\n",svm->kernel_mat_file) );
+
+    TRY( MatGetSize(G,&M,&N) );
+    TRY( PetscObjectPrintClassNamePrefixType((PetscObject) G,v) );
+    TRY( PetscViewerASCIIPushTab(v) );
+    TRY( PetscViewerASCIIPrintf(v,"dimensions: %D,%D\n",M,N) );
+    TRY( PetscViewerASCIIPopTab(v) );
+
+    TRY(PetscViewerASCIIPopTab(v));
+  } else {
+    TRY( PetscObjectGetComm((PetscObject) v,&comm) );
+    TRY( PetscObjectGetType((PetscObject) v,&type_name) );
+
+    FLLOP_SETERRQ1(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewMatGramian",type_name);
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMLoadTrainingDataset_Binary"
 PetscErrorCode SVMLoadTrainingDataset_Binary(SVM svm,PetscViewer v)
 {
@@ -1838,6 +1905,8 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm->ops->computemodelscores    = SVMComputeModelScores_Binary;
   svm->ops->computehingeloss      = SVMComputeHingeLoss_Binary;
   svm->ops->computemodelparams    = SVMComputeModelParams_Binary;
+  svm->ops->loadgramian           = SVMLoadMatGramian_Binary;
+  svm->ops->viewgramian           = SVMViewMatGramian_Binary;
   svm->ops->loadtrainingdataset   = SVMLoadTrainingDataset_Binary;
   svm->ops->viewtrainingdataset   = SVMViewTrainingDataset_Binary;
 
