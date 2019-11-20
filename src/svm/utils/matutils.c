@@ -2,6 +2,7 @@
 #include <petsc/private/matimpl.h>
 #include <permonsvm.h>
 
+/* TODO rename MatBiasedCtx to MatCtx */
 typedef struct {
     Mat         Xt;
     PetscReal bias;
@@ -182,6 +183,24 @@ PetscErrorCode MatCreateSubMatrix_Biased(Mat mat,IS isrow,IS iscol,MatReuse cll,
   TRY( PetscObjectComposeFunction((PetscObject) newmat_inner,"MatGetOwnershipIS_C",MatGetOwnershipIS_Biased) );
 
   *newmat = newmat_inner;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "MatBiasedGetInnerMat"
+PetscErrorCode MatBiasedGetInnerMat(Mat A,Mat *inner)
+{
+  void         *ptr;
+  MatBiasedCtx *ctx;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(A,MAT_CLASSID,1);
+  PetscValidPointer(inner,2);
+
+  TRY( MatShellGetContext(A,&ptr) );
+  ctx = (MatBiasedCtx *) ptr;
+
+  *inner = ctx->Xt;
   PetscFunctionReturn(0);
 }
 

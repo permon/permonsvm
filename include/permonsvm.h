@@ -244,4 +244,5 @@ FLLOP_EXTERN PetscErrorCode SVMViewTestDataset(SVM,PetscViewer);
 FLLOP_EXTERN PetscErrorCode PetscViewerSVMLightOpen(MPI_Comm,const char [],PetscViewer *);
 
 FLLOP_EXTERN PetscErrorCode MatBiasedCreate(Mat,PetscReal,Mat *);
+FLLOP_EXTERN PetscErrorCode MatBiasedGetInnerMat(Mat,Mat *);
 #endif
