@@ -1562,6 +1562,30 @@ PetscErrorCode SVMGetMatGramian(SVM svm,Mat *G)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMComputeOperator"
+/*@
+  SVMComputeOperator - Computes implicit Hessian matrix associated with underlying QP problem.
+
+  Collective on SVM
+
+  Level: advanced
+
+  Input parameter:
+. svm - SVM context
+
+.seealso SVM, SVMSetMatGramian()
+@*/
+PetscErrorCode SVMComputeOperator(SVM svm)
+{
+
+  PetscFunctionBeginI;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+
+  TRY( PetscTryMethod(svm,"SVMComputeOperator_C",(SVM),(svm)) );
+  PetscFunctionReturnI(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetTrainingDataset"
 /*@
   SVMSetTrainingDataset - Sets the training samples and labels.
