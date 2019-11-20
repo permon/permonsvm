@@ -661,133 +661,100 @@ PetscErrorCode SVMComputeOperator_Binary(SVM svm)
 #define __FUNCT__ "SVMSetUp_Binary"
 PetscErrorCode SVMSetUp_Binary(SVM svm)
 {
-  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+  SVM_Binary  *svm_binary = (SVM_Binary *) svm->data;
 
-  QP          qp;
   QPS         qps;
+  QP          qp;
 
-  Vec         diag,diag_p,diag_n;
-  Mat         H,HpE,mats[2];
+  Mat         Xt;
+  Vec         y;
+
   Vec         e;
   Vec         x_init,x_init_p,x_init_n;
-
   Mat         Be = NULL;
   PetscReal   norm;
   Vec         lb;
-  Vec         ub,ub_p,ub_n;
+  Vec         ub = NULL,ub_p,ub_n;
 
-  Mat         Xt_training,X_training;
-  Vec         y;
-  PetscInt    n,m,N;
-
-  PetscReal   C,Cp,Cn;
   PetscInt    p;        /* penalty type */
   PetscInt    svm_mod;
   SVMLossType loss_type;
 
+  PetscReal   C,Cp,Cn;
+
+  PetscInt    i;
+
+  /* monitors */
   PetscBool   svm_monitor_set;
   void        *mctx;  /* monitor context */
 
   PetscFunctionBegin;
   if (svm->setupcalled) PetscFunctionReturn(0);
 
-  TRY( SVMGetLossType(svm,&loss_type) );
-  TRY( SVMGetMod(svm,&svm_mod) );
-  TRY( SVMGetPenaltyType(svm,&p) );
-
   if (svm->posttraincalled) {
-    TRY( SVMUpdate_Binary_Private(svm) );
+    /* TRY( SVMUpdate_Binary_Private(svm) ); */
     PetscFunctionReturn(0);
   }
 
-  if (svm->hyperoptset) {
-    TRY( SVMGridSearch(svm) );
+  /* TODO generalize implementation of hyper parameter optimization */
+  if (svm->hyperoptset) { TRY( SVMGridSearch(svm) ); }
+
+  TRY( SVMGetQPS(svm,&qps) );
+  TRY( QPSGetQP(qps,&qp) );
+
+  TRY( SVMComputeOperator(svm) ); /* compute Hessian of QP problem */
+
+  TRY( SVMGetTrainingDataset(svm,&Xt,&y) ); /* get samples and label vector for latter computing */
+
+  /* Set RHS */
+  TRY( VecDuplicate(y,&e) );  /* creating vector e same size and type as y_training */
+  TRY( VecSet(e,1.) );
+  TRY( QPSetRhs(qp,e) );      /* set linear term of QP problem */
+
+  /* Set equality constraint for SVM mod 1 */
+  TRY( SVMGetMod(svm,&svm_mod) );
+  if (svm_mod == 1) {
+    TRY( MatCreateOneRow(y,&Be) );   /* Be = y^t */
+    TRY( VecNorm(y,NORM_2,&norm) );
+    TRY( MatScale(Be,1. / norm) );    /* ||Be|| = 1 */
+    TRY( QPSetEq(qp,Be,NULL) );
   }
 
+  /* Create box constraint */
+  TRY( VecDuplicate(y,&lb) );  /* create lower bound constraint */
+  TRY( VecSet(lb,0.) );
+
+  TRY( SVMGetPenaltyType(svm,&p) );
   if (p == 1) {
     TRY( SVMGetC(svm,&C) );
   } else {
     TRY( SVMGetCp(svm,&Cp) );
     TRY( SVMGetCn(svm,&Cn) );
   }
-  TRY( SVMGetTrainingDataset(svm,&Xt_training,NULL) );
 
-  /* Set QP and QPS solver */
-  TRY( SVMGetQPS(svm,&qps) );
-  TRY( QPSGetQP(qps,&qp) );
-
-  /* Remap y to -1,1 values if needed */
-  TRY( SVMSetUp_Remapy_Binary_Private(svm) );
-  y = svm_binary->y_inner;
-
-  /* Create Hessian */
-  TRY( PermonMatTranspose(Xt_training,MAT_TRANSPOSE_CHEAPEST,&X_training) );
-  TRY( MatCreateNormal(X_training,&H) );  /* H = X^t * X */
-  TRY( MatDiagonalScale(H,y,y) );         /* H = diag(y)*H*diag(y) */
-
-  /* Create right hand side vector*/
-  TRY( VecDuplicate(y,&e) );  /* creating vector e same size and type as y_training */
-  TRY( VecSet(e,1.0) );
-  TRY( QPSetRhs(qp,e) );      /* set linear term of QP problem */
-
-  /* Set equality constrain for solver type 1 (with equality constraint) */
-  if (svm_mod == 1) {
-    TRY( MatCreateOneRow(y,&Be) );   /* Be = y^t */
-    TRY( VecNorm(y,NORM_2,&norm) );
-    TRY( MatScale(Be,1.0/norm) );    /* ||Be|| = 1 */
-    TRY( QPSetEq(qp,Be,NULL) );
-  }
-
-  /* Create box constraints */
-  TRY( VecDuplicate(y,&lb) );  /* create lower bound constraint vector */
-  TRY( VecSet(lb,0.) );
-
+  TRY( SVMGetLossType(svm,&loss_type) );
   if (loss_type == SVM_L1) {
     TRY( VecDuplicate(lb,&ub) );
+
     if (p == 1) {
       TRY( VecSet(ub,C) );
     } else {
+      /* Set upper bound constrain related to positive samples */
       TRY( VecGetSubVector(ub,svm_binary->is_p,&ub_p) );
       TRY( VecSet(ub_p,Cp) );
       TRY( VecRestoreSubVector(ub,svm_binary->is_p,&ub_p) );
 
+      /* Set upper bound constrain related to negative samples */
       TRY( VecGetSubVector(ub,svm_binary->is_n,&ub_n) );
       TRY( VecSet(ub_n,Cn) );
       TRY( VecRestoreSubVector(ub,svm_binary->is_n,&ub_n) );
     }
-  } else {
-    /* 1 / 2t = C / 2 => t = 1 / C */
-    /* H = H + t * I */
-    /* https://link.springer.com/article/10.1134/S1054661812010129 */
-    /* http://www.lib.kobe-u.ac.jp/repository/90000225.pdf */
-
-    TRY( MatGetLocalSize(H,&m,&n) );
-    TRY( MatGetSize(H,&N,NULL) );
-
-    /* Set values of diagonal matrix */
-    TRY( VecDuplicate(lb,&svm_binary->diag) );
-    diag = svm_binary->diag;
-    if (p == 1) {
-      TRY( VecSet(diag,1. / C) );
-    } else {
-      TRY( VecGetSubVector(diag,svm_binary->is_p,&diag_p) );
-      TRY( VecSet(diag_p,1. / Cp) );
-      TRY( VecRestoreSubVector(diag,svm_binary->is_p,&diag_p) );
-
-      TRY( VecGetSubVector(diag,svm_binary->is_n,&diag_n) );
-      TRY( VecSet(diag_n,1. / Cn) );
-      TRY( VecRestoreSubVector(diag,svm_binary->is_n,&diag_n) );
-    }
-    TRY( MatCreateDiag(diag,&svm_binary->J) );
-
-    mats[0] = svm_binary->J;
-    mats[1] = H;
-    TRY( MatCreateSum(PetscObjectComm((PetscObject)svm),2,mats,&HpE) );
-    TRY( MatDestroy(&H) );
-    H  = HpE;
-    ub = NULL;
   }
 
+  TRY( QPSetBox(qp,NULL,lb,ub) );
+
+  /* TODO create public method for setting initial vector */
+  /* Set initial guess */
   TRY( VecDuplicate(lb,&x_init) );
   if (p == 1) {
     TRY( VecSet(x_init,C - 100 * PETSC_MACHINE_EPSILON) );
@@ -803,10 +770,8 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   TRY( QPSetInitialVector(qp,x_init) );
   TRY( VecDestroy(&x_init) );
 
-  TRY( QPSetOperator(qp,H) );
-  TRY( QPSetBox(qp,NULL,lb,ub) );
-
-  /* set monitors */
+  /* TODO create public method for setting monitors */
+  /* Set monitors */
   TRY( PetscOptionsHasName(NULL,((PetscObject) svm)->prefix,"-svm_monitor",&svm_monitor_set) );
   if (svm_monitor_set) {
     TRY( SVMMonitorCreateCtx_Binary(&mctx,svm) );
@@ -859,25 +824,24 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
     }
   }
 
+  /* Set QPS */
   if (svm->setfromoptionscalled) {
     TRY( QPTFromOptions(qp) );
     TRY( QPSSetFromOptions(qps) );
   }
-
   TRY( QPSSetUp(qps) );
 
-  /* decreasing reference counts */
-  TRY( MatDestroy(&X_training) );
-  TRY( MatDestroy(&H) );
+  /* Create work vectors */
+  for (i = 0; i < 3; ++i) { TRY( VecDestroy(&svm_binary->work[i]) ); }
+  TRY( MatCreateVecs(Xt,NULL,&svm_binary->work[0]) );
+  TRY( VecDuplicate(svm_binary->work[0],&svm_binary->work[1]) );
+  TRY( VecDuplicate(svm_binary->work[0],&svm_binary->work[2]) );
+
+  /* Decreasing reference counts using destroy methods */
   TRY( MatDestroy(&Be) );
   TRY( VecDestroy(&e) );
   TRY( VecDestroy(&lb) );
   TRY( VecDestroy(&ub) );
-
-  /* create work vecs */
-  TRY( MatCreateVecs(Xt_training,NULL,&svm_binary->work[0]) );
-  TRY( VecDuplicate(svm_binary->work[0],&svm_binary->work[1]) );
-  TRY( VecDuplicate(svm_binary->work[0],&svm_binary->work[2]) );
 
   svm->setupcalled = PETSC_TRUE;
   PetscFunctionReturn(0);
