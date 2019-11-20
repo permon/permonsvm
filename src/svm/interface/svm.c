@@ -3,7 +3,7 @@
 #include "../utils/io.h"
 
 PetscClassId  SVM_CLASSID;
-PetscLogEvent SVM_LoadDataset;
+PetscLogEvent SVM_LoadDataset,SVM_LoadGramian;
 
 const char *const ModelScores[]={"accuracy","precision","sensitivity","F1","mcc","aucroc","G1","ModelScore","model_",0};
 const char *const CrossValidationTypes[]={"kfold","stratified_kfold","CrossValidationType","cv_",0};
@@ -2331,6 +2331,78 @@ PetscErrorCode SVMComputeModelParams(SVM svm)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   if (svm->ops->computemodelparams) {
     TRY( svm->ops->computemodelparams(svm) );
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMLoadMatGramian"
+/*@
+  SVMLoadMatGramian - Loads precomputed Gramian (kernel) matrix.
+
+  Collective on PetscViewer
+
+  Input Parameters:
++ svm - SVM context
+- v - viewer
+
+ Level: intermediate
+
+.seealso SVM, SVMViewMatGramian(), SVMLoadTrainingDataset()
+@*/
+PetscErrorCode SVMLoadMatGramian(SVM svm,PetscViewer v)
+{
+  MPI_Comm   comm;
+  PetscBool  view_io,view_dataset;
+
+  const char *dataset_file;
+
+  PetscFunctionBeginI;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
+
+  PetscLogEventBegin(SVM_LoadGramian,svm,0,0,0);
+  if (svm->ops->loadgramian) {
+    TRY( svm->ops->loadgramian(svm,v) );
+  }
+  PetscLogEventEnd(SVM_LoadGramian,svm,0,0,0);
+
+  TRY( PetscViewerFileGetName(v,&dataset_file) );
+  TRY( PetscStrcpy(svm->kernel_mat_file,dataset_file) );
+
+  TRY( PetscOptionsHasName(NULL,NULL,"-svm_view_io",&view_io) );
+  TRY( PetscOptionsHasName(NULL,NULL,"-svm_view_gramian",&view_dataset) );
+  if (view_io || view_dataset) {
+    TRY( PetscObjectGetComm((PetscObject) v,&comm) );
+    TRY( SVMViewMatGramian(svm,PETSC_VIEWER_STDOUT_(comm)) );
+  }
+  PetscFunctionReturnI(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMViewGramian"
+/*@
+  SVMViewGramian - Visualizes (precomputed) Gramian matrix.
+
+  Collective on PetscViewer
+
+  Input Parameters:
++ svm - SVM context
+- v - viewer
+
+  Level: intermediate
+
+.seealso SVM, SVMLoadMatGramian()
+@*/
+PetscErrorCode SVMViewMatGramian(SVM svm,PetscViewer v)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
+
+  if (svm->ops->viewgramian) {
+    TRY(svm->ops->viewgramian(svm,v) );
   }
   PetscFunctionReturn(0);
 }

@@ -18,6 +18,7 @@ PetscErrorCode SVMInitializePackage()
   TRY( SVMRegisterAll() );
   /* Register Events */
   TRY( PetscLogEventRegister("SVMLoadDataset",SVM_CLASSID,&SVM_LoadDataset) );
+  TRY( PetscLogEventRegister("SVMLoadGramian",SVM_CLASSID,&SVM_LoadGramian) );
 
   TRY( PetscRegisterFinalize(SVMFinalizePackage) );
   PetscFunctionReturn(0);
