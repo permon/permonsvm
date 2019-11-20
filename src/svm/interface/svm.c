@@ -2377,14 +2377,14 @@ PetscErrorCode SVMViewTrainingDataset(SVM svm,PetscViewer v)
 @*/
 PetscErrorCode SVMLoadTestDataset(SVM svm,PetscViewer v)
 {
-  MPI_Comm   comm;
+  MPI_Comm    comm;
 
-  Mat        Xt_test;
-  Mat        Xt_biased;
-  Vec        y_test;
+  Mat         X_test;
+  Mat         X_biased;
+  Vec         y_test;
 
-  PetscReal  bias;
-  PetscInt   mod;
+  PetscReal   bias;
+  PetscInt    mod;
 
   const char *dataset_file;
   PetscBool  view_io,view_test_dataset;
@@ -2394,19 +2394,24 @@ PetscErrorCode SVMLoadTestDataset(SVM svm,PetscViewer v)
   PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
 
   TRY( PetscObjectGetComm((PetscObject) svm,&comm) );
-  TRY( MatCreate(comm,&Xt_test) );
-  TRY( PetscObjectSetName((PetscObject) Xt_test,"Xt_test") );
+  TRY( MatCreate(comm,&X_test) );
+  /* Create matrix of test samples */
+  TRY( PetscObjectSetName((PetscObject) X_test,"X_test") );
+  TRY( PetscObjectSetName((PetscObject) X_test,"X_test") );
+  TRY( PetscObjectSetOptionsPrefix((PetscObject) X_test,"X_test_") );
+  TRY( MatSetFromOptions(X_test) );
+  /* Create label vector of test samples */
   TRY( VecCreate(comm,&y_test) );
   TRY( PetscObjectSetName((PetscObject) y_test,"y_test") );
 
-  TRY( SVMLoadDataset(svm,v,Xt_test,y_test) );
+  TRY( SVMLoadDataset(svm,v,X_test,y_test) );
   TRY( SVMGetMod(svm,&mod) );
   if (mod == 2) {
     TRY( SVMGetBias(svm,&bias) );
-    TRY( MatBiasedCreate(Xt_test,bias,&Xt_biased) );
-    Xt_test = Xt_biased;
+    TRY( MatBiasedCreate(X_test,bias,&X_biased) );
+    X_test = X_biased;
   }
-  TRY( SVMSetTestDataset(svm,Xt_test,y_test) );
+  TRY( SVMSetTestDataset(svm,X_test,y_test) );
 
   TRY( PetscViewerFileGetName(v,&dataset_file) );
   TRY( PetscStrcpy(svm->test_dataset_file,dataset_file) );
@@ -2419,7 +2424,7 @@ PetscErrorCode SVMLoadTestDataset(SVM svm,PetscViewer v)
   }
 
   /* Free memory */
-  TRY( MatDestroy(&Xt_test) );
+  TRY( MatDestroy(&X_test) );
   TRY( VecDestroy(&y_test) );
   PetscFunctionReturnI(0);
 }

@@ -1555,8 +1555,8 @@ PetscErrorCode SVMLoadTrainingDataset_Binary(SVM svm,PetscViewer v)
 {
   MPI_Comm  comm;
 
-  Mat       Xt_training;
-  Mat       Xt_biased;
+  Mat       X_training;
+  Mat       X_biased;
   Vec       y_training;
 
   PetscReal bias;
@@ -1564,22 +1564,26 @@ PetscErrorCode SVMLoadTrainingDataset_Binary(SVM svm,PetscViewer v)
 
   PetscFunctionBegin;
   TRY( PetscObjectGetComm((PetscObject) svm,&comm) );
-  TRY( MatCreate(comm,&Xt_training) );
-  TRY( PetscObjectSetName((PetscObject) Xt_training,"Xt_training") );
+  /* Create matrix of training samples */
+  TRY( MatCreate(comm,&X_training) );
+  TRY( PetscObjectSetName((PetscObject) X_training,"X_training") );
+  TRY( PetscObjectSetOptionsPrefix((PetscObject) X_training,"X_training_") );
+  TRY( MatSetFromOptions(X_training) );
+
   TRY( VecCreate(comm,&y_training) );
   TRY( PetscObjectSetName((PetscObject) y_training,"y_training") );
 
-  TRY( SVMLoadDataset(svm,v,Xt_training,y_training) );
+  TRY( SVMLoadDataset(svm,v,X_training,y_training) );
   TRY( SVMGetMod(svm,&mod) );
   if (mod == 2) {
     TRY( SVMGetBias(svm,&bias) );
-    TRY( MatBiasedCreate(Xt_training,bias,&Xt_biased) );
-    Xt_training = Xt_biased;
+    TRY( MatBiasedCreate(X_training,bias,&X_biased) );
+    X_training = X_biased;
   }
-  TRY( SVMSetTrainingDataset(svm,Xt_training,y_training) );
+  TRY( SVMSetTrainingDataset(svm,X_training,y_training) );
 
   /* Free memory */
-  TRY( MatDestroy(&Xt_training) );
+  TRY( MatDestroy(&X_training) );
   TRY( VecDestroy(&y_training) );
   PetscFunctionReturn(0);
 }
