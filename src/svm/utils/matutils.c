@@ -205,6 +205,24 @@ PetscErrorCode MatBiasedGetInnerMat(Mat A,Mat *inner)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "MatBiasedGetBias"
+PetscErrorCode MatBiasedGetBias(Mat A,PetscReal *bias)
+{
+  void         *ptr;
+  MatBiasedCtx *ctx;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(A,MAT_CLASSID,1);
+  PetscValidPointer(bias,2);
+
+  TRY( MatShellGetContext(A,&ptr) );
+  ctx = (MatBiasedCtx *) ptr;
+
+  *bias = ctx->bias;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "MatBiasedCreate"
 PetscErrorCode MatBiasedCreate(Mat Xt,PetscReal bias,Mat *Xt_biased)
 {
