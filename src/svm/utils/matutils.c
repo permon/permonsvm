@@ -235,6 +235,10 @@ PetscErrorCode MatBiasedCreate(Mat Xt,PetscReal bias,Mat *Xt_biased)
   MatBiasedCtx *ctx = NULL;
 
   PetscFunctionBegin;
+  PetscValidHeaderSpecific(Xt,MAT_CLASSID,1);
+  PetscValidLogicalCollectiveReal(Xt,bias,2);
+  PetscValidPointer(Xt_biased,3);
+
   PetscObjectGetComm((PetscObject) Xt,&comm);
   TRY( MPI_Comm_size(comm,&comm_size) );
   TRY( MPI_Comm_rank(comm,&comm_rank) );
