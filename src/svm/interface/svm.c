@@ -2434,38 +2434,55 @@ PetscErrorCode SVMLoadTestDataset(SVM svm,PetscViewer v)
 PetscErrorCode SVMViewTestDataset(SVM svm,PetscViewer v)
 {
   MPI_Comm   comm;
-  const char *type_name = NULL;
 
-  Mat        Xt_test;
-  Vec        y_test;
+  Mat        X,X_inner;
+  PetscReal  bias;
+  Vec        y;
+
+  PetscInt   mod;
 
   PetscBool  isascii;
+  const char *type_name = NULL;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
 
-  TRY( SVMGetTestDataset(svm,&Xt_test,&y_test) );
-  if (!Xt_test || !y_test) {
+  TRY( SVMGetTestDataset(svm,&X,&y) );
+  if (!X || !y) {
     TRY( PetscObjectGetComm((PetscObject) v,&comm) );
     FLLOP_SETERRQ(comm,PETSC_ERR_ARG_NULL,"Test dataset is not set");
   }
 
   TRY( PetscObjectTypeCompare((PetscObject)v,PETSCVIEWERASCII,&isascii) );
   if (isascii) {
-    TRY( PetscViewerASCIIPrintf(v, "=====================\n") );
+    /* Print info related to svm type */
     TRY( PetscObjectPrintClassNamePrefixType((PetscObject) svm,v) );
 
     TRY( PetscViewerASCIIPushTab(v) );
-    TRY( PetscViewerASCIIPrintf(v,"Test dataset from file \"%s\" was loaded successfully!\n",svm->test_dataset_file) );
-    TRY( PetscViewerASCIIPrintf(v,"Dataset contains:\n") );
+    TRY( PetscViewerASCIIPrintf(v,"Training dataset was loaded from file \"%s\" SUCCESSFULLY:\n",svm->test_dataset_file) );
 
-    TRY( PetscViewerASCIIPushTab(v) );
-    TRY( SVMDatasetInfo(svm,Xt_test,y_test,v) );
-    TRY( PetscViewerASCIIPopTab(v) );
+    /* Print info related to matrix type and dataset */
+    TRY( PetscObjectPrintClassNamePrefixType((PetscObject) X,v) );
+    TRY( SVMGetMod(svm,&mod) );
+    if (mod == 2) {
+      TRY( MatBiasedGetInnerMat(X,&X_inner) );
+      TRY( MatBiasedGetBias(X,&bias) );
+
+      TRY( PetscViewerASCIIPushTab(v) );
+      TRY( PetscViewerASCIIPrintf(v,"Samples are augmented with additional dimension by means of bias %.2f\n",bias) );
+      TRY( PetscViewerASCIIPrintf(v,"inner") );
+      TRY( PetscObjectPrintClassNamePrefixType((PetscObject) X_inner,v) );
+      TRY( PetscViewerASCIIPopTab(v) );
+
+      TRY( PetscViewerASCIIPushTab(v) );
+      TRY( SVMDatasetInfo(svm,X,y,v) );
+      TRY( PetscViewerASCIIPopTab(v) );
+    } else {
+      TRY( SVMDatasetInfo(svm,X,y,v) );
+    }
 
     TRY(PetscViewerASCIIPopTab(v));
-    TRY(PetscViewerASCIIPrintf(v,"=====================\n"));
   } else {
     TRY( PetscObjectGetComm((PetscObject) v,&comm) );
     TRY( PetscObjectGetType((PetscObject) v,&type_name) );
