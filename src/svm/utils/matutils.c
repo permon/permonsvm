@@ -27,20 +27,20 @@ PetscErrorCode MatDestroy_Biased(Mat A)
 #define __FUNCT__ "MatMult_Biased"
 PetscErrorCode MatMult_Biased(Mat A,Vec x,Vec y)
 {
-  MPI_Comm    comm;
-  PetscMPIInt comm_size,comm_rank;
-  MPI_Request req;
+  MPI_Comm          comm;
+  PetscMPIInt       comm_size,comm_rank;
+  MPI_Request       req;
 
-  PetscInt    n;
-  PetscInt    ilow,ihi;
-  PetscScalar a,b;
+  PetscInt          n;
+  PetscInt          low,hi;
+  PetscScalar       a,b;
+
+  IS                is_col;
+  Vec               x_sub;
   const PetscScalar *x_arr;
 
-  void         *ptr = NULL;
-  MatCtx       *ctx = NULL;
-
-  IS           is_col;
-  Vec          x_sub;
+  void              *ptr = NULL;
+  MatCtx            *ctx = NULL;
 
   PetscFunctionBegin;
   TRY( PetscObjectGetComm((PetscObject) A,&comm) );
@@ -53,25 +53,25 @@ PetscErrorCode MatMult_Biased(Mat A,Vec x,Vec y)
   if (comm_rank == comm_size - 1) {
     TRY( VecGetLocalSize(x,&n) );
     TRY( VecGetArrayRead(x,&x_arr) );
-    a = x_arr[n-1];
+    a = x_arr[n - 1];
     TRY( VecRestoreArrayRead(y,&x_arr) );
   }
-
-  TRY( MPI_Ibcast(&a,1,MPIU_SCALAR,comm_size-1,comm,&req) );
+  TRY( MPI_Ibcast(&a,1,MPIU_SCALAR,comm_size - 1,comm,&req) );
   TRY( MPI_Wait(&req,MPI_STATUS_IGNORE) );
 
-  TRY( VecGetOwnershipRange(x,&ilow,&ihi) );
-  if (comm_rank == comm_size - 1) ihi -= 1;
-  TRY( ISCreateStride(comm,ihi-ilow,ilow,1,&is_col) );
+  TRY( VecGetOwnershipRange(x,&low,&hi) );
+  if (comm_rank == comm_size - 1) hi -= 1;
+  TRY( ISCreateStride(comm,hi - low,low,1,&is_col) );
 
   TRY( VecGetSubVector(x,is_col,&x_sub) );
   TRY( MatMult(ctx->inner,x_sub,y) );
   TRY( VecRestoreSubVector(x,is_col,&x_sub) );
 
-  TRY( ISDestroy(&is_col) );
-
   b = ctx->bias * a;
   TRY( VecShift(y,b) );
+
+  /* Free memory */
+  TRY( ISDestroy(&is_col) );
   PetscFunctionReturn(0);
 }
 
@@ -186,6 +186,26 @@ PetscErrorCode MatCreateSubMatrix_Biased(Mat A,IS isrow,IS iscol,MatReuse cll,Ma
 
 #undef __FUNCT__
 #define __FUNCT__ "MatBiasedGetInnerMat"
+/*
+  MatBiasedGetInnerMat - Get inner (original) matrix
+
+  Not Collective
+
+  Input Parameter:
+. A - biased matrix context
+
+  Output Parameter:
+. inner - original (inner) matrix context
+
+  Notes:
+  This routine does not return a new copy of an inner (original) matrix. It actually returns a pointer to the same matrix that is passed in creating routine namely MatBiasedCreate().
+
+  Do not call MatDestroy() after using of this object.
+
+  Level: advanced
+
+.seealso MatBiasedCreate()
+*/
 PetscErrorCode MatBiasedGetInnerMat(Mat A,Mat *inner)
 {
   void   *ptr;
@@ -204,6 +224,21 @@ PetscErrorCode MatBiasedGetInnerMat(Mat A,Mat *inner)
 
 #undef __FUNCT__
 #define __FUNCT__ "MatBiasedGetBias"
+/*@
+  MatBiasedGetBias - Gets a real value of bias.
+
+  Not Collective
+
+  Input Parameter:
+. A - mat context
+
+  Output Parameter:
+. bias - value of bias
+
+  Level: beginner
+
+.seealso MatBiasedCreate()
+@*/
 PetscErrorCode MatBiasedGetBias(Mat A,PetscReal *bias)
 {
   void   *ptr;
@@ -222,6 +257,25 @@ PetscErrorCode MatBiasedGetBias(Mat A,PetscReal *bias)
 
 #undef __FUNCT__
 #define __FUNCT__ "MatBiasedCreate"
+/*@
+  MatBiasedCreate - Creates biased matrix, x_i <- [x_i, bias].
+
+  Collective on Mat
+
+  Input Parameters:
++ A - mat to be biased
+- bias - value of bias
+
+  Output Parameter:
+. A_biased - mat biased context
+
+  Notes:
+  Mat type of created mat is shell. Currently, we do not plan to create its own matrix type.
+
+  Level: advanced
+
+.seealso MatBiasedGetBias(), MatBiasedGetInnerMat()
+@*/
 PetscErrorCode MatBiasedCreate(Mat A,PetscReal bias,Mat *A_biased)
 {
   MPI_Comm    comm;
