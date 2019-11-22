@@ -35,7 +35,6 @@ struct _p_SVM {
 
   char training_dataset_file[PETSC_MAX_PATH_LEN];
   char test_dataset_file[PETSC_MAX_PATH_LEN];
-  char kernel_mat_file[PETSC_MAX_PATH_LEN];
 
   Mat                 Xt_test;
   Vec                 y_test;

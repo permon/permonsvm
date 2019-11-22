@@ -1557,7 +1557,7 @@ PetscErrorCode SVMGetMatGramian(SVM svm,Mat *G)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidPointer(G,2);
 
-  TRY( PetscTryMethod(svm,"SVMGetMatGramian_C",(SVM,Mat *),(svm,G)) );
+  TRY( PetscUseMethod(svm,"SVMGetMatGramian_C",(SVM,Mat *),(svm,G)) );
   PetscFunctionReturn(0);
 }
 
@@ -2355,8 +2355,6 @@ PetscErrorCode SVMLoadMatGramian(SVM svm,PetscViewer v)
   MPI_Comm   comm;
   PetscBool  view_io,view_dataset;
 
-  const char *dataset_file;
-
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
@@ -2366,9 +2364,6 @@ PetscErrorCode SVMLoadMatGramian(SVM svm,PetscViewer v)
     TRY( svm->ops->loadgramian(svm,v) );
   }
   PetscLogEventEnd(SVM_LoadGramian,svm,0,0,0);
-
-  TRY( PetscViewerFileGetName(v,&dataset_file) );
-  TRY( PetscStrcpy(svm->kernel_mat_file,dataset_file) );
 
   TRY( PetscOptionsHasName(NULL,NULL,"-svm_view_io",&view_io) );
   TRY( PetscOptionsHasName(NULL,NULL,"-svm_view_gramian",&view_dataset) );

@@ -731,7 +731,9 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   }
 
   /* TODO generalize implementation of hyper parameter optimization */
-  if (svm->hyperoptset) { TRY( SVMGridSearch(svm) ); }
+  if (svm->hyperoptset) {
+    TRY( SVMGridSearch(svm) );
+  }
 
   TRY( SVMGetQPS(svm,&qps) );
   TRY( QPSGetQP(qps,&qp) );
@@ -866,7 +868,9 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   TRY( QPSSetUp(qps) );
 
   /* Create work vectors */
-  for (i = 0; i < 3; ++i) { TRY( VecDestroy(&svm_binary->work[i]) ); }
+  for (i = 0; i < 3; ++i) {
+    TRY( VecDestroy(&svm_binary->work[i]) );
+  }
   TRY( MatCreateVecs(Xt,NULL,&svm_binary->work[0]) );
   TRY( VecDuplicate(svm_binary->work[0],&svm_binary->work[1]) );
   TRY( VecDuplicate(svm_binary->work[0],&svm_binary->work[2]) );
@@ -1712,17 +1716,14 @@ PetscErrorCode SVMGridSearch_Binary(SVM svm)
 #define __FUNCT__ "SVMLoadMatGramian_Binary"
 PetscErrorCode SVMLoadMatGramian_Binary(SVM svm,PetscViewer v)
 {
-  MPI_Comm comm;
   Mat      G;
 
   PetscFunctionBegin;
-  TRY( PetscObjectGetComm((PetscObject) svm,&comm) );
-
   /* Create matrix */
-  TRY( MatCreate(comm,&G) );
+  TRY( MatCreate(PetscObjectComm((PetscObject) svm),&G) );
   TRY( MatSetType(G,MATDENSE) );
   TRY( PetscObjectSetName((PetscObject) G,"G") );
-  TRY( PetscObjectSetOptionsPrefix((PetscObject) G,"gramian_") );
+  TRY( PetscObjectSetOptionsPrefix((PetscObject) G,"G_") );
   TRY( MatSetFromOptions(G) );
 
   TRY( MatLoad(G,v) );
@@ -1737,7 +1738,6 @@ PetscErrorCode SVMLoadMatGramian_Binary(SVM svm,PetscViewer v)
 #define __FUNCT__ "SVMViewMatGramian_Binary"
 PetscErrorCode SVMViewMatGramian_Binary(SVM svm,PetscViewer v)
 {
-  MPI_Comm   comm;
   const char *type_name = NULL;
 
   Mat        G;
@@ -1748,8 +1748,7 @@ PetscErrorCode SVMViewMatGramian_Binary(SVM svm,PetscViewer v)
   PetscFunctionBegin;
   TRY( SVMGetMatGramian(svm,&G) );
   if (!G) {
-    TRY( PetscObjectGetComm((PetscObject) v,&comm) );
-    FLLOP_SETERRQ(comm,PETSC_ERR_ARG_NULL,"Gramian (kernel) matrix is not specified");
+    FLLOP_SETERRQ(PetscObjectComm((PetscObject) v),PETSC_ERR_ARG_NULL,"Gramian (kernel) matrix is not set");
   }
 
   TRY( PetscObjectTypeCompare((PetscObject)v,PETSCVIEWERASCII,&isascii) );
@@ -1757,7 +1756,6 @@ PetscErrorCode SVMViewMatGramian_Binary(SVM svm,PetscViewer v)
     TRY( PetscObjectPrintClassNamePrefixType((PetscObject) svm,v) );
 
     TRY( PetscViewerASCIIPushTab(v) );
-    TRY( PetscViewerASCIIPrintf(v,"Gramian (kernel) matrix was loaded from file \"%s\" successfully!\n",svm->kernel_mat_file) );
 
     TRY( MatGetSize(G,&M,&N) );
     TRY( PetscObjectPrintClassNamePrefixType((PetscObject) G,v) );
@@ -1765,12 +1763,10 @@ PetscErrorCode SVMViewMatGramian_Binary(SVM svm,PetscViewer v)
     TRY( PetscViewerASCIIPrintf(v,"dimensions: %D,%D\n",M,N) );
     TRY( PetscViewerASCIIPopTab(v) );
 
-    TRY(PetscViewerASCIIPopTab(v));
+    TRY( PetscViewerASCIIPopTab(v) );
   } else {
-    TRY( PetscObjectGetComm((PetscObject) v,&comm) );
     TRY( PetscObjectGetType((PetscObject) v,&type_name) );
-
-    FLLOP_SETERRQ1(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewMatGramian",type_name);
+    FLLOP_SETERRQ1(PetscObjectComm((PetscObject) v),PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewMatGramian",type_name);
   }
   PetscFunctionReturn(0);
 }

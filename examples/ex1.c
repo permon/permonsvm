@@ -9,9 +9,9 @@ int main(int argc,char **argv)
   SVM            svm;
 
   char           training_file[PETSC_MAX_PATH_LEN] = "data/heart_scale.bin";
-  char           kernel_file[PETSC_MAX_PATH_LEN]   = "data/heart_scale.kernel.bin";
-  char           test_file[PETSC_MAX_PATH_LEN]     = "data/heart_scale.t.bin";
-  PetscBool      test_file_set = PETSC_FALSE;
+  char           kernel_file[PETSC_MAX_PATH_LEN]   = "";
+  char           test_file[PETSC_MAX_PATH_LEN]     = "";
+  PetscBool      test_file_set = PETSC_FALSE,kernel_file_set = PETSC_FALSE;
 
   PetscViewer    viewer;
   PetscErrorCode ierr;
@@ -19,7 +19,7 @@ int main(int argc,char **argv)
   ierr = PermonInitialize(&argc,&argv,(char *)0,help); if (ierr) return ierr;
 
   ierr = PetscOptionsGetString(NULL,NULL,"-f_training",training_file,sizeof(training_file),NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetString(NULL,NULL,"-f_kernel",kernel_file,sizeof(test_file),&test_file_set);CHKERRQ(ierr);
+  ierr = PetscOptionsGetString(NULL,NULL,"-f_kernel",kernel_file,sizeof(kernel_file),&kernel_file_set);CHKERRQ(ierr);
   ierr = PetscOptionsGetString(NULL,NULL,"-f_test",test_file,sizeof(test_file),&test_file_set);CHKERRQ(ierr);
 
   /* Create SVM object */
@@ -33,9 +33,11 @@ int main(int argc,char **argv)
   ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
 
   /* Load Gramian matrix */
-  ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,kernel_file,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
-  ierr = SVMLoadMatGramian(svm,viewer);CHKERRQ(ierr);
-  ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+  if (kernel_file_set) {
+    ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,kernel_file,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
+    ierr = SVMLoadMatGramian(svm,viewer);CHKERRQ(ierr);
+    ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+  }
 
   /* Load test dataset */
   if (test_file_set) {
