@@ -1616,8 +1616,6 @@ PetscErrorCode SVMViewTrainingDataset_Binary(SVM svm,PetscViewer v)
     TRY( PetscObjectPrintClassNamePrefixType((PetscObject) svm,v) );
 
     TRY( PetscViewerASCIIPushTab(v) );
-    TRY( PetscViewerASCIIPrintf(v,"Training dataset was loaded from file \"%s\" SUCCESSFULLY:\n",svm->training_dataset_file) );
-
     /* Print info related to matrix type and dataset */
     TRY( PetscObjectPrintClassNamePrefixType((PetscObject) X,v) );
     TRY( SVMGetMod(svm,&mod) );

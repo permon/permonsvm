@@ -2322,9 +2322,6 @@ PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat Xt,Vec y)
 @*/
 PetscErrorCode SVMLoadTrainingDataset(SVM svm,PetscViewer v)
 {
-  MPI_Comm   comm;
-
-  const char *dataset_file;
   PetscBool  view_io,view_dataset;
 
   PetscFunctionBeginI;
@@ -2335,14 +2332,10 @@ PetscErrorCode SVMLoadTrainingDataset(SVM svm,PetscViewer v)
     TRY( svm->ops->loadtrainingdataset(svm,v) );
   }
 
-  TRY( PetscViewerFileGetName(v,&dataset_file) );
-  TRY( PetscStrcpy(svm->training_dataset_file,dataset_file) );
-
   TRY( PetscOptionsHasName(NULL,NULL,"-svm_view_io",&view_io) );
   TRY( PetscOptionsHasName(NULL,NULL,"-svm_view_training_dataset",&view_dataset) );
   if (view_io || view_dataset) {
-    TRY( PetscObjectGetComm((PetscObject) v,&comm) );
-    TRY( SVMViewTrainingDataset(svm,PETSC_VIEWER_STDOUT_(comm)) );
+    TRY( SVMViewTrainingDataset(svm,PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject) v))) );
   }
   PetscFunctionReturnI(0);
 }
@@ -2386,7 +2379,6 @@ PetscErrorCode SVMLoadTestDataset(SVM svm,PetscViewer v)
   PetscReal   bias;
   PetscInt    mod;
 
-  const char *dataset_file;
   PetscBool  view_io,view_test_dataset;
 
   PetscFunctionBeginI;
@@ -2412,9 +2404,6 @@ PetscErrorCode SVMLoadTestDataset(SVM svm,PetscViewer v)
     X_test = X_biased;
   }
   TRY( SVMSetTestDataset(svm,X_test,y_test) );
-
-  TRY( PetscViewerFileGetName(v,&dataset_file) );
-  TRY( PetscStrcpy(svm->test_dataset_file,dataset_file) );
 
   TRY( PetscOptionsHasName(NULL,NULL,"-svm_view_io",&view_io) );
   TRY( PetscOptionsHasName(NULL,NULL,"-svm_view_test_dataset",&view_test_dataset) );
@@ -2460,8 +2449,6 @@ PetscErrorCode SVMViewTestDataset(SVM svm,PetscViewer v)
     TRY( PetscObjectPrintClassNamePrefixType((PetscObject) svm,v) );
 
     TRY( PetscViewerASCIIPushTab(v) );
-    TRY( PetscViewerASCIIPrintf(v,"Training dataset was loaded from file \"%s\" SUCCESSFULLY:\n",svm->test_dataset_file) );
-
     /* Print info related to matrix type and dataset */
     TRY( PetscObjectPrintClassNamePrefixType((PetscObject) X,v) );
     TRY( SVMGetMod(svm,&mod) );
