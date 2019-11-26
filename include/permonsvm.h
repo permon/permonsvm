@@ -211,12 +211,10 @@ FLLOP_EXTERN PetscErrorCode SVMGridSearchSetPosBaseLogC(SVM,PetscReal);
 FLLOP_EXTERN PetscErrorCode SVMGridSearchGetPosBaseLogC(SVM,PetscReal *);
 FLLOP_EXTERN PetscErrorCode SVMGridSearchSetPosStrideLogC(SVM,PetscReal,PetscReal,PetscReal);
 FLLOP_EXTERN PetscErrorCode SVMGridSearchGetPosStrideLogC(SVM,PetscReal *,PetscReal *,PetscReal *);
-//FLLOP_EXTERN PetscErrorCode SVMSetLogCnMin(SVM,PetscReal);
-//FLLOP_EXTERN PetscErrorCode SVMGetLogCnMin(SVM,PetscReal *);
-//FLLOP_EXTERN PetscErrorCode SVMSetLogCnMax(SVM,PetscReal);
-//FLLOP_EXTERN PetscErrorCode SVMGetLogCnMax(SVM,PetscReal *);
 FLLOP_EXTERN PetscErrorCode SVMGridSearchSetNegBaseLogC(SVM,PetscReal);
 FLLOP_EXTERN PetscErrorCode SVMGridSearchGetNegBaseLogC(SVM,PetscReal *);
+FLLOP_EXTERN PetscErrorCode SVMGridSearchSetNegStrideLogC(SVM,PetscReal,PetscReal,PetscReal);
+FLLOP_EXTERN PetscErrorCode SVMGridSearchGetNegStrideLogC(SVM,PetscReal *,PetscReal *,PetscReal *);
 
 FLLOP_EXTERN PetscErrorCode SVMSetCrossValidationType(SVM,CrossValidationType);
 FLLOP_EXTERN PetscErrorCode SVMGetCrossValidationType(SVM,CrossValidationType *);
