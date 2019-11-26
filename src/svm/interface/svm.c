@@ -229,42 +229,42 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   if (flg) {
     TRY( SVMSetCn(svm,C) );
   }
-  TRY( PetscOptionsReal("-svm_logC_min","Set SVM minimal C value (logC_start).","SVMSetLogCMin",svm->logC_start,&logC_min,&flg) );
-  if (flg) {
-    TRY( SVMSetLogCMin(svm,logC_min) );
-  }
-  TRY( PetscOptionsReal("-svm_logC_max","Set SVM maximal C value (logC_end).","SVMSetLogCMax",svm->logC_end,&logC_max,&flg) );
-  if (flg) {
-    TRY( SVMSetLogCMax(svm,logC_max) );
-  }
-  TRY( PetscOptionsReal("-svm_logC_base","Set power base of SVM parameter C (logC_base).","SVMSetLogCBase",svm->logC_base,&logC_base,&flg) );
-  if (flg) {
-    TRY( SVMSetLogCBase(svm,logC_base) );
-  }
-  TRY( PetscOptionsReal("-svm_logCp_min","Set SVM minimal Cp value (logCp_start).","SVMSetLogCpMin",svm->logCp_start,&logC_min,&flg) );
-  if (flg) {
-    TRY( SVMSetLogCpMin(svm,logC_min) );
-  }
-  TRY( PetscOptionsReal("-svm_logCp_max","Set SVM maximal Cp value (logCp_end).","SVMSetLogCpMax",svm->logCp_end,&logC_max,&flg) );
-  if (flg) {
-    TRY( SVMSetLogCpMax(svm,logC_max) );
-  }
-  TRY( PetscOptionsReal("-svm_logCp_base","Set power base of SVM parameter Cp (logCp_base).","SVMSetLogCpBase",svm->logCp_base,&logC_base,&flg) );
-  if (flg) {
-    TRY( SVMSetLogCpBase(svm,logC_base) );
-  }
-  TRY( PetscOptionsReal("-svm_logCn_min","Set SVM minimal Cn value (logCn_start).","SVMSetLogCnMin",svm->logCn_start,&logC_min,&flg) );
-  if (flg) {
-    TRY( SVMSetLogCnMin(svm,logC_min) );
-  }
-  TRY( PetscOptionsReal("-svm_logCn_max","Set SVM maximal Cn value (logCn_end).","SVMSetLogCnMax",svm->logCn_end,&logC_max,&flg) );
-  if (flg) {
-    TRY( SVMSetLogCnMax(svm,logC_max) );
-  }
-  TRY( PetscOptionsReal("-svm_logCn_base","Set power base of SVM parameter Cn (logCn_base).","SVMSetLogCnBase",svm->logCn_base,&logC_base,&flg) );
-  if (flg) {
-    TRY( SVMSetLogCnBase(svm,logC_base) );
-  }
+//  TRY( PetscOptionsReal("-svm_logC_min","Set SVM minimal C value (logC_start).","SVMSetLogCMin",svm->logC_start,&logC_min,&flg) );
+//  if (flg) {
+//    TRY( SVMSetLogCMin(svm,logC_min) );
+//  }
+//  TRY( PetscOptionsReal("-svm_logC_max","Set SVM maximal C value (logC_end).","SVMSetLogCMax",svm->logC_end,&logC_max,&flg) );
+//  if (flg) {
+//    TRY( SVMSetLogCMax(svm,logC_max) );
+//  }
+//  TRY( PetscOptionsReal("-svm_logC_base","Set power base of SVM parameter C (logC_base).","SVMSetLogCBase",svm->logC_base,&logC_base,&flg) );
+//  if (flg) {
+//    TRY( SVMSetLogCBase(svm,logC_base) );
+//  }
+//  TRY( PetscOptionsReal("-svm_logCp_min","Set SVM minimal Cp value (logCp_start).","SVMSetLogCpMin",svm->logCp_start,&logC_min,&flg) );
+//  if (flg) {
+//    TRY( SVMSetLogCpMin(svm,logC_min) );
+//  }
+//  TRY( PetscOptionsReal("-svm_logCp_max","Set SVM maximal Cp value (logCp_end).","SVMSetLogCpMax",svm->logCp_end,&logC_max,&flg) );
+//  if (flg) {
+//    TRY( SVMSetLogCpMax(svm,logC_max) );
+//  }
+//  TRY( PetscOptionsReal("-svm_logCp_base","Set power base of SVM parameter Cp (logCp_base).","SVMSetLogCpBase",svm->logCp_base,&logC_base,&flg) );
+//  if (flg) {
+//    TRY( SVMSetLogCpBase(svm,logC_base) );
+//  }
+//  TRY( PetscOptionsReal("-svm_logCn_min","Set SVM minimal Cn value (logCn_start).","SVMSetLogCnMin",svm->logCn_start,&logC_min,&flg) );
+//  if (flg) {
+//    TRY( SVMSetLogCnMin(svm,logC_min) );
+//  }
+//  TRY( PetscOptionsReal("-svm_logCn_max","Set SVM maximal Cn value (logCn_end).","SVMSetLogCnMax",svm->logCn_end,&logC_max,&flg) );
+//  if (flg) {
+//    TRY( SVMSetLogCnMax(svm,logC_max) );
+//  }
+//  TRY( PetscOptionsReal("-svm_logCn_base","Set power base of SVM parameter Cn (logCn_base).","SVMSetLogCnBase",svm->logCn_base,&logC_base,&flg) );
+//  if (flg) {
+//    TRY( SVMSetLogCnBase(svm,logC_base) );
+//  }
   TRY( PetscOptionsInt("-svm_nfolds","Set number of folds (nfolds).","SVMSetNfolds",svm->nfolds,&nfolds,&flg) );
   if (flg) {
     TRY( SVMSetNfolds(svm,nfolds) );
@@ -738,9 +738,10 @@ PetscErrorCode SVMSetPenalty(SVM svm,PetscInt m,PetscReal p[])
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMSetLogCBase"
+#define __FUNCT__ "SVMGridSearchSetBaseLogC"
 /*@
-  SVMSetLogCBase - Sets the value of penalty C step.
+  TODO edit and improve comment regarding to grid-search stride concept
+  SVMGridSearchSetBaseLogC - Sets the value of penalty C step.
 
   Logically Collective on SVM
 
@@ -752,23 +753,25 @@ PetscErrorCode SVMSetPenalty(SVM svm,PetscInt m,PetscReal p[])
 
 .seealso SVMSetC(), SVMSetLogBase(), SVMSetLogCMin(), SVMSetLogCMax(), SVMGridSearch()
 @*/
-PetscErrorCode SVMSetLogCBase(SVM svm,PetscReal logC_base)
+PetscErrorCode SVMGridSearchSetBaseLogC(SVM svm,PetscReal logC_base)
 {
 
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidLogicalCollectiveReal(svm, logC_base, 2);
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveReal(svm,logC_base,2);
 
-  if (logC_base <= 0) FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
+  if (logC_base <= 0) FLLOP_SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
+
   svm->logC_base = logC_base;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMGetLogCBase"
+#define __FUNCT__ "SVMGridSearchGetBaseLogC"
 /*@
-  SVMGetLogCBase - Returns the value of penalty C step.
+  TODO edit and improve comment regarding to grid-search stride concept
+  SVMGridSearchGetBaseLogC - Returns the value of penalty C step.
 
   Not Collective
 
@@ -782,12 +785,13 @@ PetscErrorCode SVMSetLogCBase(SVM svm,PetscReal logC_base)
 
 .seealso SVMGetC(), SVMGetLogCMin(), SVMGetLogCMax(), SVMGridSearch()
 @*/
-PetscErrorCode SVMGetLogCBase(SVM svm,PetscReal *logC_base)
+PetscErrorCode SVMGridSearchGetBaseLogC(SVM svm,PetscReal *logC_base)
 {
 
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidRealPointer(logC_base, 2);
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidRealPointer(logC_base,2);
+
   *logC_base = svm->logC_base;
   PetscFunctionReturn(0);
 }
