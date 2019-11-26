@@ -903,9 +903,10 @@ PetscErrorCode SVMGetLogCMax(SVM svm,PetscReal *logC_end)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMSetLogCpBase"
+#define __FUNCT__ "SVMGridSearchSetPosBaseLogC"
 /*@
-  SVMSetLogCpBase - Sets the value of penalty Cp step.
+  TODO edit and improve comment regarding to grid-search stride concept
+  SVMGridSearchSetPosBaseLogC - Sets the value of penalty Cp step.
 
   Logically Collective on SVM
 
@@ -917,23 +918,25 @@ PetscErrorCode SVMGetLogCMax(SVM svm,PetscReal *logC_end)
 
 .seealso SVMSetCp(), SVMGetLogCpBase(), SVMSetLogCpMin(), SVMSetLogCpMax(), SVMGridSearch()
 @*/
-PetscErrorCode SVMSetLogCpBase(SVM svm,PetscReal logCp_base)
+PetscErrorCode SVMGridSearchSetPosBaseLogC(SVM svm,PetscReal logCp_base)
 {
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidLogicalCollectiveReal(svm,logCp_base,2);
 
-  if (logCp_base <= 0) FLLOP_SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
+  if (logCp_base <= 0) FLLOP_SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
+
   svm->logCp_base = logCp_base;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMGetLogCpBase"
+#define __FUNCT__ "SVMGridSearchGetPosBaseLog"
 /*@
-  SVMGetLogCpBase - Returns the value of penalty Cp step.
+  TODO edit and improve comment regarding to grid-search stride concept
+  SVMGridSearchGetPosBaseLogC - Returns the value of penalty Cp step.
 
   Not Collective
 
@@ -947,12 +950,13 @@ PetscErrorCode SVMSetLogCpBase(SVM svm,PetscReal logCp_base)
 
 .seealso SVMGetCp(), SVMGetLogCpMin(), SVMGetLogCpMax(), SVMGridSearch()
 @*/
-PetscErrorCode SVMGetLogCpBase(SVM svm,PetscReal *logCp_base)
+PetscErrorCode SVMGridSearchGetPosBaseLogC(SVM svm,PetscReal *logCp_base)
 {
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidRealPointer(logCp_base,2);
+
   *logCp_base = svm->logCp_base;
   PetscFunctionReturn(0);
 }

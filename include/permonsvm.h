@@ -208,12 +208,13 @@ FLLOP_EXTERN PetscErrorCode SVMGridSearch(SVM);
 /* Penalty type 1 */
 FLLOP_EXTERN PetscErrorCode SVMGridSearchSetBaseLogC(SVM,PetscReal);
 FLLOP_EXTERN PetscErrorCode SVMGridSearchGetBaseLogC(SVM,PetscReal *);
-FLLOP_EXTERN PetscErrorCode SVMSetLogCpMin(SVM,PetscReal);
-FLLOP_EXTERN PetscErrorCode SVMGetLogCpMin(SVM,PetscReal *);
-FLLOP_EXTERN PetscErrorCode SVMSetLogCpMax(SVM,PetscReal);
-FLLOP_EXTERN PetscErrorCode SVMGetLogCpMax(SVM,PetscReal *);
-FLLOP_EXTERN PetscErrorCode SVMSetLogCpBase(SVM,PetscReal);
-FLLOP_EXTERN PetscErrorCode SVMGetLogCpBase(SVM,PetscReal *);
+/* Penalty type 2 */
+//FLLOP_EXTERN PetscErrorCode SVMSetLogCpMin(SVM,PetscReal);
+//FLLOP_EXTERN PetscErrorCode SVMGetLogCpMin(SVM,PetscReal *);
+//FLLOP_EXTERN PetscErrorCode SVMSetLogCpMax(SVM,PetscReal);
+//FLLOP_EXTERN PetscErrorCode SVMGetLogCpMax(SVM,PetscReal *);
+FLLOP_EXTERN PetscErrorCode SVMGridSearchSetPosBaseLogC(SVM,PetscReal);
+FLLOP_EXTERN PetscErrorCode SVMGridSearchGetPosBaseLogC(SVM,PetscReal *);
 FLLOP_EXTERN PetscErrorCode SVMSetLogCnMin(SVM,PetscReal);
 FLLOP_EXTERN PetscErrorCode SVMGetLogCnMin(SVM,PetscReal *);
 FLLOP_EXTERN PetscErrorCode SVMSetLogCnMax(SVM,PetscReal);
