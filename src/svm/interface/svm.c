@@ -45,6 +45,7 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
   svm->Cn_old     = 1.;
   svm->logC_base   = 2.;
   svm->logC_start    = -2.;
+  svm->logC_step   = 1.;
   svm->logC_end    = 2.;
   svm->logCp_base  = 2.;
   svm->logCp_start   = -2.;
@@ -797,108 +798,80 @@ PetscErrorCode SVMGridSearchGetBaseLogC(SVM svm,PetscReal *logC_base)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMSetLogCMin"
+#define __FUNCT__ "SVMGridSearchSetStrideLogC"
 /*@
-  SVMSetLogCMin - Sets the minimum value of log C penalty.
-
-  Logically Colective on SVM
-
-  Input Parameter:
-+ svm - SVM context
-- logC_start - the minimum value of log C penalty
-
-  Level: beginner
-
-.seealso SVMSetC(), SVMSetLogCBase(), SVMSetLogCMax(), SVMGridSearch()
-@*/
-PetscErrorCode SVMSetLogCMin(SVM svm,PetscReal logC_start)
-{
-
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveReal(svm,logC_start,2);
-  svm->logC_start = logC_start;
-  svm->setupcalled = PETSC_FALSE;
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetLogCMin"
-/*@
-  SVMGetLogCMin - Returns the minimum value of log C penalty.
-
-  Not Collective
-
-  Input Parameter:
-. svm - SVM context
-
-  Output Parameter:
-. logC_start - the minimum value of log C penalty
-
-  Level: beginner
-
-.seealso SVMGetC(), SVMGetLogCBase(), SVMGetLogCMax(), SVMGridSearch()
-@*/
-PetscErrorCode SVMGetLogCMin(SVM svm,PetscReal *logC_start)
-{
-
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidRealPointer(logC_start, 2);
-  *logC_start = svm->logC_start;
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetLogCMax"
-/*@
-  SVMSetLogCMax - Sets the maximum value of log C penalty.
+  SVMGridSearchSetStrideLogC - Sets stride of log C values that specify grid used in hyperparameter optimization based on grid-searching.
 
   Logically Collective on SVM
 
   Input Parameters:
 + svm - SVM context
-- logC_end - the maximum value of log C penalty
+. logC_start - first value of log C stride
+. logC_end - last value of log C stride
+- logC_step - step of log C stride
 
   Level: beginner
 
-.seealso SVMSetC(), SVMSetLogCBase(), SVMSetLogCMin(), SVMGridSearch()
+.seealso SVMGridSearchSetStrideLogC()
 @*/
-PetscErrorCode SVMSetLogCMax(SVM svm,PetscReal logC_end)
+PetscErrorCode SVMGridSearchSetStrideLogC(SVM svm,PetscReal logC_start,PetscReal logC_end,PetscReal logC_step)
 {
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveReal(svm,logC_end,2);
-  svm->logC_end = logC_end;
-  svm->setupcalled = PETSC_FALSE;
+  PetscValidLogicalCollectiveReal(svm,logC_start,2);
+  PetscValidLogicalCollectiveReal(svm,logC_end,3);
+  PetscValidLogicalCollectiveReal(svm,logC_step,4);
+
+  /* Validating values of input parameters */
+  if (logC_step == 0) FLLOP_SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be 0");
+  if (logC_start == logC_end) FLLOP_SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Start (logC_start) and end (logC_end) cannot be same");
+  if (logC_start > logC_end && logC_step > 0) FLLOP_SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be greater than 0 if start (logC_start) is greater than end (logC_end)");
+  if (logC_start < logC_end && logC_step < 0) FLLOP_SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be less than 0 if start (logC_start) is less than end (logC_end)");
+
+  svm->logC_start = logC_start;
+  svm->logC_end  = logC_end;
+  svm->logC_step  = logC_step;
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMGetLogCMax"
+#define __FUNCT__ "SVMGridSearchGetStrideLogC"
 /*@
-  SVMGetLogCMax - Returns the maximum value of log C penalty.
+  SVMGridSearchGetStrideLogC - Gets stride of log C values used for specifying grid in hyperparameter optimization based on grid-searching.
 
   Not Collective
 
   Input Parameter:
-. svm - SVM context
++ svm - SVM context
 
-  Output Parameter:
-. logC_end - the maximum value of log C penalty
+  Output Parameters:
++ logC_start - first value of log C stride
+. logC_end - last value of log C stride
+- logC_step - step of log C stride
 
   Level: beginner
 
-.seealso SVMGetC(), SVMGetLogCBase(), SVMGetLogCMin(), SVMGridSearch()
+.seealso SVMGridSearchSetStrideLogC()
 @*/
-PetscErrorCode SVMGetLogCMax(SVM svm,PetscReal *logC_end)
+PetscErrorCode SVMGridSearchGetStrideLogC(SVM svm,PetscReal *logC_start,PetscReal *logC_end,PetscReal *logC_step)
 {
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidRealPointer(logC_end,2);
-  *logC_end = svm->logC_end;
+  PetscValidRealPointer(logC_start,2);
+  PetscValidRealPointer(logC_end,3);
+  PetscValidRealPointer(logC_step,4);
+
+  if (logC_start) {
+    *logC_start = svm->logC_start;
+  }
+  if (logC_end) {
+    *logC_end = svm->logC_end;
+  }
+  if (logC_step) {
+    *logC_step = svm->logC_step;
+  }
   PetscFunctionReturn(0);
 }
 

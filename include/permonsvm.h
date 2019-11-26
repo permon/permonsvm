@@ -201,13 +201,11 @@ FLLOP_EXTERN PetscErrorCode SVMGetHyperOptNScoreTypes(SVM,PetscInt *);
 FLLOP_EXTERN PetscErrorCode SVMGetHyperOptScoreTypes(SVM svm,const ModelScore *types[]);
 
 FLLOP_EXTERN PetscErrorCode SVMGridSearch(SVM);
-//FLLOP_EXTERN PetscErrorCode SVMSetLogCMin(SVM,PetscReal);
-//FLLOP_EXTERN PetscErrorCode SVMGetLogCMin(SVM,PetscReal *);
-//FLLOP_EXTERN PetscErrorCode SVMSetLogCMax(SVM,PetscReal);
-//FLLOP_EXTERN PetscErrorCode SVMGetLogCMax(SVM,PetscReal *);
 /* Penalty type 1 */
 FLLOP_EXTERN PetscErrorCode SVMGridSearchSetBaseLogC(SVM,PetscReal);
 FLLOP_EXTERN PetscErrorCode SVMGridSearchGetBaseLogC(SVM,PetscReal *);
+FLLOP_EXTERN PetscErrorCode SVMGridSearchSetStrideLogC(SVM,PetscReal,PetscReal,PetscReal);
+FLLOP_EXTERN PetscErrorCode SVMGridSearchGetStrideLogC(SVM,PetscReal *,PetscReal *,PetscReal *);
 /* Penalty type 2 */
 //FLLOP_EXTERN PetscErrorCode SVMSetLogCpMin(SVM,PetscReal);
 //FLLOP_EXTERN PetscErrorCode SVMGetLogCpMin(SVM,PetscReal *);
