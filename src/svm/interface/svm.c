@@ -1068,9 +1068,10 @@ PetscErrorCode SVMGetLogCpMax(SVM svm,PetscReal *logCp_end)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMSetLogCnBase"
+#define __FUNCT__ "SVMGridSearchSetNegBaseLogC"
 /*@
-  SVMSetLogCnBase - Sets the value of penalty Cn step.
+  TODO edit and improve comment regarding to grid-search stride concept
+  SVMGridSearchSetNegBaseLogC - Sets the value of penalty Cn step.
 
   Logically Collective on SVM
 
@@ -1082,23 +1083,25 @@ PetscErrorCode SVMGetLogCpMax(SVM svm,PetscReal *logCp_end)
 
 .seealso SVMSetCn(), SVMGetLogCnBase(), SVMSetLogCnMin(), SVMSetLogCnMax(), SVMGridSearch()
 @*/
-PetscErrorCode SVMSetLogCnBase(SVM svm,PetscReal logCn_base)
+PetscErrorCode SVMGridSearchSetNegBaseLogC(SVM svm,PetscReal logCn_base)
 {
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidLogicalCollectiveReal(svm,logCn_base,2);
 
-  if (logCn_base <= 0) FLLOP_SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
+  if (logCn_base <= 0) FLLOP_SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
+
   svm->logCn_base = logCn_base;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMGetLogCnBase"
+#define __FUNCT__ "SVMGridSearchGetNegBaseLogC"
 /*@
-  SVMGetLogCnBase - Returns the value of penalty Cn step.
+  TODO edit and improve comment regarding to grid-search stride concept
+  SVMGridSearchGetNegBaseLogC - Returns the value of penalty Cn step.
 
   Not Collective
 
@@ -1112,12 +1115,13 @@ PetscErrorCode SVMSetLogCnBase(SVM svm,PetscReal logCn_base)
 
 .seealso SVMGetCn(), SVMGetLogCnMin(), SVMGetLogCnMax(), SVMGridSearch()
 @*/
-PetscErrorCode SVMGetLogCnBase(SVM svm,PetscReal *logCn_base)
+PetscErrorCode SVMGridSearchGetNegBaseLogC(SVM svm,PetscReal *logCn_base)
 {
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidRealPointer(logCn_base,2);
+
   *logCn_base = svm->logCn_base;
   PetscFunctionReturn(0);
 }

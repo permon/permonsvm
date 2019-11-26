@@ -215,12 +215,12 @@ FLLOP_EXTERN PetscErrorCode SVMGridSearchGetBaseLogC(SVM,PetscReal *);
 //FLLOP_EXTERN PetscErrorCode SVMGetLogCpMax(SVM,PetscReal *);
 FLLOP_EXTERN PetscErrorCode SVMGridSearchSetPosBaseLogC(SVM,PetscReal);
 FLLOP_EXTERN PetscErrorCode SVMGridSearchGetPosBaseLogC(SVM,PetscReal *);
-FLLOP_EXTERN PetscErrorCode SVMSetLogCnMin(SVM,PetscReal);
-FLLOP_EXTERN PetscErrorCode SVMGetLogCnMin(SVM,PetscReal *);
-FLLOP_EXTERN PetscErrorCode SVMSetLogCnMax(SVM,PetscReal);
-FLLOP_EXTERN PetscErrorCode SVMGetLogCnMax(SVM,PetscReal *);
-FLLOP_EXTERN PetscErrorCode SVMSetLogCnBase(SVM,PetscReal);
-FLLOP_EXTERN PetscErrorCode SVMGetLogCnBase(SVM,PetscReal *);
+//FLLOP_EXTERN PetscErrorCode SVMSetLogCnMin(SVM,PetscReal);
+//FLLOP_EXTERN PetscErrorCode SVMGetLogCnMin(SVM,PetscReal *);
+//FLLOP_EXTERN PetscErrorCode SVMSetLogCnMax(SVM,PetscReal);
+//FLLOP_EXTERN PetscErrorCode SVMGetLogCnMax(SVM,PetscReal *);
+FLLOP_EXTERN PetscErrorCode SVMGridSearchSetNegBaseLogC(SVM,PetscReal);
+FLLOP_EXTERN PetscErrorCode SVMGridSearchGetNegBaseLogC(SVM,PetscReal *);
 
 FLLOP_EXTERN PetscErrorCode SVMSetCrossValidationType(SVM,CrossValidationType);
 FLLOP_EXTERN PetscErrorCode SVMGetCrossValidationType(SVM,CrossValidationType *);
