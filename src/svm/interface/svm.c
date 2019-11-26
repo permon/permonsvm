@@ -46,9 +46,9 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
   svm->logC_base   = 2.;
   svm->logC_start    = -2.;
   svm->logC_end    = 2.;
-  svm->LogCpBase  = 2.;
-  svm->LogCpMin   = -2.;
-  svm->LogCpMax   = 2.;
+  svm->logCp_base  = 2.;
+  svm->logCp_start   = -2.;
+  svm->logCp_end   = 2.;
   svm->LogCnBase  = 2.;
   svm->LogCnMin   = -2.;
   svm->LogCnMax   = 2.;
@@ -241,15 +241,15 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   if (flg) {
     TRY( SVMSetLogCBase(svm,logC_base) );
   }
-  TRY( PetscOptionsReal("-svm_logCp_min","Set SVM minimal Cp value (LogCpMin).","SVMSetLogCpMin",svm->LogCpMin,&logC_min,&flg) );
+  TRY( PetscOptionsReal("-svm_logCp_min","Set SVM minimal Cp value (logCp_start).","SVMSetLogCpMin",svm->logCp_start,&logC_min,&flg) );
   if (flg) {
     TRY( SVMSetLogCpMin(svm,logC_min) );
   }
-  TRY( PetscOptionsReal("-svm_logCp_max","Set SVM maximal Cp value (LogCpMax).","SVMSetLogCpMax",svm->LogCpMax,&logC_max,&flg) );
+  TRY( PetscOptionsReal("-svm_logCp_max","Set SVM maximal Cp value (logCp_end).","SVMSetLogCpMax",svm->logCp_end,&logC_max,&flg) );
   if (flg) {
     TRY( SVMSetLogCpMax(svm,logC_max) );
   }
-  TRY( PetscOptionsReal("-svm_logCp_base","Set power base of SVM parameter Cp (LogCpBase).","SVMSetLogCpBase",svm->LogCpBase,&logC_base,&flg) );
+  TRY( PetscOptionsReal("-svm_logCp_base","Set power base of SVM parameter Cp (logCp_base).","SVMSetLogCpBase",svm->logCp_base,&logC_base,&flg) );
   if (flg) {
     TRY( SVMSetLogCpBase(svm,logC_base) );
   }
@@ -907,21 +907,21 @@ PetscErrorCode SVMGetLogCMax(SVM svm,PetscReal *logC_end)
 
   Input Parameters:
 + svm - SVM context
-- LogCpBase - the value of penalty Cp step
+- logCp_base - the value of penalty Cp step
 
   Level: beginner
 
 .seealso SVMSetCp(), SVMGetLogCpBase(), SVMSetLogCpMin(), SVMSetLogCpMax(), SVMGridSearch()
 @*/
-PetscErrorCode SVMSetLogCpBase(SVM svm,PetscReal LogCpBase)
+PetscErrorCode SVMSetLogCpBase(SVM svm,PetscReal logCp_base)
 {
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveReal(svm,LogCpBase,2);
+  PetscValidLogicalCollectiveReal(svm,logCp_base,2);
 
-  if (LogCpBase <= 0) FLLOP_SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
-  svm->LogCpBase = LogCpBase;
+  if (logCp_base <= 0) FLLOP_SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
+  svm->logCp_base = logCp_base;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
@@ -937,19 +937,19 @@ PetscErrorCode SVMSetLogCpBase(SVM svm,PetscReal LogCpBase)
 . svm - SVM context
 
   Output Parameter:
-. LogCpBase - the value of penalty Cp step
+. logCp_base - the value of penalty Cp step
 
   Level: beginner
 
 .seealso SVMGetCp(), SVMGetLogCpMin(), SVMGetLogCpMax(), SVMGridSearch()
 @*/
-PetscErrorCode SVMGetLogCpBase(SVM svm,PetscReal *LogCpBase)
+PetscErrorCode SVMGetLogCpBase(SVM svm,PetscReal *logCp_base)
 {
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidRealPointer(LogCpBase,2);
-  *LogCpBase = svm->LogCpBase;
+  PetscValidRealPointer(logCp_base,2);
+  *logCp_base = svm->logCp_base;
   PetscFunctionReturn(0);
 }
 
@@ -962,19 +962,19 @@ PetscErrorCode SVMGetLogCpBase(SVM svm,PetscReal *LogCpBase)
 
   Input Parameter:
 + svm - SVM context
-- LogCpMin - the minimum value of log C penalty
+- logCp_start - the minimum value of log C penalty
 
   Level: beginner
 
 .seealso SVMSetCp(), SVMSetLogCpBase(), SVMSetLogCpMax(), SVMGridSearch()
 @*/
-PetscErrorCode SVMSetLogCpMin(SVM svm,PetscReal LogCpMin)
+PetscErrorCode SVMSetLogCpMin(SVM svm,PetscReal logCp_start)
 {
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveReal(svm,LogCpMin,2);
-  svm->LogCpMin = LogCpMin;
+  PetscValidLogicalCollectiveReal(svm,logCp_start,2);
+  svm->logCp_start = logCp_start;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
@@ -990,19 +990,19 @@ PetscErrorCode SVMSetLogCpMin(SVM svm,PetscReal LogCpMin)
 . svm - SVM context
 
   Output Parameter:
-. LogCpMin - the minimum value of log Cp penalty
+. logCp_start - the minimum value of log Cp penalty
 
   Level: beginner
 
 .seealso SVMGetCp(), SVMGetLogCpBase(), SVMGetLogCpMax(), SVMGridSearch()
 @*/
-PetscErrorCode SVMGetLogCpMin(SVM svm,PetscReal *LogCpMin)
+PetscErrorCode SVMGetLogCpMin(SVM svm,PetscReal *logCp_start)
 {
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidRealPointer(LogCpMin,2);
-  *LogCpMin = svm->LogCpMin;
+  PetscValidRealPointer(logCp_start,2);
+  *logCp_start = svm->logCp_start;
   PetscFunctionReturn(0);
 }
 
@@ -1015,19 +1015,19 @@ PetscErrorCode SVMGetLogCpMin(SVM svm,PetscReal *LogCpMin)
 
   Input Parameters:
 + svm - SVM context
-- LogCpMax - the maximum value of log Cp penalty
+- logCp_end - the maximum value of log Cp penalty
 
   Level: beginner
 
 .seealso SVMSetCp(), SVMSetLogCpBase(), SVMSetLogCpMin(), SVMGridSearch()
 @*/
-PetscErrorCode SVMSetLogCpMax(SVM svm,PetscReal LogCpMax)
+PetscErrorCode SVMSetLogCpMax(SVM svm,PetscReal logCp_end)
 {
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveReal(svm,LogCpMax,2);
-  svm->LogCpMax = LogCpMax;
+  PetscValidLogicalCollectiveReal(svm,logCp_end,2);
+  svm->logCp_end = logCp_end;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
@@ -1049,13 +1049,13 @@ PetscErrorCode SVMSetLogCpMax(SVM svm,PetscReal LogCpMax)
 
 .seealso SVMGetCp(), SVMGetLogCpBase(), SVMGetLogCpMin(), SVMGridSearch()
 @*/
-PetscErrorCode SVMGetLogCpMax(SVM svm,PetscReal *LogCpMax)
+PetscErrorCode SVMGetLogCpMax(SVM svm,PetscReal *logCp_end)
 {
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidRealPointer(LogCpMax,2);
-  *LogCpMax = svm->LogCpMax;
+  PetscValidRealPointer(logCp_end,2);
+  *logCp_end = svm->logCp_end;
   PetscFunctionReturn(0);
 }
 
