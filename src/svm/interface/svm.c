@@ -43,9 +43,9 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
   svm->Cp_old     = 2.;
   svm->Cn         = 1.;
   svm->Cn_old     = 1.;
-  svm->LogCBase   = 2.;
-  svm->LogCMin    = -2.;
-  svm->LogCMax    = 2.;
+  svm->logC_base   = 2.;
+  svm->logC_start    = -2.;
+  svm->logC_end    = 2.;
   svm->LogCpBase  = 2.;
   svm->LogCpMin   = -2.;
   svm->LogCpMax   = 2.;
@@ -229,15 +229,15 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   if (flg) {
     TRY( SVMSetCn(svm,C) );
   }
-  TRY( PetscOptionsReal("-svm_logC_min","Set SVM minimal C value (LogCMin).","SVMSetLogCMin",svm->LogCMin,&logC_min,&flg) );
+  TRY( PetscOptionsReal("-svm_logC_min","Set SVM minimal C value (logC_start).","SVMSetLogCMin",svm->logC_start,&logC_min,&flg) );
   if (flg) {
     TRY( SVMSetLogCMin(svm,logC_min) );
   }
-  TRY( PetscOptionsReal("-svm_logC_max","Set SVM maximal C value (LogCMax).","SVMSetLogCMax",svm->LogCMax,&logC_max,&flg) );
+  TRY( PetscOptionsReal("-svm_logC_max","Set SVM maximal C value (logC_end).","SVMSetLogCMax",svm->logC_end,&logC_max,&flg) );
   if (flg) {
     TRY( SVMSetLogCMax(svm,logC_max) );
   }
-  TRY( PetscOptionsReal("-svm_logC_base","Set power base of SVM parameter C (LogCBase).","SVMSetLogCBase",svm->LogCBase,&logC_base,&flg) );
+  TRY( PetscOptionsReal("-svm_logC_base","Set power base of SVM parameter C (logC_base).","SVMSetLogCBase",svm->logC_base,&logC_base,&flg) );
   if (flg) {
     TRY( SVMSetLogCBase(svm,logC_base) );
   }
@@ -746,21 +746,21 @@ PetscErrorCode SVMSetPenalty(SVM svm,PetscInt m,PetscReal p[])
 
   Input Parameters:
 + svm - SVM context
-- LogCBase - the value of penalty C step
+- logC_base - the value of penalty C step
 
   Level: beginner
 
 .seealso SVMSetC(), SVMSetLogBase(), SVMSetLogCMin(), SVMSetLogCMax(), SVMGridSearch()
 @*/
-PetscErrorCode SVMSetLogCBase(SVM svm,PetscReal LogCBase)
+PetscErrorCode SVMSetLogCBase(SVM svm,PetscReal logC_base)
 {
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidLogicalCollectiveReal(svm, LogCBase, 2);
+  PetscValidLogicalCollectiveReal(svm, logC_base, 2);
 
-  if (LogCBase <= 0) FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
-  svm->LogCBase = LogCBase;
+  if (logC_base <= 0) FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
+  svm->logC_base = logC_base;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
@@ -776,19 +776,19 @@ PetscErrorCode SVMSetLogCBase(SVM svm,PetscReal LogCBase)
 . svm - SVM context
 
   Output Parameter:
-. LogCBase - the value of penalty C step
+. logC_base - the value of penalty C step
 
   Level: beginner
 
 .seealso SVMGetC(), SVMGetLogCMin(), SVMGetLogCMax(), SVMGridSearch()
 @*/
-PetscErrorCode SVMGetLogCBase(SVM svm,PetscReal *LogCBase)
+PetscErrorCode SVMGetLogCBase(SVM svm,PetscReal *logC_base)
 {
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidRealPointer(LogCBase, 2);
-  *LogCBase = svm->LogCBase;
+  PetscValidRealPointer(logC_base, 2);
+  *logC_base = svm->logC_base;
   PetscFunctionReturn(0);
 }
 
@@ -801,19 +801,19 @@ PetscErrorCode SVMGetLogCBase(SVM svm,PetscReal *LogCBase)
 
   Input Parameter:
 + svm - SVM context
-- LogCMin - the minimum value of log C penalty
+- logC_start - the minimum value of log C penalty
 
   Level: beginner
 
 .seealso SVMSetC(), SVMSetLogCBase(), SVMSetLogCMax(), SVMGridSearch()
 @*/
-PetscErrorCode SVMSetLogCMin(SVM svm,PetscReal LogCMin)
+PetscErrorCode SVMSetLogCMin(SVM svm,PetscReal logC_start)
 {
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveReal(svm,LogCMin,2);
-  svm->LogCMin = LogCMin;
+  PetscValidLogicalCollectiveReal(svm,logC_start,2);
+  svm->logC_start = logC_start;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
@@ -829,19 +829,19 @@ PetscErrorCode SVMSetLogCMin(SVM svm,PetscReal LogCMin)
 . svm - SVM context
 
   Output Parameter:
-. LogCMin - the minimum value of log C penalty
+. logC_start - the minimum value of log C penalty
 
   Level: beginner
 
 .seealso SVMGetC(), SVMGetLogCBase(), SVMGetLogCMax(), SVMGridSearch()
 @*/
-PetscErrorCode SVMGetLogCMin(SVM svm,PetscReal *LogCMin)
+PetscErrorCode SVMGetLogCMin(SVM svm,PetscReal *logC_start)
 {
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidRealPointer(LogCMin, 2);
-  *LogCMin = svm->LogCMin;
+  PetscValidRealPointer(logC_start, 2);
+  *logC_start = svm->logC_start;
   PetscFunctionReturn(0);
 }
 
@@ -854,19 +854,19 @@ PetscErrorCode SVMGetLogCMin(SVM svm,PetscReal *LogCMin)
 
   Input Parameters:
 + svm - SVM context
-- LogCMax - the maximum value of log C penalty
+- logC_end - the maximum value of log C penalty
 
   Level: beginner
 
 .seealso SVMSetC(), SVMSetLogCBase(), SVMSetLogCMin(), SVMGridSearch()
 @*/
-PetscErrorCode SVMSetLogCMax(SVM svm,PetscReal LogCMax)
+PetscErrorCode SVMSetLogCMax(SVM svm,PetscReal logC_end)
 {
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveReal(svm,LogCMax,2);
-  svm->LogCMax = LogCMax;
+  PetscValidLogicalCollectiveReal(svm,logC_end,2);
+  svm->logC_end = logC_end;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
@@ -882,19 +882,19 @@ PetscErrorCode SVMSetLogCMax(SVM svm,PetscReal LogCMax)
 . svm - SVM context
 
   Output Parameter:
-. LogCMax - the maximum value of log C penalty
+. logC_end - the maximum value of log C penalty
 
   Level: beginner
 
 .seealso SVMGetC(), SVMGetLogCBase(), SVMGetLogCMin(), SVMGridSearch()
 @*/
-PetscErrorCode SVMGetLogCMax(SVM svm,PetscReal *LogCMax)
+PetscErrorCode SVMGetLogCMax(SVM svm,PetscReal *logC_end)
 {
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidRealPointer(LogCMax,2);
-  *LogCMax = svm->LogCMax;
+  PetscValidRealPointer(logC_end,2);
+  *logC_end = svm->logC_end;
   PetscFunctionReturn(0);
 }
 
@@ -1043,7 +1043,7 @@ PetscErrorCode SVMSetLogCpMax(SVM svm,PetscReal LogCpMax)
 . svm - SVM context
 
   Output Parameter:
-. LogCMax - the maximum value of log Cp penalty
+. logC_end - the maximum value of log Cp penalty
 
   Level: beginner
 

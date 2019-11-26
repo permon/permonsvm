@@ -44,7 +44,7 @@ struct _p_SVM {
   PetscReal           C,C_old;
   PetscReal           Cp,Cp_old;
   PetscReal           Cn,Cn_old;
-  PetscReal           LogCMin,LogCMax,LogCBase;
+  PetscReal           logC_base,logC_start,logC_end;
   PetscReal           LogCpMin,LogCpMax,LogCpBase;
   PetscReal           LogCnMin,LogCnMax,LogCnBase;
   PetscInt            nfolds;

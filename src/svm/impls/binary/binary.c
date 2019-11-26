@@ -1413,73 +1413,73 @@ PetscErrorCode SVMGetModelScore_Binary(SVM svm,ModelScore score_type,PetscReal *
 #define __FUNCT__ "SVMInitGridSearch_Binary_Private"
 PetscErrorCode SVMInitGridSearch_Binary_Private(SVM svm,PetscInt *n,PetscReal *c_arr[])
 {
-  PetscInt  penalty_type;
-
-  PetscReal logC_min,logC_max,logC_base;
-  PetscReal logCp_min,logCp_max,logCp_base;
-  PetscReal logCn_min,logCn_max,logCn_base;
-
-  PetscReal Cp,Cn;
-  PetscReal C_min,Cp_min,Cn_min;
-
-  PetscReal *c_arr_inner;
-  PetscInt  n_inner,np,nn;
-  PetscInt  i,j,p;
-
-  PetscFunctionBegin;
-  TRY( SVMGetPenaltyType(svm,&penalty_type) );
-
-  if (penalty_type == 1) {
-    TRY( SVMGetLogCMin(svm,&logC_min) );
-    TRY( SVMGetLogCMax(svm,&logC_max) );
-    TRY( SVMGetLogCBase(svm,&logC_base) );
-
-    C_min = PetscPowReal(logC_base,logC_min);
-
-    n_inner = (PetscInt) (logC_max - logC_min) + 1;
-    TRY( PetscMalloc1(n_inner,&c_arr_inner) );
-
-    c_arr_inner[0] = C_min;
-    for (i = 1; i < n_inner; ++i) {
-      c_arr_inner[i] = c_arr_inner[i-1] * logC_base;
-    }
-  /* Penalty type 2: different penalty for each one class */
-  } else {
-    TRY( SVMGetLogCpMin(svm,&logCp_min) );
-    TRY( SVMGetLogCpMax(svm,&logCp_max) );
-    TRY( SVMGetLogCpBase(svm,&logCp_base) );
-
-    TRY( SVMGetLogCnMin(svm,&logCn_min) );
-    TRY( SVMGetLogCnMax(svm,&logCn_max) );
-    TRY( SVMGetLogCnBase(svm,&logCn_base) );
-
-    Cp_min = PetscPowReal(logCp_base,logCp_min);
-    Cn_min = PetscPowReal(logCn_base,logCn_min);
-
-    np = (PetscInt) (logCp_max - logCp_min) + 1;
-    nn = (PetscInt) (logCn_max - logCn_min) + 1;
-    n_inner = 2 * np * nn;
-
-    TRY( PetscMalloc1(n_inner,&c_arr_inner) );
-
-    /* Generate Cp and Cn values */
-    Cp = Cp_min;
-    p  = 0;
-    for (i = 0; i < np; ++i) {
-      c_arr_inner[p++] = Cp;
-      c_arr_inner[p++] = Cn_min;
-      Cn = Cn_min;
-      for (j = 1; j < nn; ++j) {
-        c_arr_inner[p++] = Cp;
-        Cn *= logCn_base;
-        c_arr_inner[p++] = Cn;
-      }
-      Cp *= logCp_base;
-    }
-  }
-
-  *n = n_inner;
-  *c_arr = c_arr_inner;
+//  PetscInt  penalty_type;
+//
+//  PetscReal logC_min,logC_max,logC_base;
+//  PetscReal logCp_min,logCp_max,logCp_base;
+//  PetscReal logCn_min,logCn_max,logCn_base;
+//
+//  PetscReal Cp,Cn;
+//  PetscReal C_min,Cp_min,Cn_min;
+//
+//  PetscReal *c_arr_inner;
+//  PetscInt  n_inner,np,nn;
+//  PetscInt  i,j,p;
+//
+//  PetscFunctionBegin;
+//  TRY( SVMGetPenaltyType(svm,&penalty_type) );
+//
+//  if (penalty_type == 1) {
+//    TRY( SVMGetLogCMin(svm,&logC_min) );
+//    TRY( SVMGetLogCMax(svm,&logC_max) );
+//    TRY( SVMGetLogCBase(svm,&logC_base) );
+//
+//    C_min = PetscPowReal(logC_base,logC_min);
+//
+//    n_inner = (PetscInt) (logC_max - logC_min) + 1;
+//    TRY( PetscMalloc1(n_inner,&c_arr_inner) );
+//
+//    c_arr_inner[0] = C_min;
+//    for (i = 1; i < n_inner; ++i) {
+//      c_arr_inner[i] = c_arr_inner[i-1] * logC_base;
+//    }
+//  /* Penalty type 2: different penalty for each one class */
+//  } else {
+//    TRY( SVMGetLogCpMin(svm,&logCp_min) );
+//    TRY( SVMGetLogCpMax(svm,&logCp_max) );
+//    TRY( SVMGetLogCpBase(svm,&logCp_base) );
+//
+//    TRY( SVMGetLogCnMin(svm,&logCn_min) );
+//    TRY( SVMGetLogCnMax(svm,&logCn_max) );
+//    TRY( SVMGetLogCnBase(svm,&logCn_base) );
+//
+//    Cp_min = PetscPowReal(logCp_base,logCp_min);
+//    Cn_min = PetscPowReal(logCn_base,logCn_min);
+//
+//    np = (PetscInt) (logCp_max - logCp_min) + 1;
+//    nn = (PetscInt) (logCn_max - logCn_min) + 1;
+//    n_inner = 2 * np * nn;
+//
+//    TRY( PetscMalloc1(n_inner,&c_arr_inner) );
+//
+//    /* Generate Cp and Cn values */
+//    Cp = Cp_min;
+//    p  = 0;
+//    for (i = 0; i < np; ++i) {
+//      c_arr_inner[p++] = Cp;
+//      c_arr_inner[p++] = Cn_min;
+//      Cn = Cn_min;
+//      for (j = 1; j < nn; ++j) {
+//        c_arr_inner[p++] = Cp;
+//        Cn *= logCn_base;
+//        c_arr_inner[p++] = Cn;
+//      }
+//      Cp *= logCp_base;
+//    }
+//  }
+//
+//  *n = n_inner;
+//  *c_arr = c_arr_inner;
   PetscFunctionReturn(0);
 }
 
