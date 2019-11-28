@@ -1,6 +1,9 @@
 
-static char help[] = "Trains binary SVM classification model using precomputed Gramian (linear kernel) matrix.\n\
-                      Provided Gramian matrix is computed and related to no-bias SVM formulation (svm_binary_mod 2).\n";
+static char help[] = "Trains binary SVM classification model using precomputed Gramian matrix.\n\
+Input parameters:\n\
+  -f       : training dataset file\n\
+  -f_kernel: file contains precomputed Gramian\n\
+  -f_test  : test dataset file\n";
 
 #include <permonsvm.h>
 
