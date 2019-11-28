@@ -188,22 +188,24 @@ PetscErrorCode SVMDestroy(SVM *svm)
 @*/
 PetscErrorCode SVMSetFromOptions(SVM svm)
 {
-  PetscErrorCode      ierr;
-
+  PetscInt            svm_mod;
+  SVMLossType         loss_type;
+  PetscInt            penalty_type;
+  PetscReal           C;
 
   PetscBool           hyperoptset;
   ModelScore          hyperopt_score_types[7];
-  PetscInt            n;
+  PetscReal           logC_base,logC_stride[3];
 
-  PetscInt            penalty_type;
-  PetscReal           C,logC_min,logC_max,logC_base;
-  PetscBool           flg,warm_start;
-
-  SVMLossType         loss_type;
-  PetscInt            svm_mod;
-
+  /* TODO change CrossValidationType to shorter CVType */
   CrossValidationType cv_type;
   PetscInt            nfolds;
+
+  PetscBool           warm_start;
+
+  PetscInt            n;
+  PetscBool           flg;
+  PetscErrorCode      ierr;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
@@ -213,13 +215,13 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   if (flg) {
     TRY( SVMSetMod(svm,svm_mod) );
   }
+  TRY( PetscOptionsEnum("-svm_loss_type","Specify the loss function for soft-margin SVM (non-separable samples).","SVMSetNfolds",SVMLossTypes,(PetscEnum)svm->loss_type,(PetscEnum*)&loss_type,&flg) );
+  if (flg) {
+    TRY( SVMSetLossType(svm,loss_type) );
+  }
   TRY( PetscOptionsInt("-svm_penalty_type","Set type of misclasification error penalty.","SVMSetPenaltyType",svm->penalty_type,&penalty_type,&flg) );
   if (flg) {
     TRY( SVMSetPenaltyType(svm,penalty_type) );
-  }
-  TRY( PetscOptionsBool("-svm_hyperopt","Specify whether hyperparameter optimization will be performed.","SVMSetHyperOpt",svm->hyperoptset,&hyperoptset,&flg) );
-  if (flg) {
-    TRY( SVMSetHyperOpt(svm,hyperoptset) );
   }
   TRY( PetscOptionsReal("-svm_C","Set SVM C (C).","SVMSetC",svm->C,&C,&flg) );
   if (flg) {
@@ -233,59 +235,61 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   if (flg) {
     TRY( SVMSetCn(svm,C) );
   }
-//  TRY( PetscOptionsReal("-svm_logC_min","Set SVM minimal C value (logC_start).","SVMSetLogCMin",svm->logC_start,&logC_min,&flg) );
-//  if (flg) {
-//    TRY( SVMSetLogCMin(svm,logC_min) );
-//  }
-//  TRY( PetscOptionsReal("-svm_logC_max","Set SVM maximal C value (logC_end).","SVMSetLogCMax",svm->logC_end,&logC_max,&flg) );
-//  if (flg) {
-//    TRY( SVMSetLogCMax(svm,logC_max) );
-//  }
-//  TRY( PetscOptionsReal("-svm_logC_base","Set power base of SVM parameter C (logC_base).","SVMSetLogCBase",svm->logC_base,&logC_base,&flg) );
-//  if (flg) {
-//    TRY( SVMSetLogCBase(svm,logC_base) );
-//  }
-//  TRY( PetscOptionsReal("-svm_logCp_min","Set SVM minimal Cp value (logCp_start).","SVMSetLogCpMin",svm->logCp_start,&logC_min,&flg) );
-//  if (flg) {
-//    TRY( SVMSetLogCpMin(svm,logC_min) );
-//  }
-//  TRY( PetscOptionsReal("-svm_logCp_max","Set SVM maximal Cp value (logCp_end).","SVMSetLogCpMax",svm->logCp_end,&logC_max,&flg) );
-//  if (flg) {
-//    TRY( SVMSetLogCpMax(svm,logC_max) );
-//  }
-//  TRY( PetscOptionsReal("-svm_logCp_base","Set power base of SVM parameter Cp (logCp_base).","SVMSetLogCpBase",svm->logCp_base,&logC_base,&flg) );
-//  if (flg) {
-//    TRY( SVMSetLogCpBase(svm,logC_base) );
-//  }
-//  TRY( PetscOptionsReal("-svm_logCn_min","Set SVM minimal Cn value (logCn_start).","SVMSetLogCnMin",svm->logCn_start,&logC_min,&flg) );
-//  if (flg) {
-//    TRY( SVMSetLogCnMin(svm,logC_min) );
-//  }
-//  TRY( PetscOptionsReal("-svm_logCn_max","Set SVM maximal Cn value (logCn_end).","SVMSetLogCnMax",svm->logCn_end,&logC_max,&flg) );
-//  if (flg) {
-//    TRY( SVMSetLogCnMax(svm,logC_max) );
-//  }
-//  TRY( PetscOptionsReal("-svm_logCn_base","Set power base of SVM parameter Cn (logCn_base).","SVMSetLogCnBase",svm->logCn_base,&logC_base,&flg) );
-//  if (flg) {
-//    TRY( SVMSetLogCnBase(svm,logC_base) );
-//  }
-  TRY( PetscOptionsInt("-svm_nfolds","Set number of folds (nfolds).","SVMSetNfolds",svm->nfolds,&nfolds,&flg) );
+  /* Hyperparameter optimization options */
+  TRY( PetscOptionsBool("-svm_hyperopt","Specify whether hyperparameter optimization will be performed.","SVMSetHyperOpt",svm->hyperoptset,&hyperoptset,&flg) );
   if (flg) {
-    TRY( SVMSetNfolds(svm,nfolds) );
-  }
-  TRY( PetscOptionsEnum("-svm_loss_type","Specify the loss function for soft-margin SVM (non-separable samples).","SVMSetNfolds",SVMLossTypes,(PetscEnum)svm->loss_type,(PetscEnum*)&loss_type,&flg) );
-  if (flg) {
-    TRY( SVMSetLossType(svm,loss_type) );
+    TRY( SVMSetHyperOpt(svm,hyperoptset) );
   }
   n = 7;
   TRY( PetscOptionsEnumArray("-svm_hyperopt_score_types","Specify the score types for evaluating performance of model during hyperparameter optimization.","SVMSetHyperOptScoreTypes",ModelScores,(PetscEnum *) hyperopt_score_types,&n,&flg) );
   if (flg) {
     TRY( SVMSetHyperOptScoreTypes(svm,n,hyperopt_score_types) );
   }
+  /* Grid search options (penalty type 1) */
+  TRY( PetscOptionsReal("-svm_gs_logC_base","Base of log of C values that specify grid (penalty type 1).","SVMGridSearchSetBaseLogC",svm->logC_base,&logC_base,&flg) );
+  if (flg) {
+    TRY( SVMGridSearchSetBaseLogC(svm,logC_base) );
+  }
+  n = 3;
+  logC_stride[1] =  2.;
+  logC_stride[2] =  1.;
+  TRY( PetscOptionsRealArray("-svm_gs_logC_stride","Stride log C values that specify grid (penalty type 1)","SVMGridSearchSetStrideLogC",logC_stride,&n,&flg) );
+  if (flg) {
+    TRY( SVMGridSearchSetStrideLogC(svm,logC_stride[0],logC_stride[1],logC_stride[2]) );
+  }
+  /* Grid search options (penalty type 2) */
+  TRY( PetscOptionsReal("-svm_gs_logCp_base","Base of log of C+ values that specify grid (penalty type 2).","SVMGridSearchSetPosBaseLogC",svm->logCp_base,&logC_base,&flg) );
+  if (flg) {
+    TRY( SVMGridSearchSetPosBaseLogC(svm,logC_base) );
+  }
+  n = 3;
+  logC_stride[1] = 2.;
+  logC_stride[2] = 1.;
+  TRY( PetscOptionsRealArray("-svm_gs_logCp_stride","Stride log C+ values that specify grid (penalty type 2).","SVMGridSearchSetPosStrideLogC",logC_stride,&n,&flg) );
+  if (flg) {
+    TRY( SVMGridSearchSetPosStrideLogC(svm,logC_stride[0],logC_stride[1],logC_stride[2]) );
+  }
+  TRY( PetscOptionsReal("-svm_gs_logCn_base","Base of log of C- values that specify grid (penalty type 2).","SVMGridSearchSetNegBaseLogC",svm->logCn_base,&logC_base,&flg) );
+  if (flg) {
+    TRY( SVMGridSearchSetNegBaseLogC(svm,logC_base) );
+  }
+  n = 3;
+  logC_stride[1] = 2.;
+  logC_stride[2] = 1.;
+  TRY( PetscOptionsRealArray("-svm_gs_logCn_stride","Stride log C- values that specify grid (penalty type 2).","SVMGridSearchSetNegStrideLogC",logC_stride,&n,&flg) );
+  if (flg) {
+    TRY( SVMGridSearchSetNegStrideLogC(svm,logC_stride[0],logC_stride[1],logC_stride[2]) );
+  }
+  /* Cross validation options */
   TRY( PetscOptionsEnum("-svm_cv_type","Specify the type of cross validation.","SVMSetCrossValidationType",CrossValidationTypes,(PetscEnum)svm->cv_type,(PetscEnum*)&cv_type,&flg) );
   if (flg) {
     TRY( SVMSetCrossValidationType(svm,cv_type) );
   }
+  TRY( PetscOptionsInt("-svm_nfolds","Set number of folds (nfolds).","SVMSetNfolds",svm->nfolds,&nfolds,&flg) );
+  if (flg) {
+    TRY( SVMSetNfolds(svm,nfolds) );
+  }
+  /* Warm start */
   TRY( PetscOptionsBool("-svm_warm_start","Specify whether warm start is used in cross-validation.","SVMSetWarmStart",svm->warm_start,&warm_start,&flg) );
   if (flg) {
     TRY( SVMSetWarmStart(svm,warm_start) );
