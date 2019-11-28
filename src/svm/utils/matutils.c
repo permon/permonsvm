@@ -315,17 +315,16 @@ PetscErrorCode MatBiasedCreate(Mat A,PetscReal bias,Mat *A_biased)
   TRY( MatShellSetOperation(A_biased_inner,MATOP_CREATE_SUBMATRIX,(void(*)(void))MatCreateSubMatrix_Biased) );
   TRY( PetscObjectComposeFunction((PetscObject) A_biased_inner,"MatGetOwnershipIS_C",MatGetOwnershipIS_Biased) );
 
-  /* Set names of mat and inner mat */
+  /* Set name of biased mat */
   TRY( PetscObjectGetName((PetscObject) A,&A_name) );
-  TRY( PetscObjectSetName((PetscObject) A_biased_inner,A_name) );
-  /* Set prefixes of mat and inner mat */
-  TRY( PetscObjectGetOptionsPrefix((PetscObject) A,&A_prefix) );
-  TRY( PetscObjectSetOptionsPrefix((PetscObject) A_biased_inner,A_prefix) );
-  TRY( PetscObjectAppendOptionsPrefix((PetscObject) A,"inner_") );
-  /* Set name of inner mat */
   TRY( PetscStrcpy(A_name_inner,A_name) );
-  TRY( PetscStrcat(A_name_inner,"_inner") );
-  TRY( PetscObjectSetName((PetscObject) A,A_name_inner) );
+  TRY( PetscStrcat(A_name_inner,"_biased") );
+  TRY( PetscObjectSetName((PetscObject) A_biased_inner,A_name_inner) );
+  /* Set prefix of biased mat */
+  TRY( PetscObjectGetOptionsPrefix((PetscObject) A,&A_prefix) );
+  TRY( PetscStrcpy(A_name_inner,A_prefix) );
+  TRY( PetscStrcat(A_name_inner,"biased_") );
+  TRY( PetscObjectSetOptionsPrefix((PetscObject) A_biased_inner,A_name_inner) );
 
   *A_biased = A_biased_inner;
   PetscFunctionReturn(0);
