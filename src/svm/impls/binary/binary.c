@@ -109,7 +109,6 @@ PetscErrorCode SVMView_Binary(SVM svm,PetscViewer v)
   TRY( PetscObjectTypeCompare((PetscObject)v,PETSCVIEWERASCII,&isascii) );
 
   if (isascii) {
-    TRY( PetscViewerASCIIPrintf(v,"=====================\n") );
     TRY( PetscObjectPrintClassNamePrefixType((PetscObject) svm,v) );
 
     TRY( PetscViewerASCIIPushTab(v) );
@@ -150,8 +149,6 @@ PetscErrorCode SVMView_Binary(SVM svm,PetscViewer v)
     TRY( PetscViewerASCIIPopTab(v) );
 
     TRY( PetscViewerASCIIPopTab(v) );
-
-    TRY( PetscViewerASCIIPrintf(v,"=====================\n") );
   } else {
     FLLOP_SETERRQ1(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewScore", ((PetscObject)v)->type_name);
   }
@@ -182,7 +179,6 @@ PetscErrorCode SVMViewScore_Binary(SVM svm,PetscViewer v)
     TRY( SVMGetMod(svm,&mod) );
     TRY( SVMGetLossType(svm,&loss_type) );
 
-    TRY( PetscViewerASCIIPrintf(v,"=====================\n") );
     TRY( PetscObjectPrintClassNamePrefixType((PetscObject) svm,v) );
 
     TRY( PetscViewerASCIIPushTab(v) );
@@ -214,8 +210,6 @@ PetscErrorCode SVMViewScore_Binary(SVM svm,PetscViewer v)
     TRY( PetscViewerASCIIPopTab(v) );
 
     TRY( PetscViewerASCIIPopTab(v) );
-
-    TRY( PetscViewerASCIIPrintf(v,"=====================\n") );
   } else {
     FLLOP_SETERRQ1(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewScore", ((PetscObject)v)->type_name);
   }
