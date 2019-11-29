@@ -322,9 +322,8 @@ PetscErrorCode MatBiasedCreate(Mat A,PetscReal bias,Mat *A_biased)
   TRY( PetscObjectSetName((PetscObject) A_biased_inner,A_name_inner) );
   /* Set prefix of biased mat */
   TRY( PetscObjectGetOptionsPrefix((PetscObject) A,&A_prefix) );
-  TRY( PetscStrcpy(A_name_inner,A_prefix) );
-  TRY( PetscStrcat(A_name_inner,"biased_") );
-  TRY( PetscObjectSetOptionsPrefix((PetscObject) A_biased_inner,A_name_inner) );
+  TRY( PetscObjectSetOptionsPrefix((PetscObject) A_biased_inner,A_prefix) );
+  TRY( PetscObjectAppendOptionsPrefix((PetscObject) A_biased_inner,"biased_") );
 
   *A_biased = A_biased_inner;
   PetscFunctionReturn(0);
