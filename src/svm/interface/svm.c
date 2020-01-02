@@ -1627,15 +1627,18 @@ PetscErrorCode SVMGetOperator(SVM svm,Mat *A)
   Input parameter:
 . svm - SVM context
 
-.seealso SVM, SVMSetGramian(), SVMGetGramian()
+  Output Parameter:
+. A - Hessian matrix
+
+.seealso SVM, SVMSetOperator(), SVMGetOperator(), SVMSetGramian(), SVMGetGramian()
 @*/
-PetscErrorCode SVMComputeOperator(SVM svm)
+PetscErrorCode SVMComputeOperator(SVM svm,Mat *A)
 {
 
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
-  TRY( PetscTryMethod(svm,"SVMComputeOperator_C",(SVM),(svm)) );
+  TRY( PetscTryMethod(svm,"SVMComputeOperator_C",(SVM,Mat *),(svm,A)) );
   PetscFunctionReturnI(0);
 }
 

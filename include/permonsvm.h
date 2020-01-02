@@ -162,7 +162,7 @@ FLLOP_EXTERN PetscErrorCode SVMSetGramian(SVM,Mat);
 FLLOP_EXTERN PetscErrorCode SVMGetGramian(SVM,Mat *);
 FLLOP_EXTERN PetscErrorCode SVMSetOperator(SVM,Mat);
 FLLOP_EXTERN PetscErrorCode SVMGetOperator(SVM,Mat *);
-FLLOP_EXTERN PetscErrorCode SVMComputeOperator(SVM);
+FLLOP_EXTERN PetscErrorCode SVMComputeOperator(SVM,Mat *);
 
 FLLOP_EXTERN PetscErrorCode SVMSetTrainingDataset(SVM,Mat,Vec);
 FLLOP_EXTERN PetscErrorCode SVMGetTrainingDataset(SVM,Mat *,Vec *);
