@@ -749,6 +749,7 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   Mat         Xt;
   Vec         y;
 
+  Mat         H;
   Vec         e;
   Vec         x_init,x_init_p,x_init_n;
   Mat         Be = NULL;
@@ -781,12 +782,13 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
     TRY( SVMGridSearch(svm) );
   }
 
-  TRY( SVMGetQPS(svm,&qps) );
-  TRY( QPSGetQP(qps,&qp) );
-
-  TRY( SVMComputeOperator(svm) ); /* compute Hessian of QP problem */
+  TRY( SVMComputeOperator(svm,&H) ); /* compute Hessian of QP problem */
+  TRY( SVMSetOperator(svm,H) );
 
   TRY( SVMGetTrainingDataset(svm,&Xt,&y) ); /* get samples and label vector for latter computing */
+
+  TRY( SVMGetQPS(svm,&qps) );
+  TRY( QPSGetQP(qps,&qp) );
 
   /* Set RHS */
   TRY( VecDuplicate(y,&e) );  /* creating vector e same size and type as y_training */
@@ -917,11 +919,12 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   for (i = 0; i < 3; ++i) {
     TRY( VecDestroy(&svm_binary->work[i]) );
   }
-  TRY( MatCreateVecs(Xt,NULL,&svm_binary->work[0]) );
+  TRY( MatCreateVecs(Xt,NULL,&svm_binary->work[0]) ); /* TODO use duplicated vector y instead of creating vec? */
   TRY( VecDuplicate(svm_binary->work[0],&svm_binary->work[1]) );
   TRY( VecDuplicate(svm_binary->work[0],&svm_binary->work[2]) );
 
   /* Decreasing reference counts using destroy methods */
+  TRY( MatDestroy(&H) );
   TRY( MatDestroy(&Be) );
   TRY( VecDestroy(&e) );
   TRY( VecDestroy(&lb) );
