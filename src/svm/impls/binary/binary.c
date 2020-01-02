@@ -76,6 +76,8 @@ PetscErrorCode SVMDestroy_Binary(SVM svm)
   PetscFunctionBegin;
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetGramian_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetGramian_C",NULL) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetOperator_C",NULL) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetOperator_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingDataset_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMComputeOperator_C",NULL) );
@@ -264,6 +266,54 @@ PetscErrorCode SVMGetGramian_Binary(SVM svm,Mat *G)
 
   PetscFunctionBegin;
   *G = svm_binary->G;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetOperator_Binary"
+PetscErrorCode SVMSetOperator_Binary(SVM svm,Mat A)
+{
+  QPS      qps;
+  QP       qp;
+
+  Mat      Xt;
+  PetscInt m,n;
+
+  PetscFunctionBegin;
+  /* Checking that operator (Hessian) is rectangular */
+  TRY( MatGetSize(A,&m,&n) );
+  if (m != n) {
+    FLLOP_SETERRQ2(PetscObjectComm((PetscObject) A),PETSC_ERR_ARG_SIZ,"Hessian matrix must be rectangular, G(%D,%D)",m,n);
+  }
+  /* Checking dimension compatibility between Hessian (operator) and training data matrices */
+  TRY( SVMGetTrainingDataset(svm,&Xt,NULL) );
+  if (Xt) {
+    TRY( MatGetSize(Xt,&n,NULL) );
+    if (m != n) {
+      FLLOP_SETERRQ2(PetscObjectComm((PetscObject) A),PETSC_ERR_ARG_SIZ,"Matrix dimensions are incompatible, A(%D,) != X_training(%D,)",m,n);
+    }
+  }
+
+  /* TODO SVMGetQP impl */
+  TRY( SVMGetQPS(svm,&qps) );
+  TRY( QPSGetQP(qps,&qp) );
+  TRY( QPSetOperator(qp,A) );
+
+  svm->setupcalled = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetOperator_Binary"
+PetscErrorCode SVMGetOperator_Binary(SVM svm,Mat *A)
+{
+  QPS qps;
+  QP  qp;
+
+  PetscFunctionBegin;
+  TRY( SVMGetQPS(svm,&qps) );
+  TRY( QPSGetQP(qps,&qp) );
+  TRY( QPGetOperator(qp,A) );
   PetscFunctionReturn(0);
 }
 
@@ -1909,6 +1959,8 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
 
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetGramian_C",SVMSetGramian_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetGramian_C",SVMGetGramian_Binary) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetOperator_C",SVMSetOperator_Binary) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetOperator_C",SVMGetOperator_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingDataset_C",SVMSetTrainingDataset_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C",SVMGetTrainingDataset_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMComputeOperator_C",SVMComputeOperator_Binary) );
