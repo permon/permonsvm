@@ -81,7 +81,7 @@ PetscErrorCode SVMRunBinaryClassification()
     } else {
       FLLOP_SETERRQ1(comm,PETSC_ERR_SUP,"File type %s not supported",extension);
     }
-    TRY( SVMLoadMatGramian(svm,viewer) );
+    TRY( SVMLoadGramian(svm,viewer) );
     TRY( PetscViewerDestroy(&viewer) );
   }
   /* Load test dataset */

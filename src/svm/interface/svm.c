@@ -1512,9 +1512,9 @@ PetscErrorCode SVMViewScore(SVM svm,PetscViewer v)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMSetMatGramian"
+#define __FUNCT__ "SVMSetGramian"
 /*@
-  SVMSetMatGramian - Set precomputed Gramian (kernel) matrix.
+  SVMSetGramian - Set precomputed Gramian (kernel) matrix.
 
   Input Parameters:
 + svm - SVM context
@@ -1522,23 +1522,23 @@ PetscErrorCode SVMViewScore(SVM svm,PetscViewer v)
 
   Level: intermediate
 
-.seealso SVM, SVMGetMatGramian(), SVMLoadMatGramian()
+.seealso SVM, SVMGetGramian(), SVMLoadGramian()
 @*/
-PetscErrorCode SVMSetMatGramian(SVM svm,Mat G)
+PetscErrorCode SVMSetGramian(SVM svm,Mat G)
 {
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidHeaderSpecific(G,MAT_CLASSID,2);
 
-  TRY( PetscTryMethod(svm,"SVMSetMatGramian_C",(SVM,Mat),(svm,G)) );
+  TRY( PetscTryMethod(svm,"SVMSetGramian_C",(SVM,Mat),(svm,G)) );
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMGetMatGramian"
+#define __FUNCT__ "SVMGetGramian"
 /*@
-  SVMGetMatGramian - Get pracomputed Gramian (kernel) matrix.
+  SVMGetGramian - Get precomputed Gramian (kernel) matrix.
 
   Input Parameter:
 . svm - SVM context
@@ -1548,16 +1548,16 @@ PetscErrorCode SVMSetMatGramian(SVM svm,Mat G)
 
   Level: intermediate
 
-.seealso SVM, SVMSetMatGramian()
+.seealso SVM, SVMSetGramian(), SVMLoadGramian()
 @*/
-PetscErrorCode SVMGetMatGramian(SVM svm,Mat *G)
+PetscErrorCode SVMGetGramian(SVM svm,Mat *G)
 {
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidPointer(G,2);
 
-  TRY( PetscUseMethod(svm,"SVMGetMatGramian_C",(SVM,Mat *),(svm,G)) );
+  TRY( PetscUseMethod(svm,"SVMGetGramian_C",(SVM,Mat *),(svm,G)) );
   PetscFunctionReturn(0);
 }
 
@@ -1573,7 +1573,7 @@ PetscErrorCode SVMGetMatGramian(SVM svm,Mat *G)
   Input parameter:
 . svm - SVM context
 
-.seealso SVM, SVMSetMatGramian()
+.seealso SVM, SVMSetGramian(), SVMGetGramian()
 @*/
 PetscErrorCode SVMComputeOperator(SVM svm)
 {
@@ -2336,9 +2336,9 @@ PetscErrorCode SVMComputeModelParams(SVM svm)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMLoadMatGramian"
+#define __FUNCT__ "SVMLoadGramian"
 /*@
-  SVMLoadMatGramian - Loads precomputed Gramian (kernel) matrix.
+  SVMLoadGramian - Loads precomputed Gramian (kernel) matrix.
 
   Collective on PetscViewer
 
@@ -2348,9 +2348,9 @@ PetscErrorCode SVMComputeModelParams(SVM svm)
 
  Level: intermediate
 
-.seealso SVM, SVMViewMatGramian(), SVMLoadTrainingDataset()
+.seealso SVM, SVMSetGramian(), SVMGetGramian(), SVMViewGramian(), SVMLoadTrainingDataset()
 @*/
-PetscErrorCode SVMLoadMatGramian(SVM svm,PetscViewer v)
+PetscErrorCode SVMLoadGramian(SVM svm,PetscViewer v)
 {
   MPI_Comm   comm;
   PetscBool  view_io,view_dataset;
@@ -2369,7 +2369,7 @@ PetscErrorCode SVMLoadMatGramian(SVM svm,PetscViewer v)
   TRY( PetscOptionsHasName(NULL,NULL,"-svm_view_gramian",&view_dataset) );
   if (view_io || view_dataset) {
     TRY( PetscObjectGetComm((PetscObject) v,&comm) );
-    TRY( SVMViewMatGramian(svm,PETSC_VIEWER_STDOUT_(comm)) );
+    TRY( SVMViewGramian(svm,PETSC_VIEWER_STDOUT_(comm)) );
   }
   PetscFunctionReturnI(0);
 }
@@ -2387,9 +2387,9 @@ PetscErrorCode SVMLoadMatGramian(SVM svm,PetscViewer v)
 
   Level: intermediate
 
-.seealso SVM, SVMLoadMatGramian()
+.seealso SVM, SVMSetGramian(), SVMGetGramian(), SVMLoadGramian(), SVMViewTrainingDataset()
 @*/
-PetscErrorCode SVMViewMatGramian(SVM svm,PetscViewer v)
+PetscErrorCode SVMViewGramian(SVM svm,PetscViewer v)
 {
 
   PetscFunctionBegin;

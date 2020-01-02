@@ -38,7 +38,7 @@ int main(int argc,char **argv)
   /* Load Gramian matrix */
   if (kernel_file_set) {
     ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,kernel_file,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
-    ierr = SVMLoadMatGramian(svm,viewer);CHKERRQ(ierr);
+    ierr = SVMLoadGramian(svm,viewer);CHKERRQ(ierr);
     ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
   }
 

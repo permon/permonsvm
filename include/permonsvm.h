@@ -158,8 +158,8 @@ FLLOP_EXTERN PetscErrorCode SVMSetUp(SVM);
 FLLOP_EXTERN PetscErrorCode SVMView(SVM,PetscViewer);
 FLLOP_EXTERN PetscErrorCode SVMViewScore(SVM,PetscViewer);
 
-FLLOP_EXTERN PetscErrorCode SVMSetMatGramian(SVM,Mat);
-FLLOP_EXTERN PetscErrorCode SVMGetMatGramian(SVM,Mat *);
+FLLOP_EXTERN PetscErrorCode SVMSetGramian(SVM,Mat);
+FLLOP_EXTERN PetscErrorCode SVMGetGramian(SVM,Mat *);
 FLLOP_EXTERN PetscErrorCode SVMComputeOperator(SVM);
 
 FLLOP_EXTERN PetscErrorCode SVMSetTrainingDataset(SVM,Mat,Vec);
@@ -238,8 +238,8 @@ FLLOP_EXTERN PetscErrorCode SVMSetOptionsPrefix(SVM svm,const char []);
 FLLOP_EXTERN PetscErrorCode SVMAppendOptionsPrefix(SVM svm,const char []);
 FLLOP_EXTERN PetscErrorCode SVMGetOptionsPrefix(SVM svm,const char *[]);
 
-FLLOP_EXTERN PetscErrorCode SVMLoadMatGramian(SVM,PetscViewer);
-FLLOP_EXTERN PetscErrorCode SVMViewMatGramian(SVM,PetscViewer);
+FLLOP_EXTERN PetscErrorCode SVMLoadGramian(SVM,PetscViewer);
+FLLOP_EXTERN PetscErrorCode SVMViewGramian(SVM,PetscViewer);
 FLLOP_EXTERN PetscErrorCode SVMLoadDataset(SVM,PetscViewer,Mat,Vec);
 FLLOP_EXTERN PetscErrorCode SVMDatasetInfo(SVM,Mat,Vec,PetscViewer);
 FLLOP_EXTERN PetscErrorCode SVMLoadTrainingDataset(SVM,PetscViewer);
