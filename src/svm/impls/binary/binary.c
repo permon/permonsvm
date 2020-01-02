@@ -641,13 +641,10 @@ PetscErrorCode SVMUpdate_Binary_Private(SVM svm)
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMComputeOperator_Binary"
-PetscErrorCode SVMComputeOperator_Binary(SVM svm)
+PetscErrorCode SVMComputeOperator_Binary(SVM svm,Mat *A)
 {
   MPI_Comm    comm;
   SVM_Binary  *svm_binary = (SVM_Binary *) svm->data;
-
-  QPS         qps;
-  QP          qp;
 
   Mat         G,H,HpJ;
   Mat         mats[2];
@@ -663,6 +660,10 @@ PetscErrorCode SVMComputeOperator_Binary(SVM svm)
   PetscReal   C,Cp,Cn;
 
   PetscFunctionBegin;
+  /* Check if operator is set */
+  TRY( SVMGetOperator(svm,&H) );
+  if (H) PetscFunctionReturn(0);
+
   TRY( SVMGetPenaltyType(svm,&p) );
   TRY( SVMGetLossType(svm,&loss_type) );
 
@@ -730,14 +731,9 @@ PetscErrorCode SVMComputeOperator_Binary(SVM svm)
     H  = HpJ;
   }
 
-  /* Set operator into QP formulation */
-  TRY( SVMGetQPS(svm,&qps) );
-  TRY( QPSGetQP(qps,&qp) );
-  TRY( QPSetOperator(qp,H) );
-
+  *A = H;
   /* Decreasing reference counts */
   TRY( MatDestroy(&X) );
-  TRY( MatDestroy(&H) );
   PetscFunctionReturn(0);
 }
 
