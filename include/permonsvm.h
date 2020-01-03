@@ -234,6 +234,7 @@ FLLOP_EXTERN PetscErrorCode SVMStratifiedKFoldCrossValidation(SVM,PetscReal [],P
 
 FLLOP_EXTERN PetscErrorCode SVMSetQPS(SVM,QPS);
 FLLOP_EXTERN PetscErrorCode SVMGetQPS(SVM,QPS *);
+FLLOP_EXTERN PetscErrorCode SVMGetQP(SVM,QP *);
 FLLOP_EXTERN PetscErrorCode SVMSetWarmStart(SVM,PetscBool);
 
 FLLOP_EXTERN PetscErrorCode SVMSetOptionsPrefix(SVM svm,const char []);

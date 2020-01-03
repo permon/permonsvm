@@ -349,7 +349,7 @@ PetscErrorCode SVMSetType(SVM svm,const SVMType type)
 
   Level: advanced
 
-.seealso SVMGetQPS()
+.seealso SVMGetQPS(), SVMGetQP()
 @*/
 PetscErrorCode SVMSetQPS(SVM svm,QPS qps)
 {
@@ -377,7 +377,7 @@ PetscErrorCode SVMSetQPS(SVM svm,QPS qps)
 
   Level: advanced
 
-.seealso SVMSetQPS()
+.seealso SVMSetQPS(), SVMGetQP()
 @*/
 PetscErrorCode SVMGetQPS(SVM svm,QPS *qps)
 {
@@ -387,6 +387,34 @@ PetscErrorCode SVMGetQPS(SVM svm,QPS *qps)
   PetscValidPointer(qps,2);
 
   TRY( PetscUseMethod(svm,"SVMGetQPS_C",(SVM,QPS *),(svm,qps)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetQP"
+/*@
+  SVMGetQP - Returns QP context.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. qp - QP context
+
+  Level: beginner
+
+.seealso SVMSetQPS(), SVMGetQPS()
+@*/
+PetscErrorCode SVMGetQP(SVM svm,QP *qp)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidPointer(qp,2);
+
+  TRY( PetscUseMethod(svm,"SVMGetQP_C",(SVM,QP *),(svm,qp)) );
   PetscFunctionReturn(0);
 }
 

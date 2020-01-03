@@ -83,6 +83,7 @@ PetscErrorCode SVMDestroy_Binary(SVM svm)
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMComputeOperator_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetQPS_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetQPS_C",NULL) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetQP_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetBias_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetBias_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetSeparatingHyperplane_C",NULL) );
@@ -508,6 +509,18 @@ PetscErrorCode SVMSetQPS_Binary(SVM svm,QPS qps)
   TRY( PetscObjectReference((PetscObject) qps) );
 
   svm->setupcalled = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetQP_Binary"
+PetscErrorCode SVMGetQP_Binary(SVM svm,QP *qp)
+{
+  QPS qps;
+
+  PetscFunctionBegin;
+  TRY( SVMGetQPS(svm,&qps) );
+  TRY( QPSGetQP(qps,qp) );
   PetscFunctionReturn(0);
 }
 
@@ -1965,6 +1978,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMComputeOperator_C",SVMComputeOperator_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetQPS_C",SVMSetQPS_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetQPS_C",SVMGetQPS_Binary) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetQP_C",SVMGetQP_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetBias_C",SVMSetBias_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetBias_C",SVMGetBias_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetSeparatingHyperplane_C",SVMSetSeparatingHyperplane_Binary) );
