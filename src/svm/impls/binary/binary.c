@@ -274,7 +274,6 @@ PetscErrorCode SVMGetGramian_Binary(SVM svm,Mat *G)
 #define __FUNCT__ "SVMSetOperator_Binary"
 PetscErrorCode SVMSetOperator_Binary(SVM svm,Mat A)
 {
-  QPS      qps;
   QP       qp;
 
   Mat      Xt;
@@ -295,9 +294,7 @@ PetscErrorCode SVMSetOperator_Binary(SVM svm,Mat A)
     }
   }
 
-  /* TODO SVMGetQP impl */
-  TRY( SVMGetQPS(svm,&qps) );
-  TRY( QPSGetQP(qps,&qp) );
+  TRY( SVMGetQP(svm,&qp) );
   TRY( QPSetOperator(qp,A) );
 
   svm->setupcalled = PETSC_FALSE;
@@ -308,12 +305,10 @@ PetscErrorCode SVMSetOperator_Binary(SVM svm,Mat A)
 #define __FUNCT__ "SVMGetOperator_Binary"
 PetscErrorCode SVMGetOperator_Binary(SVM svm,Mat *A)
 {
-  QPS qps;
   QP  qp;
 
   PetscFunctionBegin;
-  TRY( SVMGetQPS(svm,&qps) );
-  TRY( QPSGetQP(qps,&qp) );
+  TRY( SVMGetQP(svm,&qp) );
   TRY( QPGetOperator(qp,A) );
   PetscFunctionReturn(0);
 }
@@ -571,7 +566,6 @@ PetscErrorCode SVMUpdate_Binary_Private(SVM svm)
 {
   SVM_Binary  *svm_binary = (SVM_Binary *) svm->data;
 
-  QPS         qps;
   QP          qp;
 
   Vec         x_init,x_init_p,x_init_n;
@@ -585,10 +579,6 @@ PetscErrorCode SVMUpdate_Binary_Private(SVM svm)
   PetscFunctionBegin;
   TRY( SVMUpdateOperator_Binary_Private(svm) );
 
-  /* TODO implementation SVMGetQP */
-  TRY( SVMGetQPS(svm,&qps) );
-  TRY( QPSGetQP(qps,&qp) );
-
   TRY( SVMGetPenaltyType(svm,&p) );
   if (p == 1) {
     TRY( SVMGetC(svm,&C) );
@@ -598,6 +588,7 @@ PetscErrorCode SVMUpdate_Binary_Private(SVM svm)
   }
 
   /* Update initial guess */
+  TRY( SVMGetQP(svm,&qp) );
   TRY( QPGetSolutionVector(qp,&x_init) );
 
   /* TODO SVMUpdateInitialVector_Binary_Private */
@@ -1005,7 +996,7 @@ PetscErrorCode SVMReconstructHyperplane_Binary(SVM svm)
 {
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
-  QPS       qps;
+  /* QPS       qps; */
   QP        qp;
   Vec       lb,ub;
 
@@ -1019,15 +1010,11 @@ PetscErrorCode SVMReconstructHyperplane_Binary(SVM svm)
   PetscInt  svm_mod;
 
   PetscFunctionBegin;
-  TRY( SVMGetMod(svm,&svm_mod) );
-
-  TRY( SVMGetQPS(svm,&qps) );
-  TRY( QPSGetQP(qps,&qp) );
-
   TRY( SVMGetTrainingDataset(svm,&Xt,NULL) );
   y = svm_binary->y_inner;
 
   /* Reconstruction of hyperplane normal */
+  TRY( SVMGetQP(svm,&qp) );
   TRY( QPGetSolutionVector(qp,&x) );
   TRY( VecDuplicate(x,&yx) );
 
@@ -1036,6 +1023,7 @@ PetscErrorCode SVMReconstructHyperplane_Binary(SVM svm)
   TRY( MatMultTranspose(Xt,yx,w_inner) ); /* w = (X^t)^t * yx = X * yx */
 
   /* Reconstruction of the hyperplane bias */
+  TRY( SVMGetMod(svm,&svm_mod) );
   if (svm_mod == 1) {
     TRY( QPGetBox(qp,NULL,&lb,&ub) );
 
@@ -1139,17 +1127,14 @@ PetscErrorCode SVMComputeModelParams_Binary(SVM svm)
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
   QP          qp;
-  QPS         qps;
   Vec         x,lb,ub;
-
   Vec         w;
 
   SVMLossType loss_type;
   PetscInt    svm_mod;
 
   PetscFunctionBegin;
-  TRY( SVMGetQPS(svm,&qps) );
-  TRY( QPSGetQP(qps,&qp) );
+  TRY( SVMGetQP(svm,&qp) );
   TRY( SVMGetLossType(svm,&loss_type) );
   TRY( SVMGetMod(svm,&svm_mod) );
 
@@ -1263,7 +1248,6 @@ PetscErrorCode SVMComputeObjFuncValues_Binary_Private(SVM svm)
 
   PetscReal   tmp;
 
-  QPS         qps;
   QP          qp;
   Vec         x;
 
@@ -1297,8 +1281,7 @@ PetscErrorCode SVMComputeObjFuncValues_Binary_Private(SVM svm)
   }
 
   /* Compute value of dual objective function */
-  TRY( SVMGetQPS(svm,&qps) );
-  TRY( QPSGetQP(qps,&qp) );
+  TRY( SVMGetQP(svm,&qp) );
   TRY( QPGetSolutionVector(qp,&x) );
   TRY( QPComputeObjective(qp,x,&svm_binary->dualObj) );
   svm_binary->dualObj *= -1.;
