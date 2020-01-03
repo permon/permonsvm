@@ -117,7 +117,7 @@ int main(int argc,char **argv)
     test:
       nsize: 3
       args: -f $PERMON_SVM_DIR/examples/data/heart_scale.bin -f_test $PERMON_SVM_DIR/examples/data/heart_scale.t.bin
-      args: -X_training_mat_type dense -X_test_mat_type aij
+      args: -Xt_training_mat_type dense -Xt_test_mat_type aij
     test:
       nsize: 4
       args: -f $PERMON_SVM_DIR/examples/data/heart_scale.svmlight -f_test $PERMON_SVM_DIR/examples/data/heart_scale.t.svmlight
