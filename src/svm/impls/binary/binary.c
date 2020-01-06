@@ -1573,7 +1573,10 @@ PetscErrorCode SVMLoadTrainingDataset_Binary(SVM svm,PetscViewer v)
   TRY( VecCreate(comm,&y_training) );
   TRY( PetscObjectSetName((PetscObject) y_training,"y_training") );
 
+  TRY( PetscLogEventBegin(SVM_LoadDataset,svm,0,0,0) );
   TRY( SVMLoadDataset(svm,v,Xt_training,y_training) );
+  TRY( PetscLogEventEnd(SVM_LoadDataset,svm,0,0,0) );
+
   TRY( SVMGetMod(svm,&mod) );
   if (mod == 2) {
     TRY( SVMGetBias(svm,&bias) );

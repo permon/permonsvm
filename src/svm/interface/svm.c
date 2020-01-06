@@ -2258,56 +2258,6 @@ PetscErrorCode SVMComputeModelParams(SVM svm)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMLoadDataset"
-/*@
-  SVMLoadDataset - Loads dataset.
-
-  Input Parameters:
-+ svm - SVM context
-- v - viewer
-
-  Output Parameters:
-+ Xt - matrix of samples
-- y - known labels of samples
-
-.seealso SVM
-@*/
-PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat Xt,Vec y)
-{
-  MPI_Comm   comm;
-  const char *type_name = NULL;
-
-  PetscBool  isascii,ishdf5,isbinary;
-
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
-  PetscValidHeaderSpecific(Xt,MAT_CLASSID,3);
-  PetscCheckSameComm(svm,1,Xt,3);
-  PetscValidHeaderSpecific(y,VEC_CLASSID,4);
-  PetscCheckSameComm(svm,1,y,4);
-
-  TRY( PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERASCII,&isascii) );
-  TRY( PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERHDF5,&ishdf5) );
-  TRY( PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERBINARY,&isbinary) );
-
-  PetscLogEventBegin(SVM_LoadDataset,svm,0,0,0);
-  if (isascii) {
-    TRY( DatasetLoad_SVMLight(Xt,y,v) );
-  } else if (ishdf5 || isbinary) {
-    TRY( DatasetLoad_Binary(Xt,y,v) );
-  } else {
-    TRY( PetscObjectGetComm((PetscObject) v,&comm) );
-    TRY( PetscObjectGetType((PetscObject) v,&type_name) );
-
-    FLLOP_SETERRQ1(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMLoadDataset",type_name);
-  }
-  PetscLogEventEnd(SVM_LoadDataset,svm,0,0,0);
-
-  PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
 #define __FUNCT__ "SVMLoadTrainingDataset"
 /*@
   SVMLoadTrainingDataset - Loads training dataset.
@@ -2395,7 +2345,10 @@ PetscErrorCode SVMLoadTestDataset(SVM svm,PetscViewer v)
   TRY( VecCreate(comm,&y_test) );
   TRY( PetscObjectSetName((PetscObject) y_test,"y_test") );
 
+  TRY( PetscLogEventBegin(SVM_LoadDataset,svm,0,0,0) );
   TRY( SVMLoadDataset(svm,v,Xt_test,y_test) );
+  TRY( PetscLogEventEnd(SVM_LoadDataset,svm,0,0,0) );
+
   TRY( SVMGetMod(svm,&mod) );
   if (mod == 2) {
     TRY( SVMGetBias(svm,&bias) );
