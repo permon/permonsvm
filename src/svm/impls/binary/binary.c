@@ -996,7 +996,6 @@ PetscErrorCode SVMReconstructHyperplane_Binary(SVM svm)
 {
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
-  /* QPS       qps; */
   QP        qp;
   Vec       lb,ub;
 
