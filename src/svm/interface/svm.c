@@ -2346,7 +2346,7 @@ PetscErrorCode SVMLoadTestDataset(SVM svm,PetscViewer v)
   TRY( PetscObjectSetName((PetscObject) y_test,"y_test") );
 
   TRY( PetscLogEventBegin(SVM_LoadDataset,svm,0,0,0) );
-  TRY( SVMLoadDataset(svm,v,Xt_test,y_test) );
+  TRY( PetscViewerLoadSVMDataset(Xt_test,y_test,v) );
   TRY( PetscLogEventEnd(SVM_LoadDataset,svm,0,0,0) );
 
   TRY( SVMGetMod(svm,&mod) );

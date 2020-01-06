@@ -399,12 +399,11 @@ PetscErrorCode DatasetLoad_Binary(Mat Xt,Vec y,PetscViewer v)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMLoadDataset"
+#define __FUNCT__ "PetscViewerLoadSVMDataset"
 /*@
-  SVMLoadDataset - Loads dataset.
+  PetscViewerLoadDataset - Loads dataset.
 
   Input Parameters:
-+ svm - SVM context
 - v - viewer
 
   Output Parameters:
@@ -413,7 +412,7 @@ PetscErrorCode DatasetLoad_Binary(Mat Xt,Vec y,PetscViewer v)
 
 .seealso SVM
 @*/
-PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat Xt,Vec y)
+PetscErrorCode PetscViewerLoadSVMDataset(Mat Xt,Vec y,PetscViewer v)
 {
   MPI_Comm   comm;
   const char *type_name = NULL;
@@ -421,12 +420,11 @@ PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat Xt,Vec y)
   PetscBool  isascii,ishdf5,isbinary;
 
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
-  PetscValidHeaderSpecific(Xt,MAT_CLASSID,3);
-  PetscCheckSameComm(svm,1,Xt,3);
-  PetscValidHeaderSpecific(y,VEC_CLASSID,4);
-  PetscCheckSameComm(svm,1,y,4);
+  PetscValidHeaderSpecific(Xt,MAT_CLASSID,1);
+  PetscValidHeaderSpecific(y,VEC_CLASSID,2);
+  PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,3);
+  PetscCheckSameComm(v,1,Xt,2);
+  PetscCheckSameComm(v,1,y,3);
 
   TRY( PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERASCII,&isascii) );
   TRY( PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERHDF5,&ishdf5) );
@@ -440,7 +438,7 @@ PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat Xt,Vec y)
     TRY( PetscObjectGetComm((PetscObject) v,&comm) );
     TRY( PetscObjectGetType((PetscObject) v,&type_name) );
 
-    FLLOP_SETERRQ1(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMLoadDataset",type_name);
+    FLLOP_SETERRQ1(comm,PETSC_ERR_SUP,"Viewer type %s not supported for PetscViewerLoadDataset",type_name);
   }
 
   PetscFunctionReturn(0);

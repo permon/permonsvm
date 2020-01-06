@@ -1574,7 +1574,7 @@ PetscErrorCode SVMLoadTrainingDataset_Binary(SVM svm,PetscViewer v)
   TRY( PetscObjectSetName((PetscObject) y_training,"y_training") );
 
   TRY( PetscLogEventBegin(SVM_LoadDataset,svm,0,0,0) );
-  TRY( SVMLoadDataset(svm,v,Xt_training,y_training) );
+  TRY( PetscViewerLoadSVMDataset(Xt_training,y_training,v) );
   TRY( PetscLogEventEnd(SVM_LoadDataset,svm,0,0,0) );
 
   TRY( SVMGetMod(svm,&mod) );
