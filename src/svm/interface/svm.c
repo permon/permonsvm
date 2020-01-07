@@ -2415,10 +2415,10 @@ PetscErrorCode SVMViewTestDataset(SVM svm,PetscViewer v)
       TRY( PetscViewerASCIIPopTab(v) );
 
       TRY( PetscViewerASCIIPushTab(v) );
-      TRY( SVMDatasetInfo(svm,Xt,y,v) );
+      TRY( SVMViewDataset(svm,Xt,y,v) );
       TRY( PetscViewerASCIIPopTab(v) );
     } else {
-      TRY( SVMDatasetInfo(svm,Xt,y,v) );
+      TRY( SVMViewDataset(svm,Xt,y,v) );
     }
 
     TRY(PetscViewerASCIIPopTab(v));
@@ -2432,8 +2432,8 @@ PetscErrorCode SVMViewTestDataset(SVM svm,PetscViewer v)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMDatasetInfo"
-PetscErrorCode SVMDatasetInfo(SVM svm,Mat Xt,Vec y,PetscViewer v)
+#define __FUNCT__ "SVMViewDataset"
+PetscErrorCode SVMViewDataset(SVM svm,Mat Xt,Vec y,PetscViewer v)
 {
   MPI_Comm   comm;
   const char *type_name = NULL;

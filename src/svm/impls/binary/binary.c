@@ -1633,10 +1633,10 @@ PetscErrorCode SVMViewTrainingDataset_Binary(SVM svm,PetscViewer v)
       TRY( PetscViewerASCIIPopTab(v) );
 
       TRY( PetscViewerASCIIPushTab(v) );
-      TRY( SVMDatasetInfo(svm,Xt,y,v) );
+      TRY( SVMViewDataset(svm,Xt,y,v) );
       TRY( PetscViewerASCIIPopTab(v) );
     } else {
-      TRY( SVMDatasetInfo(svm,Xt,y,v) );
+      TRY( SVMViewDataset(svm,Xt,y,v) );
     }
 
     TRY(PetscViewerASCIIPopTab(v));
