@@ -1597,11 +1597,8 @@ PetscErrorCode SVMViewTrainingDataset_Binary(SVM svm,PetscViewer v)
 {
   MPI_Comm   comm;
 
-  Mat        Xt,Xt_inner;
-  PetscReal  bias;
+  Mat        Xt;
   Vec        y;
-
-  PetscInt   mod;
 
   PetscBool  isascii;
   const char *type_name = NULL;
@@ -1619,27 +1616,8 @@ PetscErrorCode SVMViewTrainingDataset_Binary(SVM svm,PetscViewer v)
     TRY( PetscObjectPrintClassNamePrefixType((PetscObject) svm,v) );
 
     TRY( PetscViewerASCIIPushTab(v) );
-    /* Print info related to matrix type and dataset */
-    TRY( PetscObjectPrintClassNamePrefixType((PetscObject) Xt,v) );
-    TRY( SVMGetMod(svm,&mod) );
-    if (mod == 2) {
-      TRY( MatBiasedGetInnerMat(Xt,&Xt_inner) );
-      TRY( MatBiasedGetBias(Xt,&bias) );
-
-      TRY( PetscViewerASCIIPushTab(v) );
-      TRY( PetscViewerASCIIPrintf(v,"Samples are augmented with additional dimension by means of bias %.2f\n",bias) );
-      TRY( PetscViewerASCIIPrintf(v,"inner") );
-      TRY( PetscObjectPrintClassNamePrefixType((PetscObject) Xt_inner,v) );
-      TRY( PetscViewerASCIIPopTab(v) );
-
-      TRY( PetscViewerASCIIPushTab(v) );
-      TRY( SVMViewDataset(svm,Xt,y,v) );
-      TRY( PetscViewerASCIIPopTab(v) );
-    } else {
-      TRY( SVMViewDataset(svm,Xt,y,v) );
-    }
-
-    TRY(PetscViewerASCIIPopTab(v));
+    TRY( SVMViewDataset(svm,Xt,y,v) );
+    TRY( PetscViewerASCIIPopTab(v) );
   } else {
     TRY( PetscObjectGetComm((PetscObject) v,&comm) );
     TRY( PetscObjectGetType((PetscObject) v,&type_name) );
