@@ -33,7 +33,8 @@ PetscErrorCode SVMReset_Binary(SVM svm)
   }
   TRY( VecDestroy(&svm_binary->w) );
   TRY( MatDestroy(&svm_binary->Xt_training) );
-  TRY( MatDestroy(&svm_binary->D) );
+  TRY( MatDestroy(&svm_binary->G) );
+  TRY( MatDestroy(&svm_binary->J) );
   TRY( VecDestroy(&svm_binary->diag) );
   TRY( VecDestroy(&svm_binary->y_training) );
   TRY( VecDestroy(&svm_binary->y_inner) );
@@ -50,7 +51,8 @@ PetscErrorCode SVMReset_Binary(SVM svm)
   svm_binary->y_inner     = NULL;
   svm_binary->is_p        = NULL;
   svm_binary->is_n        = NULL;
-  svm_binary->D           = NULL;
+  svm_binary->G           = NULL;
+  svm_binary->J           = NULL;
   svm_binary->diag        = NULL;
 
   svm_binary->nsv         = 0;
@@ -72,10 +74,16 @@ PetscErrorCode SVMDestroy_Binary(SVM svm)
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
   PetscFunctionBegin;
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetGramian_C",NULL) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetGramian_C",NULL) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetOperator_C",NULL) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetOperator_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingDataset_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C",NULL) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMComputeOperator_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetQPS_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetQPS_C",NULL) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetQP_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetBias_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetBias_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetSeparatingHyperplane_C",NULL) );
@@ -223,6 +231,89 @@ PetscErrorCode SVMViewScore_Binary(SVM svm,PetscViewer v)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMSetGramian_Binary"
+PetscErrorCode SVMSetGramian_Binary(SVM svm,Mat G)
+{
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
+  Mat        Xt;
+  PetscInt   m,n;
+
+  PetscFunctionBegin;
+  /* Checking that Gramian is rectangular */
+  TRY( MatGetSize(G,&m,&n) );
+  if (m != n) {
+    FLLOP_SETERRQ2(PetscObjectComm((PetscObject) G),PETSC_ERR_ARG_SIZ,"Gramian (kernel) matrix must be rectangular, G(%D,%D)",m,n);
+  }
+  /* Checking dimension compatibility between training data matrix and Gramian */
+  TRY( SVMGetTrainingDataset(svm,&Xt,NULL) );
+  if (Xt) {
+    TRY( MatGetSize(Xt,&n,NULL) );
+    if (m != n) {
+      FLLOP_SETERRQ2(PetscObjectComm((PetscObject) G),PETSC_ERR_ARG_SIZ,"Matrix dimensions are incompatible, G(%D,) != X_training(%D,)",m,n);
+    }
+  }
+  TRY( MatDestroy(&svm_binary->G) );
+  TRY( PetscObjectReference((PetscObject) G) );
+  svm_binary->G = G;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetGramian_Binary"
+PetscErrorCode SVMGetGramian_Binary(SVM svm,Mat *G)
+{
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
+  PetscFunctionBegin;
+  *G = svm_binary->G;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetOperator_Binary"
+PetscErrorCode SVMSetOperator_Binary(SVM svm,Mat A)
+{
+  QP       qp;
+
+  Mat      Xt;
+  PetscInt m,n;
+
+  PetscFunctionBegin;
+  /* Checking that operator (Hessian) is rectangular */
+  TRY( MatGetSize(A,&m,&n) );
+  if (m != n) {
+    FLLOP_SETERRQ2(PetscObjectComm((PetscObject) A),PETSC_ERR_ARG_SIZ,"Hessian matrix must be rectangular, G(%D,%D)",m,n);
+  }
+  /* Checking dimension compatibility between Hessian (operator) and training data matrices */
+  TRY( SVMGetTrainingDataset(svm,&Xt,NULL) );
+  if (Xt) {
+    TRY( MatGetSize(Xt,&n,NULL) );
+    if (m != n) {
+      FLLOP_SETERRQ2(PetscObjectComm((PetscObject) A),PETSC_ERR_ARG_SIZ,"Matrix dimensions are incompatible, A(%D,) != X_training(%D,)",m,n);
+    }
+  }
+
+  TRY( SVMGetQP(svm,&qp) );
+  TRY( QPSetOperator(qp,A) );
+
+  svm->setupcalled = PETSC_FALSE;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetOperator_Binary"
+PetscErrorCode SVMGetOperator_Binary(SVM svm,Mat *A)
+{
+  QP  qp;
+
+  PetscFunctionBegin;
+  TRY( SVMGetQP(svm,&qp) );
+  TRY( QPGetOperator(qp,A) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetTrainingDataset"
 PetscErrorCode SVMSetTrainingDataset_Binary(SVM svm,Mat Xt_training,Vec y_training)
 {
@@ -230,14 +321,25 @@ PetscErrorCode SVMSetTrainingDataset_Binary(SVM svm,Mat Xt_training,Vec y_traini
 
   PetscReal  max;
   PetscInt   lo,hi;
+  PetscInt   m,n;
+
+  Mat        G;
   Vec        tmp;
 
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidHeaderSpecific(Xt_training,MAT_CLASSID,2);
-  PetscCheckSameComm(svm,1,Xt_training,2);
-  PetscValidHeaderSpecific(y_training,VEC_CLASSID,3);
-  PetscCheckSameComm(svm,1,y_training,3);
+  TRY( MatGetSize(Xt_training,&m,NULL) );
+  TRY( VecGetSize(y_training,&n) );
+  if (m != n) {
+    FLLOP_SETERRQ2(PetscObjectComm((PetscObject) Xt_training),PETSC_ERR_ARG_SIZ,"Dimensions are incompatible, X_training(%D,) != y_training(%D)",m,n);
+  }
+
+  TRY( SVMGetGramian(svm,&G) );
+  if (G) {
+    TRY( MatGetSize(G,&n,NULL) );
+    if (m != n) {
+      FLLOP_SETERRQ2(PetscObjectComm((PetscObject) G),PETSC_ERR_ARG_SIZ,"Matrix dimensions are incompatible, X_training(%D,) != G(%D,)",m,n);
+    }
+  }
 
   TRY( MatDestroy(&svm_binary->Xt_training) );
   svm_binary->Xt_training = Xt_training;
@@ -247,6 +349,7 @@ PetscErrorCode SVMSetTrainingDataset_Binary(SVM svm,Mat Xt_training,Vec y_traini
   svm_binary->y_training = y_training;
   TRY( PetscObjectReference((PetscObject) y_training) );
 
+  /* Determine index sets of positive and negative samples */
   TRY( VecGetOwnershipRange(y_training,&lo,&hi) );
   TRY( VecMax(y_training,NULL,&max) );
   TRY( VecDuplicate(y_training,&tmp) );
@@ -303,6 +406,7 @@ static PetscErrorCode SVMSetUp_Remapy_Binary_Private(SVM svm)
   TRY( VecMax(y,NULL,&max) );
 
   if (min == -1.0 && max == 1.0) {
+    TRY( VecDestroy(&svm_binary->y_inner) );
     svm_binary->y_inner = y;
     TRY( PetscObjectReference((PetscObject) y) );
   } else {
@@ -328,7 +432,8 @@ static PetscErrorCode SVMSetUp_Remapy_Binary_Private(SVM svm)
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMCreateQPS_Binary_Private"
-PetscErrorCode SVMCreateQPS_Binary_Private(SVM svm,QPS *qps) {
+PetscErrorCode SVMCreateQPS_Binary_Private(SVM svm,QPS *qps)
+{
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
   PetscReal rtol, divtol, max_eig_tol;
@@ -403,66 +508,90 @@ PetscErrorCode SVMSetQPS_Binary(SVM svm,QPS qps)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMGetQP_Binary"
+PetscErrorCode SVMGetQP_Binary(SVM svm,QP *qp)
+{
+  QPS qps;
+
+  PetscFunctionBegin;
+  TRY( SVMGetQPS(svm,&qps) );
+  TRY( QPSGetQP(qps,qp) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMUpdateOperator_Binary_Private"
+PetscErrorCode SVMUpdateOperator_Binary_Private(SVM svm)
+{
+  SVM_Binary  *svm_binary = (SVM_Binary *) svm->data;
+
+  Vec         diag_p,diag_n;
+
+  PetscInt    p;
+  SVMLossType loss_type;
+
+  PetscReal   C,Cn,Cp;
+
+  PetscFunctionBegin;
+  TRY( SVMGetLossType(svm,&loss_type) );
+  if (loss_type == SVM_L1) PetscFunctionReturn(0);
+
+  /* Update regularization of Hessian */
+  TRY( SVMGetPenaltyType(svm,&p) );
+  if (p == 1) {
+    TRY( SVMGetC(svm,&C) );
+
+    TRY( MatScale(svm_binary->J,0.) );
+    TRY( MatShift(svm_binary->J,1. / C) );
+  } else {
+    TRY( SVMGetCp(svm,&Cp) );
+    TRY( SVMGetCn(svm,&Cn) );
+
+    TRY( VecGetSubVector(svm_binary->diag,svm_binary->is_p,&diag_p) );
+    TRY( VecSet(diag_p,1. / Cp) );
+    TRY( VecRestoreSubVector(svm_binary->diag,svm_binary->is_p,&diag_p) );
+
+    TRY( VecGetSubVector(svm_binary->diag,svm_binary->is_n,&diag_n) );
+    TRY( VecSet(diag_n,1. / Cn) );
+    TRY( VecRestoreSubVector(svm_binary->diag,svm_binary->is_n,&diag_n) );
+  }
+  PetscFunctionReturn(0);
+}
+
+/* TODO implement SVMUpdateInitialVector_Binary_Private */
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMUpdate_Binary_Private"
 PetscErrorCode SVMUpdate_Binary_Private(SVM svm)
 {
   SVM_Binary  *svm_binary = (SVM_Binary *) svm->data;
 
   QP          qp;
-  QPS         qps;
-  Vec         ub,ub_p,ub_n;
-  Vec         diag_p,diag_n;
+
   Vec         x_init,x_init_p,x_init_n;
+  Vec         ub = NULL,ub_p,ub_n;
 
   PetscInt    p;
-  PetscReal   C,Cn,Cp;
   SVMLossType loss_type;
 
+  PetscReal   C,Cn,Cp;
+
   PetscFunctionBegin;
+  TRY( SVMUpdateOperator_Binary_Private(svm) );
+
   TRY( SVMGetPenaltyType(svm,&p) );
   if (p == 1) {
     TRY( SVMGetC(svm,&C) );
   } else {
-    TRY( SVMGetCp(svm, &Cp) );
-    TRY( SVMGetCn(svm, &Cn) );
-  }
-  TRY( SVMGetLossType(svm,&loss_type) );
-
-  TRY( SVMGetQPS(svm,&qps) );
-  TRY( QPSGetQP(qps,&qp) );
-  /* Update upper boundary or Hessian */
-  if (loss_type == SVM_L1) {
-    TRY( QPGetBox(qp,NULL,NULL,&ub) );
-    /* Update upper boundary */
-    if (p == 1) {
-      TRY( VecSet(ub,C) );
-    } else {
-      TRY( VecGetSubVector(ub,svm_binary->is_p,&ub_p) );
-      TRY( VecSet(ub_p,Cp) );
-      TRY( VecRestoreSubVector(ub,svm_binary->is_p,&ub_p) );
-
-      TRY( VecGetSubVector(ub,svm_binary->is_n,&ub_n) );
-      TRY( VecSet(ub_n,Cn) );
-      TRY( VecRestoreSubVector(ub,svm_binary->is_n,&ub_n) );
-    }
-  } else {
-    /* Update Hessian */
-    if (p == 1) {
-      TRY( VecSet(svm_binary->diag,1. / C) );
-    } else {
-      TRY( VecGetSubVector(svm_binary->diag,svm_binary->is_p,&diag_p) );
-      TRY( VecSet(diag_p,1. / Cp) );
-      TRY( VecRestoreSubVector(svm_binary->diag,svm_binary->is_p,&diag_p) );
-
-      TRY( VecGetSubVector(svm_binary->diag,svm_binary->is_n,&diag_n) );
-      TRY( VecSet(diag_n,1. / Cn) );
-      TRY( VecRestoreSubVector(svm_binary->diag,svm_binary->is_n,&diag_n) );
-    }
-    TRY( MatDiagonalSet(svm_binary->D,svm_binary->diag,INSERT_VALUES) );
+    TRY( SVMGetCp(svm,&Cp) );
+    TRY( SVMGetCn(svm,&Cn) );
   }
 
   /* Update initial guess */
+  TRY( SVMGetQP(svm,&qp) );
   TRY( QPGetSolutionVector(qp,&x_init) );
+
+  /* TODO SVMUpdateInitialVector_Binary_Private */
   if (svm->warm_start) {
     if (p == 1) {
       TRY( VecScale(x_init,1. / svm->C_old) );
@@ -491,124 +620,102 @@ PetscErrorCode SVMUpdate_Binary_Private(SVM svm)
       TRY( VecRestoreSubVector(x_init,svm_binary->is_n,&x_init_n) );
     }
   }
+
+  /* Update upper bound vector */
+  TRY( SVMGetLossType(svm,&loss_type) );
+  if (loss_type == SVM_L2) PetscFunctionReturn(0);
+
+  TRY( QPGetBox(qp,NULL,NULL,&ub) );
+  if (p == 1) {
+    TRY( VecSet(ub,C) );
+  } else {
+    TRY( VecGetSubVector(ub,svm_binary->is_p,&ub_p) );
+    TRY( VecSet(ub_p,Cp) );
+    TRY( VecRestoreSubVector(ub,svm_binary->is_p,&ub_p) );
+
+    TRY( VecGetSubVector(ub,svm_binary->is_n,&ub_n) );
+    TRY( VecSet(ub_n,Cn) );
+    TRY( VecRestoreSubVector(ub,svm_binary->is_n,&ub_n) );
+  }
+
   svm->setupcalled     = PETSC_TRUE;
   svm->posttraincalled = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMSetUp_Binary"
-PetscErrorCode SVMSetUp_Binary(SVM svm)
+#define __FUNCT__ "SVMComputeOperator_Binary"
+PetscErrorCode SVMComputeOperator_Binary(SVM svm,Mat *A)
 {
-  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+  MPI_Comm    comm;
+  SVM_Binary  *svm_binary = (SVM_Binary *) svm->data;
 
-  QP          qp;
-  QPS         qps;
+  Mat         G,H,HpJ;
+  Mat         mats[2];
+  Mat         Xt,X = NULL;
+  PetscInt    m,n,M,N;
 
-  Vec         diag,diag_p,diag_n;
-  Mat         H,HpE,mats[2];
-  Vec         e;
-  Vec         x_init,x_init_p,x_init_n;
-
-  Mat         Be = NULL;
-  PetscReal   norm;
-  Vec         lb;
-  Vec         ub,ub_p,ub_n;
-
-  Mat         Xt_training,X_training;
   Vec         y;
-  PetscInt    n,m,N;
+  Vec         diag,diag_p,diag_n;
 
-  PetscReal   C,Cp,Cn;
-  PetscInt    p;        /* penalty type */
-  PetscInt    svm_mod;
+  PetscInt    p;         /* penalty type */
   SVMLossType loss_type;
 
-  PetscBool   svm_monitor_set;
-  void        *mctx;  /* monitor context */
+  PetscReal   C,Cp,Cn;
 
   PetscFunctionBegin;
-  if (svm->setupcalled) PetscFunctionReturn(0);
+  /* Check if operator is set */
+  TRY( SVMGetOperator(svm,&H) );
+  if (H) PetscFunctionReturn(0);
 
-  TRY( SVMGetLossType(svm,&loss_type) );
-  TRY( SVMGetMod(svm,&svm_mod) );
   TRY( SVMGetPenaltyType(svm,&p) );
+  TRY( SVMGetLossType(svm,&loss_type) );
 
-  if (svm->posttraincalled) {
-    TRY( SVMUpdate_Binary_Private(svm) );
-    PetscFunctionReturn(0);
-  }
-
-  if (svm->hyperoptset) {
-    TRY( SVMGridSearch(svm) );
-  }
-
-  if (p == 1) {
-    TRY( SVMGetC(svm,&C) );
+  TRY( SVMGetGramian(svm,&G) );
+  /* Create Gramian matrix (X^t * X) implicitly if it is not set by user, i.e. G == NULL */
+  if (!G) {
+    /* TODO add option for computing Gramian explicitly */
+    TRY( SVMGetTrainingDataset(svm,&Xt,NULL) );
+    TRY( PermonMatTranspose(Xt,MAT_TRANSPOSE_CHEAPEST,&X) );
+    TRY( MatCreateNormal(X,&G) );  /* G = X^t * X */
   } else {
-    TRY( SVMGetCp(svm,&Cp) );
-    TRY( SVMGetCn(svm,&Cn) );
+    TRY( PetscObjectReference((PetscObject) G) );
   }
-  TRY( SVMGetTrainingDataset(svm,&Xt_training,NULL) );
-
-  /* Set QP and QPS solver */
-  TRY( SVMGetQPS(svm,&qps) );
-  TRY( QPSGetQP(qps,&qp) );
 
   /* Remap y to -1,1 values if needed */
   TRY( SVMSetUp_Remapy_Binary_Private(svm) );
   y = svm_binary->y_inner;
 
-  /* Create Hessian */
-  TRY( PermonMatTranspose(Xt_training,MAT_TRANSPOSE_CHEAPEST,&X_training) );
-  TRY( MatCreateNormal(X_training,&H) );  /* H = X^t * X */
-  TRY( MatDiagonalScale(H,y,y) );         /* H = diag(y)*H*diag(y) */
+  /* Create Hessian matrix */
+  H = G;
+  TRY( MatDiagonalScale(H,y,y) ); /* H = diag(y) * G * diag(y) */
 
-  /* Create right hand side vector*/
-  TRY( VecDuplicate(y,&e) );  /* creating vector e same size and type as y_training */
-  TRY( VecSet(e,1.0) );
-  TRY( QPSetRhs(qp,e) );      /* set linear term of QP problem */
-
-  /* Set equality constrain for solver type 1 (with equality constraint) */
-  if (svm_mod == 1) {
-    TRY( MatCreateOneRow(y,&Be) );   /* Be = y^t */
-    TRY( VecNorm(y,NORM_2,&norm) );
-    TRY( MatScale(Be,1.0/norm) );    /* ||Be|| = 1 */
-    TRY( QPSetEq(qp,Be,NULL) );
-  }
-
-  /* Create box constraints */
-  TRY( VecDuplicate(y,&lb) );  /* create lower bound constraint vector */
-  TRY( VecSet(lb,0.) );
-
-  if (loss_type == SVM_L1) {
-    TRY( VecDuplicate(lb,&ub) );
-    if (p == 1) {
-      TRY( VecSet(ub,C) );
-    } else {
-      TRY( VecGetSubVector(ub,svm_binary->is_p,&ub_p) );
-      TRY( VecSet(ub_p,Cp) );
-      TRY( VecRestoreSubVector(ub,svm_binary->is_p,&ub_p) );
-
-      TRY( VecGetSubVector(ub,svm_binary->is_n,&ub_n) );
-      TRY( VecSet(ub_n,Cn) );
-      TRY( VecRestoreSubVector(ub,svm_binary->is_n,&ub_n) );
-    }
-  } else {
+  /* Regularize Hessian in case of l2-loss SVM */
+  if (loss_type == SVM_L2) {
     /* 1 / 2t = C / 2 => t = 1 / C */
     /* H = H + t * I */
     /* https://link.springer.com/article/10.1134/S1054661812010129 */
     /* http://www.lib.kobe-u.ac.jp/repository/90000225.pdf */
+    TRY( PetscObjectGetComm((PetscObject) H,&comm) );
+    TRY( MatDestroy(&svm_binary->J) );
 
-    TRY( MatGetLocalSize(H,&m,&n) );
-    TRY( MatGetSize(H,&N,NULL) );
+    if (p == 1) { /* Penalty type 1 */
+      TRY( SVMGetC(svm,&C) );
 
-    /* Set values of diagonal matrix */
-    TRY( VecDuplicate(lb,&svm_binary->diag) );
-    diag = svm_binary->diag;
-    if (p == 1) {
-      TRY( VecSet(diag,1. / C) );
-    } else {
+      TRY( MatGetLocalSize(H,&m,&n) );
+      TRY( MatGetSize(H,&M,&N) );
+
+      TRY( MatCreateConstantDiagonal(comm,m,n,M,N,1. / C,&svm_binary->J) );
+      TRY( MatAssemblyBegin(svm_binary->J,MAT_FINAL_ASSEMBLY) );
+      TRY( MatAssemblyEnd(svm_binary->J,MAT_FINAL_ASSEMBLY) );
+    } else { /* Penalty type 2 */
+      TRY( SVMGetCp(svm,&Cp) );
+      TRY( SVMGetCn(svm,&Cn) );
+
+      TRY( VecDestroy(&svm_binary->diag) );
+      TRY( VecDuplicate(y,&svm_binary->diag) );
+      diag = svm_binary->diag;
+
       TRY( VecGetSubVector(diag,svm_binary->is_p,&diag_p) );
       TRY( VecSet(diag_p,1. / Cp) );
       TRY( VecRestoreSubVector(diag,svm_binary->is_p,&diag_p) );
@@ -616,17 +723,126 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
       TRY( VecGetSubVector(diag,svm_binary->is_n,&diag_n) );
       TRY( VecSet(diag_n,1. / Cn) );
       TRY( VecRestoreSubVector(diag,svm_binary->is_n,&diag_n) );
-    }
-    TRY( MatCreateDiag(diag,&svm_binary->D) );
 
-    mats[0] = svm_binary->D;
+      TRY( MatCreateDiag(diag,&svm_binary->J) );
+    }
+
+    mats[0] = svm_binary->J;
     mats[1] = H;
-    TRY( MatCreateSum(PetscObjectComm((PetscObject)svm),2,mats,&HpE) );
+    TRY( MatCreateSum(comm,2,mats,&HpJ) ); /* H = H + J */
     TRY( MatDestroy(&H) );
-    H  = HpE;
-    ub = NULL;
+
+    H  = HpJ;
   }
 
+  *A = H;
+  /* Decreasing reference counts */
+  TRY( MatDestroy(&X) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetUp_Binary"
+PetscErrorCode SVMSetUp_Binary(SVM svm)
+{
+  SVM_Binary  *svm_binary = (SVM_Binary *) svm->data;
+
+  QPS         qps;
+  QP          qp;
+
+  Mat         Xt;
+  Vec         y;
+
+  Mat         H;
+  Vec         e;
+  Vec         x_init,x_init_p,x_init_n;
+  Mat         Be = NULL;
+  PetscReal   norm;
+  Vec         lb;
+  Vec         ub = NULL,ub_p,ub_n;
+
+  PetscInt    p;        /* penalty type */
+  PetscInt    svm_mod;
+  SVMLossType loss_type;
+
+  PetscReal   C,Cp,Cn;
+
+  PetscInt    i;
+
+  /* monitors */
+  PetscBool   svm_monitor_set;
+  void        *mctx;  /* monitor context */
+
+  PetscFunctionBegin;
+  if (svm->setupcalled) PetscFunctionReturn(0);
+
+  if (svm->posttraincalled) {
+    TRY( SVMUpdate_Binary_Private(svm) );
+    PetscFunctionReturn(0);
+  }
+
+  /* TODO generalize implementation of hyper parameter optimization */
+  if (svm->hyperoptset) {
+    TRY( SVMGridSearch(svm) );
+  }
+
+  TRY( SVMComputeOperator(svm,&H) ); /* compute Hessian of QP problem */
+  TRY( SVMSetOperator(svm,H) );
+
+  TRY( SVMGetTrainingDataset(svm,&Xt,&y) ); /* get samples and label vector for latter computing */
+
+  TRY( SVMGetQPS(svm,&qps) );
+  TRY( QPSGetQP(qps,&qp) );
+
+  /* Set RHS */
+  TRY( VecDuplicate(y,&e) );  /* creating vector e same size and type as y_training */
+  TRY( VecSet(e,1.) );
+  TRY( QPSetRhs(qp,e) );      /* set linear term of QP problem */
+
+  /* Set equality constraint for SVM mod 1 */
+  TRY( SVMGetMod(svm,&svm_mod) );
+  if (svm_mod == 1) {
+    TRY( MatCreateOneRow(y,&Be) );   /* Be = y^t */
+    TRY( VecNorm(y,NORM_2,&norm) );
+    TRY( MatScale(Be,1. / norm) );    /* ||Be|| = 1 */
+    TRY( QPSetEq(qp,Be,NULL) );
+  }
+
+  /* Create box constraint */
+  TRY( VecDuplicate(y,&lb) );  /* create lower bound constraint */
+  TRY( VecSet(lb,0.) );
+
+  TRY( SVMGetPenaltyType(svm,&p) );
+  if (p == 1) {
+    TRY( SVMGetC(svm,&C) );
+  } else {
+    TRY( SVMGetCp(svm,&Cp) );
+    TRY( SVMGetCn(svm,&Cn) );
+  }
+
+  TRY( SVMGetLossType(svm,&loss_type) );
+  if (loss_type == SVM_L1) {
+    TRY( VecDuplicate(lb,&ub) );
+
+    if (p == 1) {
+      TRY( VecSet(ub,C) );
+    } else {
+      /* Set upper bound constrain related to positive samples */
+      TRY( VecGetSubVector(ub,svm_binary->is_p,&ub_p) );
+      TRY( VecSet(ub_p,Cp) );
+      TRY( VecRestoreSubVector(ub,svm_binary->is_p,&ub_p) );
+
+      /* Set upper bound constrain related to negative samples */
+      TRY( VecGetSubVector(ub,svm_binary->is_n,&ub_n) );
+      TRY( VecSet(ub_n,Cn) );
+      TRY( VecRestoreSubVector(ub,svm_binary->is_n,&ub_n) );
+    }
+  }
+
+  TRY( QPSetBox(qp,NULL,lb,ub) );
+
+  /* TODO create public method for setting initial vector */
+  /* Set initial guess */
   TRY( VecDuplicate(lb,&x_init) );
   if (p == 1) {
     TRY( VecSet(x_init,C - 100 * PETSC_MACHINE_EPSILON) );
@@ -642,10 +858,8 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   TRY( QPSetInitialVector(qp,x_init) );
   TRY( VecDestroy(&x_init) );
 
-  TRY( QPSetOperator(qp,H) );
-  TRY( QPSetBox(qp,NULL,lb,ub) );
-
-  /* set monitors */
+  /* TODO create public method for setting monitors */
+  /* Set monitors */
   TRY( PetscOptionsHasName(NULL,((PetscObject) svm)->prefix,"-svm_monitor",&svm_monitor_set) );
   if (svm_monitor_set) {
     TRY( SVMMonitorCreateCtx_Binary(&mctx,svm) );
@@ -698,25 +912,27 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
     }
   }
 
+  /* Set QPS */
   if (svm->setfromoptionscalled) {
     TRY( QPTFromOptions(qp) );
     TRY( QPSSetFromOptions(qps) );
   }
-
   TRY( QPSSetUp(qps) );
 
-  /* decreasing reference counts */
-  TRY( MatDestroy(&X_training) );
+  /* Create work vectors */
+  for (i = 0; i < 3; ++i) {
+    TRY( VecDestroy(&svm_binary->work[i]) );
+  }
+  TRY( MatCreateVecs(Xt,NULL,&svm_binary->work[0]) ); /* TODO use duplicated vector y instead of creating vec? */
+  TRY( VecDuplicate(svm_binary->work[0],&svm_binary->work[1]) );
+  TRY( VecDuplicate(svm_binary->work[0],&svm_binary->work[2]) );
+
+  /* Decreasing reference counts using destroy methods */
   TRY( MatDestroy(&H) );
   TRY( MatDestroy(&Be) );
   TRY( VecDestroy(&e) );
   TRY( VecDestroy(&lb) );
   TRY( VecDestroy(&ub) );
-
-  /* create work vecs */
-  TRY( MatCreateVecs(Xt_training,NULL,&svm_binary->work[0]) );
-  TRY( VecDuplicate(svm_binary->work[0],&svm_binary->work[1]) );
-  TRY( VecDuplicate(svm_binary->work[0],&svm_binary->work[2]) );
 
   svm->setupcalled = PETSC_TRUE;
   PetscFunctionReturn(0);
@@ -780,7 +996,6 @@ PetscErrorCode SVMReconstructHyperplane_Binary(SVM svm)
 {
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
-  QPS       qps;
   QP        qp;
   Vec       lb,ub;
 
@@ -794,15 +1009,11 @@ PetscErrorCode SVMReconstructHyperplane_Binary(SVM svm)
   PetscInt  svm_mod;
 
   PetscFunctionBegin;
-  TRY( SVMGetMod(svm,&svm_mod) );
-
-  TRY( SVMGetQPS(svm,&qps) );
-  TRY( QPSGetQP(qps,&qp) );
-
   TRY( SVMGetTrainingDataset(svm,&Xt,NULL) );
   y = svm_binary->y_inner;
 
   /* Reconstruction of hyperplane normal */
+  TRY( SVMGetQP(svm,&qp) );
   TRY( QPGetSolutionVector(qp,&x) );
   TRY( VecDuplicate(x,&yx) );
 
@@ -811,6 +1022,7 @@ PetscErrorCode SVMReconstructHyperplane_Binary(SVM svm)
   TRY( MatMultTranspose(Xt,yx,w_inner) ); /* w = (X^t)^t * yx = X * yx */
 
   /* Reconstruction of the hyperplane bias */
+  TRY( SVMGetMod(svm,&svm_mod) );
   if (svm_mod == 1) {
     TRY( QPGetBox(qp,NULL,&lb,&ub) );
 
@@ -914,17 +1126,14 @@ PetscErrorCode SVMComputeModelParams_Binary(SVM svm)
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
   QP          qp;
-  QPS         qps;
   Vec         x,lb,ub;
-
   Vec         w;
 
   SVMLossType loss_type;
   PetscInt    svm_mod;
 
   PetscFunctionBegin;
-  TRY( SVMGetQPS(svm,&qps) );
-  TRY( QPSGetQP(qps,&qp) );
+  TRY( SVMGetQP(svm,&qp) );
   TRY( SVMGetLossType(svm,&loss_type) );
   TRY( SVMGetMod(svm,&svm_mod) );
 
@@ -1038,7 +1247,6 @@ PetscErrorCode SVMComputeObjFuncValues_Binary_Private(SVM svm)
 
   PetscReal   tmp;
 
-  QPS         qps;
   QP          qp;
   Vec         x;
 
@@ -1072,8 +1280,7 @@ PetscErrorCode SVMComputeObjFuncValues_Binary_Private(SVM svm)
   }
 
   /* Compute value of dual objective function */
-  TRY( SVMGetQPS(svm,&qps) );
-  TRY( QPSGetQP(qps,&qp) );
+  TRY( SVMGetQP(svm,&qp) );
   TRY( QPGetSolutionVector(qp,&x) );
   TRY( QPComputeObjective(qp,x,&svm_binary->dualObj) );
   svm_binary->dualObj *= -1.;
@@ -1550,6 +1757,66 @@ PetscErrorCode SVMGridSearch_Binary(SVM svm)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMLoadGramian_Binary"
+PetscErrorCode SVMLoadGramian_Binary(SVM svm,PetscViewer v)
+{
+  Mat G;
+
+  PetscFunctionBegin;
+  /* Create matrix */
+  TRY( MatCreate(PetscObjectComm((PetscObject) svm),&G) );
+  TRY( MatSetType(G,MATDENSE) );
+  TRY( PetscObjectSetName((PetscObject) G,"G") );
+  TRY( PetscObjectSetOptionsPrefix((PetscObject) G,"G_") );
+  TRY( MatSetFromOptions(G) );
+
+  TRY( MatLoad(G,v) );
+  TRY( SVMSetGramian(svm,G) );
+
+  /* Free memory */
+  TRY( MatDestroy(&G) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMViewGramian_Binary"
+PetscErrorCode SVMViewGramian_Binary(SVM svm,PetscViewer v)
+{
+  const char *type_name = NULL;
+
+  Mat        G;
+  PetscInt   M,N;
+
+  PetscBool  isascii;
+
+  PetscFunctionBegin;
+  TRY( SVMGetGramian(svm,&G) );
+  if (!G) {
+    FLLOP_SETERRQ(PetscObjectComm((PetscObject) v),PETSC_ERR_ARG_NULL,"Gramian (kernel) matrix is not set");
+  }
+
+  TRY( PetscObjectTypeCompare((PetscObject)v,PETSCVIEWERASCII,&isascii) );
+  if (isascii) {
+    TRY( PetscObjectPrintClassNamePrefixType((PetscObject) svm,v) );
+
+    TRY( PetscViewerASCIIPushTab(v) );
+
+    TRY( MatGetSize(G,&M,&N) );
+    TRY( PetscObjectPrintClassNamePrefixType((PetscObject) G,v) );
+    TRY( PetscViewerASCIIPushTab(v) );
+    TRY( PetscViewerASCIIPrintf(v,"dimensions: %D,%D\n",M,N) );
+    /* TODO information related to kernel type, parameters, mod etc. */
+    TRY( PetscViewerASCIIPopTab(v) );
+
+    TRY( PetscViewerASCIIPopTab(v) );
+  } else {
+    TRY( PetscObjectGetType((PetscObject) v,&type_name) );
+    FLLOP_SETERRQ1(PetscObjectComm((PetscObject) v),PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewGramian",type_name);
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMLoadTrainingDataset_Binary"
 PetscErrorCode SVMLoadTrainingDataset_Binary(SVM svm,PetscViewer v)
 {
@@ -1644,7 +1911,8 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm_binary->b           = 1.;
   svm_binary->qps         = NULL;
   svm_binary->Xt_training = NULL;
-  svm_binary->D           = NULL;
+  svm_binary->G           = NULL;
+  svm_binary->J           = NULL;
   svm_binary->diag        = NULL;
   svm_binary->y_training  = NULL;
   svm_binary->y_inner     = NULL;
@@ -1678,13 +1946,21 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm->ops->computemodelscores    = SVMComputeModelScores_Binary;
   svm->ops->computehingeloss      = SVMComputeHingeLoss_Binary;
   svm->ops->computemodelparams    = SVMComputeModelParams_Binary;
+  svm->ops->loadgramian           = SVMLoadGramian_Binary;
+  svm->ops->viewgramian           = SVMViewGramian_Binary;
   svm->ops->loadtrainingdataset   = SVMLoadTrainingDataset_Binary;
   svm->ops->viewtrainingdataset   = SVMViewTrainingDataset_Binary;
 
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetGramian_C",SVMSetGramian_Binary) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetGramian_C",SVMGetGramian_Binary) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetOperator_C",SVMSetOperator_Binary) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetOperator_C",SVMGetOperator_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingDataset_C",SVMSetTrainingDataset_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C",SVMGetTrainingDataset_Binary) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMComputeOperator_C",SVMComputeOperator_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetQPS_C",SVMSetQPS_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetQPS_C",SVMGetQPS_Binary) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetQP_C",SVMGetQP_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetBias_C",SVMSetBias_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetBias_C",SVMGetBias_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetSeparatingHyperplane_C",SVMSetSeparatingHyperplane_Binary) );

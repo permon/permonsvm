@@ -24,6 +24,8 @@ struct _SVMOps {
   PetscErrorCode (*computemodelscores)(SVM,Vec,Vec);
   PetscErrorCode (*computehingeloss)(SVM);
   PetscErrorCode (*computemodelparams)(SVM);
+  PetscErrorCode (*loadgramian)(SVM,PetscViewer);
+  PetscErrorCode (*viewgramian)(SVM,PetscViewer);
   PetscErrorCode (*loadtrainingdataset)(SVM,PetscViewer);
   PetscErrorCode (*viewtrainingdataset)(SVM,PetscViewer);
 };
@@ -64,5 +66,6 @@ struct _p_SVM {
 };
 
 FLLOP_EXTERN PetscLogEvent SVM_LoadDataset;
+FLLOP_EXTERN PetscLogEvent SVM_LoadGramian;
 #endif
 

@@ -12,7 +12,9 @@ typedef struct {
 
     PetscScalar y_map[2];
     Vec         diag;
-    Mat         D;
+    Mat         J;
+
+    Mat         G;
 
     Vec         w;
     PetscScalar b;

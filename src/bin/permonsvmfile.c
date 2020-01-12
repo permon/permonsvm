@@ -26,7 +26,8 @@ PetscErrorCode SVMRunBinaryClassification()
 
   char        training_file[PETSC_MAX_PATH_LEN] = "examples/data/heart_scale.bin";
   char        test_file[PETSC_MAX_PATH_LEN]     = "";
-  PetscBool   test_file_set = PETSC_FALSE;
+  char        kernel_file[PETSC_MAX_PATH_LEN]   = "";
+  PetscBool   test_file_set = PETSC_FALSE,kernel_file_set = PETSC_FALSE;
 
   char        *extension = NULL;
 
@@ -36,6 +37,7 @@ PetscErrorCode SVMRunBinaryClassification()
   PetscFunctionBeginI;
   TRY( PetscOptionsGetString(NULL,NULL,"-f_training",training_file,sizeof(training_file),NULL) );
   TRY( PetscOptionsGetString(NULL,NULL,"-f_test",test_file,sizeof(test_file),&test_file_set) );
+  TRY( PetscOptionsGetString(NULL,NULL,"-f_kernel",kernel_file,sizeof(kernel_file),&kernel_file_set) );
 
   TRY( SVMCreate(comm,&svm) );
   TRY( SVMSetType(svm,SVM_BINARY) );
@@ -62,6 +64,26 @@ PetscErrorCode SVMRunBinaryClassification()
   TRY( SVMLoadTrainingDataset(svm,viewer) );
   TRY( PetscViewerDestroy(&viewer) );
 
+  /* Load precomputed Gramian (kernel matrix), i.e. phi(X^T) * phi(X) generally */
+  if (kernel_file_set) {
+    TRY( GetFilenameExtension(kernel_file,&extension) );
+    TRY( PetscStrcmp(extension,h5,&ishdf5) );
+    TRY( PetscStrcmp(extension,bin,&isbinary) );
+
+    if (ishdf5) {
+#if defined(PETSC_HAVE_HDF5)
+      TRY( PetscViewerHDF5Open(comm,kernel_file,FILE_MODE_READ,&viewer) );
+#else
+      FLLOP_SETERRQ(comm,PETSC_ERR_SUP,"PETSc is not configured with HDF5");
+#endif
+    } else if (isbinary) {
+      TRY( PetscViewerBinaryOpen(comm,kernel_file,FILE_MODE_READ,&viewer) );
+    } else {
+      FLLOP_SETERRQ1(comm,PETSC_ERR_SUP,"File type %s not supported",extension);
+    }
+    TRY( SVMLoadGramian(svm,viewer) );
+    TRY( PetscViewerDestroy(&viewer) );
+  }
   /* Load test dataset */
   if (test_file_set) {
     TRY( GetFilenameExtension(test_file,&extension) );
