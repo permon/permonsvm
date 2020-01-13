@@ -747,18 +747,17 @@ PetscErrorCode SVMSetPenalty(SVM svm,PetscInt m,PetscReal p[])
 #undef __FUNCT__
 #define __FUNCT__ "SVMGridSearchSetBaseLogC"
 /*@
-  TODO edit and improve comment regarding to grid-search stride concept
-  SVMGridSearchSetBaseLogC - Sets the value of penalty C step.
+  SVMGridSearchSetBaseLogC - Sets the base of log of C values that specify grid (penalty type 1).
 
   Logically Collective on SVM
 
   Input Parameters:
 + svm - SVM context
-- logC_base - the value of penalty C step
+- logC_base - base of log of C
 
   Level: beginner
 
-.seealso SVMSetC(), SVMSetLogBase(), SVMSetLogCMin(), SVMSetLogCMax(), SVMGridSearch()
+.seealso SVMGridSearch(), SVMGridSearchGetBaseLogC(), SVMGridSearchSetStrideLogC(), SVMSetPenaltyType()
 @*/
 PetscErrorCode SVMGridSearchSetBaseLogC(SVM svm,PetscReal logC_base)
 {
@@ -777,8 +776,7 @@ PetscErrorCode SVMGridSearchSetBaseLogC(SVM svm,PetscReal logC_base)
 #undef __FUNCT__
 #define __FUNCT__ "SVMGridSearchGetBaseLogC"
 /*@
-  TODO edit and improve comment regarding to grid-search stride concept
-  SVMGridSearchGetBaseLogC - Returns the value of penalty C step.
+  SVMGridSearchGetBaseLogC - Returns the base of log of C values that specify grid (penalty type 1).
 
   Not Collective
 
@@ -786,11 +784,11 @@ PetscErrorCode SVMGridSearchSetBaseLogC(SVM svm,PetscReal logC_base)
 . svm - SVM context
 
   Output Parameter:
-. logC_base - the value of penalty C step
+. logC_base - base of log of C
 
   Level: beginner
 
-.seealso SVMGetC(), SVMGetLogCMin(), SVMGetLogCMax(), SVMGridSearch()
+.seealso SVMGridSearch(), SVMGridSearchSetBaseLogC(), SVMGridSearchSetStrideLogC(), SVMSetPenaltyType()
 @*/
 PetscErrorCode SVMGridSearchGetBaseLogC(SVM svm,PetscReal *logC_base)
 {
@@ -806,7 +804,7 @@ PetscErrorCode SVMGridSearchGetBaseLogC(SVM svm,PetscReal *logC_base)
 #undef __FUNCT__
 #define __FUNCT__ "SVMGridSearchSetStrideLogC"
 /*@
-  SVMGridSearchSetStrideLogC - Sets stride of log C values that specify grid used in hyperparameter optimization based on grid-searching.
+  SVMGridSearchSetStrideLogC - Sets stride of log C values that specify grid used in hyperparameter optimization based on grid-searching (penalty type 1).
 
   Logically Collective on SVM
 
@@ -818,7 +816,7 @@ PetscErrorCode SVMGridSearchGetBaseLogC(SVM svm,PetscReal *logC_base)
 
   Level: beginner
 
-.seealso SVMGridSearchSetStrideLogC()
+.seealso SVMGridSearch(), SVMGridSearchSetBaseLogC(), SVMGridSearchGetStrideLogC(), SVMSetPenaltyType()
 @*/
 PetscErrorCode SVMGridSearchSetStrideLogC(SVM svm,PetscReal logC_start,PetscReal logC_end,PetscReal logC_step)
 {
@@ -844,12 +842,12 @@ PetscErrorCode SVMGridSearchSetStrideLogC(SVM svm,PetscReal logC_start,PetscReal
 #undef __FUNCT__
 #define __FUNCT__ "SVMGridSearchGetStrideLogC"
 /*@
-  SVMGridSearchGetStrideLogC - Gets stride of log C values used for specifying grid in hyperparameter optimization based on grid-searching.
+  SVMGridSearchGetStrideLogC - Returns stride of log C values used for specifying grid in hyperparameter optimization based on grid-searching (penalty type 1).
 
   Not Collective
 
   Input Parameter:
-+ svm - SVM context
+. svm - SVM context
 
   Output Parameters:
 + logC_start - first value of log C stride
@@ -858,7 +856,7 @@ PetscErrorCode SVMGridSearchSetStrideLogC(SVM svm,PetscReal logC_start,PetscReal
 
   Level: beginner
 
-.seealso SVMGridSearchSetStrideLogC()
+.seealso SVMGridSearch(), SVMGridSearchSetBaseLogC(), SVMGridSearchSetStrideLogC(), SVMSetPenaltyType()
 @*/
 PetscErrorCode SVMGridSearchGetStrideLogC(SVM svm,PetscReal *logC_start,PetscReal *logC_end,PetscReal *logC_step)
 {
@@ -884,18 +882,17 @@ PetscErrorCode SVMGridSearchGetStrideLogC(SVM svm,PetscReal *logC_start,PetscRea
 #undef __FUNCT__
 #define __FUNCT__ "SVMGridSearchSetPositiveBaseLogC"
 /*@
-  TODO edit and improve comment regarding to grid-search stride concept
-  SVMGridSearchSetPositiveBaseLogC - Sets the value of penalty Cp step.
+  SVMGridSearchSetPositiveBaseLogC - Returns the base of log of C+ values that specify grid (penalty type 2).
 
   Logically Collective on SVM
 
   Input Parameters:
 + svm - SVM context
-- logCp_base - the value of penalty Cp step
+- logCp_base - base of log of C+
 
   Level: beginner
 
-.seealso SVMSetCp(), SVMGetLogCpBase(), SVMSetLogCpMin(), SVMSetLogCpMax(), SVMGridSearch()
+.seealso SVMGridSearch(), SVMGridSearchGetPositiveBaseLogC(), SVMGridSearchSetPositiveStrideLogC(), SVMGridSearchSetNegativeBaseLogC(), SVMGridSearchSetNegativeStrideLogC(), SVMSetPenaltyType()
 @*/
 PetscErrorCode SVMGridSearchSetPositiveBaseLogC(SVM svm,PetscReal logCp_base)
 {
@@ -914,8 +911,7 @@ PetscErrorCode SVMGridSearchSetPositiveBaseLogC(SVM svm,PetscReal logCp_base)
 #undef __FUNCT__
 #define __FUNCT__ "SVMGridSearchGetPositiveBaseLogC"
 /*@
-  TODO edit and improve comment regarding to grid-search stride concept
-  SVMGridSearchGetPosBaseLogC - Returns the value of penalty Cp step.
+  SVMGridSearchGetPosBaseLogC - Returns the base of log of C+ values that specify grid (penalty type 2).
 
   Not Collective
 
@@ -923,11 +919,11 @@ PetscErrorCode SVMGridSearchSetPositiveBaseLogC(SVM svm,PetscReal logCp_base)
 . svm - SVM context
 
   Output Parameter:
-. logCp_base - the value of penalty Cp step
+. logCp_base - base of log of C+
 
   Level: beginner
 
-.seealso SVMGetCp(), SVMGetLogCpMin(), SVMGetLogCpMax(), SVMGridSearch()
+.seealso SVMGridSearch(), SVMGridSearchSetPositiveBaseLogC(), SVMGridSearchSetPositiveStrideLogC(), SVMGridSearchSetNegativeBaseLogC(), SVMGridSearchSetNegativeStrideLogC(), SVMSetPenaltyType()
 @*/
 PetscErrorCode SVMGridSearchGetPositiveBaseLogC(SVM svm,PetscReal *logCp_base)
 {
@@ -943,7 +939,7 @@ PetscErrorCode SVMGridSearchGetPositiveBaseLogC(SVM svm,PetscReal *logCp_base)
 #undef __FUNCT__
 #define __FUNCT__ "SVMGridSearchSetPositiveStrideLogC"
 /*@
-  SVMGridSearchSetPositiveStrideLogC - Sets stride of log C+ values that specify grid used in hyperparameter optimization based on grid-searching.
+  SVMGridSearchSetPositiveStrideLogC - Sets stride of log C+ values that specify grid used in hyperparameter optimization based on grid-searching (penalty type 2).
 
   Logically Collective on SVM
 
@@ -955,7 +951,7 @@ PetscErrorCode SVMGridSearchGetPositiveBaseLogC(SVM svm,PetscReal *logCp_base)
 
   Level: beginner
 
-.seealso SVMGridSearchGetPositiveStrideLogC()
+.seealso SVMGridSearch(), SVMGridSearchSetPositiveBaseLogC(), SVMGridSearchGetPositiveStrideLogC(), SVMGridSearchSetNegativeBaseLogC(), SVMGridSearchSetNegativeStrideLogC(), SVMSetPenaltyType()
 @*/
 PetscErrorCode SVMGridSearchSetPositiveStrideLogC(SVM svm,PetscReal logC_start,PetscReal logC_end,PetscReal logC_step)
 {
@@ -981,12 +977,12 @@ PetscErrorCode SVMGridSearchSetPositiveStrideLogC(SVM svm,PetscReal logC_start,P
 #undef __FUNCT__
 #define __FUNCT__ "SVMGridSearchGetPositiveStrideLogC"
 /*@
-  SVMGridSearchGetStrideLogC - Gets stride of log C+ values used for specifying grid in hyperparameter optimization based on grid-searching.
+  SVMGridSearchGetStrideLogC - Returns stride of log C+ values used for specifying grid in hyperparameter optimization based on grid-searching (penalty type 2).
 
   Not Collective
 
   Input Parameter:
-+ svm - SVM context
+. svm - SVM context
 
   Output Parameters:
 + logC_start - first value of log C+ stride
@@ -995,7 +991,7 @@ PetscErrorCode SVMGridSearchSetPositiveStrideLogC(SVM svm,PetscReal logC_start,P
 
   Level: beginner
 
-.seealso SVMGridSearchSetPositiveStrideLogC()
+.seealso SVMGridSearch(), SVMGridSearchSetPositiveBaseLogC(), SVMGridSearchSetPositiveStrideLogC(), SVMGridSearchSetNegativeBaseLogC(), SVMGridSearchSetNegativeStrideLogC(), SVMSetPenaltyType()
 @*/
 PetscErrorCode SVMGridSearchGetPositiveStrideLogC(SVM svm,PetscReal *logC_start,PetscReal *logC_end,PetscReal *logC_step)
 {
@@ -1021,18 +1017,17 @@ PetscErrorCode SVMGridSearchGetPositiveStrideLogC(SVM svm,PetscReal *logC_start,
 #undef __FUNCT__
 #define __FUNCT__ "SVMGridSearchSetNegativeBaseLogC"
 /*@
-  TODO edit and improve comment regarding to grid-search stride concept
-  SVMGridSearchSetNegativeBaseLogC - Sets the value of penalty Cn step.
+  SVMGridSearchSetNegativeBaseLogC - Sets the base of log of C- values that specify grid (penalty type 2).
 
   Logically Collective on SVM
 
   Input Parameters:
 + svm - SVM context
-- logCn_base - the value of penalty Cn step
+- logCn_base - base of log of C-
 
   Level: beginner
 
-.seealso SVMSetCn(), SVMGetLogCnBase(), SVMSetLogCnMin(), SVMSetLogCnMax(), SVMGridSearch()
+.seealso SVMGridSearch(), SVMGridSearchGetNegativeBaseLogC(), SVMGridSearchSetNegativeStrideLogC(), SVMGridSearchSetPositiveBaseLogC(), SVMGridSearchSetPositiveStrideLogC(), SVMSetPenaltyType()
 @*/
 PetscErrorCode SVMGridSearchSetNegativeBaseLogC(SVM svm,PetscReal logCn_base)
 {
@@ -1051,8 +1046,7 @@ PetscErrorCode SVMGridSearchSetNegativeBaseLogC(SVM svm,PetscReal logCn_base)
 #undef __FUNCT__
 #define __FUNCT__ "SVMGridSearchGetNegativeBaseLogC"
 /*@
-  TODO edit and improve comment regarding to grid-search stride concept
-  SVMGridSearchGetNegativeBaseLogC - Returns the value of penalty Cn step.
+  SVMGridSearchGetNegativeBaseLogC - Returns base of log of C- values that specify grid (penalty type 2).
 
   Not Collective
 
@@ -1060,11 +1054,11 @@ PetscErrorCode SVMGridSearchSetNegativeBaseLogC(SVM svm,PetscReal logCn_base)
 . svm - SVM context
 
   Output Parameter:
-. logCn_base - the value of penalty Cn step
+. logCn_base - base of log of C-
 
   Level: beginner
 
-.seealso SVMGetCn(), SVMGetLogCnMin(), SVMGetLogCnMax(), SVMGridSearch()
+.seealso SVMGridSearch(), SVMGridSearchSetNegativeBaseLogC(), SVMGridSearchSetNegativeStrideLogC(), SVMGridSearchSetPositiveBaseLogC(), SVMGridSearchSetPositiveStrideLogC(), SVMSetPenaltyType()
 @*/
 PetscErrorCode SVMGridSearchGetNegativeBaseLogC(SVM svm,PetscReal *logCn_base)
 {
@@ -1080,7 +1074,7 @@ PetscErrorCode SVMGridSearchGetNegativeBaseLogC(SVM svm,PetscReal *logCn_base)
 #undef __FUNCT__
 #define __FUNCT__ "SVMGridSearchSetNegativeStrideLogC"
 /*@
-  SVMGridSearchSetNegativeStrideLogC - Sets stride of log C- values that specify grid used in hyperparameter optimization based on grid-searching.
+  SVMGridSearchSetNegativeStrideLogC - Sets stride of log C- values that specify grid used in hyperparameter optimization based on grid-searching (penalty type 2).
 
   Logically Collective on SVM
 
@@ -1092,7 +1086,7 @@ PetscErrorCode SVMGridSearchGetNegativeBaseLogC(SVM svm,PetscReal *logCn_base)
 
   Level: beginner
 
-.seealso SVMGridSearchGetNegativeStrideLogC()
+.seealso SVMGridSearch(), SVMGridSearchSetNegativeBaseLogC(), SVMGridSearchGetNegativeStrideLogC(), SVMGridSearchSetPositiveBaseLogC(), SVMGridSearchSetPositiveStrideLogC(), SVMSetPenaltyType()
 @*/
 PetscErrorCode SVMGridSearchSetNegativeStrideLogC(SVM svm,PetscReal logC_start,PetscReal logC_end,PetscReal logC_step)
 {
@@ -1118,12 +1112,12 @@ PetscErrorCode SVMGridSearchSetNegativeStrideLogC(SVM svm,PetscReal logC_start,P
 #undef __FUNCT__
 #define __FUNCT__ "SVMGridSearchGetNegativeStrideLogC"
 /*@
-  SVMGridSearchGetStrideLogC - Gets stride of log C- values used for specifying grid in hyperparameter optimization based on grid-searching.
+  SVMGridSearchGetStrideLogC - Gets stride of log C- values used for specifying grid in hyperparameter optimization based on grid-searching (penalty type 2).
 
   Not Collective
 
   Input Parameter:
-+ svm - SVM context
+. svm - SVM context
 
   Output Parameters:
 + logC_start - the first value of log C- stride
@@ -1132,7 +1126,7 @@ PetscErrorCode SVMGridSearchSetNegativeStrideLogC(SVM svm,PetscReal logC_start,P
 
   Level: beginner
 
-.seealso SVMGridSearchSetNegativeStrideLogC()
+.seealso SVMGridSearch(), SVMGridSearchSetNegativeBaseLogC(), SVMGridSearchSetNegativeStrideLogC(), SVMGridSearchSetPositiveBaseLogC(), SVMGridSearchSetPositiveStrideLogC(), SVMSetPenaltyType()
 @*/
 PetscErrorCode SVMGridSearchGetNegativeStrideLogC(SVM svm,PetscReal *logC_start,PetscReal *logC_end,PetscReal *logC_step)
 {
