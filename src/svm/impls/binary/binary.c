@@ -1429,10 +1429,10 @@ PetscErrorCode SVMInitGridSearch_Binary_Private(SVM svm,PetscInt *n_out,PetscRea
 
     for (i = 0; i < n; ++i) grid[i] = PetscPowReal(base_1,start_1 + i * step_1);
   } else {
-    TRY( SVMGridSearchGetPosBaseLogC(svm,&base_1) );
-    TRY( SVMGridSearchGetPosStrideLogC(svm,&start_1,&end_1,&step_1) );
-    TRY( SVMGridSearchGetNegBaseLogC(svm,&base_2) );
-    TRY( SVMGridSearchGetNegStrideLogC(svm,&start_2,&end_2,&step_2) );
+    TRY( SVMGridSearchGetPositiveBaseLogC(svm,&base_1) );
+    TRY( SVMGridSearchGetPositiveStrideLogC(svm,&start_1,&end_1,&step_1) );
+    TRY( SVMGridSearchGetNegativeBaseLogC(svm,&base_2) );
+    TRY( SVMGridSearchGetNegativeStrideLogC(svm,&start_2,&end_2,&step_2) );
 
     n_1 = (PetscAbs(end_1 - start_1) + 1) / PetscAbs(step_1);
     n_2 = (PetscAbs(end_2 - start_2) + 1) / PetscAbs(step_2);
@@ -1471,8 +1471,7 @@ PetscErrorCode SVMGridSearch_Binary(SVM svm)
   TRY( SVMInitGridSearch_Binary_Private(svm,&n,&grid) );
   /* Perform cross-validation */
   s = n / m;
-  TRY( PetscMalloc1(s,&scores) );
-  TRY( PetscMemzero(scores,s * sizeof(PetscReal)) );
+  TRY( PetscCalloc1(s,&scores) );
   TRY( SVMCrossValidation(svm,grid,n,scores) );
 
   /* Find best score */

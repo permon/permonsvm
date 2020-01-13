@@ -207,14 +207,14 @@ FLLOP_EXTERN PetscErrorCode SVMGridSearchGetBaseLogC(SVM,PetscReal *);
 FLLOP_EXTERN PetscErrorCode SVMGridSearchSetStrideLogC(SVM,PetscReal,PetscReal,PetscReal);
 FLLOP_EXTERN PetscErrorCode SVMGridSearchGetStrideLogC(SVM,PetscReal *,PetscReal *,PetscReal *);
 /* Penalty type 2 */
-FLLOP_EXTERN PetscErrorCode SVMGridSearchSetPosBaseLogC(SVM,PetscReal);
-FLLOP_EXTERN PetscErrorCode SVMGridSearchGetPosBaseLogC(SVM,PetscReal *);
-FLLOP_EXTERN PetscErrorCode SVMGridSearchSetPosStrideLogC(SVM,PetscReal,PetscReal,PetscReal);
-FLLOP_EXTERN PetscErrorCode SVMGridSearchGetPosStrideLogC(SVM,PetscReal *,PetscReal *,PetscReal *);
-FLLOP_EXTERN PetscErrorCode SVMGridSearchSetNegBaseLogC(SVM,PetscReal);
-FLLOP_EXTERN PetscErrorCode SVMGridSearchGetNegBaseLogC(SVM,PetscReal *);
-FLLOP_EXTERN PetscErrorCode SVMGridSearchSetNegStrideLogC(SVM,PetscReal,PetscReal,PetscReal);
-FLLOP_EXTERN PetscErrorCode SVMGridSearchGetNegStrideLogC(SVM,PetscReal *,PetscReal *,PetscReal *);
+FLLOP_EXTERN PetscErrorCode SVMGridSearchSetPositiveBaseLogC(SVM,PetscReal);
+FLLOP_EXTERN PetscErrorCode SVMGridSearchGetPositiveBaseLogC(SVM,PetscReal *);
+FLLOP_EXTERN PetscErrorCode SVMGridSearchSetPositiveStrideLogC(SVM,PetscReal,PetscReal,PetscReal);
+FLLOP_EXTERN PetscErrorCode SVMGridSearchGetPositiveStrideLogC(SVM,PetscReal *,PetscReal *,PetscReal *);
+FLLOP_EXTERN PetscErrorCode SVMGridSearchSetNegativeBaseLogC(SVM,PetscReal);
+FLLOP_EXTERN PetscErrorCode SVMGridSearchGetNegativeBaseLogC(SVM,PetscReal *);
+FLLOP_EXTERN PetscErrorCode SVMGridSearchSetNegativeStrideLogC(SVM,PetscReal,PetscReal,PetscReal);
+FLLOP_EXTERN PetscErrorCode SVMGridSearchGetNegativeStrideLogC(SVM,PetscReal *,PetscReal *,PetscReal *);
 
 FLLOP_EXTERN PetscErrorCode SVMSetCrossValidationType(SVM,CrossValidationType);
 FLLOP_EXTERN PetscErrorCode SVMGetCrossValidationType(SVM,CrossValidationType *);
