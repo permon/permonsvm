@@ -241,6 +241,10 @@ FLLOP_EXTERN PetscErrorCode SVMSetOptionsPrefix(SVM svm,const char []);
 FLLOP_EXTERN PetscErrorCode SVMAppendOptionsPrefix(SVM svm,const char []);
 FLLOP_EXTERN PetscErrorCode SVMGetOptionsPrefix(SVM svm,const char *[]);
 
+/* Input/Output functions */
+FLLOP_EXTERN PetscErrorCode PetscViewerLoadSVMDataset(Mat,Vec,PetscViewer);
+FLLOP_EXTERN PetscErrorCode SVMViewDataset(SVM,Mat,Vec,PetscViewer);
+
 FLLOP_EXTERN PetscErrorCode SVMLoadGramian(SVM,PetscViewer);
 FLLOP_EXTERN PetscErrorCode SVMViewGramian(SVM,PetscViewer);
 FLLOP_EXTERN PetscErrorCode SVMLoadDataset(SVM,PetscViewer,Mat,Vec);
@@ -252,5 +256,8 @@ FLLOP_EXTERN PetscErrorCode SVMViewTestDataset(SVM,PetscViewer);
 
 FLLOP_EXTERN PetscErrorCode PetscViewerSVMLightOpen(MPI_Comm,const char [],PetscViewer *);
 
+/* Functions related to a biased matrix */
 FLLOP_EXTERN PetscErrorCode MatBiasedCreate(Mat,PetscReal,Mat *);
+FLLOP_EXTERN PetscErrorCode MatBiasedGetInnerMat(Mat,Mat *);
+FLLOP_EXTERN PetscErrorCode MatBiasedGetBias(Mat,PetscReal *);
 #endif

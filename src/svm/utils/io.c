@@ -397,3 +397,49 @@ PetscErrorCode DatasetLoad_Binary(Mat Xt,Vec y,PetscViewer v)
   TRY( PetscObjectSetName((PetscObject) y,y_name) );
   PetscFunctionReturn(0);
 }
+
+#undef __FUNCT__
+#define __FUNCT__ "PetscViewerLoadSVMDataset"
+/*@
+  PetscViewerLoadDataset - Loads dataset.
+
+  Input Parameters:
+- v - viewer
+
+  Output Parameters:
++ Xt - matrix of samples
+- y - known labels of samples
+
+.seealso SVM
+@*/
+PetscErrorCode PetscViewerLoadSVMDataset(Mat Xt,Vec y,PetscViewer v)
+{
+  MPI_Comm   comm;
+  const char *type_name = NULL;
+
+  PetscBool  isascii,ishdf5,isbinary;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(Xt,MAT_CLASSID,1);
+  PetscValidHeaderSpecific(y,VEC_CLASSID,2);
+  PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,3);
+  PetscCheckSameComm(v,1,Xt,2);
+  PetscCheckSameComm(v,1,y,3);
+
+  TRY( PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERASCII,&isascii) );
+  TRY( PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERHDF5,&ishdf5) );
+  TRY( PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERBINARY,&isbinary) );
+
+  if (isascii) {
+    TRY( DatasetLoad_SVMLight(Xt,y,v) );
+  } else if (ishdf5 || isbinary) {
+    TRY( DatasetLoad_Binary(Xt,y,v) );
+  } else {
+    TRY( PetscObjectGetComm((PetscObject) v,&comm) );
+    TRY( PetscObjectGetType((PetscObject) v,&type_name) );
+
+    FLLOP_SETERRQ1(comm,PETSC_ERR_SUP,"Viewer type %s not supported for PetscViewerLoadDataset",type_name);
+  }
+
+  PetscFunctionReturn(0);
+}
