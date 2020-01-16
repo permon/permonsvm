@@ -78,6 +78,8 @@ PetscErrorCode SVMDestroy_Binary(SVM svm)
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetGramian_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetOperator_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetOperator_C",NULL) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetInitialVector_C",NULL) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetSolutionVector_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingDataset_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMComputeOperator_C",NULL) );
@@ -732,6 +734,32 @@ PetscErrorCode SVMComputeOperator_Binary(SVM svm,Mat *A)
   *A = H;
   /* Decreasing reference counts */
   TRY( MatDestroy(&X) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetInitialVector_Binary"
+PetscErrorCode SVMSetInitialVector_Binary(SVM svm,Vec x0)
+{
+  QP qp;
+
+  PetscFunctionBegin;
+  PetscCheckSameComm(svm,1,x0,2);
+
+  TRY( SVMGetQP(svm,&qp) );
+  TRY( QPSetInitialVector(qp,x0) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetSolutionVector_Binary"
+PetscErrorCode SVMGetSolutionVector_Binary(SVM svm,Vec *x)
+{
+  QP qp;
+
+  PetscFunctionBegin;
+  TRY( SVMGetQP(svm,&qp) );
+  TRY( QPGetSolutionVector(qp,x) );
   PetscFunctionReturn(0);
 }
 
@@ -1901,6 +1929,8 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetGramian_C",SVMGetGramian_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetOperator_C",SVMSetOperator_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetOperator_C",SVMGetOperator_Binary) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetInitialGuess_C",SVMSetInitialVector_Binary) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetSolutionVector_C",SVMGetSolutionVector_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingDataset_C",SVMSetTrainingDataset_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C",SVMGetTrainingDataset_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMComputeOperator_C",SVMComputeOperator_Binary) );

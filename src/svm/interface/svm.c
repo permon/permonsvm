@@ -1600,6 +1600,58 @@ PetscErrorCode SVMComputeOperator(SVM svm,Mat *A)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMSetInitialVector"
+/*@
+  SVMSetInitialVector - Sets initial vector x0 associated with underlying QP problem.
+
+  Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+- x0 - initial guess vector
+
+  Level: advanced
+
+.seealso SVM, QP, SVMGetSolutionVector(), SVMGetQP()
+@*/
+PetscErrorCode SVMSetInitialVector(SVM svm,Vec x0)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(x0,VEC_CLASSID,2);
+
+  TRY( PetscTryMethod(svm,"SVMSetInitialVector_C",(SVM,Vec),(svm,x0)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMGetSolutionVector"
+/*@
+  SVMGetSolutionVector - Gets solution vector associated with underlying QP problem.
+
+  Collective on SVM
+
+  Input Parameters:
++ svm - SVM context
+- x0 - solution vector
+
+  Level: advanced
+
+.seealso SVM, QP, SVMSetInitialVector(), SVMGetQP()
+@*/
+PetscErrorCode SVMGetSolutionVector(SVM svm,Vec *x)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidPointer(x,2);
+
+  TRY( PetscUseMethod(svm,"SVMGetSolutionVector_C",(SVM,Vec *),(svm,x)) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetTrainingDataset"
 /*@
   SVMSetTrainingDataset - Sets the training samples and labels.
