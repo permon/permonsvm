@@ -777,7 +777,7 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
 
   Mat         H;
   Vec         e;
-  Vec         x_init,x_init_p,x_init_n;
+  Vec         x_init;
   Mat         Be = NULL;
   PetscReal   norm;
   Vec         lb;
@@ -834,51 +834,39 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   TRY( VecDuplicate(y,&lb) );  /* create lower bound constraint */
   TRY( VecSet(lb,0.) );
 
-  TRY( SVMGetPenaltyType(svm,&p) );
-  if (p == 1) {
-    TRY( SVMGetC(svm,&C) );
-  } else {
-    TRY( SVMGetCp(svm,&Cp) );
-    TRY( SVMGetCn(svm,&Cn) );
-  }
-
   TRY( SVMGetLossType(svm,&loss_type) );
   if (loss_type == SVM_L1) {
     TRY( VecDuplicate(lb,&ub) );
 
+    TRY( SVMGetPenaltyType(svm,&p) );
     if (p == 1) {
+      TRY( SVMGetC(svm,&C) );
       TRY( VecSet(ub,C) );
     } else {
       /* Set upper bound constrain related to positive samples */
+      TRY( SVMGetCp(svm,&Cp) );
       TRY( VecGetSubVector(ub,svm_binary->is_p,&ub_p) );
       TRY( VecSet(ub_p,Cp) );
       TRY( VecRestoreSubVector(ub,svm_binary->is_p,&ub_p) );
 
       /* Set upper bound constrain related to negative samples */
+      TRY( SVMGetCn(svm,&Cn) );
       TRY( VecGetSubVector(ub,svm_binary->is_n,&ub_n) );
       TRY( VecSet(ub_n,Cn) );
       TRY( VecRestoreSubVector(ub,svm_binary->is_n,&ub_n) );
     }
   }
-
   TRY( QPSetBox(qp,NULL,lb,ub) );
 
   /* TODO create public method for setting initial vector */
   /* Set initial guess */
-  TRY( VecDuplicate(lb,&x_init) );
-  if (p == 1) {
-    TRY( VecSet(x_init,C - 100 * PETSC_MACHINE_EPSILON) );
-  } else {
-    TRY( VecGetSubVector(x_init,svm_binary->is_p,&x_init_p) );
-    TRY( VecSet(x_init_p,Cp - 100 * PETSC_MACHINE_EPSILON) );
-    TRY( VecRestoreSubVector(x_init,svm_binary->is_p,&x_init_p) );
-
-    TRY( VecGetSubVector(x_init,svm_binary->is_n,&x_init_n) );
-    TRY( VecSet(x_init_n,Cn - 100 * PETSC_MACHINE_EPSILON) );
-    TRY( VecRestoreSubVector(x_init,svm_binary->is_n,&x_init_n) );
+  TRY( QPGetSolutionVector(qp,&x_init) );
+  if (!x_init) {
+    TRY( VecDuplicate(lb,&x_init) );
+    TRY( VecSet(x_init,0.) );
+    TRY( QPSetInitialVector(qp,x_init) );
+    TRY( VecDestroy(&x_init) );
   }
-  TRY( QPSetInitialVector(qp,x_init) );
-  TRY( VecDestroy(&x_init) );
 
   /* TODO create public method for setting monitors */
   /* Set monitors */
