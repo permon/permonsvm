@@ -117,7 +117,6 @@ PetscErrorCode SVMView_Binary(SVM svm,PetscViewer v)
   TRY( PetscObjectTypeCompare((PetscObject)v,PETSCVIEWERASCII,&isascii) );
 
   if (isascii) {
-    TRY( PetscViewerASCIIPrintf(v,"=====================\n") );
     TRY( PetscObjectPrintClassNamePrefixType((PetscObject) svm,v) );
 
     TRY( PetscViewerASCIIPushTab(v) );
@@ -158,8 +157,6 @@ PetscErrorCode SVMView_Binary(SVM svm,PetscViewer v)
     TRY( PetscViewerASCIIPopTab(v) );
 
     TRY( PetscViewerASCIIPopTab(v) );
-
-    TRY( PetscViewerASCIIPrintf(v,"=====================\n") );
   } else {
     FLLOP_SETERRQ1(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewScore", ((PetscObject)v)->type_name);
   }
@@ -190,7 +187,6 @@ PetscErrorCode SVMViewScore_Binary(SVM svm,PetscViewer v)
     TRY( SVMGetMod(svm,&mod) );
     TRY( SVMGetLossType(svm,&loss_type) );
 
-    TRY( PetscViewerASCIIPrintf(v,"=====================\n") );
     TRY( PetscObjectPrintClassNamePrefixType((PetscObject) svm,v) );
 
     TRY( PetscViewerASCIIPushTab(v) );
@@ -222,8 +218,6 @@ PetscErrorCode SVMViewScore_Binary(SVM svm,PetscViewer v)
     TRY( PetscViewerASCIIPopTab(v) );
 
     TRY( PetscViewerASCIIPopTab(v) );
-
-    TRY( PetscViewerASCIIPrintf(v,"=====================\n") );
   } else {
     FLLOP_SETERRQ1(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewScore", ((PetscObject)v)->type_name);
   }
@@ -1618,75 +1612,54 @@ PetscErrorCode SVMGetModelScore_Binary(SVM svm,ModelScore score_type,PetscReal *
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMInitGridSearch_Binary_Private"
-PetscErrorCode SVMInitGridSearch_Binary_Private(SVM svm,PetscInt *n,PetscReal *c_arr[])
+PetscErrorCode SVMInitGridSearch_Binary_Private(SVM svm,PetscInt *n_out,PetscReal *grid_out[])
 {
   PetscInt  penalty_type;
 
-  PetscReal logC_min,logC_max,logC_base;
-  PetscReal logCp_min,logCp_max,logCp_base;
-  PetscReal logCn_min,logCn_max,logCn_base;
+  PetscReal base_1,start_1,end_1,step_1;
+  PetscReal base_2,start_2,end_2,step_2;
+  PetscReal tmp;
 
-  PetscReal Cp,Cn;
-  PetscReal C_min,Cp_min,Cn_min;
+  PetscReal *grid;
+  PetscInt  n,n_1,n_2;
 
-  PetscReal *c_arr_inner;
-  PetscInt  n_inner,np,nn;
   PetscInt  i,j,p;
 
   PetscFunctionBegin;
   TRY( SVMGetPenaltyType(svm,&penalty_type) );
-
   if (penalty_type == 1) {
-    TRY( SVMGetLogCMin(svm,&logC_min) );
-    TRY( SVMGetLogCMax(svm,&logC_max) );
-    TRY( SVMGetLogCBase(svm,&logC_base) );
+    TRY( SVMGridSearchGetBaseLogC(svm,&base_1) );
+    TRY( SVMGridSearchGetStrideLogC(svm,&start_1,&end_1,&step_1) );
 
-    C_min = PetscPowReal(logC_base,logC_min);
+    n = (PetscAbs(end_1 - start_1) + 1) / PetscAbs(step_1);
+    TRY( PetscMalloc1(n,&grid) );
 
-    n_inner = (PetscInt) (logC_max - logC_min) + 1;
-    TRY( PetscMalloc1(n_inner,&c_arr_inner) );
-
-    c_arr_inner[0] = C_min;
-    for (i = 1; i < n_inner; ++i) {
-      c_arr_inner[i] = c_arr_inner[i-1] * logC_base;
-    }
-  /* Penalty type 2: different penalty for each one class */
+    for (i = 0; i < n; ++i) grid[i] = PetscPowReal(base_1,start_1 + i * step_1);
   } else {
-    TRY( SVMGetLogCpMin(svm,&logCp_min) );
-    TRY( SVMGetLogCpMax(svm,&logCp_max) );
-    TRY( SVMGetLogCpBase(svm,&logCp_base) );
+    TRY( SVMGridSearchGetPositiveBaseLogC(svm,&base_1) );
+    TRY( SVMGridSearchGetPositiveStrideLogC(svm,&start_1,&end_1,&step_1) );
+    TRY( SVMGridSearchGetNegativeBaseLogC(svm,&base_2) );
+    TRY( SVMGridSearchGetNegativeStrideLogC(svm,&start_2,&end_2,&step_2) );
 
-    TRY( SVMGetLogCnMin(svm,&logCn_min) );
-    TRY( SVMGetLogCnMax(svm,&logCn_max) );
-    TRY( SVMGetLogCnBase(svm,&logCn_base) );
+    n_1 = (PetscAbs(end_1 - start_1) + 1) / PetscAbs(step_1);
+    n_2 = (PetscAbs(end_2 - start_2) + 1) / PetscAbs(step_2);
+    n = 2 * n_1 * n_2;
+    TRY( PetscMalloc1(n,&grid) );
 
-    Cp_min = PetscPowReal(logCp_base,logCp_min);
-    Cn_min = PetscPowReal(logCn_base,logCn_min);
-
-    np = (PetscInt) (logCp_max - logCp_min) + 1;
-    nn = (PetscInt) (logCn_max - logCn_min) + 1;
-    n_inner = 2 * np * nn;
-
-    TRY( PetscMalloc1(n_inner,&c_arr_inner) );
-
-    /* Generate Cp and Cn values */
-    Cp = Cp_min;
-    p  = 0;
-    for (i = 0; i < np; ++i) {
-      c_arr_inner[p++] = Cp;
-      c_arr_inner[p++] = Cn_min;
-      Cn = Cn_min;
-      for (j = 1; j < nn; ++j) {
-        c_arr_inner[p++] = Cp;
-        Cn *= logCn_base;
-        c_arr_inner[p++] = Cn;
+    p = -1;
+    for (i = 0; i < n_1; ++i) {
+      grid[++p] = PetscPowReal(base_1,start_1 + i * step_1);
+      tmp = grid[p];
+      grid[++p] = PetscPowReal(base_2,start_2);
+      for (j = 1; j < n_2; ++j) {
+        grid[++p] = tmp;
+        grid[++p] = PetscPowReal(base_2,start_2 + j * step_2);
       }
-      Cp *= logCp_base;
     }
   }
 
-  *n = n_inner;
-  *c_arr = c_arr_inner;
+  *n_out = n;
+  *grid_out = grid;
   PetscFunctionReturn(0);
 }
 
@@ -1694,65 +1667,39 @@ PetscErrorCode SVMInitGridSearch_Binary_Private(SVM svm,PetscInt *n,PetscReal *c
 #define __FUNCT__ "SVMGridSearch_Binary"
 PetscErrorCode SVMGridSearch_Binary(SVM svm)
 {
-  MPI_Comm   comm;
-
-  PetscReal  *c_arr,*score;
-  PetscReal  score_best;
-  PetscInt   m,n,i,p;
-
-  PetscBool  info_set;
-  const char *prefix;
-
-  const ModelScore *hyperopt_score_types;
-  PetscInt   nscores;
+  PetscReal *grid;
+  PetscReal *scores,score_best;
+  PetscInt  i,n,m,p,s;
 
   PetscFunctionBegin;
-  TRY( SVMInitGridSearch_Binary_Private(svm,&n,&c_arr) );
   TRY( SVMGetPenaltyType(svm,&m) );
 
-  TRY( PetscMalloc1((n / m),&score) );
-  TRY( PetscMemzero(score,(n / m) * sizeof(PetscReal)) );
+  /* Initialize grid */
+  TRY( SVMInitGridSearch_Binary_Private(svm,&n,&grid) );
+  /* Perform cross-validation */
+  s = n / m;
+  TRY( PetscCalloc1(s,&scores) );
+  TRY( SVMCrossValidation(svm,grid,n,scores) );
 
-  TRY( SVMCrossValidation(svm,c_arr,n,score) );
-
-  /* Select penalty */
-  n /= m;
-  score_best = score[0];
-  p = 0;
-  for (i = 1; i < n; ++i) {
-    if (score[i] > score_best) {
+  /* Find best score */
+  score_best = -1.;
+  for (i = 0; i < s; ++i) {
+    if (scores[i] > score_best) {
       p = i;
-      score_best = score[i];
+      score_best = scores[i];
     }
   }
-  TRY( SVMSetPenalty(svm,m,&c_arr[p * m]) );
 
-  TRY( SVMGetOptionsPrefix(svm,&prefix) );
-  TRY( PetscOptionsHasName(NULL,prefix,"-svm_info",&info_set) );
-
-  if (info_set) {
-    TRY( PetscObjectGetComm((PetscObject) svm,&comm) );
-    TRY( SVMGetHyperOptScoreTypes(svm,&hyperopt_score_types) );
-    TRY( SVMGetHyperOptNScoreTypes(svm,&nscores) );
-    TRY( PetscPrintf(comm,"SVM (grid-search): selected ") );
-    if (m == 1) {
-      TRY( PetscPrintf(comm,"C_best=%f, ",c_arr[p]) );
-    } else {
-      TRY( PetscPrintf(comm,"C+_best=%f, ",c_arr[p * m]) );
-      TRY( PetscPrintf(comm,"C-_best=%f, ",c_arr[p * m + 1]) );
-    }
-    TRY( PetscPrintf(comm,"acc_score=%f (",score_best) );
-    for (i = 0; i < nscores; ++i) {
-      TRY( PetscPrintf(comm,"%s",ModelScores[hyperopt_score_types[i]]) );
-      if (i < nscores - 1) {
-        TRY( PetscPrintf(comm,",") );
-      } else {
-        TRY( PetscPrintf(comm,")\n") );
-      }
-    }
+  if (m == 1) {
+    PetscInfo2(svm,"selected best C=%.4f (score=%f)\n",grid[p],score_best);
+  } else {
+    PetscInfo3(svm,"selected best C+=%.4f, C-=%.4f (score=%f)\n",grid[p * m],grid[p * m + 1],score_best);
   }
-  TRY( PetscFree(c_arr) );
-  TRY( PetscFree(score) );
+
+  TRY( SVMSetPenalty(svm,m,&grid[p * m]) );
+
+  TRY( PetscFree(grid) );
+  TRY( PetscFree(scores) );
   PetscFunctionReturn(0);
 }
 

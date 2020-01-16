@@ -8,7 +8,6 @@
     number of CG steps 0
     number of expansion steps 46
     number of proportioning steps 1
-=====================
   type: binary
   model parameters:
     ||w||=2.3081    bias=0.0000    margin=0.8665    NSV=45
@@ -16,8 +15,6 @@
     sum(xi_i)=60.5118
   objective functions:
     primalObj=63.1753    dualObj=61.7252    gap=1.4501
-=====================
-=====================
   type: binary
   model performance score with training parameters C=1.000, mod=2, loss=L1:
     Confusion matrix:
@@ -25,4 +22,3 @@
       FN =    7      TN =   47
     accuracy=82.22%    precision=75.00%    sensitivity=79.41%
     F1=0.77    MCC=0.63    AUC_ROC=0.82    G1=0.63
-=====================
