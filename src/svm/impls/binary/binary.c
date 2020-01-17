@@ -554,7 +554,42 @@ PetscErrorCode SVMUpdateOperator_Binary_Private(SVM svm)
   PetscFunctionReturn(0);
 }
 
-/* TODO implement SVMUpdateInitialVector_Binary_Private */
+#undef __FUNCT__
+#define __FUNCT__ "SVMUpdateInitialVector_Binary_Private"
+PetscErrorCode SVMUpdateInitialVector_Binary_Private(SVM svm)
+{
+  SVM_Binary *svm_binary;
+
+  Vec        x,x_p,x_n;
+  PetscInt   p;
+
+  PetscReal  C,Cp,Cn;
+
+  PetscFunctionBegin;
+  TRY( SVMGetSolutionVector(svm,&x) );
+  TRY( SVMGetPenaltyType(svm,&p) );
+  if (p == 1) {
+    TRY( SVMGetC(svm,&C) );
+    TRY( VecScale(x,1. / svm->C_old) );
+  } else {
+    svm_binary = (SVM_Binary *) svm->data;
+
+    TRY( SVMGetCp(svm,&Cp) );
+    TRY( VecGetSubVector(x,svm_binary->is_p,&x_p) );
+    TRY( VecScale(x_p,1. / svm->Cp_old) );
+    TRY( VecScale(x_p,Cp) );
+    TRY( VecRestoreSubVector(x,svm_binary->is_p,&x_p) );
+
+    TRY( SVMGetCn(svm,&Cn) );
+    TRY( VecGetSubVector(x,svm_binary->is_n,&x_n) );
+    TRY( VecScale(x_n,1. / svm->Cn_old) );
+    TRY( VecScale(x_n,Cn) );
+    TRY( VecRestoreSubVector(x,svm_binary->is_n,&x_n) );
+  }
+
+  svm->setupcalled = PETSC_TRUE;
+  PetscFunctionReturn(0);
+}
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMUpdate_Binary_Private"
@@ -858,7 +893,6 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   }
   TRY( QPSetBox(qp,NULL,lb,ub) );
 
-  /* TODO create public method for setting initial vector */
   /* Set initial guess */
   TRY( QPGetSolutionVector(qp,&x_init) );
   if (!x_init) {
