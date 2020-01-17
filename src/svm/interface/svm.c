@@ -1652,6 +1652,24 @@ PetscErrorCode SVMGetSolutionVector(SVM svm,Vec *x)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMComputeInitialGuess"
+/*@
+  TODO write doc
+@*/
+PetscErrorCode SVMComputeInitialGuess(SVM svm,Vec *x)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidPointer(x,2);
+
+  if (svm->ops->computeinitialguess) {
+    TRY( svm->ops->computeinitialguess(svm,x) );
+  }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetTrainingDataset"
 /*@
   SVMSetTrainingDataset - Sets the training samples and labels.

@@ -781,6 +781,84 @@ PetscErrorCode SVMGetSolutionVector_Binary(SVM svm,Vec *x)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMComputeInitialGuess_Binary"
+PetscErrorCode SVMComputeInitialGuess_Binary(SVM svm,Vec *x)
+{
+  SVM_Binary *svm_binary;
+
+  PetscReal  C,Cp,Cn;
+  PetscInt   p;
+
+  PetscInt   nfolds;
+  PetscInt   i;
+
+  Vec        y,x_inner;
+  Vec        tmp,tmp_p,tmp_n;
+
+  PetscFunctionBegin;
+  TRY( SVMGetTrainingDataset(svm,NULL,&y) );
+  TRY( VecDuplicate(y,&x_inner) );
+  TRY( VecSet(x_inner,0.) );
+
+  if (!svm->hyperoptset && !svm->warm_start) PetscFunctionReturn(0);
+
+  /* Determine initial guess from the best solutions attained in cross-validation */
+  svm_binary = (SVM_Binary *) svm->data;
+  TRY( VecDuplicate(y,&tmp) );
+
+  TRY( SVMGetNfolds(svm,&nfolds) );
+  TRY( SVMGetPenaltyType(svm,&p) );
+
+  if (p == 1) {
+    TRY( SVMGetC(svm,&C) ); /* Get the best C */
+    for (i = 0; i < nfolds; ++i) {
+      if (svm_binary->cv_best_C[i] != C) {
+        TRY( VecCopy(svm_binary->cv_best_x[i],tmp) );
+        TRY( VecScale(tmp,1. / svm_binary->cv_best_C[i]) );
+        TRY( VecAXPY(x_inner,C,tmp) );
+      } else {
+        TRY( VecAXPY(x_inner,1.,svm_binary->cv_best_x[i]) );
+      }
+    }
+    TRY( VecScale(x_inner,1. / (nfolds - 1)) );
+  } else {
+    TRY( SVMGetCp(svm,&Cp) ); /* Get the best Cp, Cn */
+    TRY( SVMGetCn(svm,&Cn) );
+
+    for (i = 0; i < nfolds; ++i) {
+      if (svm_binary->cv_best_C[2 * i] != Cp && svm_binary->cv_best_C[2 * i + 1] != Cn) {
+        TRY( VecCopy(svm_binary->cv_best_x[i],tmp) );
+        /* Scale the best solution on i-th fold to feasible set corresponding to positive samples and determined by Cp */
+        if (svm_binary->cv_best_C[2 * i] != Cp) {
+          TRY( VecGetSubVector(tmp,svm_binary->is_p,&tmp_p) );
+          TRY( VecScale(tmp_p,1. / svm_binary->cv_best_C[2 * i]) );
+          TRY( VecScale(tmp_p,Cp) );
+          TRY( VecRestoreSubVector(tmp,svm_binary->is_p,&tmp_p) );
+        }
+        /* Scale the best solution on i-th fold to feasible set corresponding to negative samples and determined by Cn */
+        if (svm_binary->cv_best_C[2 * i + 1] != Cn) {
+          TRY( VecGetSubVector(tmp,svm_binary->is_n,&tmp_n) );
+          TRY( VecScale(tmp_n,1. / svm_binary->cv_best_C[2 * i + 1]) );
+          TRY( VecScale(tmp_p,Cn) );
+          TRY( VecRestoreSubVector(tmp,svm_binary->is_n,&tmp_n) );
+        }
+        TRY( VecAXPY(x_inner,1.,tmp) );
+      } else {
+        TRY( VecAXPY(x_inner,1.,svm_binary->cv_best_x[i]) );
+      }
+    }
+    /* Average scaled solutions */
+    TRY( VecScale(x_inner,1. / (nfolds - 1)) );
+  }
+
+  *x = x_inner;
+
+  /* Free memory */
+  TRY( VecDestroy(&tmp) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMSetUp_Binary"
 PetscErrorCode SVMSetUp_Binary(SVM svm)
 {
@@ -1913,6 +1991,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm->ops->setup                 = SVMSetUp_Binary;
   svm->ops->reset                 = SVMReset_Binary;
   svm->ops->destroy               = SVMDestroy_Binary;
+  svm->ops->computeinitialguess   = SVMComputeInitialGuess_Binary;
   svm->ops->setfromoptions        = SVMSetFromOptions_Binary;
   svm->ops->train                 = SVMTrain_Binary;
   svm->ops->posttrain             = SVMPostTrain_Binary;

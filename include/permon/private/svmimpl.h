@@ -10,6 +10,7 @@ typedef struct _SVMOps *SVMOps;
 struct _SVMOps {
   PetscErrorCode (*reset)(SVM);
   PetscErrorCode (*destroy)(SVM);
+  PetscErrorCode (*computeinitialguess)(SVM,Vec *);
   PetscErrorCode (*setfromoptions)(PetscOptionItems *,SVM);
   PetscErrorCode (*setup)(SVM);
   PetscErrorCode (*train)(SVM);

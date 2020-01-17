@@ -166,7 +166,8 @@ FLLOP_EXTERN PetscErrorCode SVMComputeOperator(SVM,Mat *);
 
 FLLOP_EXTERN PetscErrorCode SVMSetInitialVector(SVM,Vec);
 FLLOP_EXTERN PetscErrorCode SVMGetSolutionVector(SVM,Vec *);
-/* TODO SVMComputeInitialGuess() */
+FLLOP_EXTERN PetscErrorCode SVMComputeInitialGuess(SVM,Vec *);
+/* TODO SVMSetComputeInitialGuess() for general purposes */
 
 FLLOP_EXTERN PetscErrorCode SVMSetTrainingDataset(SVM,Mat,Vec);
 FLLOP_EXTERN PetscErrorCode SVMGetTrainingDataset(SVM,Mat *,Vec *);
