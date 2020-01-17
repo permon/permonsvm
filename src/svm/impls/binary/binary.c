@@ -597,10 +597,10 @@ PetscErrorCode SVMUpdate_Binary_Private(SVM svm)
 {
   SVM_Binary  *svm_binary = (SVM_Binary *) svm->data;
 
-  QP          qp;
+  QP          qp = NULL;
 
-  Vec         x_init,x_init_p,x_init_n;
-  Vec         ub = NULL,ub_p,ub_n;
+  Vec         x;
+  Vec         ub,ub_p,ub_n;
 
   PetscInt    p;
   SVMLossType loss_type;
@@ -610,60 +610,36 @@ PetscErrorCode SVMUpdate_Binary_Private(SVM svm)
   PetscFunctionBegin;
   TRY( SVMUpdateOperator_Binary_Private(svm) );
 
-  TRY( SVMGetPenaltyType(svm,&p) );
-  if (p == 1) {
-    TRY( SVMGetC(svm,&C) );
-  } else {
-    TRY( SVMGetCp(svm,&Cp) );
-    TRY( SVMGetCn(svm,&Cn) );
-  }
-
   /* Update initial guess */
-  TRY( SVMGetQP(svm,&qp) );
-  TRY( QPGetSolutionVector(qp,&x_init) );
-
-  /* TODO SVMUpdateInitialVector_Binary_Private */
   if (svm->warm_start) {
-    if (p == 1) {
-      TRY( VecScale(x_init,1. / svm->C_old) );
-      TRY( VecScale(x_init,C) );
-    } else {
-      TRY( VecGetSubVector(x_init,svm_binary->is_p,&x_init_p) );
-      TRY( VecScale(x_init_p,1. / svm->Cp_old) );
-      TRY( VecScale(x_init_p,Cp) );
-      TRY( VecRestoreSubVector(x_init,svm_binary->is_p,&x_init_p) );
-
-      TRY( VecGetSubVector(x_init,svm_binary->is_n,&x_init_n) );
-      TRY( VecScale(x_init_n,1. / svm->Cn_old) );
-      TRY( VecScale(x_init_n,Cn) );
-      TRY( VecRestoreSubVector(x_init,svm_binary->is_n,&x_init_n) );
-    }
+    TRY( SVMUpdateInitialVector_Binary_Private(svm) );
   } else {
-    if (p == 1) {
-      TRY( VecSet(x_init,C - 100 * PETSC_MACHINE_EPSILON) );
-    } else {
-      TRY( VecGetSubVector(x_init,svm_binary->is_p,&x_init_p) );
-      TRY( VecSet(x_init_p,Cp - 100 * PETSC_MACHINE_EPSILON) );
-      TRY( VecRestoreSubVector(x_init,svm_binary->is_p,&x_init_p) );
-
-      TRY( VecGetSubVector(x_init,svm_binary->is_n,&x_init_n) );
-      TRY( VecSet(x_init_n,Cn - 100 * PETSC_MACHINE_EPSILON) );
-      TRY( VecRestoreSubVector(x_init,svm_binary->is_n,&x_init_n) );
-    }
+    TRY( SVMGetQP(svm,&qp) );
+    TRY( QPGetSolutionVector(qp,&x) );
+    TRY( VecSet(x,0.) );
   }
 
   /* Update upper bound vector */
   TRY( SVMGetLossType(svm,&loss_type) );
   if (loss_type == SVM_L2) PetscFunctionReturn(0);
 
+  if (!qp) {
+    TRY( SVMGetQP(svm,&qp) );
+  }
   TRY( QPGetBox(qp,NULL,NULL,&ub) );
+
+  /* TODO public method for setting box constraint */
+  TRY( SVMGetPenaltyType(svm,&p) );
   if (p == 1) {
+    TRY( SVMGetC(svm,&C) );
     TRY( VecSet(ub,C) );
   } else {
+    TRY( SVMGetCp(svm,&Cp) );
     TRY( VecGetSubVector(ub,svm_binary->is_p,&ub_p) );
     TRY( VecSet(ub_p,Cp) );
     TRY( VecRestoreSubVector(ub,svm_binary->is_p,&ub_p) );
 
+    TRY( SVMGetCp(svm,&Cn) );
     TRY( VecGetSubVector(ub,svm_binary->is_n,&ub_n) );
     TRY( VecSet(ub_n,Cn) );
     TRY( VecRestoreSubVector(ub,svm_binary->is_n,&ub_n) );
