@@ -33,7 +33,9 @@ typedef struct {
     PetscReal   model_scores[7];
 
     /* Work vecs */
-    Vec         work[3]; /* xi, c, Xtw */
+    Vec         work[3];    /* xi, c, Xtw */
+    Vec         *cv_best_x; /* best solutions on particular folds */
+    PetscReal   *cv_best_C; /* best penalties on particular folds */
 
     /* Valuess of primal and dual objective functions */
     PetscReal   primalObj,dualObj;

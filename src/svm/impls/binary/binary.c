@@ -59,10 +59,16 @@ PetscErrorCode SVMReset_Binary(SVM svm)
   TRY( ISDestroy(&svm_binary->is_sv) );
   svm_binary->is_sv       = NULL;
 
+  /* Destroy working vectors */
   for (i = 0; i < 3; ++i) {
     TRY( VecDestroy(&svm_binary->work[i]) );
     svm_binary->work[i] = NULL;
   }
+
+  TRY( VecDestroyVecs(svm->nfolds,&svm_binary->cv_best_x) );
+  svm_binary->cv_best_x = NULL;
+  TRY( PetscFree(svm_binary->cv_best_C) );
+  svm_binary->cv_best_C = NULL;
   PetscFunctionReturn(0);
 }
 
@@ -1901,6 +1907,8 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   for (i = 0; i < 3; ++i) {
     svm_binary->work[i] = NULL;
   }
+  svm_binary->cv_best_x = NULL;
+  svm_binary->cv_best_C = NULL;
 
   svm->ops->setup                 = SVMSetUp_Binary;
   svm->ops->reset                 = SVMReset_Binary;
