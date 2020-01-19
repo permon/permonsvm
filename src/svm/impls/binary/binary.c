@@ -953,14 +953,26 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   }
   TRY( QPSetBox(qp,NULL,lb,ub) );
 
-  /* Set initial guess */
-  TRY( QPGetSolutionVector(qp,&x_init) );
-  if (!x_init) {
-    TRY( VecDuplicate(lb,&x_init) );
-    TRY( VecSet(x_init,0.) );
+  /* Set initial guess in case of warm starting */
+  if (svm->hyperoptset && svm->warm_start) {
+    TRY( SVMComputeInitialGuess(svm,&x_init) );
     TRY( QPSetInitialVector(qp,x_init) );
     TRY( VecDestroy(&x_init) );
+  } else {
+    /* Info */
   }
+  /* TRY( QPGetSolutionVector(qp,&x_init) );
+  printf("%x",x_init); */
+  /* TODO fix error empty solution vector */
+  /* if (!x_init) { */
+    /* TRY( VecDuplicate(lb,&x_init) );
+    TRY( SVMComputeInitialGuess(svm,&x_init) );
+    TRY( QPSetInitialVector(qp,x_init) ); */
+    /* TRY( VecDuplicate(lb,&x_init) );
+    TRY( VecSet(x_init,0.) );
+    TRY( QPSetInitialVector(qp,x_init) );
+    TRY( VecDestroy(&x_init) ); */
+  /* } */
 
   /* TODO create public method for setting monitors */
   /* Set monitors */
