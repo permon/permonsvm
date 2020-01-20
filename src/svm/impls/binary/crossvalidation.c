@@ -77,7 +77,7 @@ PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt
       TRY( PetscPrintf(comm,"SVM: fold %d of %d\n",i+1,nfolds) );
     }
 
-    first = lo + i - 1;
+    first = lo + i - lo % nfolds;
     if (first < lo) first += nfolds;
     n = (hi + nfolds - first - 1) / nfolds;
 
@@ -140,7 +140,7 @@ static PetscErrorCode SVMFoldVecIdx_Binary_Private(Vec idx,PetscInt nfolds,Petsc
   TRY( VecGetOwnershipRange(idx,&lo,&hi) );
 
   /* Determine first element of index set (local)*/
-  first = lo + i - 1;
+  first = lo + i - lo % nfolds;
   if (first < lo) first += nfolds;
   /* Determine length of index set (local) */
   n = (hi + nfolds - first - 1) / nfolds;
