@@ -1,0 +1,744 @@
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 13 iterations
+  all 1 QPSSolves from last QPSReset/QPSResetStatistics have required 13 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 27
+    number of CG steps 0
+    number of expansion steps 13
+    number of proportioning steps 0
+  type: binary
+  model parameters:
+    ||w||=1.2318    bias=0.0000    margin=1.6236    NSV=33
+  L1 hinge loss:
+    sum(xi_i)=41.8357
+  objective functions:
+    primalObj=5.4071    dualObj=5.2555    gap=0.1516
+  type: binary
+  model performance score with training parameters C=0.111, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   26      FP =    5
+      FN =    6      TN =   23
+    accuracy=81.67%    precision=83.87%    sensitivity=81.25%
+    F1=0.83    MCC=0.63    AUC_ROC=0.82    G1=0.63
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 18 iterations
+  all 2 QPSSolves from last QPSReset/QPSResetStatistics have required 31 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 62
+    number of CG steps 1
+    number of expansion steps 29
+    number of proportioning steps 1
+  type: binary
+  model parameters:
+    ||w||=1.4191    bias=0.0000    margin=1.4094    NSV=30
+  L1 hinge loss:
+    sum(xi_i)=40.6740
+  objective functions:
+    primalObj=8.8346    dualObj=8.5573    gap=0.2773
+  type: binary
+  model performance score with training parameters C=0.192, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   26      FP =    5
+      FN =    6      TN =   23
+    accuracy=81.67%    precision=83.87%    sensitivity=81.25%
+    F1=0.83    MCC=0.63    AUC_ROC=0.82    G1=0.63
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 22 iterations
+  all 3 QPSSolves from last QPSReset/QPSResetStatistics have required 53 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 106
+    number of CG steps 1
+    number of expansion steps 50
+    number of proportioning steps 2
+  type: binary
+  model parameters:
+    ||w||=1.6743    bias=0.0000    margin=1.1945    NSV=32
+  L1 hinge loss:
+    sum(xi_i)=39.5161
+  objective functions:
+    primalObj=14.5737    dualObj=14.1425    gap=0.4312
+  type: binary
+  model performance score with training parameters C=0.333, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   27      FP =    4
+      FN =    7      TN =   22
+    accuracy=81.67%    precision=87.10%    sensitivity=79.41%
+    F1=0.83    MCC=0.63    AUC_ROC=0.82    G1=0.64
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 35 iterations
+  all 4 QPSSolves from last QPSReset/QPSResetStatistics have required 88 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 176
+    number of CG steps 1
+    number of expansion steps 84
+    number of proportioning steps 3
+  type: binary
+  model parameters:
+    ||w||=1.9530    bias=0.0000    margin=1.0241    NSV=28
+  L1 hinge loss:
+    sum(xi_i)=38.6699
+  objective functions:
+    primalObj=24.2332    dualObj=23.5813    gap=0.6519
+  type: binary
+  model performance score with training parameters C=0.577, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   29      FP =    2
+      FN =    7      TN =   22
+    accuracy=85.00%    precision=93.55%    sensitivity=80.56%
+    F1=0.87    MCC=0.71    AUC_ROC=0.86    G1=0.72
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 36 iterations
+  all 5 QPSSolves from last QPSReset/QPSResetStatistics have required 124 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 247
+    number of CG steps 2
+    number of expansion steps 118
+    number of proportioning steps 4
+  type: binary
+  model parameters:
+    ||w||=2.3417    bias=0.0000    margin=0.8541    NSV=29
+  L1 hinge loss:
+    sum(xi_i)=37.5288
+  objective functions:
+    primalObj=40.2706    dualObj=39.2953    gap=0.9753
+  type: binary
+  model performance score with training parameters C=1.000, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   27      FP =    4
+      FN =    7      TN =   22
+    accuracy=81.67%    precision=87.10%    sensitivity=79.41%
+    F1=0.83    MCC=0.63    AUC_ROC=0.82    G1=0.64
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 41 iterations
+  all 6 QPSSolves from last QPSReset/QPSResetStatistics have required 165 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 327
+    number of CG steps 4
+    number of expansion steps 156
+    number of proportioning steps 5
+  type: binary
+  model parameters:
+    ||w||=2.7567    bias=0.0000    margin=0.7255    NSV=29
+  L1 hinge loss:
+    sum(xi_i)=36.9482
+  objective functions:
+    primalObj=67.7960    dualObj=65.7462    gap=2.0498
+  type: binary
+  model performance score with training parameters C=1.732, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   27      FP =    4
+      FN =    8      TN =   21
+    accuracy=80.00%    precision=87.10%    sensitivity=77.14%
+    F1=0.82    MCC=0.60    AUC_ROC=0.81    G1=0.61
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 52 iterations
+  all 7 QPSSolves from last QPSReset/QPSResetStatistics have required 217 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 418
+    number of CG steps 17
+    number of expansion steps 194
+    number of proportioning steps 6
+  type: binary
+  model parameters:
+    ||w||=3.2792    bias=0.0000    margin=0.6099    NSV=27
+  L1 hinge loss:
+    sum(xi_i)=37.6145
+  objective functions:
+    primalObj=118.2199    dualObj=110.7524    gap=7.4675
+  type: binary
+  model performance score with training parameters C=3.000, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   26      FP =    5
+      FN =    6      TN =   23
+    accuracy=81.67%    precision=83.87%    sensitivity=81.25%
+    F1=0.83    MCC=0.63    AUC_ROC=0.82    G1=0.63
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 73 iterations
+  all 8 QPSSolves from last QPSReset/QPSResetStatistics have required 290 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 533
+    number of CG steps 47
+    number of expansion steps 235
+    number of proportioning steps 8
+  type: binary
+  model parameters:
+    ||w||=3.4730    bias=0.0000    margin=0.5759    NSV=31
+  L1 hinge loss:
+    sum(xi_i)=37.2960
+  objective functions:
+    primalObj=199.8268    dualObj=187.8062    gap=12.0206
+  type: binary
+  model performance score with training parameters C=5.196, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   27      FP =    4
+      FN =    6      TN =   23
+    accuracy=83.33%    precision=87.10%    sensitivity=81.82%
+    F1=0.84    MCC=0.67    AUC_ROC=0.84    G1=0.67
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 84 iterations
+  all 9 QPSSolves from last QPSReset/QPSResetStatistics have required 374 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 661
+    number of CG steps 86
+    number of expansion steps 278
+    number of proportioning steps 10
+  type: binary
+  model parameters:
+    ||w||=3.4553    bias=0.0000    margin=0.5788    NSV=35
+  L1 hinge loss:
+    sum(xi_i)=37.6768
+  objective functions:
+    primalObj=345.0613    dualObj=321.0696    gap=23.9917
+  type: binary
+  model performance score with training parameters C=9.000, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   27      FP =    4
+      FN =    7      TN =   22
+    accuracy=81.67%    precision=87.10%    sensitivity=79.41%
+    F1=0.83    MCC=0.63    AUC_ROC=0.82    G1=0.64
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 117 iterations
+  all 10 QPSSolves from last QPSReset/QPSResetStatistics have required 491 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 834
+    number of CG steps 146
+    number of expansion steps 333
+    number of proportioning steps 12
+  type: binary
+  model parameters:
+    ||w||=3.2568    bias=0.0000    margin=0.6141    NSV=29
+  L1 hinge loss:
+    sum(xi_i)=37.3398
+  objective functions:
+    primalObj=587.3731    dualObj=553.3277    gap=34.0453
+  type: binary
+  model performance score with training parameters C=15.588, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   26      FP =    5
+      FN =    8      TN =   21
+    accuracy=78.33%    precision=83.87%    sensitivity=76.47%
+    F1=0.80    MCC=0.57    AUC_ROC=0.79    G1=0.57
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 18 iterations
+  all 1 QPSSolves from last QPSReset/QPSResetStatistics have required 18 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 36
+    number of CG steps 0
+    number of expansion steps 17
+    number of proportioning steps 1
+  type: binary
+  model parameters:
+    ||w||=1.3439    bias=0.0000    margin=1.4883    NSV=33
+  L1 hinge loss:
+    sum(xi_i)=32.8384
+  objective functions:
+    primalObj=4.5517    dualObj=4.4391    gap=0.1125
+  type: binary
+  model performance score with training parameters C=0.111, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   23      FP =    7
+      FN =    7      TN =   23
+    accuracy=76.67%    precision=76.67%    sensitivity=76.67%
+    F1=0.77    MCC=0.53    AUC_ROC=0.77    G1=0.53
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 21 iterations
+  all 2 QPSSolves from last QPSReset/QPSResetStatistics have required 39 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 78
+    number of CG steps 0
+    number of expansion steps 37
+    number of proportioning steps 2
+  type: binary
+  model parameters:
+    ||w||=1.6297    bias=0.0000    margin=1.2272    NSV=35
+  L1 hinge loss:
+    sum(xi_i)=30.0211
+  objective functions:
+    primalObj=7.1055    dualObj=6.8502    gap=0.2553
+  type: binary
+  model performance score with training parameters C=0.192, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   23      FP =    7
+      FN =    7      TN =   23
+    accuracy=76.67%    precision=76.67%    sensitivity=76.67%
+    F1=0.77    MCC=0.53    AUC_ROC=0.77    G1=0.53
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 23 iterations
+  all 3 QPSSolves from last QPSReset/QPSResetStatistics have required 62 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 124
+    number of CG steps 0
+    number of expansion steps 59
+    number of proportioning steps 3
+  type: binary
+  model parameters:
+    ||w||=1.9528    bias=0.0000    margin=1.0242    NSV=36
+  L1 hinge loss:
+    sum(xi_i)=27.9327
+  objective functions:
+    primalObj=11.2175    dualObj=10.7178    gap=0.4997
+  type: binary
+  model performance score with training parameters C=0.333, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   23      FP =    7
+      FN =    7      TN =   23
+    accuracy=76.67%    precision=76.67%    sensitivity=76.67%
+    F1=0.77    MCC=0.53    AUC_ROC=0.77    G1=0.53
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 30 iterations
+  all 4 QPSSolves from last QPSReset/QPSResetStatistics have required 92 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 184
+    number of CG steps 0
+    number of expansion steps 88
+    number of proportioning steps 4
+  type: binary
+  model parameters:
+    ||w||=2.2651    bias=0.0000    margin=0.8830    NSV=31
+  L1 hinge loss:
+    sum(xi_i)=26.6156
+  objective functions:
+    primalObj=17.9319    dualObj=17.1825    gap=0.7494
+  type: binary
+  model performance score with training parameters C=0.577, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   22      FP =    8
+      FN =    7      TN =   23
+    accuracy=75.00%    precision=73.33%    sensitivity=75.86%
+    F1=0.75    MCC=0.50    AUC_ROC=0.75    G1=0.50
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 34 iterations
+  all 5 QPSSolves from last QPSReset/QPSResetStatistics have required 126 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 250
+    number of CG steps 2
+    number of expansion steps 119
+    number of proportioning steps 5
+  type: binary
+  model parameters:
+    ||w||=2.7181    bias=0.0000    margin=0.7358    NSV=31
+  L1 hinge loss:
+    sum(xi_i)=25.6642
+  objective functions:
+    primalObj=29.3582    dualObj=27.6545    gap=1.7036
+  type: binary
+  model performance score with training parameters C=1.000, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   22      FP =    8
+      FN =    7      TN =   23
+    accuracy=75.00%    precision=73.33%    sensitivity=75.86%
+    F1=0.75    MCC=0.50    AUC_ROC=0.75    G1=0.50
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 39 iterations
+  all 6 QPSSolves from last QPSReset/QPSResetStatistics have required 165 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 323
+    number of CG steps 7
+    number of expansion steps 152
+    number of proportioning steps 6
+  type: binary
+  model parameters:
+    ||w||=3.0509    bias=0.0000    margin=0.6555    NSV=26
+  L1 hinge loss:
+    sum(xi_i)=24.9526
+  objective functions:
+    primalObj=47.8734    dualObj=45.8157    gap=2.0577
+  type: binary
+  model performance score with training parameters C=1.732, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   21      FP =    9
+      FN =    6      TN =   24
+    accuracy=75.00%    precision=70.00%    sensitivity=77.78%
+    F1=0.74    MCC=0.50    AUC_ROC=0.75    G1=0.51
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 50 iterations
+  all 7 QPSSolves from last QPSReset/QPSResetStatistics have required 215 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 411
+    number of CG steps 19
+    number of expansion steps 189
+    number of proportioning steps 7
+  type: binary
+  model parameters:
+    ||w||=3.6864    bias=0.0000    margin=0.5425    NSV=23
+  L1 hinge loss:
+    sum(xi_i)=25.3813
+  objective functions:
+    primalObj=82.9387    dualObj=76.0785    gap=6.8602
+  type: binary
+  model performance score with training parameters C=3.000, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   22      FP =    8
+      FN =    6      TN =   24
+    accuracy=76.67%    precision=73.33%    sensitivity=78.57%
+    F1=0.76    MCC=0.53    AUC_ROC=0.77    G1=0.54
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 82 iterations
+  all 8 QPSSolves from last QPSReset/QPSResetStatistics have required 297 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 548
+    number of CG steps 45
+    number of expansion steps 243
+    number of proportioning steps 9
+  type: binary
+  model parameters:
+    ||w||=4.2325    bias=0.0000    margin=0.4725    NSV=22
+  L1 hinge loss:
+    sum(xi_i)=24.5809
+  objective functions:
+    primalObj=136.6833    dualObj=128.5160    gap=8.1672
+  type: binary
+  model performance score with training parameters C=5.196, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   22      FP =    8
+      FN =    6      TN =   24
+    accuracy=76.67%    precision=73.33%    sensitivity=78.57%
+    F1=0.76    MCC=0.53    AUC_ROC=0.77    G1=0.54
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 108 iterations
+  all 9 QPSSolves from last QPSReset/QPSResetStatistics have required 405 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 718
+    number of CG steps 90
+    number of expansion steps 304
+    number of proportioning steps 11
+  type: binary
+  model parameters:
+    ||w||=4.4810    bias=0.0000    margin=0.4463    NSV=24
+  L1 hinge loss:
+    sum(xi_i)=25.0182
+  objective functions:
+    primalObj=235.2031    dualObj=216.8013    gap=18.4018
+  type: binary
+  model performance score with training parameters C=9.000, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   22      FP =    8
+      FN =    6      TN =   24
+    accuracy=76.67%    precision=73.33%    sensitivity=78.57%
+    F1=0.76    MCC=0.53    AUC_ROC=0.77    G1=0.54
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 121 iterations
+  all 10 QPSSolves from last QPSReset/QPSResetStatistics have required 526 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 893
+    number of CG steps 156
+    number of expansion steps 357
+    number of proportioning steps 13
+  type: binary
+  model parameters:
+    ||w||=4.9191    bias=0.0000    margin=0.4066    NSV=21
+  L1 hinge loss:
+    sum(xi_i)=24.1091
+  objective functions:
+    primalObj=387.9221    dualObj=366.8419    gap=21.0801
+  type: binary
+  model performance score with training parameters C=15.588, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   23      FP =    7
+      FN =    6      TN =   24
+    accuracy=78.33%    precision=76.67%    sensitivity=79.31%
+    F1=0.78    MCC=0.57    AUC_ROC=0.78    G1=0.57
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 14 iterations
+  all 1 QPSSolves from last QPSReset/QPSResetStatistics have required 14 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 29
+    number of CG steps 0
+    number of expansion steps 14
+    number of proportioning steps 0
+  type: binary
+  model parameters:
+    ||w||=1.1105    bias=0.0000    margin=1.8009    NSV=48
+  L1 hinge loss:
+    sum(xi_i)=51.6393
+  objective functions:
+    primalObj=6.3543    dualObj=6.2313    gap=0.1231
+  type: binary
+  model performance score with training parameters C=0.111, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   18      FP =    5
+      FN =    2      TN =   35
+    accuracy=88.33%    precision=78.26%    sensitivity=90.00%
+    F1=0.84    MCC=0.75    AUC_ROC=0.89    G1=0.77
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 19 iterations
+  all 2 QPSSolves from last QPSReset/QPSResetStatistics have required 33 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 68
+    number of CG steps 0
+    number of expansion steps 33
+    number of proportioning steps 0
+  type: binary
+  model parameters:
+    ||w||=1.3152    bias=0.0000    margin=1.5207    NSV=43
+  L1 hinge loss:
+    sum(xi_i)=50.0467
+  objective functions:
+    primalObj=10.4963    dualObj=10.3022    gap=0.1941
+  type: binary
+  model performance score with training parameters C=0.192, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   19      FP =    4
+      FN =    2      TN =   35
+    accuracy=90.00%    precision=82.61%    sensitivity=90.48%
+    F1=0.86    MCC=0.79    AUC_ROC=0.90    G1=0.80
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 22 iterations
+  all 3 QPSSolves from last QPSReset/QPSResetStatistics have required 55 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 113
+    number of CG steps 0
+    number of expansion steps 55
+    number of proportioning steps 0
+  type: binary
+  model parameters:
+    ||w||=1.6619    bias=0.0000    margin=1.2035    NSV=45
+  L1 hinge loss:
+    sum(xi_i)=48.7828
+  objective functions:
+    primalObj=17.6418    dualObj=17.0362    gap=0.6057
+  type: binary
+  model performance score with training parameters C=0.333, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   20      FP =    3
+      FN =    3      TN =   34
+    accuracy=90.00%    precision=86.96%    sensitivity=86.96%
+    F1=0.87    MCC=0.79    AUC_ROC=0.89    G1=0.79
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 33 iterations
+  all 4 QPSSolves from last QPSReset/QPSResetStatistics have required 88 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 180
+    number of CG steps 0
+    number of expansion steps 88
+    number of proportioning steps 0
+  type: binary
+  model parameters:
+    ||w||=2.0908    bias=0.0000    margin=0.9566    NSV=35
+  L1 hinge loss:
+    sum(xi_i)=47.6117
+  objective functions:
+    primalObj=29.6743    dualObj=28.4273    gap=1.2470
+  type: binary
+  model performance score with training parameters C=0.577, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   20      FP =    3
+      FN =    3      TN =   34
+    accuracy=90.00%    precision=86.96%    sensitivity=86.96%
+    F1=0.87    MCC=0.79    AUC_ROC=0.89    G1=0.79
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 45 iterations
+  all 5 QPSSolves from last QPSReset/QPSResetStatistics have required 133 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 265
+    number of CG steps 5
+    number of expansion steps 127
+    number of proportioning steps 1
+  type: binary
+  model parameters:
+    ||w||=2.3547    bias=0.0000    margin=0.8494    NSV=33
+  L1 hinge loss:
+    sum(xi_i)=47.6112
+  objective functions:
+    primalObj=50.3836    dualObj=48.0036    gap=2.3800
+  type: binary
+  model performance score with training parameters C=1.000, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   19      FP =    4
+      FN =    4      TN =   33
+    accuracy=86.67%    precision=82.61%    sensitivity=82.61%
+    F1=0.83    MCC=0.72    AUC_ROC=0.86    G1=0.72
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 55 iterations
+  all 6 QPSSolves from last QPSReset/QPSResetStatistics have required 188 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 367
+    number of CG steps 13
+    number of expansion steps 173
+    number of proportioning steps 2
+  type: binary
+  model parameters:
+    ||w||=2.6358    bias=0.0000    margin=0.7588    NSV=36
+  L1 hinge loss:
+    sum(xi_i)=46.1993
+  objective functions:
+    primalObj=83.4932    dualObj=81.4502    gap=2.0430
+  type: binary
+  model performance score with training parameters C=1.732, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   20      FP =    3
+      FN =    5      TN =   32
+    accuracy=86.67%    precision=86.96%    sensitivity=80.00%
+    F1=0.83    MCC=0.72    AUC_ROC=0.86    G1=0.71
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 72 iterations
+  all 7 QPSSolves from last QPSReset/QPSResetStatistics have required 260 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 488
+    number of CG steps 36
+    number of expansion steps 221
+    number of proportioning steps 3
+  type: binary
+  model parameters:
+    ||w||=2.9419    bias=0.0000    margin=0.6798    NSV=33
+  L1 hinge loss:
+    sum(xi_i)=46.3365
+  objective functions:
+    primalObj=143.3371    dualObj=138.7762    gap=4.5608
+  type: binary
+  model performance score with training parameters C=3.000, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   19      FP =    4
+      FN =    5      TN =   32
+    accuracy=85.00%    precision=82.61%    sensitivity=79.17%
+    F1=0.81    MCC=0.69    AUC_ROC=0.84    G1=0.68
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 89 iterations
+  all 8 QPSSolves from last QPSReset/QPSResetStatistics have required 349 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 629
+    number of CG steps 73
+    number of expansion steps 272
+    number of proportioning steps 4
+  type: binary
+  model parameters:
+    ||w||=3.0323    bias=0.0000    margin=0.6596    NSV=35
+  L1 hinge loss:
+    sum(xi_i)=45.9009
+  objective functions:
+    primalObj=243.1054    dualObj=236.7884    gap=6.3170
+  type: binary
+  model performance score with training parameters C=5.196, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   20      FP =    3
+      FN =    5      TN =   32
+    accuracy=86.67%    precision=86.96%    sensitivity=80.00%
+    F1=0.83    MCC=0.72    AUC_ROC=0.86    G1=0.71
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 116 iterations
+  all 9 QPSSolves from last QPSReset/QPSResetStatistics have required 465 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 803
+    number of CG steps 131
+    number of expansion steps 329
+    number of proportioning steps 5
+  type: binary
+  model parameters:
+    ||w||=3.3891    bias=0.0000    margin=0.5901    NSV=32
+  L1 hinge loss:
+    sum(xi_i)=46.2195
+  objective functions:
+    primalObj=421.7181    dualObj=406.8392    gap=14.8789
+  type: binary
+  model performance score with training parameters C=9.000, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   20      FP =    3
+      FN =    4      TN =   33
+    accuracy=88.33%    precision=86.96%    sensitivity=83.33%
+    F1=0.85    MCC=0.76    AUC_ROC=0.88    G1=0.75
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 144 iterations
+  all 10 QPSSolves from last QPSReset/QPSResetStatistics have required 609 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 1006
+    number of CG steps 216
+    number of expansion steps 387
+    number of proportioning steps 6
+  type: binary
+  model parameters:
+    ||w||=3.2700    bias=0.0000    margin=0.6116    NSV=30
+  L1 hinge loss:
+    sum(xi_i)=46.5031
+  objective functions:
+    primalObj=730.2585    dualObj=701.9622    gap=28.2964
+  type: binary
+  model performance score with training parameters C=15.588, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   20      FP =    3
+      FN =    4      TN =   33
+    accuracy=88.33%    precision=86.96%    sensitivity=83.33%
+    F1=0.85    MCC=0.76    AUC_ROC=0.88    G1=0.75
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 46 iterations
+  all 1 QPSSolves from last QPSReset/QPSResetStatistics have required 46 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-50, dtol=1.0e+100, maxits=10000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 92
+    number of CG steps 0
+    number of expansion steps 45
+    number of proportioning steps 1
+  type: binary
+  model parameters:
+    ||w||=1.8943    bias=0.0000    margin=1.0558    NSV=44
+  L1 hinge loss:
+    sum(xi_i)=61.6078
+  objective functions:
+    primalObj=37.3634    dualObj=36.5471    gap=0.8164
+  type: binary
+  model performance score with training parameters C=0.577, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   26      FP =   10
+      FN =    7      TN =   47
+    accuracy=81.11%    precision=72.22%    sensitivity=78.79%
+    F1=0.75    MCC=0.60    AUC_ROC=0.81    G1=0.61
