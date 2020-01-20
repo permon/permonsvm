@@ -53,7 +53,7 @@ PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt
   TRY( SVMGetPenaltyType(svm,&p) );
 
   /* Create SVM used in cross validation */
-  TRY( SVMCreate(PetscObjectComm((PetscObject)svm),&cross_svm) );
+  TRY( SVMCreate(comm,&cross_svm) );
   TRY( SVMSetType(cross_svm,SVM_BINARY) );
 
   /* Set options of SVM used in cross validation */
@@ -69,9 +69,6 @@ PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt
   TRY( SVMGetTrainingDataset(svm,&Xt,&y) );
   TRY( MatGetOwnershipRange(Xt,&lo,&hi) );
 
-  TRY( ISCreate(PetscObjectComm((PetscObject) svm),&is_test) );
-  TRY( ISSetType(is_test,ISSTRIDE) );
-
   TRY( SVMGetHyperOptNScoreTypes(svm,&nscores) );
   TRY( SVMGetHyperOptScoreTypes(svm,&model_scores) );
   TRY( SVMGetNfolds(svm,&nfolds) );
@@ -85,7 +82,7 @@ PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt
     n = (hi + nfolds - first - 1) / nfolds;
 
     /* Create test dataset */
-    TRY( ISStrideSetStride(is_test,n,first,nfolds) );
+    TRY( ISCreateStride(comm,n,first,nfolds,&is_test) );
     TRY( MatCreateSubMatrix(Xt,is_test,NULL,MAT_INITIAL_MATRIX,&Xt_test) );
     TRY( VecGetSubVector(y,is_test,&y_test) );
 
@@ -119,12 +116,12 @@ PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt
     TRY( VecRestoreSubVector(y,is_test,&y_test) );
     TRY( MatDestroy(&Xt_test) );
     TRY( ISDestroy(&is_training) );
+    TRY( ISDestroy(&is_test) );
   }
 
   n = m / p;
   for (i = 0; i < n; ++i) score[i] /= (PetscReal) nscores * nfolds;
 
-  TRY( ISDestroy(&is_test) );
   TRY( SVMDestroy(&cross_svm) );
   PetscFunctionReturn(0);
 }
