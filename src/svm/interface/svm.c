@@ -438,7 +438,7 @@ PetscErrorCode SVMGetQP(SVM svm,QP *qp)
 
   Level: beginner
 
-.seealso SVMSetNfolds(), SVMCrossValidation()
+.seealso SVMGetNfolds(), SVMCrossValidation()
 @*/
 PetscErrorCode SVMSetNfolds(SVM svm,PetscInt nfolds)
 {
@@ -447,9 +447,7 @@ PetscErrorCode SVMSetNfolds(SVM svm,PetscInt nfolds)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidLogicalCollectiveInt(svm,nfolds,2);
 
-  if (nfolds < 2) FLLOP_SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be greater than 1.");
-  svm->nfolds = nfolds;
-  svm->setupcalled = PETSC_FALSE;
+  TRY( PetscTryMethod(svm,"SVMSetNfolds_C",(SVM,PetscInt),(svm,nfolds)) );
   PetscFunctionReturn(0);
 }
 

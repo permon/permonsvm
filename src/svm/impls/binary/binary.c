@@ -92,6 +92,7 @@ PetscErrorCode SVMDestroy_Binary(SVM svm)
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetQPS_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetQPS_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetQP_C",NULL) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetNfolds_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetBias_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetBias_C",NULL) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetSeparatingHyperplane_C",NULL) );
@@ -518,6 +519,26 @@ PetscErrorCode SVMGetQP_Binary(SVM svm,QP *qp)
   PetscFunctionBegin;
   TRY( SVMGetQPS(svm,&qps) );
   TRY( QPSGetQP(qps,qp) );
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMSetNfolds_Binary"
+PetscErrorCode SVMSetNfolds_Binary(SVM svm,PetscInt nfolds)
+{
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
+  PetscFunctionBegin;
+  if (nfolds < 2) FLLOP_SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Argument must be greater than 1.");
+
+  /* Destroy working arrays for storing solutions on actual folds of cross-validation */
+  TRY( VecDestroyVecs(svm->nfolds,&svm_binary->cv_best_x) );
+  svm_binary->cv_best_x = NULL;
+  TRY( PetscFree(svm_binary->cv_best_C) );
+  svm_binary->cv_best_C = NULL;
+
+  svm->nfolds = nfolds;
+  svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(0);
 }
 
@@ -2034,6 +2055,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetQPS_C",SVMSetQPS_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetQPS_C",SVMGetQPS_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetQP_C",SVMGetQP_Binary) );
+  TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetNfolds_C",SVMSetNfolds_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetBias_C",SVMSetBias_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetBias_C",SVMGetBias_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetSeparatingHyperplane_C",SVMSetSeparatingHyperplane_Binary) );
