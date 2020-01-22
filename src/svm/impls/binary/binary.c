@@ -1631,7 +1631,7 @@ PetscErrorCode SVMInitGridSearch_Binary_Private(SVM svm,PetscInt *n_out,PetscRea
     TRY( SVMGridSearchGetBaseLogC(svm,&base_1) );
     TRY( SVMGridSearchGetStrideLogC(svm,&start_1,&end_1,&step_1) );
 
-    n = (PetscAbs(end_1 - start_1) + 1) / PetscAbs(step_1);
+    n = PetscAbs(end_1 - start_1) / PetscAbs(step_1) + 1;
     TRY( PetscMalloc1(n,&grid) );
 
     for (i = 0; i < n; ++i) grid[i] = PetscPowReal(base_1,start_1 + i * step_1);
@@ -1641,8 +1641,8 @@ PetscErrorCode SVMInitGridSearch_Binary_Private(SVM svm,PetscInt *n_out,PetscRea
     TRY( SVMGridSearchGetNegativeBaseLogC(svm,&base_2) );
     TRY( SVMGridSearchGetNegativeStrideLogC(svm,&start_2,&end_2,&step_2) );
 
-    n_1 = (PetscAbs(end_1 - start_1) + 1) / PetscAbs(step_1);
-    n_2 = (PetscAbs(end_2 - start_2) + 1) / PetscAbs(step_2);
+    n_1 = PetscAbs(end_1 - start_1) / PetscAbs(step_1) + 1;
+    n_2 = PetscAbs(end_2 - start_2) / PetscAbs(step_2) + 1;
     n = 2 * n_1 * n_2;
     TRY( PetscMalloc1(n,&grid) );
 

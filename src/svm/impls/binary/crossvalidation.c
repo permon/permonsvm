@@ -53,7 +53,7 @@ PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt
   TRY( SVMGetPenaltyType(svm,&p) );
 
   /* Create SVM used in cross validation */
-  TRY( SVMCreate(PetscObjectComm((PetscObject)svm),&cross_svm) );
+  TRY( SVMCreate(comm,&cross_svm) );
   TRY( SVMSetType(cross_svm,SVM_BINARY) );
 
   /* Set options of SVM used in cross validation */
@@ -69,9 +69,6 @@ PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt
   TRY( SVMGetTrainingDataset(svm,&Xt,&y) );
   TRY( MatGetOwnershipRange(Xt,&lo,&hi) );
 
-  TRY( ISCreate(PetscObjectComm((PetscObject) svm),&is_test) );
-  TRY( ISSetType(is_test,ISSTRIDE) );
-
   TRY( SVMGetHyperOptNScoreTypes(svm,&nscores) );
   TRY( SVMGetHyperOptScoreTypes(svm,&model_scores) );
   TRY( SVMGetNfolds(svm,&nfolds) );
@@ -80,12 +77,12 @@ PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt
       TRY( PetscPrintf(comm,"SVM: fold %d of %d\n",i+1,nfolds) );
     }
 
-    first = lo + i - 1;
+    first = lo + i - lo % nfolds;
     if (first < lo) first += nfolds;
     n = (hi + nfolds - first - 1) / nfolds;
 
     /* Create test dataset */
-    TRY( ISStrideSetStride(is_test,n,first,nfolds) );
+    TRY( ISCreateStride(comm,n,first,nfolds,&is_test) );
     TRY( MatCreateSubMatrix(Xt,is_test,NULL,MAT_INITIAL_MATRIX,&Xt_test) );
     TRY( VecGetSubVector(y,is_test,&y_test) );
 
@@ -119,37 +116,37 @@ PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt
     TRY( VecRestoreSubVector(y,is_test,&y_test) );
     TRY( MatDestroy(&Xt_test) );
     TRY( ISDestroy(&is_training) );
+    TRY( ISDestroy(&is_test) );
   }
 
   n = m / p;
   for (i = 0; i < n; ++i) score[i] /= (PetscReal) nscores * nfolds;
 
-  TRY( ISDestroy(&is_test) );
   TRY( SVMDestroy(&cross_svm) );
   PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMFoldVecIdx_Binary_Private"
-static PetscErrorCode SVMFoldVecIdx_Binary_Private(IS is_idx,Vec idx,PetscInt nfolds,PetscInt i,IS *is_training,IS *is_test)
+static PetscErrorCode SVMFoldVecIdx_Binary_Private(Vec idx,PetscInt nfolds,PetscInt i,IS *is_training,IS *is_test)
 {
   PetscInt lo,hi;
   PetscInt first,n;
 
-  IS       is_idx_training;
+  IS       is_idx,is_idx_training;
   Vec      idx_training,idx_test;
 
   PetscFunctionBegin;
   TRY( VecGetOwnershipRange(idx,&lo,&hi) );
 
   /* Determine first element of index set (local)*/
-  first = lo + i - 1;
+  first = lo + i - lo % nfolds;
   if (first < lo) first += nfolds;
   /* Determine length of index set (local) */
   n = (hi + nfolds - first - 1) / nfolds;
 
   /* Create index set for training */
-  TRY( ISStrideSetStride(is_idx,n,first,nfolds) );
+  TRY( ISCreateStride(PetscObjectComm((PetscObject) idx),n,first,nfolds,&is_idx) );
   TRY( VecGetSubVector(idx,is_idx,&idx_test) );
   TRY( ISCreateFromVec(idx_test,is_test) );
   TRY( VecRestoreSubVector(idx,is_idx,&idx_test) );
@@ -161,6 +158,7 @@ static PetscErrorCode SVMFoldVecIdx_Binary_Private(IS is_idx,Vec idx,PetscInt nf
   TRY( VecRestoreSubVector(idx,is_idx_training,&idx_training) );
 
   /* Free memory */
+  TRY( ISDestroy(&is_idx) );
   TRY( ISDestroy(&is_idx_training) );
   PetscFunctionReturn(0);
 }
@@ -183,7 +181,6 @@ PetscErrorCode SVMStratifiedKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[
   IS               is_p,is_n;
   Vec              idx_p,idx_n;
 
-  IS               is_idx_p,is_idx_n;
   IS               is_training_p,is_test_p;
   IS               is_training_n,is_test_n;
 
@@ -231,12 +228,6 @@ PetscErrorCode SVMStratifiedKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[
   TRY( VecCreateFromIS(is_p,&idx_p) );
   TRY( VecCreateFromIS(is_n,&idx_n) );
 
-  /* Create stride index sets for folding  */
-  TRY( ISCreate(comm,&is_idx_p) );
-  TRY( ISSetType(is_idx_p,ISSTRIDE) );
-  TRY( ISCreate(comm,&is_idx_n) );
-  TRY( ISSetType(is_idx_n,ISSTRIDE) );
-
   /* Perform cross validation */
   TRY( SVMGetHyperOptNScoreTypes(svm,&nscores) );
   TRY( SVMGetHyperOptScoreTypes(svm,&model_scores) );
@@ -247,9 +238,9 @@ PetscErrorCode SVMStratifiedKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[
     }
 
     /* Fold positive samples */
-    TRY( SVMFoldVecIdx_Binary_Private(is_idx_p,idx_p,nfolds,i,&is_training_p,&is_test_p) );
+    TRY( SVMFoldVecIdx_Binary_Private(idx_p,nfolds,i,&is_training_p,&is_test_p) );
     /* Fold positive samples */
-    TRY( SVMFoldVecIdx_Binary_Private(is_idx_n,idx_n,nfolds,i,&is_training_n,&is_test_n) );
+    TRY( SVMFoldVecIdx_Binary_Private(idx_n,nfolds,i,&is_training_n,&is_test_n) );
 
     /* Union indices of positive and negative training samples */
     TRY( ISExpand(is_training_p,is_training_n,&is_training) );
@@ -301,8 +292,6 @@ PetscErrorCode SVMStratifiedKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[
   for (i = 0; i < k; ++i) score[i] /= (PetscReal) nscores * nfolds;
 
   /* Free memory */
-  TRY( ISDestroy(&is_idx_n) );
-  TRY( ISDestroy(&is_idx_p) );
   TRY( VecDestroy(&idx_n) );
   TRY( VecDestroy(&idx_p) );
   TRY( SVMDestroy(&cross_svm) );
