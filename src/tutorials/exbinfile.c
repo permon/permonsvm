@@ -27,7 +27,7 @@ PetscErrorCode GetFilenameExtension(const char *filename,char **extension)
 int main(int argc,char **argv)
 {
   SVM            svm;
-  char           training_file[PETSC_MAX_PATH_LEN] = "examples/data/heart_scale.bin";
+  char           training_file[PETSC_MAX_PATH_LEN] = "data/heart_scale.bin";
   char           test_file[PETSC_MAX_PATH_LEN]     = "";
   char           *extension = NULL;
   PetscViewer    viewer;
@@ -108,26 +108,26 @@ int main(int argc,char **argv)
     args: -qps_view_convergence -svm_view -svm_view_score
     filter: grep -v MPI
     test:
-      args: -f $PERMON_SVM_DIR/examples/data/heart_scale.bin -f_test $PERMON_SVM_DIR/examples/data/heart_scale.t.bin
+      args: -f $PERMON_SVM_DIR/src/tutorials/data/heart_scale.bin -f_test $PERMON_SVM_DIR/src/tutorials/data/heart_scale.t.bin
     # TODO use when requires works for testset/test
     #test:
     #  requires: hdf5
     #  nsize: 2
-    #  args: -f $PERMON_SVM_DIR/examples/data/heart_scale.h5 -f_test $PERMON_SVM_DIR/examples/data/heart_scale.t.h5
+    #  args: -f $PERMON_SVM_DIR/src/tutorials/data/heart_scale.h5 -f_test $PERMON_SVM_DIR/src/tutorials/data/heart_scale.t.h5
     test:
       nsize: 3
-      args: -f $PERMON_SVM_DIR/examples/data/heart_scale.bin -f_test $PERMON_SVM_DIR/examples/data/heart_scale.t.bin
+      args: -f $PERMON_SVM_DIR/src/tutorials/data/heart_scale.bin -f_test $PERMON_SVM_DIR/src/tutorials/data/heart_scale.t.bin
       args: -Xt_training_mat_type dense -Xt_test_mat_type aij
     test:
       nsize: 4
-      args: -f $PERMON_SVM_DIR/examples/data/heart_scale.svmlight -f_test $PERMON_SVM_DIR/examples/data/heart_scale.t.svmlight
+      args: -f $PERMON_SVM_DIR/src/tutorials/data/heart_scale.svmlight -f_test $PERMON_SVM_DIR/src/tutorials/data/heart_scale.t.svmlight
   test:
     suffix: hdf5
     requires: hdf5
     filter: grep -v MPI
     nsize: 2
     args: -qps_view_convergence -svm_view -svm_view_score
-    args: -f $PERMON_SVM_DIR/examples/data/heart_scale.h5 -f_test $PERMON_SVM_DIR/examples/data/heart_scale.t.h5
+    args: -f $PERMON_SVM_DIR/src/tutorials/data/heart_scale.h5 -f_test $PERMON_SVM_DIR/src/tutorials/data/heart_scale.t.h5
     output_file: output/exbinfile_1.out
 TEST*/
 
