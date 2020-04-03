@@ -9,17 +9,17 @@ Please use [GitHub](https://github.com/permon/permonsvm) for issues and pull req
 Feature overview
 -----------------
 
-- The scalable parallel solution for the linear C-SVM 
-- Supported classifications:	
-	- binary
-	- no-bias binary
+- Scalable (parallel) solution for the linear C-SVM 
+- Supported binary classifications:	
+	- standard classification (linear and bound constraints)
+	- relaxed-bias classification (bound constraints)
 - Misclassification error quantification:
 	- _l1_ hinge-loss function
 	- _l2_ hinge-loss function
-- Bias classification solvers: 
+- Standard classification solvers: 
 	-  SMALXE + MPRGP (active-set method for bound constrained problems) 
 	-  SMALXE + [The Toolkit for Advance Optimization](https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/Tao/index.html) (TAO) solvers for minimization with bound constraints
-- No-bias classification solvers:
+- Relaxed-bias classification solvers:
 	- MPRGP
 	- TAO solvers for minimization with bound constraints 
 - Warm start  
@@ -43,7 +43,7 @@ Feature overview
 Quick guide to installation
 -------------------------------------
 
-1. install [PermonQP](https://github.com/permon/permon) (follow instructions in the associated README.md)
+1. install [PermonQP](https://github.com/permon/permon) (follow instructions in the associated README)
 2. set `PERMON_SVM_DIR` variable pointing to the PermonSVM directory (probably this file's parent directory)
 3. build PermonSVM simply using makefile (makes use of PETSc buildsystem):
    `make`
@@ -54,17 +54,17 @@ Quick guide to installation
 Tutorials
 --------------------------
 
-We also provide the bash script ``runsvmmpi`` in the root directory of PermonSVM to easily run minimal working example ``src/bin/permonsvmfile.c``. Several training and test datasets are located in ``DATA_DIR=src/tutorials/data``. Please set the variable before running following examples.
+Tutorials illustrating basic functionality of the package are located in [`src/tutorials`](https://github.com/permon/permonsvm/tree/master/src/tutorials). We also provide the bash script [runsvmmpi](https://github.com/permon/permonsvm/tree/master/runsvmmpi) in the root directory of PermonSVM to easily run minimal working example [`src/bin/permonsvmfile.c`](https://github.com/permon/permonsvm/tree/master/src/bin/permonsvmfile.c). Several training and test datasets are located in ``DATA_DIR=src/tutorials/data``. Please set the variable before running following examples.
 
 ### Using different classification methods
 
-1. running PermonSVM on 2 MPI processes with default settings (no-bias classification, _l1_ hinge loss, C = 1)
+1. running PermonSVM on 2 MPI processes with default settings (relaxed-bias classification, _l1_ hinge loss, C = 1, B = 1)
    
  	```	bash 
  	./runsvmmpi 2 -f_training $DATA_DIR/heart_scale.bin -f_test $DATA_DIR/heart_scale.t.bin
  	```
   
-2. running PermonSVM on 2 MPI processes with penalty parameter C = 100
+2. running PermonSVM on 2 MPI processes with penalty parameter C = 100 
 	
 	```	bash
 	./runsvmmpi 2 -f_training $DATA_DIR/heart_scale.bin -f_test $DATA_DIR/heart_scale.t.bin 
@@ -87,7 +87,7 @@ We also provide the bash script ``runsvmmpi`` in the root directory of PermonSVM
 	
 ### Hyperparameter optimization
 
-1. running PermonSVM on 2 MPI processes with hyperparameter optimization with default settings (_l1_ hinge loss function, no-bias classification, grid-search log2C = [-2:1:2], k-fold cross validation on 5 folds)
+1. running PermonSVM on 2 MPI processes with hyperparameter optimization with default settings (_l1_ hinge loss function, relaxed-bias classification, grid-search log2C = [-2:1:2], k-fold cross validation on 5 folds)
 
 	```	bash
 	./runsvmmpi 2 -f_training $DATA_DIR/heart_scale.bin -f_test $DATA_DIR/heart_scale.t.bin 
@@ -118,7 +118,8 @@ PermonSVM uses an implicit representation of the Gramian matrix by default. Some
 -f_kernel $DATA_DIR/heart_scale.kernel.bin
 ```
 
-The training dataset `src/tutorials/data/heart_scale` and testing dataset `src/tutorials/data/heart_scale.t` have been obtained by splitting the `heart_scale` dataset from the [LIBSVM dataset page](https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html#heart). Other tutorials illustrating basic functionality of the package are located in `src/tutorials`.
+The training dataset `src/tutorials/data/heart_scale` and testing dataset `src/tutorials/data/heart_scale.t` have been obtained by splitting the `heart_scale` dataset from the [LIBSVM dataset page](https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html#heart).
+
 
 Currently supported PERMON/PETSc versions
 ----------------------------------
