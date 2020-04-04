@@ -63,7 +63,7 @@ Tutorials
 
 1. running PermonSVM on 2 MPI processes with default settings (relaxed-bias classification, _l1_ hinge loss, C = 1, B = 1)
    
- 	```	bash 
+ 	```bash 
  	./runsvmmpi 2 -f_training $DATA_DIR/heart_scale.bin -f_test $DATA_DIR/heart_scale.t.bin
  	```
   
