@@ -54,7 +54,10 @@ Quick installation guide
 Tutorials
 --------------------------
 
-Tutorials illustrating basic functionality of the package are located in [`src/tutorials`](https://github.com/permon/permonsvm/tree/master/src/tutorials). We also provide the bash script [runsvmmpi](https://github.com/permon/permonsvm/tree/master/runsvmmpi) in the root directory of PermonSVM to easily run minimal working example [`src/bin/permonsvmfile.c`](https://github.com/permon/permonsvm/tree/master/src/bin/permonsvmfile.c). Several training and test datasets are located in ``DATA_DIR=src/tutorials/data``. Please set the variable before running following examples.
+* Tutorials illustrating basic functionality of the package are located in [`src/tutorials`](https://github.com/permon/permonsvm/tree/master/src/tutorials).
+* We also provide the bash script [runsvmmpi](https://github.com/permon/permonsvm/tree/master/runsvmmpi) in the root directory of PermonSVM to easily run minimal working example [`src/bin/permonsvmfile.c`](https://github.com/permon/permonsvm/tree/master/src/bin/permonsvmfile.c).
+* Several training and test datasets are located in `DATA_DIR=src/tutorials/data`.
+* Please set the `DATA_DIR` variable before running following examples.
 
 ### Using different classification methods
 
