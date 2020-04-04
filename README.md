@@ -76,9 +76,9 @@ Tutorials
    
 3. running PermonSVM on 2 MPI processes with C = 0.01 and _l2_ hinge loss
 
-	```	bash
-	./runsvmmpi 2 -f_training $DATA_DIR/heart_scale.bin -f_test $DATA_DIR/heart_scale.t.bin 
-	-svm_loss_type L2 -svm_C 1e-2
+	```bash
+	./runsvmmpi 2 -f_training $DATA_DIR/heart_scale.bin -f_test $DATA_DIR/heart_scale.t.bin \
+	  -svm_loss_type L2 -svm_C 1e-2
 	```
   
 4. running PermonSVM on 2 MPI processes solving standard classification problem (binary mod 1), missclassification error quantification by _l2_ hinge loss, and C = 0.01
