@@ -43,7 +43,7 @@ Feature overview
 Quick installation guide
 -------------------------------------
 
-1. install [PermonQP](https://github.com/permon/permon) (follow instructions in the associated README)
+1. install [PermonQP](https://github.com/permon/permon) (follow instructions in its own [README.md](https://github.com/permon/permon/blob/master/README.md))
 2. set `PERMON_SVM_DIR` variable pointing to the PermonSVM directory (probably this file's parent directory)
 3. build PermonSVM simply using makefile (makes use of PETSc buildsystem):
    `make`
