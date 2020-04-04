@@ -92,9 +92,9 @@ Tutorials
 
 1. running PermonSVM on 2 MPI processes with hyperparameter optimization with default settings (_l1_ hinge loss function, relaxed-bias classification, grid-search log2C = [-2:1:2], k-fold cross validation on 5 folds)
 
-	```	bash
-	./runsvmmpi 2 -f_training $DATA_DIR/heart_scale.bin -f_test $DATA_DIR/heart_scale.t.bin 
-	-svm_hyperopt 1
+	```bash
+	./runsvmmpi 2 -f_training $DATA_DIR/heart_scale.bin -f_test $DATA_DIR/heart_scale.t.bin \
+	  -svm_hyperopt 1
 	```
    
 2. running PermonSVM on 2 MPI processes with grid-search on C = {0.1, 1, 10, 100} combined with cross validation on 3 folds that reuses a previous solution (warm start)
