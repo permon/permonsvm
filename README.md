@@ -69,9 +69,9 @@ Tutorials
   
 2. running PermonSVM on 2 MPI processes with penalty parameter C = 100 
 	
-	```	bash
-	./runsvmmpi 2 -f_training $DATA_DIR/heart_scale.bin -f_test $DATA_DIR/heart_scale.t.bin 
-	-svm_C 100
+	```bash
+	./runsvmmpi 2 -f_training $DATA_DIR/heart_scale.bin -f_test $DATA_DIR/heart_scale.t.bin \
+	  -svm_C 100
 	```
    
 3. running PermonSVM on 2 MPI processes with C = 0.01 and _l2_ hinge loss
