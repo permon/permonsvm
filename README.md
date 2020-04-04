@@ -119,8 +119,8 @@ Sometimes, it is reasonable to compute inner products related to the Gramian exp
 For such cases, PermonSVM provides functionality allowing to load precomputed Gramian matrix.
 
 ```bash
-./runsvmmpi 2 -f_training $DATA_DIR/heart_scale.bin -f_test $DATA_DIR/heart_scale.t.bin 
--f_kernel $DATA_DIR/heart_scale.kernel.bin
+./runsvmmpi 2 -f_training $DATA_DIR/heart_scale.bin -f_test $DATA_DIR/heart_scale.t.bin \
+  -f_kernel $DATA_DIR/heart_scale.kernel.bin
 ```
 
 The training dataset `src/tutorials/data/heart_scale` and testing dataset `src/tutorials/data/heart_scale.t` have been obtained by splitting the `heart_scale` dataset from the [LIBSVM dataset page](https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html#heart).
