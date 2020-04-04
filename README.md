@@ -114,7 +114,9 @@ Tutorials
    
 ### Using precomputed Gramian matrix
 
-PermonSVM uses an implicit representation of the Gramian matrix by default. Sometimes, it is reasonable to compute inner products related to the Gramian explicitly, typically, when a number of features is disproportionately larger than a number of samples. For such cases, PermonSVM provides functionality allowing to load precomputed Gramian matrix 
+PermonSVM uses an implicit representation of the Gramian matrix by default.
+Sometimes, it is reasonable to compute inner products related to the Gramian explicitly, typically, when a number of features is disproportionately larger than a number of samples.
+For such cases, PermonSVM provides functionality allowing to load precomputed Gramian matrix.
 
 ```bash
 ./runsvmmpi 2 -f_training $DATA_DIR/heart_scale.bin -f_test $DATA_DIR/heart_scale.t.bin 
