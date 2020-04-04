@@ -107,9 +107,9 @@ Tutorials
 3. running PermonSVM on 2 MPI processes with grid search on C = {0.1, 1, 10, 100} and stratified k-fold cross validation on 3 folds with warm start
 
 	```bash
-	./runsvmmpi 2 -f_training $DATA_DIR/heart_scale.bin -f_test $DATA_DIR/heart_scale.t.bin 
-	-svm_hyperopt 1 -svm_gs_logC_base 10 -svm_gs_logC_stride 1,2,1 -svm_nfolds 3 -cross_svm_warm_start 1 
-	-svm_cv_type stratified_kfold
+	./runsvmmpi 2 -f_training $DATA_DIR/heart_scale.bin -f_test $DATA_DIR/heart_scale.t.bin \
+	  -svm_hyperopt 1 -svm_gs_logC_base 10 -svm_gs_logC_stride 1,2,1 -svm_nfolds 3 -cross_svm_warm_start 1 \
+	  -svm_cv_type stratified_kfold
 	```
    
 ### Using precomputed Gramian matrix
