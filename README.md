@@ -40,7 +40,7 @@ Feature overview
 	- HDF5 (AIJ and dense matrices)
 	- SVMLight
 
-Quick guide to installation
+Quick installation guide
 -------------------------------------
 
 1. install [PermonQP](https://github.com/permon/permon) (follow instructions in the associated README)
