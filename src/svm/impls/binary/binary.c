@@ -1,8 +1,6 @@
 
 #include "binaryimpl.h"
 
-PetscClassId SVM_CLASSID;
-
 const char *const SVMLossTypes[]={"L1","L2","SVMLossType","SVM_",0};
 
 typedef struct {
