@@ -26,6 +26,7 @@ typedef struct {
 
     IS          is_sv;
     PetscInt    nsv;
+    PetscReal   chop_tol;
 
     QPS         qps;
 
