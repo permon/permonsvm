@@ -1120,6 +1120,7 @@ PetscErrorCode SVMComputeModelParams_Binary(SVM svm)
   QP          qp;
   Vec         x,lb,ub;
   Vec         w;
+  PetscReal   max;
 
   SVMLossType loss_type;
   PetscInt    svm_mod;
@@ -1139,6 +1140,9 @@ PetscErrorCode SVMComputeModelParams_Binary(SVM svm)
 
   TRY( QPGetSolutionVector(qp,&x) );
   TRY( QPGetBox(qp,NULL,&lb,&ub) );
+
+  TRY( VecMax(x,NULL,&max) );
+  TRY( VecChop(x,svm_binary->chop_tol*max) );
 
   if (svm_mod == 2) {
     TRY( ISDestroy(&svm_binary->is_sv) );
@@ -1865,6 +1869,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
 
   svm_binary->nsv         = 0;
   svm_binary->is_sv       = NULL;
+  svm_binary->chop_tol    = PETSC_MACHINE_EPSILON;
 
   TRY( PetscMemzero(svm_binary->y_map,2 * sizeof(PetscScalar)) );
   TRY( PetscMemzero(svm_binary->confusion_matrix,4 * sizeof(PetscInt)) );
