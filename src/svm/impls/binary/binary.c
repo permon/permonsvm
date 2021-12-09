@@ -1787,6 +1787,7 @@ PetscErrorCode SVMLoadTrainingDataset_Binary(SVM svm,PetscViewer v)
   TRY( MatSetFromOptions(Xt_training) );
 
   TRY( VecCreate(comm,&y_training) );
+  TRY( VecSetFromOptions(y_training) );
   TRY( PetscObjectSetName((PetscObject) y_training,"y_training") );
 
   TRY( PetscLogEventBegin(SVM_LoadDataset,svm,0,0,0) );
