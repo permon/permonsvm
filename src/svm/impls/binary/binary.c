@@ -232,10 +232,10 @@ PetscErrorCode SVMSetGramian_Binary(SVM svm,Mat G)
   PetscInt   m,n;
 
   PetscFunctionBegin;
-  /* Checking that Gramian is rectangular */
+  /* Checking that Gramian is square */
   TRY( MatGetSize(G,&m,&n) );
   if (m != n) {
-    FLLOP_SETERRQ2(PetscObjectComm((PetscObject) G),PETSC_ERR_ARG_SIZ,"Gramian (kernel) matrix must be rectangular, G(%D,%D)",m,n);
+    FLLOP_SETERRQ2(PetscObjectComm((PetscObject) G),PETSC_ERR_ARG_SIZ,"Gramian (kernel) matrix must be square, G(%D,%D)",m,n);
   }
   /* Checking dimension compatibility between training data matrix and Gramian */
   TRY( SVMGetTrainingDataset(svm,&Xt,NULL) );
@@ -272,10 +272,10 @@ PetscErrorCode SVMSetOperator_Binary(SVM svm,Mat A)
   PetscInt m,n;
 
   PetscFunctionBegin;
-  /* Checking that operator (Hessian) is rectangular */
+  /* Checking that operator (Hessian) is square */
   TRY( MatGetSize(A,&m,&n) );
   if (m != n) {
-    FLLOP_SETERRQ2(PetscObjectComm((PetscObject) A),PETSC_ERR_ARG_SIZ,"Hessian matrix must be rectangular, G(%D,%D)",m,n);
+    FLLOP_SETERRQ2(PetscObjectComm((PetscObject) A),PETSC_ERR_ARG_SIZ,"Hessian matrix must be square, G(%D,%D)",m,n);
   }
   /* Checking dimension compatibility between Hessian (operator) and training data matrices */
   TRY( SVMGetTrainingDataset(svm,&Xt,NULL) );
