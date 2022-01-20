@@ -145,6 +145,7 @@ PetscErrorCode MatCreateSubMatrix_Biased(Mat A,IS isrow,IS iscol,MatReuse cll,Ma
   Mat         A_sub;
   PetscInt    m,n,M,N;
   Mat         mat_inner;
+  VecType     vtype;
 
   void        *ptr     = NULL;
   MatCtx      *ctx     = NULL;
@@ -179,6 +180,10 @@ PetscErrorCode MatCreateSubMatrix_Biased(Mat A,IS isrow,IS iscol,MatReuse cll,Ma
   TRY( MatShellSetOperation(mat_inner,MATOP_MULT_TRANSPOSE  ,(void(*)(void))MatMultTranspose_Biased) );
   TRY( MatShellSetOperation(mat_inner,MATOP_CREATE_SUBMATRIX,(void(*)(void))MatCreateSubMatrix_Biased) );
   TRY( PetscObjectComposeFunction((PetscObject) mat_inner,"MatGetOwnershipIS_C",MatGetOwnershipIS_Biased) );
+
+  /* Set the default vector type for the shell to be the same as for the matrix A */
+  TRY( MatGetVecType(A,&vtype) );
+  TRY( MatShellSetVecType(mat_inner,vtype) );
 
   *out = mat_inner;
   PetscFunctionReturn(0);
@@ -284,6 +289,7 @@ PetscErrorCode MatBiasedCreate(Mat A,PetscReal bias,Mat *A_biased)
   Mat         A_biased_inner;
   PetscInt    m,n,M,N;
   MatCtx      *ctx = NULL;
+  VecType     vtype;
 
   const char  *A_name,*A_prefix;
   char        A_name_inner[50];
@@ -314,6 +320,10 @@ PetscErrorCode MatBiasedCreate(Mat A,PetscReal bias,Mat *A_biased)
   TRY( MatShellSetOperation(A_biased_inner,MATOP_MULT_TRANSPOSE  ,(void(*)(void))MatMultTranspose_Biased) );
   TRY( MatShellSetOperation(A_biased_inner,MATOP_CREATE_SUBMATRIX,(void(*)(void))MatCreateSubMatrix_Biased) );
   TRY( PetscObjectComposeFunction((PetscObject) A_biased_inner,"MatGetOwnershipIS_C",MatGetOwnershipIS_Biased) );
+
+  /* Set the default vector type for the shell to be the same as for the matrix A */
+  TRY( MatGetVecType(A,&vtype) );
+  TRY( MatShellSetVecType(A_biased_inner,vtype) );
 
   /* Set name of biased mat */
   TRY( PetscObjectGetName((PetscObject) A,&A_name) );

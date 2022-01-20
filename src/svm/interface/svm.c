@@ -2567,6 +2567,7 @@ PetscErrorCode SVMLoadTestDataset(SVM svm,PetscViewer v)
   TRY( MatSetFromOptions(Xt_test) );
   /* Create label vector of test samples */
   TRY( VecCreate(comm,&y_test) );
+  TRY( VecSetFromOptions(y_test) );
   TRY( PetscObjectSetName((PetscObject) y_test,"y_test") );
 
   TRY( PetscLogEventBegin(SVM_LoadDataset,svm,0,0,0) );
