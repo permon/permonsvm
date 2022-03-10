@@ -28,6 +28,8 @@ struct _SVMOps {
   PetscErrorCode (*viewgramian)(SVM,PetscViewer);
   PetscErrorCode (*loadtrainingdataset)(SVM,PetscViewer);
   PetscErrorCode (*viewtrainingdataset)(SVM,PetscViewer);
+  PetscErrorCode (*viewtrainingpredictions)(SVM,PetscViewer);
+  PetscErrorCode (*viewtestpredictions)(SVM,PetscViewer);
 };
 
 struct _p_SVM {

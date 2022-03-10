@@ -1441,6 +1441,52 @@ PetscErrorCode SVMView(SVM svm,PetscViewer v)
   PetscFunctionReturn(0);
 }
 
+/*@
+  SVMViewTrainingPredictions - Views predictions on training samples using trained model.
+
+  Input Parameters:
++ svm - SVM context
+- v - visualization context
+
+  Level: beginner
+
+.seealso SVMLoadTrainingDataset, SVMPredict, PetscViewer
+@*/
+PetscErrorCode SVMViewTrainingPredictions(SVM svm,PetscViewer v)
+{
+
+  PetscFunctionBeginI;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
+  if (svm->ops->viewtrainingpredictions) {
+    TRY( svm->ops->viewtrainingpredictions(svm,v) );
+  }
+  PetscFunctionReturnI(0);
+}
+
+/*@
+  SVMViewTestPredictions - Views predictions on test samples using trained model.
+
+  Input Parameters:
++ svm - SVM context
+- v - visualization context
+
+  Level: beginner
+
+.seealso SVMLoadTestDataset, SVMPredict, PetscViewer
+@*/
+PetscErrorCode SVMViewTestPredictions(SVM svm,PetscViewer v)
+{
+
+  PetscFunctionBeginI;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
+  if (svm->ops->viewtestpredictions) {
+    TRY( svm->ops->viewtestpredictions(svm,v) );
+  }
+  PetscFunctionReturnI(0);
+}
+
 #undef __FUNCT__
 #define __FUNCT__ "SVMViewScore"
 /*@

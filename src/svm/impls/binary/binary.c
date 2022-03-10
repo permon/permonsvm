@@ -1844,6 +1844,54 @@ PetscErrorCode SVMViewTrainingDataset_Binary(SVM svm,PetscViewer v)
   PetscFunctionReturn(0);
 }
 
+PetscErrorCode SVMViewTrainingPredictions_Binary(SVM svm,PetscViewer v)
+{
+  MPI_Comm   comm;
+
+  Mat        Xt_training;
+  Vec        y_pred;
+
+  PetscFunctionBegin;
+  TRY( SVMGetTrainingDataset(svm,&Xt_training,NULL) );
+  if (!Xt_training) {
+    TRY( PetscObjectGetComm((PetscObject) v,&comm) );
+    FLLOP_SETERRQ(comm,PETSC_ERR_ARG_NULL,"Test dataset is not set");
+  }
+
+  /* View predictions on training samples */
+  TRY( SVMPredict(svm,Xt_training,&y_pred) );
+  TRY( PetscObjectSetName((PetscObject) y_pred,"y_training_predictions") );
+  TRY( VecView(y_pred,v) );
+
+  /* Free memory */
+  TRY( VecDestroy(&y_pred) );
+  PetscFunctionReturn(0);
+}
+
+PetscErrorCode SVMViewTestPredictions_Binary(SVM svm,PetscViewer v)
+{
+  MPI_Comm   comm;
+
+  Mat        Xt_test;
+  Vec        y_pred;
+
+  PetscFunctionBegin;
+  TRY( SVMGetTestDataset(svm,&Xt_test,NULL) );
+  if (!Xt_test) {
+    TRY( PetscObjectGetComm((PetscObject) v,&comm) );
+    FLLOP_SETERRQ(comm,PETSC_ERR_ARG_NULL,"Test dataset is not set");
+  }
+
+  /* View predictions on test samples */
+  TRY( SVMPredict(svm,Xt_test,&y_pred) );
+  TRY( PetscObjectSetName((PetscObject) y_pred,"y_test_predictions") );
+  TRY( VecView(y_pred,v) );
+
+  /* Free memory */
+  TRY( VecDestroy(&y_pred) );
+  PetscFunctionReturn(0);
+}
+
 #undef __FUNCT__
 #define __FUNCT__ "SVMCreate_Binary"
 PetscErrorCode SVMCreate_Binary(SVM svm)
@@ -1880,26 +1928,28 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
     svm_binary->work[i] = NULL;
   }
 
-  svm->ops->setup                 = SVMSetUp_Binary;
-  svm->ops->reset                 = SVMReset_Binary;
-  svm->ops->destroy               = SVMDestroy_Binary;
-  svm->ops->setfromoptions        = SVMSetFromOptions_Binary;
-  svm->ops->train                 = SVMTrain_Binary;
-  svm->ops->posttrain             = SVMPostTrain_Binary;
-  svm->ops->reconstructhyperplane = SVMReconstructHyperplane_Binary;
-  svm->ops->predict               = SVMPredict_Binary;
-  svm->ops->test                  = SVMTest_Binary;
-  svm->ops->crossvalidation       = SVMCrossValidation_Binary;
-  svm->ops->gridsearch            = SVMGridSearch_Binary;
-  svm->ops->view                  = SVMView_Binary;
-  svm->ops->viewscore             = SVMViewScore_Binary;
-  svm->ops->computemodelscores    = SVMComputeModelScores_Binary;
-  svm->ops->computehingeloss      = SVMComputeHingeLoss_Binary;
-  svm->ops->computemodelparams    = SVMComputeModelParams_Binary;
-  svm->ops->loadgramian           = SVMLoadGramian_Binary;
-  svm->ops->viewgramian           = SVMViewGramian_Binary;
-  svm->ops->loadtrainingdataset   = SVMLoadTrainingDataset_Binary;
-  svm->ops->viewtrainingdataset   = SVMViewTrainingDataset_Binary;
+  svm->ops->setup                   = SVMSetUp_Binary;
+  svm->ops->reset                   = SVMReset_Binary;
+  svm->ops->destroy                 = SVMDestroy_Binary;
+  svm->ops->setfromoptions          = SVMSetFromOptions_Binary;
+  svm->ops->train                   = SVMTrain_Binary;
+  svm->ops->posttrain               = SVMPostTrain_Binary;
+  svm->ops->reconstructhyperplane   = SVMReconstructHyperplane_Binary;
+  svm->ops->predict                 = SVMPredict_Binary;
+  svm->ops->test                    = SVMTest_Binary;
+  svm->ops->crossvalidation         = SVMCrossValidation_Binary;
+  svm->ops->gridsearch              = SVMGridSearch_Binary;
+  svm->ops->view                    = SVMView_Binary;
+  svm->ops->viewscore               = SVMViewScore_Binary;
+  svm->ops->computemodelscores      = SVMComputeModelScores_Binary;
+  svm->ops->computehingeloss        = SVMComputeHingeLoss_Binary;
+  svm->ops->computemodelparams      = SVMComputeModelParams_Binary;
+  svm->ops->loadgramian             = SVMLoadGramian_Binary;
+  svm->ops->viewgramian             = SVMViewGramian_Binary;
+  svm->ops->loadtrainingdataset     = SVMLoadTrainingDataset_Binary;
+  svm->ops->viewtrainingdataset     = SVMViewTrainingDataset_Binary;
+  svm->ops->viewtrainingpredictions = SVMViewTrainingPredictions_Binary;
+  svm->ops->viewtestpredictions     = SVMViewTestPredictions_Binary;
 
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMSetGramian_C",SVMSetGramian_Binary) );
   TRY( PetscObjectComposeFunction((PetscObject) svm,"SVMGetGramian_C",SVMGetGramian_Binary) );
