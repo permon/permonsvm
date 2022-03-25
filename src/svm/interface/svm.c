@@ -1457,7 +1457,7 @@ PetscErrorCode SVMViewTrainingPredictions(SVM svm,PetscViewer v)
 
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
+  if (v) PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
   if (svm->ops->viewtrainingpredictions) {
     TRY( svm->ops->viewtrainingpredictions(svm,v) );
   }
@@ -1480,7 +1480,7 @@ PetscErrorCode SVMViewTestPredictions(SVM svm,PetscViewer v)
 
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
+  if (v) {PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);}
   if (svm->ops->viewtestpredictions) {
     TRY( svm->ops->viewtestpredictions(svm,v) );
   }

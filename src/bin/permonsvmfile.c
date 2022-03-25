@@ -131,10 +131,8 @@ PetscErrorCode SVMRunBinaryClassification()
 #else
       SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_SUP,"PETSc is not configured with HDF5");
 #endif
-    } else if (isbinary) {
-      TRY( PetscViewerBinaryOpen(PETSC_COMM_WORLD,training_result_file,FILE_MODE_WRITE,&viewer) );
     } else {
-      SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_SUP,"File type %s not supported",extension);
+      TRY( PetscViewerBinaryOpen(PETSC_COMM_WORLD,training_result_file,FILE_MODE_WRITE,&viewer) );
     }
     TRY( SVMViewTrainingPredictions(svm,viewer) );
     TRY( PetscViewerDestroy(&viewer) );
@@ -150,10 +148,8 @@ PetscErrorCode SVMRunBinaryClassification()
 #else
       SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_SUP,"PETSc is not configured with HDF5");
 #endif
-    } else if (isbinary) {
-      TRY( PetscViewerBinaryOpen(PETSC_COMM_WORLD,test_result_file,FILE_MODE_WRITE,&viewer) );
     } else {
-      SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_SUP,"File type %s not supported",extension);
+      TRY( PetscViewerBinaryOpen(PETSC_COMM_WORLD,test_result_file,FILE_MODE_WRITE,&viewer) );
     }
     TRY( SVMViewTestPredictions(svm,viewer) );
     TRY( PetscViewerDestroy(&viewer) );

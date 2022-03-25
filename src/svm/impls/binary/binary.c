@@ -1855,7 +1855,7 @@ PetscErrorCode SVMViewTrainingPredictions_Binary(SVM svm,PetscViewer v)
   TRY( SVMGetTrainingDataset(svm,&Xt_training,NULL) );
   if (!Xt_training) {
     TRY( PetscObjectGetComm((PetscObject) v,&comm) );
-    FLLOP_SETERRQ(comm,PETSC_ERR_ARG_NULL,"Test dataset is not set");
+    FLLOP_SETERRQ(comm,PETSC_ERR_ARG_NULL,"Training dataset is not set");
   }
 
   /* View predictions on training samples */

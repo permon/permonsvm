@@ -29,12 +29,9 @@ int main(int argc,char **argv)
   SVM            svm;
   char           training_file[PETSC_MAX_PATH_LEN] = "data/heart_scale.bin";
   char           test_file[PETSC_MAX_PATH_LEN]     = "";
-  char           training_result_file[PETSC_MAX_PATH_LEN] = "";
-  char           test_result_file[PETSC_MAX_PATH_LEN]     = "";
   char           *extension = NULL;
   PetscViewer    viewer;
   PetscBool      test_file_set = PETSC_FALSE;
-  PetscBool      training_result_file_set=PETSC_FALSE,test_result_file_set=PETSC_FALSE;
   PetscBool      ishdf5,isbinary,issvmlight;
   PetscErrorCode ierr;
 
@@ -42,9 +39,6 @@ int main(int argc,char **argv)
 
   ierr = PetscOptionsGetString(NULL,NULL,"-f",training_file,sizeof(training_file),NULL);CHKERRQ(ierr);
   ierr = PetscOptionsGetString(NULL,NULL,"-f_test",test_file,sizeof(test_file),&test_file_set);CHKERRQ(ierr);
-
-  ierr = PetscOptionsGetString(NULL,NULL,"-f_training_predictions",training_result_file,sizeof(training_result_file),&training_result_file_set);CHKERRQ(ierr);
-  ierr = PetscOptionsGetString(NULL,NULL,"-f_test_predictions",test_result_file,sizeof(test_result_file),&test_result_file_set);CHKERRQ(ierr);
 
   /* Create SVM object */
   ierr = SVMCreate(PETSC_COMM_WORLD,&svm);CHKERRQ(ierr);
@@ -100,46 +94,6 @@ int main(int argc,char **argv)
   /* Test performance of SVM model */
   if (test_file_set) {
     ierr = SVMTest(svm);CHKERRQ(ierr);
-  }
-
-  /* Save predictions on training samples */
-  if (training_result_file_set) {
-    ierr = GetFilenameExtension(training_result_file,&extension);CHKERRQ(ierr);
-    ierr = PetscStrcmp(extension,h5,&ishdf5);CHKERRQ(ierr);
-    ierr = PetscStrcmp(extension,bin,&isbinary);CHKERRQ(ierr);
-    if (ishdf5) {
-#if defined(PETSC_HAVE_HDF5)
-      ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,training_result_file,FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
-#else
-      SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_SUP,"PETSc is not configured with HDF5");
-#endif
-    } else if (isbinary) {
-      ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,training_result_file,FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
-    } else {
-      SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_SUP,"File type %s not supported",extension);
-    }
-    ierr = SVMViewTrainingPredictions(svm,viewer);CHKERRQ(ierr);
-    ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
-  }
-
-  /* Save predictions on test samples */
-  if (test_result_file_set) {
-    ierr = GetFilenameExtension(test_result_file,&extension);CHKERRQ(ierr);
-    ierr = PetscStrcmp(extension,h5,&ishdf5);CHKERRQ(ierr);
-    ierr = PetscStrcmp(extension,bin,&isbinary);CHKERRQ(ierr);
-    if (ishdf5) {
-#if defined(PETSC_HAVE_HDF5)
-      ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,test_result_file,FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
-#else
-      SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_SUP,"PETSc is not configured with HDF5");
-#endif
-    } else if (isbinary) {
-      ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,test_result_file,FILE_MODE_WRITE,&viewer);CHKERRQ(ierr);
-    } else {
-      SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_SUP,"File type %s not supported",extension);
-    }
-    ierr = SVMViewTestPredictions(svm,viewer);CHKERRQ(ierr);
-    ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
   }
 
   ierr = SVMDestroy(&svm);CHKERRQ(ierr);
