@@ -1441,6 +1441,52 @@ PetscErrorCode SVMView(SVM svm,PetscViewer v)
   PetscFunctionReturn(0);
 }
 
+/*@
+  SVMViewTrainingPredictions - Views predictions on training samples using trained model.
+
+  Input Parameters:
++ svm - SVM context
+- v - visualization context
+
+  Level: beginner
+
+.seealso SVMLoadTrainingDataset, SVMPredict, PetscViewer
+@*/
+PetscErrorCode SVMViewTrainingPredictions(SVM svm,PetscViewer v)
+{
+
+  PetscFunctionBeginI;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  if (v) PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
+  if (svm->ops->viewtrainingpredictions) {
+    TRY( svm->ops->viewtrainingpredictions(svm,v) );
+  }
+  PetscFunctionReturnI(0);
+}
+
+/*@
+  SVMViewTestPredictions - Views predictions on test samples using trained model.
+
+  Input Parameters:
++ svm - SVM context
+- v - visualization context
+
+  Level: beginner
+
+.seealso SVMLoadTestDataset, SVMPredict, PetscViewer
+@*/
+PetscErrorCode SVMViewTestPredictions(SVM svm,PetscViewer v)
+{
+
+  PetscFunctionBeginI;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  if (v) {PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);}
+  if (svm->ops->viewtestpredictions) {
+    TRY( svm->ops->viewtestpredictions(svm,v) );
+  }
+  PetscFunctionReturnI(0);
+}
+
 #undef __FUNCT__
 #define __FUNCT__ "SVMViewScore"
 /*@
@@ -1812,6 +1858,14 @@ PetscErrorCode SVMPostTrain(SVM svm)
     TRY( PetscViewerPopFormat(v) );
     TRY( PetscViewerDestroy(&v) );
   }
+
+  TRY( PetscOptionsGetViewer(((PetscObject) svm)->comm,NULL,((PetscObject) svm)->prefix,"-svm_view_training_predictions",&v,&format,&view) );
+  if (view) {
+    TRY( PetscViewerPushFormat(v,format) );
+    TRY( SVMViewTrainingPredictions(svm,v) );
+    TRY( PetscViewerPopFormat(v) );
+    TRY( PetscViewerDestroy(&v) );
+  }
   PetscFunctionReturnI(0);
 }
 
@@ -1990,16 +2044,24 @@ PetscErrorCode SVMTest(SVM svm)
 {
   PetscViewer       v;
   PetscViewerFormat format;
-  PetscBool         view_score;
+  PetscBool         view;
 
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   TRY( svm->ops->test(svm) );
 
-  TRY( PetscOptionsGetViewer(((PetscObject)svm)->comm,NULL,((PetscObject)svm)->prefix,"-svm_view_score",&v,&format,&view_score) );
-  if (view_score) {
+  TRY( PetscOptionsGetViewer(((PetscObject)svm)->comm,NULL,((PetscObject)svm)->prefix,"-svm_view_score",&v,&format,&view) );
+  if (view) {
     TRY( PetscViewerPushFormat(v,format) );
     TRY( SVMViewScore(svm,v) );
+    TRY( PetscViewerPopFormat(v) );
+    TRY( PetscViewerDestroy(&v) );
+  }
+
+  TRY( PetscOptionsGetViewer(((PetscObject)svm)->comm,NULL,((PetscObject)svm)->prefix,"-svm_view_test_predictions",&v,&format,&view) );
+  if (view) {
+    TRY( PetscViewerPushFormat(v,format) );
+    TRY( SVMViewTestPredictions(svm,v) );
     TRY( PetscViewerPopFormat(v) );
     TRY( PetscViewerDestroy(&v) );
   }

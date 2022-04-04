@@ -27,7 +27,10 @@ PetscErrorCode SVMRunBinaryClassification()
   char        training_file[PETSC_MAX_PATH_LEN] = "examples/data/heart_scale.bin";
   char        test_file[PETSC_MAX_PATH_LEN]     = "";
   char        kernel_file[PETSC_MAX_PATH_LEN]   = "";
+  char        training_result_file[PETSC_MAX_PATH_LEN] = "";
+  char        test_result_file[PETSC_MAX_PATH_LEN]     = "";
   PetscBool   test_file_set = PETSC_FALSE,kernel_file_set = PETSC_FALSE;
+  PetscBool   training_result_file_set=PETSC_FALSE,test_result_file_set=PETSC_FALSE;
 
   char        *extension = NULL;
 
@@ -38,6 +41,9 @@ PetscErrorCode SVMRunBinaryClassification()
   TRY( PetscOptionsGetString(NULL,NULL,"-f_training",training_file,sizeof(training_file),NULL) );
   TRY( PetscOptionsGetString(NULL,NULL,"-f_test",test_file,sizeof(test_file),&test_file_set) );
   TRY( PetscOptionsGetString(NULL,NULL,"-f_kernel",kernel_file,sizeof(kernel_file),&kernel_file_set) );
+
+  TRY( PetscOptionsGetString(NULL,NULL,"-f_training_predictions",training_result_file,sizeof(training_result_file),&training_result_file_set) );
+  TRY( PetscOptionsGetString(NULL,NULL,"-f_test_predictions",test_result_file,sizeof(test_result_file),&test_result_file_set) );
 
   TRY( SVMCreate(comm,&svm) );
   TRY( SVMSetType(svm,SVM_BINARY) );
@@ -112,6 +118,41 @@ PetscErrorCode SVMRunBinaryClassification()
   /* Test performance of SVM model */
   if (test_file_set) {
     TRY( SVMTest(svm) );
+  }
+
+  /* Save results */
+  if (training_result_file_set) {
+    TRY( GetFilenameExtension(training_result_file,&extension) );
+    TRY( PetscStrcmp(extension,h5,&ishdf5) );
+    TRY( PetscStrcmp(extension,bin,&isbinary) );
+    if (ishdf5) {
+#if defined(PETSC_HAVE_HDF5)
+      TRY( PetscViewerHDF5Open(PETSC_COMM_WORLD,training_result_file,FILE_MODE_WRITE,&viewer) );
+#else
+      SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_SUP,"PETSc is not configured with HDF5");
+#endif
+    } else {
+      TRY( PetscViewerBinaryOpen(PETSC_COMM_WORLD,training_result_file,FILE_MODE_WRITE,&viewer) );
+    }
+    TRY( SVMViewTrainingPredictions(svm,viewer) );
+    TRY( PetscViewerDestroy(&viewer) );
+  }
+
+  if (test_result_file_set) {
+    TRY( GetFilenameExtension(test_result_file,&extension) );
+    TRY( PetscStrcmp(extension,h5,&ishdf5) );
+    TRY( PetscStrcmp(extension,bin,&isbinary) );
+    if (ishdf5) {
+#if defined(PETSC_HAVE_HDF5)
+      TRY( PetscViewerHDF5Open(PETSC_COMM_WORLD,test_result_file,FILE_MODE_WRITE,&viewer) );
+#else
+      SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_SUP,"PETSc is not configured with HDF5");
+#endif
+    } else {
+      TRY( PetscViewerBinaryOpen(PETSC_COMM_WORLD,test_result_file,FILE_MODE_WRITE,&viewer) );
+    }
+    TRY( SVMViewTestPredictions(svm,viewer) );
+    TRY( PetscViewerDestroy(&viewer) );
   }
 
   TRY( SVMDestroy(&svm) );
