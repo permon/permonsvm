@@ -19,48 +19,48 @@ int main(int argc,char **argv)
 
   ierr = PermonInitialize(&argc,&argv,(char *)0,help); if (ierr) return ierr;
 
-  ierr = PetscOptionsGetString(NULL,NULL,"-f_training",training_file,sizeof(training_file),NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetString(NULL,NULL,"-f_test",test_file,sizeof(test_file),&test_file_set);CHKERRQ(ierr);
+  PetscCall(PetscOptionsGetString(NULL,NULL,"-f_training",training_file,sizeof(training_file),NULL));
+  PetscCall(PetscOptionsGetString(NULL,NULL,"-f_test",test_file,sizeof(test_file),&test_file_set));
 
   /* Create SVM object */
-  ierr = SVMCreate(PETSC_COMM_WORLD,&svm);CHKERRQ(ierr);
-  ierr = SVMSetType(svm,SVM_BINARY);CHKERRQ(ierr);
+  PetscCall(SVMCreate(PETSC_COMM_WORLD,&svm));
+  PetscCall(SVMSetType(svm,SVM_BINARY));
 
   /* Set hyper-parameter optimization will be performed */
-  ierr = SVMSetHyperOpt(svm,PETSC_TRUE);CHKERRQ(ierr);
+  PetscCall(SVMSetHyperOpt(svm,PETSC_TRUE));
 
   /* Set k-fold cross-validation on 3 folds */
-  ierr = SVMSetCrossValidationType(svm,CROSS_VALIDATION_KFOLD);CHKERRQ(ierr);
-  ierr = SVMSetNfolds(svm,3);CHKERRQ(ierr);
+  PetscCall(SVMSetCrossValidationType(svm,CROSS_VALIDATION_KFOLD));
+  PetscCall(SVMSetNfolds(svm,3));
 
   /* Perform grid-search on S = {3^-2, 3^-1.5, ... 3^-0.5, 1, 3^0.5 ..., 3^1.5, 3^2} */
-  ierr = SVMSetPenaltyType(svm,1);CHKERRQ(ierr);
-  ierr = SVMGridSearchSetBaseLogC(svm,3);CHKERRQ(ierr);
-  ierr = SVMGridSearchSetStrideLogC(svm,-2,2,0.5);CHKERRQ(ierr);
+  PetscCall(SVMSetPenaltyType(svm,1));
+  PetscCall(SVMGridSearchSetBaseLogC(svm,3));
+  PetscCall(SVMGridSearchSetStrideLogC(svm,-2,2,0.5));
 
-  ierr = SVMSetFromOptions(svm);CHKERRQ(ierr);
+  PetscCall(SVMSetFromOptions(svm));
 
   /* Load training dataset */
-  ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,training_file,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
-  ierr = SVMLoadTrainingDataset(svm,viewer);CHKERRQ(ierr);
-  ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+  PetscCall(PetscViewerBinaryOpen(PETSC_COMM_WORLD,training_file,FILE_MODE_READ,&viewer));
+  PetscCall(SVMLoadTrainingDataset(svm,viewer));
+  PetscCall(PetscViewerDestroy(&viewer));
 
   /* Load test dataset */
   if (test_file_set) {
-    ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,test_file,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
-    ierr = SVMLoadTestDataset(svm,viewer);CHKERRQ(ierr);
-    ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+    PetscCall(PetscViewerBinaryOpen(PETSC_COMM_WORLD,test_file,FILE_MODE_READ,&viewer));
+    PetscCall(SVMLoadTestDataset(svm,viewer));
+    PetscCall(PetscViewerDestroy(&viewer));
   }
 
   /* Train SVM model */
-  ierr = SVMTrain(svm);CHKERRQ(ierr);
+  PetscCall(SVMTrain(svm));
   /* Test performance of SVM model */
   if (test_file_set) {
-    ierr = SVMTest(svm);CHKERRQ(ierr);
+    PetscCall(SVMTest(svm));
   }
 
   /* Free memory */
-  ierr = SVMDestroy(&svm);CHKERRQ(ierr);
+  PetscCall(SVMDestroy(&svm));
   ierr = PermonFinalize();
   return ierr;
 }
