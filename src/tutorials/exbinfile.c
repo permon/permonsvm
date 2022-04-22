@@ -32,9 +32,8 @@ int main(int argc,char **argv)
   PetscViewer    viewer;
   PetscBool      test_file_set = PETSC_FALSE;
   PetscBool      ishdf5,isbinary,issvmlight;
-  PetscErrorCode ierr;
 
-  ierr = PermonInitialize(&argc,&argv,(char *)0,help);if (ierr) return ierr;
+  PetscCall(PermonInitialize(&argc,&argv,(char *)0,help));
 
   PetscCall(PetscOptionsGetString(NULL,NULL,"-f",training_file,sizeof(training_file),NULL));
   PetscCall(PetscOptionsGetString(NULL,NULL,"-f_test",test_file,sizeof(test_file),&test_file_set));
@@ -96,8 +95,9 @@ int main(int argc,char **argv)
   }
 
   PetscCall(SVMDestroy(&svm));
-  ierr = PermonFinalize();
-  return ierr;
+  PetscCall(PermonFinalize());
+
+  return 0;
 }
 
 

@@ -19,9 +19,8 @@ int main(int argc,char **argv)
   PetscBool      training_result_view=PETSC_FALSE,test_result_view=PETSC_FALSE;
 
   PetscViewer    viewer;
-  PetscErrorCode ierr;
 
-  ierr = PermonInitialize(&argc,&argv,(char *)0,help); if (ierr) return ierr;
+  PetscCall(PermonInitialize(&argc,&argv,(char *)0,help));
 
   PetscCall(PetscOptionsGetString(NULL,NULL,"-f_training",training_file,sizeof(training_file),NULL));
   PetscCall(PetscOptionsGetString(NULL,NULL,"-f_test",test_file,sizeof(test_file),&test_file_set));
@@ -65,8 +64,9 @@ int main(int argc,char **argv)
 
   /* Free memory */
   PetscCall(SVMDestroy(&svm));
-  ierr = PermonFinalize();
-  return ierr;
+  PetscCall(PermonFinalize());
+
+  return 0;
 }
 
 /*TEST
