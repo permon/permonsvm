@@ -1307,20 +1307,18 @@ PetscErrorCode SVMPostTrain_Binary(SVM svm)
 #define __FUNCT__ "SVMSetFromOptions_Binary"
 PetscErrorCode SVMSetFromOptions_Binary(PetscOptionItems *PetscOptionsObject,SVM svm)
 {
-  PetscErrorCode ierr;
-
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
   PetscReal b;
   PetscBool flg;
 
   PetscFunctionBegin;
-  ierr = PetscObjectOptionsBegin((PetscObject) svm);CHKERRQ(ierr);
+  PetscObjectOptionsBegin((PetscObject) svm);
   PetscCall(PetscOptionsReal("-svm_bias","","SVMSetBias",svm_binary->b,&b,&flg));
   if (flg) {
     PetscCall(SVMSetBias(svm,b));
   }
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  PetscOptionsEnd();
   PetscFunctionReturn(0);
 }
 

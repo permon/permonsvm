@@ -204,12 +204,11 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
 
   PetscInt            n;
   PetscBool           flg;
-  PetscErrorCode      ierr;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
-  ierr = PetscObjectOptionsBegin((PetscObject)svm);CHKERRQ(ierr);
+  PetscObjectOptionsBegin((PetscObject)svm);
   PetscCall(PetscOptionsInt("-svm_binary_mod","","SVMSetMod",svm->svm_mod,&svm_mod,&flg));
   if (flg) {
     PetscCall(SVMSetMod(svm,svm_mod));
@@ -297,7 +296,7 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   if (svm->ops->setfromoptions) {
     PetscCall(svm->ops->setfromoptions(PetscOptionsObject,svm));
   }
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  PetscOptionsEnd();
 
   svm->setfromoptionscalled = PETSC_TRUE;
   PetscFunctionReturn(0);
