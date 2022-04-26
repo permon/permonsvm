@@ -21,13 +21,13 @@
   }
 
 #define DynamicArrayInit(a,_capacity_,_grow_factor_)      \
-  TRY( PetscMalloc(_capacity_ * sizeof(*(a.data)),&(a.data)) ); \
+  PetscCall(PetscMalloc(_capacity_ * sizeof(*(a.data)),&(a.data))); \
   a.size = 0;                                                   \
   a.capacity = _capacity_;                                      \
   a.grow_factor = _grow_factor_;
 
 #define DynamicArrayClear(a) \
-  TRY( PetscFree(a.data) ); \
+  PetscCall(PetscFree(a.data)); \
   a.capacity = 0;           \
   a.size = 0;
 
@@ -38,7 +38,7 @@
 
 #define DynamicArrayResize(a) \
   a.capacity = a.grow_factor * a.capacity; \
-  TRY( PetscRealloc(a.capacity * sizeof(*(a.data)),&a.data) ); \
+  PetscCall(PetscRealloc(a.capacity * sizeof(*(a.data)),&a.data)); \
 
 #define DynamicArrayAddValue(a,v) \
   PetscInt i; \
@@ -64,8 +64,8 @@ static PetscErrorCode IOReadBuffer_SVMLight_Private(MPI_Comm comm,const char *fi
   PetscInt    p;
 
   PetscFunctionBegin;
-  TRY( MPI_Comm_size(comm,&comm_size) );
-  TRY( MPI_Comm_rank(comm,&comm_rank) );
+  PetscCallMPI(MPI_Comm_size(comm,&comm_size));
+  PetscCallMPI(MPI_Comm_rank(comm,&comm_rank));
 
   chunk_buff_inner = NULL;
   overlap = PETSC_DECIDE;
@@ -73,11 +73,11 @@ static PetscErrorCode IOReadBuffer_SVMLight_Private(MPI_Comm comm,const char *fi
   eol_pos = 0;
   eol_found = PETSC_FALSE;
 
-  TRY( PetscOptionsGetInt(NULL,NULL,"-svm_io_overlap",&overlap,NULL) );
-  if (overlap < 0 && overlap != PETSC_DECIDE) FLLOP_SETERRQ(comm, PETSC_ERR_ARG_OUTOFRANGE, "Overlap must be greater or equal to zero");
+  PetscCall(PetscOptionsGetInt(NULL,NULL,"-svm_io_overlap",&overlap,NULL));
+  if (overlap < 0 && overlap != PETSC_DECIDE) SETERRQ(comm, PETSC_ERR_ARG_OUTOFRANGE, "Overlap must be greater or equal to zero");
 
-  TRY( MPI_File_open(comm,filename,MPI_MODE_RDONLY,MPI_INFO_NULL,&fh) );
-  TRY( MPI_File_get_size(fh,&file_size) );
+  PetscCallMPI(MPI_File_open(comm,filename,MPI_MODE_RDONLY,MPI_INFO_NULL,&fh));
+  PetscCallMPI(MPI_File_get_size(fh,&file_size));
 
   /* Determine overlap size of chunk buffers, and reading offsets */
   if (overlap == PETSC_DECIDE) {
@@ -93,14 +93,14 @@ static PetscErrorCode IOReadBuffer_SVMLight_Private(MPI_Comm comm,const char *fi
   if (comm_rank != comm_size-1) chunk_size_overlaped += overlap;
   {
     MPI_Offset chunk_size_o = chunk_size;
-    TRY( MPI_Scan(&chunk_size_o,&offset,1,MPI_OFFSET,MPI_SUM,comm) );
+    PetscCallMPI(MPI_Scan(&chunk_size_o,&offset,1,MPI_OFFSET,MPI_SUM,comm));
   }
   offset -= chunk_size;
 
   /* Allocation of chunk buffers and reading appropriate part of file */
-  TRY( PetscMalloc(chunk_size_overlaped * sizeof(char),&chunk_buff_inner) );
+  PetscCall(PetscMalloc(chunk_size_overlaped * sizeof(char),&chunk_buff_inner));
 
-  TRY( MPI_File_read_at_all(fh,offset,chunk_buff_inner,(PetscMPIInt)chunk_size_overlaped,MPI_CHAR,MPI_STATUS_IGNORE) );
+  PetscCallMPI(MPI_File_read_at_all(fh,offset,chunk_buff_inner,(PetscMPIInt)chunk_size_overlaped,MPI_CHAR,MPI_STATUS_IGNORE));
 
   /* Check EOL in end of buffers without overlaps */
   if (chunk_buff_inner[chunk_size-1] == '\n') eol_found = PETSC_TRUE;
@@ -130,35 +130,35 @@ static PetscErrorCode IOReadBuffer_SVMLight_Private(MPI_Comm comm,const char *fi
           eol_found = PETSC_TRUE;
         }
 
-        TRY( PetscRealloc(chunk_size_overlaped * sizeof(char),&chunk_buff_inner) );
-        TRY( MPI_File_read_at(fh,offset + chunk_size,&chunk_buff_inner[chunk_size],overlap,MPI_CHAR,MPI_STATUS_IGNORE) );
+        PetscCall(PetscRealloc(chunk_size_overlaped * sizeof(char),&chunk_buff_inner));
+        PetscCallMPI(MPI_File_read_at(fh,offset + chunk_size,&chunk_buff_inner[chunk_size],overlap,MPI_CHAR,MPI_STATUS_IGNORE));
       }
     }
   }
 
   if (comm_rank != comm_size-1) {
-    TRY( MPI_Send(&eol_pos,1,MPIU_INT,comm_rank + 1,0,comm) );
+    PetscCallMPI(MPI_Send(&eol_pos,1,MPIU_INT,comm_rank + 1,0,comm));
   }
   if (comm_rank != 0) {
-    TRY( MPI_Recv(&eol_start,1,MPIU_INT,comm_rank - 1,0,comm,MPI_STATUS_IGNORE) );
+    PetscCallMPI(MPI_Recv(&eol_start,1,MPIU_INT,comm_rank - 1,0,comm,MPI_STATUS_IGNORE));
   }
 
   /* Buffer shrink */
   if (comm_rank == 0) {
-    TRY( PetscRealloc((chunk_size_tmp+eol_pos+1) * sizeof(char),&chunk_buff_inner) );
+    PetscCall(PetscRealloc((chunk_size_tmp+eol_pos+1) * sizeof(char),&chunk_buff_inner));
     chunk_buff_inner[chunk_size_tmp+eol_pos] = 0;
   } else if ((chunk_size_shrink = chunk_size_tmp + eol_pos - eol_start) != 0) {
-    TRY( PetscMemmove(chunk_buff_inner,chunk_buff_inner + eol_start,chunk_size_shrink * sizeof(char)) );
-    TRY( PetscRealloc((chunk_size_tmp+eol_pos-eol_start+1) * sizeof(char),&chunk_buff_inner) );
+    PetscCall(PetscMemmove(chunk_buff_inner,chunk_buff_inner + eol_start,chunk_size_shrink * sizeof(char)));
+    PetscCall(PetscRealloc((chunk_size_tmp+eol_pos-eol_start+1) * sizeof(char),&chunk_buff_inner));
     chunk_buff_inner[chunk_size_shrink] = 0;
   } else {
-    TRY( PetscFree(chunk_buff_inner) );
+    PetscCall(PetscFree(chunk_buff_inner));
     chunk_buff_inner = NULL;
   }
 
   *chunk_buff = chunk_buff_inner;
 
-  TRY( MPI_File_close(&fh) );
+  PetscCallMPI(MPI_File_close(&fh));
   PetscFunctionReturn(0);
 }
 
@@ -186,11 +186,11 @@ static PetscErrorCode IOParseBuffer_SVMLight_Private(MPI_Comm comm,char *buff,st
   array_init_capacity = DARRAY_INIT_CAPACITY;
   array_grow_factor = DARRAY_GROW_FACTOR;
 
-  TRY( PetscOptionsGetInt(NULL,NULL,"-svm_io_darray_init_size",&array_init_capacity,NULL) );
-  if (array_init_capacity <= 0) FLLOP_SETERRQ(comm,PETSC_ERR_ARG_OUTOFRANGE,"Initial size of dynamic array must be greater than zero");
+  PetscCall(PetscOptionsGetInt(NULL,NULL,"-svm_io_darray_init_size",&array_init_capacity,NULL));
+  if (array_init_capacity <= 0) SETERRQ(comm,PETSC_ERR_ARG_OUTOFRANGE,"Initial size of dynamic array must be greater than zero");
 
-  TRY( PetscOptionsGetReal(NULL,NULL,"-svm_io_darray_grow_factor",&array_grow_factor,NULL) );
-  if (array_grow_factor <= 1.) FLLOP_SETERRQ(comm,PETSC_ERR_ARG_OUTOFRANGE,"Grow factor of dynamic array must be greater than one");
+  PetscCall(PetscOptionsGetReal(NULL,NULL,"-svm_io_darray_grow_factor",&array_grow_factor,NULL));
+  if (array_grow_factor <= 1.) SETERRQ(comm,PETSC_ERR_ARG_OUTOFRANGE,"Grow factor of dynamic array must be greater than one");
 
   DynamicArrayInit(i_in,array_init_capacity,array_grow_factor);
   DynamicArrayPushBack(i_in,0);
@@ -231,20 +231,20 @@ static PetscErrorCode IOParseBuffer_SVMLight_Private(MPI_Comm comm,char *buff,st
       line = strtok_r(NULL,"\n",&ptr_line);
     }
 #else
-    TRY( PetscTokenCreate(buff,'\n',&token_line) );
+    PetscCall(PetscTokenCreate(buff,'\n',&token_line));
     while(PETSC_TRUE) {
-      TRY( PetscTokenFind(token_line,&line) );
+      PetscCall(PetscTokenFind(token_line,&line));
       if (line) {
-        TRY( PetscTokenCreate(line,' ',&token_word) );
+        PetscCall(PetscTokenCreate(line,' ',&token_word));
 
-        TRY( PetscTokenFind(token_word,&word) );
+        PetscCall(PetscTokenFind(token_word,&word));
         yi = (PetscReal) atof(word);
 
         PermonDynamicArrayPushBack(k_in,y_in.size);
         PermonDynamicArrayPushBack(y_in,yi);
 
         while (PETSC_TRUE) {
-          TRY( PetscTokenFind(token_word,&word) );
+          PetscCall(PetscTokenFind(token_word,&word));
           if (word) {
             key = strtok(word,":");
             col = (PetscInt) atoi(key);
@@ -264,9 +264,9 @@ static PetscErrorCode IOParseBuffer_SVMLight_Private(MPI_Comm comm,char *buff,st
         break;
       }
       PermonDynamicArrayPushBack(i_in,a_in.size);
-      TRY( PetscTokenDestroy(&token_word) );
+      PetscCall(PetscTokenDestroy(&token_word));
     }
-    TRY( PetscTokenDestroy(&token_line) );
+    PetscCall(PetscTokenDestroy(&token_line));
 #endif
   } else {
     y_in.data = NULL;
@@ -275,7 +275,7 @@ static PetscErrorCode IOParseBuffer_SVMLight_Private(MPI_Comm comm,char *buff,st
     a_in.data = NULL;
   }
 
-  TRY( MPI_Allreduce(MPI_IN_PLACE,&N_in,1,MPIU_INT,MPI_MAX,comm) );
+  PetscCallMPI(MPI_Allreduce(MPI_IN_PLACE,&N_in,1,MPIU_INT,MPI_MAX,comm));
 
   *i = i_in;
   *j = j_in;
@@ -299,34 +299,34 @@ static PetscErrorCode DatasetAssembly_SVMLight_Private(Mat Xt,Vec labels,char *b
   PetscInt rbs;
 
   PetscFunctionBegin;
-  TRY( PetscObjectGetComm((PetscObject) Xt,&comm) );
+  PetscCall(PetscObjectGetComm((PetscObject) Xt,&comm));
 
-  TRY( IOParseBuffer_SVMLight_Private(comm,buff,&i,&j,&a,&k,&y,&N) );
+  PetscCall(IOParseBuffer_SVMLight_Private(comm,buff,&i,&j,&a,&k,&y,&N));
   m = (buff) ? i.size - 1 : 0;
   /* local to global: label vector indices */
   offset = (k.data) ? k.size : 0;
-  TRY( MPI_Scan(MPI_IN_PLACE,&offset,1,MPIU_INT,MPI_SUM,comm) );
+  PetscCallMPI(MPI_Scan(MPI_IN_PLACE,&offset,1,MPIU_INT,MPI_SUM,comm));
   if (k.data) {
     offset -= k.size;
     DynamicArrayAddValue(k,offset);
   }
 
   /* Assembly the Xt matrix */
-  TRY( MatSetType(Xt,MATAIJ) );
-  TRY( MatSetSizes(Xt,m,PETSC_DECIDE,PETSC_DECIDE,N) );
-  TRY( MatSeqAIJSetPreallocationCSR(Xt,i.data,j.data,a.data) );
-  TRY( MatMPIAIJSetPreallocationCSR(Xt,i.data,j.data,a.data) );
+  PetscCall(MatSetType(Xt,MATAIJ));
+  PetscCall(MatSetSizes(Xt,m,PETSC_DECIDE,PETSC_DECIDE,N));
+  PetscCall(MatSeqAIJSetPreallocationCSR(Xt,i.data,j.data,a.data));
+  PetscCall(MatMPIAIJSetPreallocationCSR(Xt,i.data,j.data,a.data));
 
   /* Assembly vector of labels */
-  TRY( MatGetBlockSizes(Xt,&rbs,NULL) );
-  TRY( VecSetSizes(labels,Xt->rmap->n,PETSC_DETERMINE) );
-  TRY( VecSetBlockSize(labels,rbs) );
-  TRY( VecSetType(labels,Xt->defaultvectype) );
-  TRY( PetscLayoutReference(Xt->rmap,&labels->map) );
+  PetscCall(MatGetBlockSizes(Xt,&rbs,NULL));
+  PetscCall(VecSetSizes(labels,Xt->rmap->n,PETSC_DETERMINE));
+  PetscCall(VecSetBlockSize(labels,rbs));
+  PetscCall(VecSetType(labels,Xt->defaultvectype));
+  PetscCall(PetscLayoutReference(Xt->rmap,&labels->map));
 
-  if (y.data) TRY( VecSetValues(labels,y.size,k.data,y.data,INSERT_VALUES) );
-  TRY( VecAssemblyBegin(labels) );
-  TRY( VecAssemblyEnd(labels) );
+  if (y.data) PetscCall(VecSetValues(labels,y.size,k.data,y.data,INSERT_VALUES));
+  PetscCall(VecAssemblyBegin(labels));
+  PetscCall(VecAssemblyEnd(labels));
 
   if (y.data) DynamicArrayClear(y);
   if (k.data) DynamicArrayClear(k);
@@ -347,13 +347,13 @@ PetscErrorCode DatasetLoad_SVMLight(Mat Xt,Vec y,PetscViewer v)
   char       *chunk_buff = NULL;
 
   PetscFunctionBegin;
-  TRY( PetscObjectGetComm((PetscObject) Xt,&comm) );
-  TRY( PetscViewerFileGetName(v,&file_name) );
+  PetscCall(PetscObjectGetComm((PetscObject) Xt,&comm));
+  PetscCall(PetscViewerFileGetName(v,&file_name));
 
-  TRY( IOReadBuffer_SVMLight_Private(comm,file_name,&chunk_buff) );
-  TRY( DatasetAssembly_SVMLight_Private(Xt,y,chunk_buff) );
+  PetscCall(IOReadBuffer_SVMLight_Private(comm,file_name,&chunk_buff));
+  PetscCall(DatasetAssembly_SVMLight_Private(Xt,y,chunk_buff));
 
-  if (chunk_buff) { TRY( PetscFree(chunk_buff) ); }
+  if (chunk_buff) { PetscCall(PetscFree(chunk_buff)); }
   PetscFunctionReturn(0);
 }
 
@@ -364,10 +364,10 @@ PetscErrorCode PetscViewerSVMLightOpen(MPI_Comm comm,const char name[],PetscView
   PetscViewer v_inner;
 
   PetscFunctionBegin;
-  TRY( PetscViewerCreate(comm,&v_inner) );
-  TRY( PetscViewerSetType(v_inner,PETSCVIEWERASCII) );
-  TRY( PetscViewerFileSetMode(v_inner,FILE_MODE_READ) );
-  TRY( PetscViewerFileSetName(v_inner,name) );
+  PetscCall(PetscViewerCreate(comm,&v_inner));
+  PetscCall(PetscViewerSetType(v_inner,PETSCVIEWERASCII));
+  PetscCall(PetscViewerFileSetMode(v_inner,FILE_MODE_READ));
+  PetscCall(PetscViewerFileSetName(v_inner,name));
 
   *v = v_inner;
   PetscFunctionReturn(0);
@@ -383,18 +383,18 @@ PetscErrorCode DatasetLoad_Binary(Mat Xt,Vec y,PetscViewer v)
   const char *y_name_tmp;
 
   PetscFunctionBegin;
-  TRY( PetscObjectGetName((PetscObject) Xt,&Xt_name_tmp) );
-  TRY( PetscStrcpy(Xt_name,Xt_name_tmp) );
-  TRY( PetscObjectGetName((PetscObject) y,&y_name_tmp) );
-  TRY( PetscStrcpy(y_name,y_name_tmp) );
+  PetscCall(PetscObjectGetName((PetscObject) Xt,&Xt_name_tmp));
+  PetscCall(PetscStrcpy(Xt_name,Xt_name_tmp));
+  PetscCall(PetscObjectGetName((PetscObject) y,&y_name_tmp));
+  PetscCall(PetscStrcpy(y_name,y_name_tmp));
 
-  TRY( PetscObjectSetName((PetscObject) Xt,"X") );
-  TRY( MatLoad(Xt,v) );
-  TRY( PetscObjectSetName((PetscObject) y,"y") );
-  TRY( VecLoad(y,v) );
+  PetscCall(PetscObjectSetName((PetscObject) Xt,"X"));
+  PetscCall(MatLoad(Xt,v));
+  PetscCall(PetscObjectSetName((PetscObject) y,"y"));
+  PetscCall(VecLoad(y,v));
 
-  TRY( PetscObjectSetName((PetscObject) Xt,Xt_name) );
-  TRY( PetscObjectSetName((PetscObject) y,y_name) );
+  PetscCall(PetscObjectSetName((PetscObject) Xt,Xt_name));
+  PetscCall(PetscObjectSetName((PetscObject) y,y_name));
   PetscFunctionReturn(0);
 }
 
@@ -426,19 +426,19 @@ PetscErrorCode PetscViewerLoadSVMDataset(Mat Xt,Vec y,PetscViewer v)
   PetscCheckSameComm(v,1,Xt,2);
   PetscCheckSameComm(v,1,y,3);
 
-  TRY( PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERASCII,&isascii) );
-  TRY( PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERHDF5,&ishdf5) );
-  TRY( PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERBINARY,&isbinary) );
+  PetscCall(PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERASCII,&isascii));
+  PetscCall(PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERHDF5,&ishdf5));
+  PetscCall(PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERBINARY,&isbinary));
 
   if (isascii) {
-    TRY( DatasetLoad_SVMLight(Xt,y,v) );
+    PetscCall(DatasetLoad_SVMLight(Xt,y,v));
   } else if (ishdf5 || isbinary) {
-    TRY( DatasetLoad_Binary(Xt,y,v) );
+    PetscCall(DatasetLoad_Binary(Xt,y,v));
   } else {
-    TRY( PetscObjectGetComm((PetscObject) v,&comm) );
-    TRY( PetscObjectGetType((PetscObject) v,&type_name) );
+    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
+    PetscCall(PetscObjectGetType((PetscObject) v,&type_name));
 
-    FLLOP_SETERRQ1(comm,PETSC_ERR_SUP,"Viewer type %s not supported for PetscViewerLoadDataset",type_name);
+    SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for PetscViewerLoadDataset",type_name);
   }
 
   PetscFunctionReturn(0);

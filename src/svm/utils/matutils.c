@@ -15,11 +15,11 @@ PetscErrorCode MatDestroy_Biased(Mat A)
   MatCtx *ctx = NULL;
 
   PetscFunctionBegin;
-  TRY( MatShellGetContext(A,&ptr) );
+  PetscCall(MatShellGetContext(A,&ptr));
   ctx = (MatCtx *) ptr;
 
-  TRY( MatDestroy(&ctx->inner) );
-  TRY( PetscFree(ctx) );
+  PetscCall(MatDestroy(&ctx->inner));
+  PetscCall(PetscFree(ctx));
   PetscFunctionReturn(0);
 }
 
@@ -43,35 +43,35 @@ PetscErrorCode MatMult_Biased(Mat A,Vec x,Vec y)
   MatCtx            *ctx = NULL;
 
   PetscFunctionBegin;
-  TRY( PetscObjectGetComm((PetscObject) A,&comm) );
-  TRY( MPI_Comm_size(comm,&comm_size) );
-  TRY( MPI_Comm_rank(comm,&comm_rank) );
+  PetscCall(PetscObjectGetComm((PetscObject) A,&comm));
+  PetscCallMPI(MPI_Comm_size(comm,&comm_size));
+  PetscCallMPI(MPI_Comm_rank(comm,&comm_rank));
 
-  TRY( MatShellGetContext(A,&ptr) );
+  PetscCall(MatShellGetContext(A,&ptr));
   ctx = (MatCtx *) ptr;
 
   if (comm_rank == comm_size - 1) {
-    TRY( VecGetLocalSize(x,&n) );
-    TRY( VecGetArrayRead(x,&x_arr) );
+    PetscCall(VecGetLocalSize(x,&n));
+    PetscCall(VecGetArrayRead(x,&x_arr));
     a = x_arr[n - 1];
-    TRY( VecRestoreArrayRead(y,&x_arr) );
+    PetscCall(VecRestoreArrayRead(y,&x_arr));
   }
-  TRY( MPI_Ibcast(&a,1,MPIU_SCALAR,comm_size - 1,comm,&req) );
-  TRY( MPI_Wait(&req,MPI_STATUS_IGNORE) );
+  PetscCallMPI(MPI_Ibcast(&a,1,MPIU_SCALAR,comm_size - 1,comm,&req));
+  PetscCallMPI(MPI_Wait(&req,MPI_STATUS_IGNORE));
 
-  TRY( VecGetOwnershipRange(x,&low,&hi) );
+  PetscCall(VecGetOwnershipRange(x,&low,&hi));
   if (comm_rank == comm_size - 1) hi -= 1;
-  TRY( ISCreateStride(comm,hi - low,low,1,&is_col) );
+  PetscCall(ISCreateStride(comm,hi - low,low,1,&is_col));
 
-  TRY( VecGetSubVector(x,is_col,&x_sub) );
-  TRY( MatMult(ctx->inner,x_sub,y) );
-  TRY( VecRestoreSubVector(x,is_col,&x_sub) );
+  PetscCall(VecGetSubVector(x,is_col,&x_sub));
+  PetscCall(MatMult(ctx->inner,x_sub,y));
+  PetscCall(VecRestoreSubVector(x,is_col,&x_sub));
 
   b = ctx->bias * a;
-  TRY( VecShift(y,b) );
+  PetscCall(VecShift(y,b));
 
   /* Free memory */
-  TRY( ISDestroy(&is_col) );
+  PetscCall(ISDestroy(&is_col));
   PetscFunctionReturn(0);
 }
 
@@ -93,31 +93,31 @@ PetscErrorCode MatMultTranspose_Biased(Mat A,Vec x,Vec y)
   MatCtx      *ctx = NULL;
 
   PetscFunctionBegin;
-  TRY( PetscObjectGetComm((PetscObject) A,&comm) );
-  TRY( MPI_Comm_size(comm,&comm_size) );
-  TRY( MPI_Comm_rank(comm,&comm_rank) );
+  PetscCall(PetscObjectGetComm((PetscObject) A,&comm));
+  PetscCallMPI(MPI_Comm_size(comm,&comm_size));
+  PetscCallMPI(MPI_Comm_rank(comm,&comm_rank));
 
-  TRY( MatShellGetContext(A,&ptr) );
+  PetscCall(MatShellGetContext(A,&ptr));
   ctx = (MatCtx *) ptr;
 
-  TRY( VecGetOwnershipRange(y,&low,&hi) );
+  PetscCall(VecGetOwnershipRange(y,&low,&hi));
   if (comm_rank == comm_size - 1) hi -= 1;
-  TRY( ISCreateStride(comm,hi - low,low,1,&is_col) );
+  PetscCall(ISCreateStride(comm,hi - low,low,1,&is_col));
 
-  TRY( VecGetSubVector(y,is_col,&y_sub) );
-  TRY( MatMultTranspose(ctx->inner,x,y_sub) );
-  TRY( VecRestoreSubVector(y,is_col,&y_sub) );
+  PetscCall(VecGetSubVector(y,is_col,&y_sub));
+  PetscCall(MatMultTranspose(ctx->inner,x,y_sub));
+  PetscCall(VecRestoreSubVector(y,is_col,&y_sub));
 
-  TRY( VecSum(x,&a) );
+  PetscCall(VecSum(x,&a));
   if (comm_rank == comm_size - 1) {
-    TRY( VecGetSize(y,&n) );
+    PetscCall(VecGetSize(y,&n));
     a *= ctx->bias;
-    TRY( VecSetValue(y,n - 1,a,INSERT_VALUES) );
+    PetscCall(VecSetValue(y,n - 1,a,INSERT_VALUES));
   }
-  TRY( VecAssemblyBegin(y) );
-  TRY( VecAssemblyEnd(y) );
+  PetscCall(VecAssemblyBegin(y));
+  PetscCall(VecAssemblyEnd(y));
 
-  TRY( ISDestroy(&is_col) );
+  PetscCall(ISDestroy(&is_col));
   PetscFunctionReturn(0);
 }
 
@@ -129,9 +129,9 @@ PetscErrorCode MatGetOwnershipIS_Biased(Mat mat,IS *rows,IS *cols)
   MatCtx *ctx;
 
   PetscFunctionBegin;
-  TRY( MatShellGetContext(mat,&ptr) );
+  PetscCall(MatShellGetContext(mat,&ptr));
   ctx = (MatCtx *) ptr;
-  TRY( MatGetOwnershipIS(ctx->inner,rows,cols) );
+  PetscCall(MatGetOwnershipIS(ctx->inner,rows,cols));
   PetscFunctionReturn(0);
 }
 
@@ -152,38 +152,38 @@ PetscErrorCode MatCreateSubMatrix_Biased(Mat A,IS isrow,IS iscol,MatReuse cll,Ma
   MatCtx      *new_ctx = NULL;
 
   PetscFunctionBegin;
-  TRY( MatShellGetContext(A,&ptr) );
+  PetscCall(MatShellGetContext(A,&ptr));
   ctx = (MatCtx *) ptr;
 
-  TRY( PetscObjectGetComm((PetscObject) ctx->inner,&comm) );
-  TRY( MPI_Comm_size(comm,&comm_size) );
-  TRY( MPI_Comm_rank(comm,&comm_rank) );
+  PetscCall(PetscObjectGetComm((PetscObject) ctx->inner,&comm));
+  PetscCallMPI(MPI_Comm_size(comm,&comm_size));
+  PetscCallMPI(MPI_Comm_rank(comm,&comm_rank));
 
-  TRY( MatCreateSubMatrix(ctx->inner,isrow,iscol,cll,&A_sub) );
+  PetscCall(MatCreateSubMatrix(ctx->inner,isrow,iscol,cll,&A_sub));
 
-  TRY( PetscNew(&new_ctx) );
+  PetscCall(PetscNew(&new_ctx));
   new_ctx->inner = A_sub;
   new_ctx->bias  = ctx->bias;
 
-  TRY( MatGetLocalSize(A_sub,&m,&n) );
-  TRY( MatGetSize(A_sub,&M,&N) );
+  PetscCall(MatGetLocalSize(A_sub,&m,&n));
+  PetscCall(MatGetSize(A_sub,&M,&N));
 
   if (comm_rank == comm_size - 1) {
       n += 1;
   }
   N += 1;
 
-  TRY( MatCreateShell(comm,m,n,M,N,new_ctx,&mat_inner) );
+  PetscCall(MatCreateShell(comm,m,n,M,N,new_ctx,&mat_inner));
   /* Set shell matrix functions */
-  TRY( MatShellSetOperation(mat_inner,MATOP_DESTROY         ,(void(*)(void))MatDestroy_Biased) );
-  TRY( MatShellSetOperation(mat_inner,MATOP_MULT            ,(void(*)(void))MatMult_Biased) );
-  TRY( MatShellSetOperation(mat_inner,MATOP_MULT_TRANSPOSE  ,(void(*)(void))MatMultTranspose_Biased) );
-  TRY( MatShellSetOperation(mat_inner,MATOP_CREATE_SUBMATRIX,(void(*)(void))MatCreateSubMatrix_Biased) );
-  TRY( PetscObjectComposeFunction((PetscObject) mat_inner,"MatGetOwnershipIS_C",MatGetOwnershipIS_Biased) );
+  PetscCall(MatShellSetOperation(mat_inner,MATOP_DESTROY         ,(void(*)(void))MatDestroy_Biased));
+  PetscCall(MatShellSetOperation(mat_inner,MATOP_MULT            ,(void(*)(void))MatMult_Biased));
+  PetscCall(MatShellSetOperation(mat_inner,MATOP_MULT_TRANSPOSE  ,(void(*)(void))MatMultTranspose_Biased));
+  PetscCall(MatShellSetOperation(mat_inner,MATOP_CREATE_SUBMATRIX,(void(*)(void))MatCreateSubMatrix_Biased));
+  PetscCall(PetscObjectComposeFunction((PetscObject) mat_inner,"MatGetOwnershipIS_C",MatGetOwnershipIS_Biased));
 
   /* Set the default vector type for the shell to be the same as for the matrix A */
-  TRY( MatGetVecType(A,&vtype) );
-  TRY( MatShellSetVecType(mat_inner,vtype) );
+  PetscCall(MatGetVecType(A,&vtype));
+  PetscCall(MatShellSetVecType(mat_inner,vtype));
 
   *out = mat_inner;
   PetscFunctionReturn(0);
@@ -220,7 +220,7 @@ PetscErrorCode MatBiasedGetInnerMat(Mat A,Mat *inner)
   PetscValidHeaderSpecific(A,MAT_CLASSID,1);
   PetscValidPointer(inner,2);
 
-  TRY( MatShellGetContext(A,&ptr) );
+  PetscCall(MatShellGetContext(A,&ptr));
   ctx = (MatCtx *) ptr;
 
   *inner = ctx->inner;
@@ -253,7 +253,7 @@ PetscErrorCode MatBiasedGetBias(Mat A,PetscReal *bias)
   PetscValidHeaderSpecific(A,MAT_CLASSID,1);
   PetscValidPointer(bias,2);
 
-  TRY( MatShellGetContext(A,&ptr) );
+  PetscCall(MatShellGetContext(A,&ptr));
   ctx = (MatCtx *) ptr;
 
   *bias = ctx->bias;
@@ -300,40 +300,40 @@ PetscErrorCode MatBiasedCreate(Mat A,PetscReal bias,Mat *A_biased)
   PetscValidPointer(A_biased,3);
 
   PetscObjectGetComm((PetscObject) A,&comm);
-  TRY( MPI_Comm_size(comm,&comm_size) );
-  TRY( MPI_Comm_rank(comm,&comm_rank) );
+  PetscCallMPI(MPI_Comm_size(comm,&comm_size));
+  PetscCallMPI(MPI_Comm_rank(comm,&comm_rank));
 
   /* Create matrix context */
-  TRY( PetscNew(&ctx) );
+  PetscCall(PetscNew(&ctx));
   ctx->inner    = A;
   ctx->bias = bias;
 
-  TRY( MatGetLocalSize(A,&m,&n) );
-  TRY( MatGetSize(A,&M,&N) );
+  PetscCall(MatGetLocalSize(A,&m,&n));
+  PetscCall(MatGetSize(A,&M,&N));
 
   if (comm_rank == comm_size - 1) n += 1;
 
-  TRY( MatCreateShell(comm,m,n,M,N+1,ctx,&A_biased_inner) );
+  PetscCall(MatCreateShell(comm,m,n,M,N+1,ctx,&A_biased_inner));
   /* Set shell matrix functions */
-  TRY( MatShellSetOperation(A_biased_inner,MATOP_DESTROY         ,(void(*)(void))MatDestroy_Biased) );
-  TRY( MatShellSetOperation(A_biased_inner,MATOP_MULT            ,(void(*)(void))MatMult_Biased) );
-  TRY( MatShellSetOperation(A_biased_inner,MATOP_MULT_TRANSPOSE  ,(void(*)(void))MatMultTranspose_Biased) );
-  TRY( MatShellSetOperation(A_biased_inner,MATOP_CREATE_SUBMATRIX,(void(*)(void))MatCreateSubMatrix_Biased) );
-  TRY( PetscObjectComposeFunction((PetscObject) A_biased_inner,"MatGetOwnershipIS_C",MatGetOwnershipIS_Biased) );
+  PetscCall(MatShellSetOperation(A_biased_inner,MATOP_DESTROY         ,(void(*)(void))MatDestroy_Biased));
+  PetscCall(MatShellSetOperation(A_biased_inner,MATOP_MULT            ,(void(*)(void))MatMult_Biased));
+  PetscCall(MatShellSetOperation(A_biased_inner,MATOP_MULT_TRANSPOSE  ,(void(*)(void))MatMultTranspose_Biased));
+  PetscCall(MatShellSetOperation(A_biased_inner,MATOP_CREATE_SUBMATRIX,(void(*)(void))MatCreateSubMatrix_Biased));
+  PetscCall(PetscObjectComposeFunction((PetscObject) A_biased_inner,"MatGetOwnershipIS_C",MatGetOwnershipIS_Biased));
 
   /* Set the default vector type for the shell to be the same as for the matrix A */
-  TRY( MatGetVecType(A,&vtype) );
-  TRY( MatShellSetVecType(A_biased_inner,vtype) );
+  PetscCall(MatGetVecType(A,&vtype));
+  PetscCall(MatShellSetVecType(A_biased_inner,vtype));
 
   /* Set name of biased mat */
-  TRY( PetscObjectGetName((PetscObject) A,&A_name) );
-  TRY( PetscStrcpy(A_name_inner,A_name) );
-  TRY( PetscStrcat(A_name_inner,"_biased") );
-  TRY( PetscObjectSetName((PetscObject) A_biased_inner,A_name_inner) );
+  PetscCall(PetscObjectGetName((PetscObject) A,&A_name));
+  PetscCall(PetscStrcpy(A_name_inner,A_name));
+  PetscCall(PetscStrcat(A_name_inner,"_biased"));
+  PetscCall(PetscObjectSetName((PetscObject) A_biased_inner,A_name_inner));
   /* Set prefix of biased mat */
-  TRY( PetscObjectGetOptionsPrefix((PetscObject) A,&A_prefix) );
-  TRY( PetscObjectSetOptionsPrefix((PetscObject) A_biased_inner,A_prefix) );
-  TRY( PetscObjectAppendOptionsPrefix((PetscObject) A_biased_inner,"biased_") );
+  PetscCall(PetscObjectGetOptionsPrefix((PetscObject) A,&A_prefix));
+  PetscCall(PetscObjectSetOptionsPrefix((PetscObject) A_biased_inner,A_prefix));
+  PetscCall(PetscObjectAppendOptionsPrefix((PetscObject) A_biased_inner,"biased_"));
 
   *A_biased = A_biased_inner;
   PetscFunctionReturn(0);

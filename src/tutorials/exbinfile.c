@@ -16,10 +16,9 @@ Input parameters include:\n\
 PetscErrorCode GetFilenameExtension(const char *filename,char **extension)
 {
   char           *extension_inner;
-  PetscErrorCode ierr;
 
   PetscFunctionBegin;
-  ierr = PetscStrrchr(filename,'.',&extension_inner);CHKERRQ(ierr);
+  PetscCall(PetscStrrchr(filename,'.',&extension_inner));
   *extension = extension_inner;
   PetscFunctionReturn(0);
 }
@@ -33,72 +32,72 @@ int main(int argc,char **argv)
   PetscViewer    viewer;
   PetscBool      test_file_set = PETSC_FALSE;
   PetscBool      ishdf5,isbinary,issvmlight;
-  PetscErrorCode ierr;
 
-  ierr = PermonInitialize(&argc,&argv,(char *)0,help);if (ierr) return ierr;
+  PetscCall(PermonInitialize(&argc,&argv,(char *)0,help));
 
-  ierr = PetscOptionsGetString(NULL,NULL,"-f",training_file,sizeof(training_file),NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetString(NULL,NULL,"-f_test",test_file,sizeof(test_file),&test_file_set);CHKERRQ(ierr);
+  PetscCall(PetscOptionsGetString(NULL,NULL,"-f",training_file,sizeof(training_file),NULL));
+  PetscCall(PetscOptionsGetString(NULL,NULL,"-f_test",test_file,sizeof(test_file),&test_file_set));
 
   /* Create SVM object */
-  ierr = SVMCreate(PETSC_COMM_WORLD,&svm);CHKERRQ(ierr);
-  ierr = SVMSetType(svm,SVM_BINARY);CHKERRQ(ierr);
-  ierr = SVMSetFromOptions(svm);CHKERRQ(ierr);
+  PetscCall(SVMCreate(PETSC_COMM_WORLD,&svm));
+  PetscCall(SVMSetType(svm,SVM_BINARY));
+  PetscCall(SVMSetFromOptions(svm));
 
   /* Load training dataset */
-  ierr = GetFilenameExtension(training_file,&extension);CHKERRQ(ierr);
-  ierr = PetscStrcmp(extension,h5,&ishdf5);CHKERRQ(ierr);
-  ierr = PetscStrcmp(extension,bin,&isbinary);CHKERRQ(ierr);
-  ierr = PetscStrcmp(extension,SVMLight,&issvmlight);CHKERRQ(ierr);
+  PetscCall(GetFilenameExtension(training_file,&extension));
+  PetscCall(PetscStrcmp(extension,h5,&ishdf5));
+  PetscCall(PetscStrcmp(extension,bin,&isbinary));
+  PetscCall(PetscStrcmp(extension,SVMLight,&issvmlight));
   if (ishdf5) {
 #if defined(PETSC_HAVE_HDF5)
-    ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,training_file,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
+    PetscCall(PetscViewerHDF5Open(PETSC_COMM_WORLD,training_file,FILE_MODE_READ,&viewer));
 #else
     SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_SUP,"PETSc is not configured with HDF5");
 #endif
   } else if (isbinary) {
-    ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,training_file,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
+    PetscCall(PetscViewerBinaryOpen(PETSC_COMM_WORLD,training_file,FILE_MODE_READ,&viewer));
   } else if (issvmlight) {
-    ierr = PetscViewerSVMLightOpen(PETSC_COMM_WORLD,training_file,&viewer);CHKERRQ(ierr);
+    PetscCall(PetscViewerSVMLightOpen(PETSC_COMM_WORLD,training_file,&viewer));
   } else {
-    SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_SUP,"File type %s not supported",extension);
+    SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_SUP,"File type %s not supported",extension);
   }
-  ierr = SVMLoadTrainingDataset(svm,viewer);CHKERRQ(ierr);
-  ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+  PetscCall(SVMLoadTrainingDataset(svm,viewer));
+  PetscCall(PetscViewerDestroy(&viewer));
 
   /* Load test dataset */
   if (test_file_set) {
-    ierr = GetFilenameExtension(test_file,&extension);CHKERRQ(ierr);
-    ierr = PetscStrcmp(extension,h5,&ishdf5);CHKERRQ(ierr);
-    ierr = PetscStrcmp(extension,bin,&isbinary);CHKERRQ(ierr);
-    ierr = PetscStrcmp(extension,SVMLight,&issvmlight);CHKERRQ(ierr);
+    PetscCall(GetFilenameExtension(test_file,&extension));
+    PetscCall(PetscStrcmp(extension,h5,&ishdf5));
+    PetscCall(PetscStrcmp(extension,bin,&isbinary));
+    PetscCall(PetscStrcmp(extension,SVMLight,&issvmlight));
     if (ishdf5) {
 #if defined(PETSC_HAVE_HDF5)
-      ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,test_file,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
+      PetscCall(PetscViewerHDF5Open(PETSC_COMM_WORLD,test_file,FILE_MODE_READ,&viewer));
 #else
       SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_SUP,"PETSc is not configured with HDF5");
 #endif
     } else if (isbinary) {
-      ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,test_file,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
+      PetscCall(PetscViewerBinaryOpen(PETSC_COMM_WORLD,test_file,FILE_MODE_READ,&viewer));
     } else if (issvmlight) {
-      ierr = PetscViewerSVMLightOpen(PETSC_COMM_WORLD,test_file,&viewer);CHKERRQ(ierr);
+      PetscCall(PetscViewerSVMLightOpen(PETSC_COMM_WORLD,test_file,&viewer));
     } else {
-      SETERRQ1(PETSC_COMM_WORLD,PETSC_ERR_SUP,"File type %s not supported",extension);
+      SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_SUP,"File type %s not supported",extension);
     }
-    ierr = SVMLoadTestDataset(svm,viewer);CHKERRQ(ierr);
-    ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+    PetscCall(SVMLoadTestDataset(svm,viewer));
+    PetscCall(PetscViewerDestroy(&viewer));
   }
 
   /* Train SVM model */
-  ierr = SVMTrain(svm);CHKERRQ(ierr);
+  PetscCall(SVMTrain(svm));
   /* Test performance of SVM model */
   if (test_file_set) {
-    ierr = SVMTest(svm);CHKERRQ(ierr);
+    PetscCall(SVMTest(svm));
   }
 
-  ierr = SVMDestroy(&svm);CHKERRQ(ierr);
-  ierr = PermonFinalize();
-  return ierr;
+  PetscCall(SVMDestroy(&svm));
+  PetscCall(PermonFinalize());
+
+  return 0;
 }
 
 

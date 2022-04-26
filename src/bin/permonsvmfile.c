@@ -13,7 +13,7 @@ PetscErrorCode GetFilenameExtension(const char *filename,char **extension)
   char *extension_inner;
 
   PetscFunctionBegin;
-  TRY( PetscStrrchr(filename,'.',&extension_inner) );
+  PetscCall(PetscStrrchr(filename,'.',&extension_inner));
   *extension = extension_inner;
   PetscFunctionReturn(0);
 }
@@ -38,124 +38,124 @@ PetscErrorCode SVMRunBinaryClassification()
   PetscBool   ishdf5,isbinary,issvmlight;
 
   PetscFunctionBeginI;
-  TRY( PetscOptionsGetString(NULL,NULL,"-f_training",training_file,sizeof(training_file),NULL) );
-  TRY( PetscOptionsGetString(NULL,NULL,"-f_test",test_file,sizeof(test_file),&test_file_set) );
-  TRY( PetscOptionsGetString(NULL,NULL,"-f_kernel",kernel_file,sizeof(kernel_file),&kernel_file_set) );
+  PetscCall(PetscOptionsGetString(NULL,NULL,"-f_training",training_file,sizeof(training_file),NULL));
+  PetscCall(PetscOptionsGetString(NULL,NULL,"-f_test",test_file,sizeof(test_file),&test_file_set));
+  PetscCall(PetscOptionsGetString(NULL,NULL,"-f_kernel",kernel_file,sizeof(kernel_file),&kernel_file_set));
 
-  TRY( PetscOptionsGetString(NULL,NULL,"-f_training_predictions",training_result_file,sizeof(training_result_file),&training_result_file_set) );
-  TRY( PetscOptionsGetString(NULL,NULL,"-f_test_predictions",test_result_file,sizeof(test_result_file),&test_result_file_set) );
+  PetscCall(PetscOptionsGetString(NULL,NULL,"-f_training_predictions",training_result_file,sizeof(training_result_file),&training_result_file_set));
+  PetscCall(PetscOptionsGetString(NULL,NULL,"-f_test_predictions",test_result_file,sizeof(test_result_file),&test_result_file_set));
 
-  TRY( SVMCreate(comm,&svm) );
-  TRY( SVMSetType(svm,SVM_BINARY) );
-  TRY( SVMSetFromOptions(svm) );
+  PetscCall(SVMCreate(comm,&svm));
+  PetscCall(SVMSetType(svm,SVM_BINARY));
+  PetscCall(SVMSetFromOptions(svm));
 
   /* Load training dataset */
-  TRY( GetFilenameExtension(training_file,&extension) );
-  TRY( PetscStrcmp(extension,h5,&ishdf5) );
-  TRY( PetscStrcmp(extension,bin,&isbinary) );
-  TRY( PetscStrcmp(extension,SVMLight,&issvmlight) );
+  PetscCall(GetFilenameExtension(training_file,&extension));
+  PetscCall(PetscStrcmp(extension,h5,&ishdf5));
+  PetscCall(PetscStrcmp(extension,bin,&isbinary));
+  PetscCall(PetscStrcmp(extension,SVMLight,&issvmlight));
   if (ishdf5) {
 #if defined(PETSC_HAVE_HDF5)
-    TRY( PetscViewerHDF5Open(comm,training_file,FILE_MODE_READ,&viewer) );
+    PetscCall(PetscViewerHDF5Open(comm,training_file,FILE_MODE_READ,&viewer));
 #else
-    FLLOP_SETERRQ(comm,PETSC_ERR_SUP,"PETSc is not configured with HDF5");
+    SETERRQ(comm,PETSC_ERR_SUP,"PETSc is not configured with HDF5");
 #endif
   } else if (isbinary) {
-    TRY( PetscViewerBinaryOpen(comm,training_file,FILE_MODE_READ,&viewer) );
+    PetscCall(PetscViewerBinaryOpen(comm,training_file,FILE_MODE_READ,&viewer));
   } else if (issvmlight) {
-    TRY( PetscViewerSVMLightOpen(comm,training_file,&viewer) );
+    PetscCall(PetscViewerSVMLightOpen(comm,training_file,&viewer));
   } else {
-    FLLOP_SETERRQ1(comm,PETSC_ERR_SUP,"File type %s not supported",extension);
+    SETERRQ(comm,PETSC_ERR_SUP,"File type %s not supported",extension);
   }
-  TRY( SVMLoadTrainingDataset(svm,viewer) );
-  TRY( PetscViewerDestroy(&viewer) );
+  PetscCall(SVMLoadTrainingDataset(svm,viewer));
+  PetscCall(PetscViewerDestroy(&viewer));
 
   /* Load precomputed Gramian (kernel matrix), i.e. phi(X^T) * phi(X) generally */
   if (kernel_file_set) {
-    TRY( GetFilenameExtension(kernel_file,&extension) );
-    TRY( PetscStrcmp(extension,h5,&ishdf5) );
-    TRY( PetscStrcmp(extension,bin,&isbinary) );
+    PetscCall(GetFilenameExtension(kernel_file,&extension));
+    PetscCall(PetscStrcmp(extension,h5,&ishdf5));
+    PetscCall(PetscStrcmp(extension,bin,&isbinary));
 
     if (ishdf5) {
 #if defined(PETSC_HAVE_HDF5)
-      TRY( PetscViewerHDF5Open(comm,kernel_file,FILE_MODE_READ,&viewer) );
+      PetscCall(PetscViewerHDF5Open(comm,kernel_file,FILE_MODE_READ,&viewer));
 #else
-      FLLOP_SETERRQ(comm,PETSC_ERR_SUP,"PETSc is not configured with HDF5");
+      SETERRQ(comm,PETSC_ERR_SUP,"PETSc is not configured with HDF5");
 #endif
     } else if (isbinary) {
-      TRY( PetscViewerBinaryOpen(comm,kernel_file,FILE_MODE_READ,&viewer) );
+      PetscCall(PetscViewerBinaryOpen(comm,kernel_file,FILE_MODE_READ,&viewer));
     } else {
-      FLLOP_SETERRQ1(comm,PETSC_ERR_SUP,"File type %s not supported",extension);
+      SETERRQ(comm,PETSC_ERR_SUP,"File type %s not supported",extension);
     }
-    TRY( SVMLoadGramian(svm,viewer) );
-    TRY( PetscViewerDestroy(&viewer) );
+    PetscCall(SVMLoadGramian(svm,viewer));
+    PetscCall(PetscViewerDestroy(&viewer));
   }
   /* Load test dataset */
   if (test_file_set) {
-    TRY( GetFilenameExtension(test_file,&extension) );
-    TRY( PetscStrcmp(extension,h5,&ishdf5) );
-    TRY( PetscStrcmp(extension,bin,&isbinary) );
-    TRY( PetscStrcmp(extension,SVMLight,&issvmlight) );
+    PetscCall(GetFilenameExtension(test_file,&extension));
+    PetscCall(PetscStrcmp(extension,h5,&ishdf5));
+    PetscCall(PetscStrcmp(extension,bin,&isbinary));
+    PetscCall(PetscStrcmp(extension,SVMLight,&issvmlight));
     if (ishdf5) {
 #if defined(PETSC_HAVE_HDF5)
-      TRY( PetscViewerHDF5Open(comm,test_file,FILE_MODE_READ,&viewer) );
+      PetscCall(PetscViewerHDF5Open(comm,test_file,FILE_MODE_READ,&viewer));
 #else
-      FLLOP_SETERRQ(comm,PETSC_ERR_SUP,"PETSc is not configured with HDF5");
+      SETERRQ(comm,PETSC_ERR_SUP,"PETSc is not configured with HDF5");
 #endif
     } else if (isbinary) {
-      TRY( PetscViewerBinaryOpen(comm,test_file,FILE_MODE_READ,&viewer) );
+      PetscCall(PetscViewerBinaryOpen(comm,test_file,FILE_MODE_READ,&viewer));
     } else if (issvmlight) {
-      TRY( PetscViewerSVMLightOpen(comm,test_file,&viewer) );
+      PetscCall(PetscViewerSVMLightOpen(comm,test_file,&viewer));
     } else {
-      FLLOP_SETERRQ1(comm,PETSC_ERR_SUP,"File type %s not supported",extension);
+      SETERRQ(comm,PETSC_ERR_SUP,"File type %s not supported",extension);
     }
-    TRY( SVMLoadTestDataset(svm,viewer) );
-    TRY( PetscViewerDestroy(&viewer) );
+    PetscCall(SVMLoadTestDataset(svm,viewer));
+    PetscCall(PetscViewerDestroy(&viewer));
   }
 
   /* Train SVM model */
-  TRY( SVMTrain(svm) );
+  PetscCall(SVMTrain(svm));
   /* Test performance of SVM model */
   if (test_file_set) {
-    TRY( SVMTest(svm) );
+    PetscCall(SVMTest(svm));
   }
 
   /* Save results */
   if (training_result_file_set) {
-    TRY( GetFilenameExtension(training_result_file,&extension) );
-    TRY( PetscStrcmp(extension,h5,&ishdf5) );
-    TRY( PetscStrcmp(extension,bin,&isbinary) );
+    PetscCall(GetFilenameExtension(training_result_file,&extension));
+    PetscCall(PetscStrcmp(extension,h5,&ishdf5));
+    PetscCall(PetscStrcmp(extension,bin,&isbinary));
     if (ishdf5) {
 #if defined(PETSC_HAVE_HDF5)
-      TRY( PetscViewerHDF5Open(PETSC_COMM_WORLD,training_result_file,FILE_MODE_WRITE,&viewer) );
+      PetscCall(PetscViewerHDF5Open(PETSC_COMM_WORLD,training_result_file,FILE_MODE_WRITE,&viewer));
 #else
       SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_SUP,"PETSc is not configured with HDF5");
 #endif
     } else {
-      TRY( PetscViewerBinaryOpen(PETSC_COMM_WORLD,training_result_file,FILE_MODE_WRITE,&viewer) );
+      PetscCall(PetscViewerBinaryOpen(PETSC_COMM_WORLD,training_result_file,FILE_MODE_WRITE,&viewer));
     }
-    TRY( SVMViewTrainingPredictions(svm,viewer) );
-    TRY( PetscViewerDestroy(&viewer) );
+    PetscCall(SVMViewTrainingPredictions(svm,viewer));
+    PetscCall(PetscViewerDestroy(&viewer));
   }
 
   if (test_result_file_set) {
-    TRY( GetFilenameExtension(test_result_file,&extension) );
-    TRY( PetscStrcmp(extension,h5,&ishdf5) );
-    TRY( PetscStrcmp(extension,bin,&isbinary) );
+    PetscCall(GetFilenameExtension(test_result_file,&extension));
+    PetscCall(PetscStrcmp(extension,h5,&ishdf5));
+    PetscCall(PetscStrcmp(extension,bin,&isbinary));
     if (ishdf5) {
 #if defined(PETSC_HAVE_HDF5)
-      TRY( PetscViewerHDF5Open(PETSC_COMM_WORLD,test_result_file,FILE_MODE_WRITE,&viewer) );
+      PetscCall(PetscViewerHDF5Open(PETSC_COMM_WORLD,test_result_file,FILE_MODE_WRITE,&viewer));
 #else
       SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_SUP,"PETSc is not configured with HDF5");
 #endif
     } else {
-      TRY( PetscViewerBinaryOpen(PETSC_COMM_WORLD,test_result_file,FILE_MODE_WRITE,&viewer) );
+      PetscCall(PetscViewerBinaryOpen(PETSC_COMM_WORLD,test_result_file,FILE_MODE_WRITE,&viewer));
     }
-    TRY( SVMViewTestPredictions(svm,viewer) );
-    TRY( PetscViewerDestroy(&viewer) );
+    PetscCall(SVMViewTestPredictions(svm,viewer));
+    PetscCall(PetscViewerDestroy(&viewer));
   }
 
-  TRY( SVMDestroy(&svm) );
+  PetscCall(SVMDestroy(&svm));
   PetscFunctionReturnI(0);
 }
 
@@ -167,7 +167,7 @@ int main(int argc,char **argv)
 
   PetscFunctionBegin;
   comm = PETSC_COMM_WORLD;
-  TRY( SVMRunBinaryClassification() );
-  TRY( PermonFinalize() );
+  PetscCall(SVMRunBinaryClassification());
+  PetscCall(PermonFinalize());
   PetscFunctionReturn(0);
 }

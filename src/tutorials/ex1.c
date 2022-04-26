@@ -17,49 +17,49 @@ int main(int argc,char **argv)
   PetscBool      test_file_set = PETSC_FALSE,kernel_file_set = PETSC_FALSE;
 
   PetscViewer    viewer;
-  PetscErrorCode ierr;
 
-  ierr = PermonInitialize(&argc,&argv,(char *)0,help); if (ierr) return ierr;
+  PetscCall(PermonInitialize(&argc,&argv,(char *)0,help));
 
-  ierr = PetscOptionsGetString(NULL,NULL,"-f_training",training_file,sizeof(training_file),NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetString(NULL,NULL,"-f_kernel",kernel_file,sizeof(kernel_file),&kernel_file_set);CHKERRQ(ierr);
-  ierr = PetscOptionsGetString(NULL,NULL,"-f_test",test_file,sizeof(test_file),&test_file_set);CHKERRQ(ierr);
+  PetscCall(PetscOptionsGetString(NULL,NULL,"-f_training",training_file,sizeof(training_file),NULL));
+  PetscCall(PetscOptionsGetString(NULL,NULL,"-f_kernel",kernel_file,sizeof(kernel_file),&kernel_file_set));
+  PetscCall(PetscOptionsGetString(NULL,NULL,"-f_test",test_file,sizeof(test_file),&test_file_set));
 
   /* Create SVM object */
-  ierr = SVMCreate(PETSC_COMM_WORLD,&svm);CHKERRQ(ierr);
-  ierr = SVMSetType(svm,SVM_BINARY);CHKERRQ(ierr);
-  ierr = SVMSetFromOptions(svm);CHKERRQ(ierr);
+  PetscCall(SVMCreate(PETSC_COMM_WORLD,&svm));
+  PetscCall(SVMSetType(svm,SVM_BINARY));
+  PetscCall(SVMSetFromOptions(svm));
 
   /* Load training dataset */
-  ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,training_file,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
-  ierr = SVMLoadTrainingDataset(svm,viewer);CHKERRQ(ierr);
-  ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+  PetscCall(PetscViewerBinaryOpen(PETSC_COMM_WORLD,training_file,FILE_MODE_READ,&viewer));
+  PetscCall(SVMLoadTrainingDataset(svm,viewer));
+  PetscCall(PetscViewerDestroy(&viewer));
 
   /* Load Gramian matrix */
   if (kernel_file_set) {
-    ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,kernel_file,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
-    ierr = SVMLoadGramian(svm,viewer);CHKERRQ(ierr);
-    ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+    PetscCall(PetscViewerBinaryOpen(PETSC_COMM_WORLD,kernel_file,FILE_MODE_READ,&viewer));
+    PetscCall(SVMLoadGramian(svm,viewer));
+    PetscCall(PetscViewerDestroy(&viewer));
   }
 
   /* Load test dataset */
   if (test_file_set) {
-    ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,test_file,FILE_MODE_READ,&viewer);CHKERRQ(ierr);
-    ierr = SVMLoadTestDataset(svm,viewer);CHKERRQ(ierr);
-    ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
+    PetscCall(PetscViewerBinaryOpen(PETSC_COMM_WORLD,test_file,FILE_MODE_READ,&viewer));
+    PetscCall(SVMLoadTestDataset(svm,viewer));
+    PetscCall(PetscViewerDestroy(&viewer));
   }
 
   /* Train classification model */
-  ierr = SVMTrain(svm);CHKERRQ(ierr);
+  PetscCall(SVMTrain(svm));
   /* Test performance of SVM model */
   if (test_file_set) {
-    ierr = SVMTest(svm);CHKERRQ(ierr);
+    PetscCall(SVMTest(svm));
   }
 
   /* Free memory */
-  ierr = SVMDestroy(&svm);CHKERRQ(ierr);
-  ierr = PermonFinalize();
-  return ierr;
+  PetscCall(SVMDestroy(&svm));
+  PetscCall(PermonFinalize());
+
+  return 0;
 }
 
 /*TEST
