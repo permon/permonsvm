@@ -12,6 +12,7 @@ struct _SVMOps {
   PetscErrorCode (*destroy)(SVM);
   PetscErrorCode (*setfromoptions)(PetscOptionItems *,SVM);
   PetscErrorCode (*setup)(SVM);
+  PetscErrorCode (*convergedsetup)(SVM);
   PetscErrorCode (*train)(SVM);
   PetscErrorCode (*posttrain)(SVM);
   PetscErrorCode (*reconstructhyperplane)(SVM);
@@ -64,7 +65,12 @@ struct _p_SVM {
   void *data;
 };
 
+typedef struct {
+  SVM svm;
+} SVMConvergedCtx;
+
 FLLOP_EXTERN PetscLogEvent SVM_LoadDataset;
 FLLOP_EXTERN PetscLogEvent SVM_LoadGramian;
+
 #endif
 

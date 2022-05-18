@@ -2068,6 +2068,55 @@ PetscErrorCode SVMTest(SVM svm)
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "SVMConvergedSetUp"
+/*@
+
+@*/
+PetscErrorCode SVMConvergedSetUp(SVM svm)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  // call specific implementation of setting convergence test
+  if (svm->ops->convergedsetup) PetscCall(svm->ops->convergedsetup(svm));
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMDefaultConvergedCreate"
+/*@
+
+@*/
+PetscErrorCode SVMDefaultConvergedCreate(void **ctx, SVM svm)
+{
+  SVMConvergedCtx *cctx;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+
+  PetscCall(PetscNew(&cctx));
+  cctx->svm = svm;
+  PetscCall(PetscObjectReference((PetscObject) svm));
+  *ctx = cctx;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMDefaultConvergedDestroy"
+/*@
+
+@*/
+PetscErrorCode SVMDefaultConvergedDestroy(void *ctx)
+{
+  SVMConvergedCtx *cctx = (SVMConvergedCtx *) ctx;
+
+  PetscFunctionBegin;
+  PetscCall(SVMDestroy(&cctx->svm));
+  PetscCall(PetscFree(cctx));
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "SVMGetModelScore"
 /*@
   SVMGetModelScore - Returns the model performance score of specified score_type.

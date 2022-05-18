@@ -40,6 +40,9 @@ typedef struct {
     PetscReal   primalObj,dualObj;
 } SVM_Binary;
 
+typedef enum {SVM_CONVERGED_DEFAULT,SVM_CONVERGED_DUALITY_GAP,SVM_CONVERGED_MAXIMAL_DUAL_VIOLATION} SVMConvergedType;
+FLLOP_EXTERN const char *const SVMConvergedTypes[];
+
 FLLOP_EXTERN PetscErrorCode SVMCrossValidation_Binary(SVM,PetscReal [],PetscInt,PetscReal []);
 FLLOP_EXTERN PetscErrorCode SVMKFoldCrossValidation_Binary(SVM,PetscReal [],PetscInt,PetscReal []);
 FLLOP_EXTERN PetscErrorCode SVMStratifiedKFoldCrossValidation_Binary(SVM,PetscReal [],PetscInt,PetscReal []);
