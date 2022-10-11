@@ -1899,7 +1899,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   PetscInt   i;
 
   PetscFunctionBegin;
-  PetscCall(PetscNewLog(svm,&svm_binary));
+  PetscCall(PetscNew(&svm_binary));
   svm->data = (void *) svm_binary;
 
   svm_binary->w           = NULL;
