@@ -2782,8 +2782,8 @@ PetscErrorCode SVMViewDataset(SVM svm,Mat Xt,Vec y,PetscViewer v)
 
     PetscCall(PetscViewerASCIIPushTab(v));
     PetscCall(PetscViewerASCIIPrintf(v,"samples\t%5" PetscInt_FMT "\n",M));
-    PetscCall(PetscViewerASCIIPrintf(v,"samples+\t%5" PetscInt_FMT " (%.2f%%)\n",M_plus,per_plus));
-    PetscCall(PetscViewerASCIIPrintf(v,"samples-\t%5" PetscInt_FMT " (%.2f%%)\n",M_minus,per_minus));
+    PetscCall(PetscViewerASCIIPrintf(v,"samples+\t%5" PetscInt_FMT " (%.2f%%)\n",M_plus,(double)per_plus));
+    PetscCall(PetscViewerASCIIPrintf(v,"samples-\t%5" PetscInt_FMT " (%.2f%%)\n",M_minus,(double)per_minus));
     if (svm_mod == 2) {
       PetscCall(PetscViewerASCIIPrintf(v,"features\t%5" PetscInt_FMT " (%" PetscInt_FMT ")\n",N,N + 1));
       PetscCall(PetscViewerASCIIPopTab(v));

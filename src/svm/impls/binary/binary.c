@@ -120,9 +120,9 @@ PetscErrorCode SVMView_Binary(SVM svm,PetscViewer v)
     PetscCall(PetscViewerASCIIPushTab(v));
     PetscCall(PetscViewerASCIIPrintf(v,"model parameters:\n"));
     PetscCall(PetscViewerASCIIPushTab(v));
-    PetscCall(PetscViewerASCIIPrintf(v,"||w||=%.4f",svm_binary->norm_w));
-    PetscCall(PetscViewerASCIIPrintf(v,"bias=%.4f",svm_binary->b));
-    PetscCall(PetscViewerASCIIPrintf(v,"margin=%.4f",svm_binary->margin));
+    PetscCall(PetscViewerASCIIPrintf(v,"||w||=%.4f",(double)svm_binary->norm_w));
+    PetscCall(PetscViewerASCIIPrintf(v,"bias=%.4f",(double)svm_binary->b));
+    PetscCall(PetscViewerASCIIPrintf(v,"margin=%.4f",(double)svm_binary->margin));
     PetscCall(PetscViewerASCIIPrintf(v,"NSV=%" PetscInt_FMT "\n",svm_binary->nsv));
     PetscCall(PetscViewerASCIIPopTab(v));
 
@@ -132,26 +132,26 @@ PetscErrorCode SVMView_Binary(SVM svm,PetscViewer v)
     PetscCall(PetscViewerASCIIPushTab(v));
     if (p == 1) {
       if (loss_type == SVM_L1) {
-        PetscCall(PetscViewerASCIIPrintf(v,"sum(xi_i)=%.4f\n",svm_binary->hinge_loss));
+        PetscCall(PetscViewerASCIIPrintf(v,"sum(xi_i)=%.4f\n",(double)svm_binary->hinge_loss));
       } else {
-        PetscCall(PetscViewerASCIIPrintf(v,"sum(xi_i^2)=%.4f\n",svm_binary->hinge_loss));
+        PetscCall(PetscViewerASCIIPrintf(v,"sum(xi_i^2)=%.4f\n",(double)svm_binary->hinge_loss));
       }
     } else {
       if (loss_type == SVM_L1) {
-        PetscCall(PetscViewerASCIIPrintf(v,"sum(xi_i+)=%.4f",svm_binary->hinge_loss_p));
-        PetscCall(PetscViewerASCIIPrintf(v,"sum(xi_i-)=%.4f\n",svm_binary->hinge_loss_n));
+        PetscCall(PetscViewerASCIIPrintf(v,"sum(xi_i+)=%.4f",(double)svm_binary->hinge_loss_p));
+        PetscCall(PetscViewerASCIIPrintf(v,"sum(xi_i-)=%.4f\n",(double)svm_binary->hinge_loss_n));
       } else {
-        PetscCall(PetscViewerASCIIPrintf(v,"sum(xi_i+^2)=%.4f",svm_binary->hinge_loss_n));
-        PetscCall(PetscViewerASCIIPrintf(v,"sum(xi_i-^2)=%.4f\n",svm_binary->hinge_loss_n));
+        PetscCall(PetscViewerASCIIPrintf(v,"sum(xi_i+^2)=%.4f",(double)svm_binary->hinge_loss_n));
+        PetscCall(PetscViewerASCIIPrintf(v,"sum(xi_i-^2)=%.4f\n",(double)svm_binary->hinge_loss_n));
       }
     }
     PetscCall(PetscViewerASCIIPopTab(v));
 
     PetscCall(PetscViewerASCIIPrintf(v,"objective functions:\n",SVMLossTypes[loss_type]));
     PetscCall(PetscViewerASCIIPushTab(v));
-    PetscCall(PetscViewerASCIIPrintf(v,"primalObj=%.4f",svm_binary->primalObj));
-    PetscCall(PetscViewerASCIIPrintf(v,"dualObj=%.4f",svm_binary->dualObj));
-    PetscCall(PetscViewerASCIIPrintf(v,"gap=%.4f\n",svm_binary->primalObj - svm_binary->dualObj));
+    PetscCall(PetscViewerASCIIPrintf(v,"primalObj=%.4f",(double)svm_binary->primalObj));
+    PetscCall(PetscViewerASCIIPrintf(v,"dualObj=%.4f",(double)svm_binary->dualObj));
+    PetscCall(PetscViewerASCIIPrintf(v,"gap=%.4f\n",(double)(svm_binary->primalObj - svm_binary->dualObj)));
     PetscCall(PetscViewerASCIIPopTab(v));
 
     PetscCall(PetscViewerASCIIPopTab(v));
@@ -190,11 +190,11 @@ PetscErrorCode SVMViewScore_Binary(SVM svm,PetscViewer v)
     PetscCall(PetscViewerASCIIPushTab(v));
     if (p == 1) {
       PetscCall(SVMGetC(svm,&C));
-      PetscCall(PetscViewerASCIIPrintf(v,"model performance score with training parameters C=%.3f, mod=%" PetscInt_FMT ", loss=%s:\n",C,mod,SVMLossTypes[loss_type]));
+      PetscCall(PetscViewerASCIIPrintf(v,"model performance score with training parameters C=%.3f, mod=%" PetscInt_FMT ", loss=%s:\n",(double)C,mod,SVMLossTypes[loss_type]));
     } else {
       PetscCall(SVMGetCp(svm,&Cp));
       PetscCall(SVMGetCn(svm,&Cn));
-      PetscCall(PetscViewerASCIIPrintf(v,"model performance score with training parameters C+=%.3f, C-=%.3f, mod=%" PetscInt_FMT ", loss=%s:\n",Cp,Cn,mod,SVMLossTypes[loss_type]));
+      PetscCall(PetscViewerASCIIPrintf(v,"model performance score with training parameters C+=%.3f, C-=%.3f, mod=%" PetscInt_FMT ", loss=%s:\n",(double)Cp,(double)Cn,mod,SVMLossTypes[loss_type]));
     }
     PetscCall(PetscViewerASCIIPushTab(v));
 
@@ -206,13 +206,13 @@ PetscErrorCode SVMViewScore_Binary(SVM svm,PetscViewer v)
     PetscCall(PetscViewerASCIIPrintf(v,"TN = %4" PetscInt_FMT "\n",svm_binary->confusion_matrix[3]));
     PetscCall(PetscViewerASCIIPopTab(v));
 
-    PetscCall(PetscViewerASCIIPrintf(v,"accuracy=%.2f%%",svm_binary->model_scores[0] * 100.));
-    PetscCall(PetscViewerASCIIPrintf(v,"precision=%.2f%%",svm_binary->model_scores[1] * 100.));
-    PetscCall(PetscViewerASCIIPrintf(v,"sensitivity=%.2f%%\n",svm_binary->model_scores[2] * 100.));
-    PetscCall(PetscViewerASCIIPrintf(v,"F1=%.2f",svm_binary->model_scores[3]));
-    PetscCall(PetscViewerASCIIPrintf(v,"MCC=%.2f",svm_binary->model_scores[4]));
-    PetscCall(PetscViewerASCIIPrintf(v,"AUC_ROC=%.2f",svm_binary->model_scores[5]));
-    PetscCall(PetscViewerASCIIPrintf(v,"G1=%.2f\n",svm_binary->model_scores[6]));
+    PetscCall(PetscViewerASCIIPrintf(v,"accuracy=%.2f%%",(double)(svm_binary->model_scores[0]) * 100.));
+    PetscCall(PetscViewerASCIIPrintf(v,"precision=%.2f%%",(double)(svm_binary->model_scores[1]) * 100.));
+    PetscCall(PetscViewerASCIIPrintf(v,"sensitivity=%.2f%%\n",(double)(svm_binary->model_scores[2]) * 100.));
+    PetscCall(PetscViewerASCIIPrintf(v,"F1=%.2f",(double)svm_binary->model_scores[3]));
+    PetscCall(PetscViewerASCIIPrintf(v,"MCC=%.2f",(double)svm_binary->model_scores[4]));
+    PetscCall(PetscViewerASCIIPrintf(v,"AUC_ROC=%.2f",(double)svm_binary->model_scores[5]));
+    PetscCall(PetscViewerASCIIPrintf(v,"G1=%.2f\n",(double)svm_binary->model_scores[6]));
     PetscCall(PetscViewerASCIIPopTab(v));
 
     PetscCall(PetscViewerASCIIPopTab(v));
@@ -2022,9 +2022,9 @@ PetscErrorCode SVMMonitorDefault_Binary(QPS qps,PetscInt it,PetscReal rnorm,void
   comm = PetscObjectComm((PetscObject) svm_inner);
   v = PETSC_VIEWER_STDOUT_(comm);
 
-  PetscCall(PetscViewerASCIIPrintf(v,"%3" PetscInt_FMT " SVM ||w||=%.10e",it,svm_binary->norm_w));
-  PetscCall(PetscViewerASCIIPrintf(v,",\tmargin=%.10e",svm_binary->margin));
-  PetscCall(PetscViewerASCIIPrintf(v,",\tbias=%.10e",svm_binary->b));
+  PetscCall(PetscViewerASCIIPrintf(v,"%3" PetscInt_FMT " SVM ||w||=%.10e",it,(double)svm_binary->norm_w));
+  PetscCall(PetscViewerASCIIPrintf(v,",\tmargin=%.10e",(double)svm_binary->margin));
+  PetscCall(PetscViewerASCIIPrintf(v,",\tbias=%.10e",(double)svm_binary->b));
   PetscCall(PetscViewerASCIIPrintf(v,",\tNSV=%3" PetscInt_FMT "\n",svm_binary->nsv));
   PetscFunctionReturn(0);
 }
@@ -2056,14 +2056,14 @@ PetscErrorCode SVMMonitorObjFuncs_Binary(QPS qps,PetscInt it,PetscReal rnorm,voi
   comm = PetscObjectComm((PetscObject) svm_inner);
   v = PETSC_VIEWER_STDOUT_(comm);
 
-  PetscCall(PetscViewerASCIIPrintf(v,"%3" PetscInt_FMT " SVM primalObj=%.10e,",it,svm_binary->primalObj));
+  PetscCall(PetscViewerASCIIPrintf(v,"%3" PetscInt_FMT " SVM primalObj=%.10e,",it,(double)svm_binary->primalObj));
   PetscCall(PetscViewerASCIIPushTab(v));
-  PetscCall(PetscViewerASCIIPrintf(v,"dualObj=%.10e,",svm_binary->dualObj));
-  PetscCall(PetscViewerASCIIPrintf(v,"gap=%.10e,",svm_binary->primalObj - svm_binary->dualObj));
+  PetscCall(PetscViewerASCIIPrintf(v,"dualObj=%.10e,",(double)svm_binary->dualObj));
+  PetscCall(PetscViewerASCIIPrintf(v,"gap=%.10e,",(double)(svm_binary->primalObj - svm_binary->dualObj)));
   if (p == 1) {
-    PetscCall(PetscViewerASCIIPrintf(v,"%s-HingeLoss=%.10e\n",SVMLossTypes[loss_type],svm_binary->hinge_loss));
+    PetscCall(PetscViewerASCIIPrintf(v,"%s-HingeLoss=%.10e\n",SVMLossTypes[loss_type],(double)svm_binary->hinge_loss));
   } else {
-    PetscCall(PetscViewerASCIIPrintf(v,"%s-HingeLoss+=%.10e %s-HingeLoss-=%.10e\n",SVMLossTypes[loss_type],svm_binary->hinge_loss_p, SVMLossTypes[loss_type],svm_binary->hinge_loss_n));
+    PetscCall(PetscViewerASCIIPrintf(v,"%s-HingeLoss+=%.10e %s-HingeLoss-=%.10e\n",SVMLossTypes[loss_type],(double)svm_binary->hinge_loss_p, SVMLossTypes[loss_type],(double)svm_binary->hinge_loss_n));
   }
   PetscCall(PetscViewerASCIIPopTab(v));
   PetscFunctionReturn(0);
@@ -2100,14 +2100,14 @@ PetscErrorCode SVMMonitorScores_Binary(QPS qps,PetscInt it,PetscReal rnorm,void 
   comm = PetscObjectComm((PetscObject) svm_inner);
   v = PETSC_VIEWER_STDOUT_(comm);
 
-  PetscCall(PetscViewerASCIIPrintf(v,"%3" PetscInt_FMT " SVM accuracy_test=%.2f%%,",it,svm_binary->model_scores[0] * 100.));
+  PetscCall(PetscViewerASCIIPrintf(v,"%3" PetscInt_FMT " SVM accuracy_test=%.2f%%,",it,(double)(svm_binary->model_scores[0]) * 100.));
   PetscCall(PetscViewerASCIIPushTab(v));
-  PetscCall(PetscViewerASCIIPrintf(v,"precision_test=%.2f%%,",svm_binary->model_scores[1] * 100.));
-  PetscCall(PetscViewerASCIIPrintf(v,"sensitivity_test=%.2f%%,",svm_binary->model_scores[2] * 100.));
-  PetscCall(PetscViewerASCIIPrintf(v,"F1_test=%.2f,",svm_binary->model_scores[3]));
-  PetscCall(PetscViewerASCIIPrintf(v,"MCC_test=%.2f",svm_binary->model_scores[4]));
-  PetscCall(PetscViewerASCIIPrintf(v,"AUC_ROC_test=%.2f",svm_binary->model_scores[5]));
-  PetscCall(PetscViewerASCIIPrintf(v,"G1_test=%.2f\n",svm_binary->model_scores[6]));
+  PetscCall(PetscViewerASCIIPrintf(v,"precision_test=%.2f%%,",(double)(svm_binary->model_scores[1]) * 100.));
+  PetscCall(PetscViewerASCIIPrintf(v,"sensitivity_test=%.2f%%,",(double)(svm_binary->model_scores[2]) * 100.));
+  PetscCall(PetscViewerASCIIPrintf(v,"F1_test=%.2f,",(double)svm_binary->model_scores[3]));
+  PetscCall(PetscViewerASCIIPrintf(v,"MCC_test=%.2f",(double)svm_binary->model_scores[4]));
+  PetscCall(PetscViewerASCIIPrintf(v,"AUC_ROC_test=%.2f",(double)svm_binary->model_scores[5]));
+  PetscCall(PetscViewerASCIIPrintf(v,"G1_test=%.2f\n",(double)svm_binary->model_scores[6]));
   PetscCall(PetscViewerASCIIPopTab(v));
 
   PetscCall(VecDestroy(&y_pred));
@@ -2146,14 +2146,14 @@ PetscErrorCode SVMMonitorTrainingScores_Binary(QPS qps,PetscInt it,PetscReal rno
   comm = PetscObjectComm((PetscObject) svm_inner);
   v = PETSC_VIEWER_STDOUT_(comm);
 
-  PetscCall(PetscViewerASCIIPrintf(v,"%3" PetscInt_FMT " SVM accuracy_training=%.2f%%,",it,svm_binary->model_scores[0] * 100.));
+  PetscCall(PetscViewerASCIIPrintf(v,"%3" PetscInt_FMT " SVM accuracy_training=%.2f%%,",it,(double)(svm_binary->model_scores[0]) * 100.));
   PetscCall(PetscViewerASCIIPushTab(v));
-  PetscCall(PetscViewerASCIIPrintf(v,"precision_training=%.2f%%,",svm_binary->model_scores[1] * 100.));
-  PetscCall(PetscViewerASCIIPrintf(v,"sensitivity_training=%.2f%%,",svm_binary->model_scores[2] * 100.));
-  PetscCall(PetscViewerASCIIPrintf(v,"F1_training=%.2f,",svm_binary->model_scores[3]));
-  PetscCall(PetscViewerASCIIPrintf(v,"MCC_training=%.2f",svm_binary->model_scores[4]));
-  PetscCall(PetscViewerASCIIPrintf(v,"AUC_ROC_training=%.2f",svm_binary->model_scores[5]));
-  PetscCall(PetscViewerASCIIPrintf(v,"G1_training=%.2f\n",svm_binary->model_scores[6]));
+  PetscCall(PetscViewerASCIIPrintf(v,"precision_training=%.2f%%,",(double)(svm_binary->model_scores[1]) * 100.));
+  PetscCall(PetscViewerASCIIPrintf(v,"sensitivity_training=%.2f%%,",(double)(svm_binary->model_scores[2]) * 100.));
+  PetscCall(PetscViewerASCIIPrintf(v,"F1_training=%.2f,",(double)svm_binary->model_scores[3]));
+  PetscCall(PetscViewerASCIIPrintf(v,"MCC_training=%.2f",(double)svm_binary->model_scores[4]));
+  PetscCall(PetscViewerASCIIPrintf(v,"AUC_ROC_training=%.2f",(double)svm_binary->model_scores[5]));
+  PetscCall(PetscViewerASCIIPrintf(v,"G1_training=%.2f\n",(double)svm_binary->model_scores[6]));
   PetscCall(PetscViewerASCIIPopTab(v));
 
   PetscCall(VecDestroy(&y_pred));
