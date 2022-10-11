@@ -500,7 +500,7 @@ PetscErrorCode SVMSetPenaltyType(SVM svm,PetscInt type)
   PetscValidLogicalCollectiveInt(svm,type,2);
   if (svm->penalty_type == type) PetscFunctionReturn(0);
 
-  if (type != 1 && type != 2) SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_SUP,"Type of penalty (%d) is not supported. It must be 1 or 2",type);
+  if (type != 1 && type != 2) SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_SUP,"Type of penalty (%" PetscInt_FMT ") is not supported. It must be 1 or 2",type);
 
   svm->penalty_type = type;
   svm->setupcalled = PETSC_FALSE;
@@ -2781,14 +2781,14 @@ PetscErrorCode SVMViewDataset(SVM svm,Mat Xt,Vec y,PetscViewer v)
     }
 
     PetscCall(PetscViewerASCIIPushTab(v));
-    PetscCall(PetscViewerASCIIPrintf(v,"samples\t%5D\n",M));
-    PetscCall(PetscViewerASCIIPrintf(v,"samples+\t%5D (%.2f%%)\n",M_plus,per_plus));
-    PetscCall(PetscViewerASCIIPrintf(v,"samples-\t%5D (%.2f%%)\n",M_minus,per_minus));
+    PetscCall(PetscViewerASCIIPrintf(v,"samples\t%5" PetscInt_FMT "\n",M));
+    PetscCall(PetscViewerASCIIPrintf(v,"samples+\t%5" PetscInt_FMT " (%.2f%%)\n",M_plus,(double)per_plus));
+    PetscCall(PetscViewerASCIIPrintf(v,"samples-\t%5" PetscInt_FMT " (%.2f%%)\n",M_minus,(double)per_minus));
     if (svm_mod == 2) {
-      PetscCall(PetscViewerASCIIPrintf(v,"features\t%5D (%D)\n",N,N + 1));
+      PetscCall(PetscViewerASCIIPrintf(v,"features\t%5" PetscInt_FMT " (%" PetscInt_FMT ")\n",N,N + 1));
       PetscCall(PetscViewerASCIIPopTab(v));
     } else {
-      PetscCall(PetscViewerASCIIPrintf(v,"features\t%5D\n",N));
+      PetscCall(PetscViewerASCIIPrintf(v,"features\t%5" PetscInt_FMT "\n",N));
     }
     PetscCall(PetscViewerASCIIPopTab(v));
 

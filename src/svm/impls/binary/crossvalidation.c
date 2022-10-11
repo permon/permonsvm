@@ -74,7 +74,7 @@ PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt
   PetscCall(SVMGetNfolds(svm,&nfolds));
   for (i = 0; i < nfolds; ++i) {
     if (info_set) {
-      PetscCall(PetscPrintf(comm,"SVM: fold %d of %d\n",i+1,nfolds));
+      PetscCall(PetscPrintf(comm,"SVM: fold %" PetscInt_FMT " of %" PetscInt_FMT "\n",i+1,nfolds));
     }
 
     first = lo + i - lo % nfolds;
@@ -234,7 +234,7 @@ PetscErrorCode SVMStratifiedKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[
   PetscCall(SVMGetNfolds(svm,&nfolds));
   for (i = 0; i < nfolds; ++i) {
     if (info_set) {
-      PetscCall(PetscPrintf(comm,"SVM: fold %d of %d\n",i+1,nfolds));
+      PetscCall(PetscPrintf(comm,"SVM: fold %" PetscInt_FMT " of %" PetscInt_FMT "\n",i+1,nfolds));
     }
 
     /* Fold positive samples */
