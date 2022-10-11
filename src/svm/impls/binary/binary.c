@@ -147,7 +147,7 @@ PetscErrorCode SVMView_Binary(SVM svm,PetscViewer v)
     }
     PetscCall(PetscViewerASCIIPopTab(v));
 
-    PetscCall(PetscViewerASCIIPrintf(v,"objective functions:\n",SVMLossTypes[loss_type]));
+    PetscCall(PetscViewerASCIIPrintf(v,"objective functions:\n"));
     PetscCall(PetscViewerASCIIPushTab(v));
     PetscCall(PetscViewerASCIIPrintf(v,"primalObj=%.4f",(double)svm_binary->primalObj));
     PetscCall(PetscViewerASCIIPrintf(v,"dualObj=%.4f",(double)svm_binary->dualObj));
