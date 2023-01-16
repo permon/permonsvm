@@ -478,7 +478,6 @@ PetscErrorCode SVMGetQPS_Binary(SVM svm,QPS *qps)
     PetscCall(SVMCreateQPS_Binary_Private(svm,&qps_inner));
     svm_binary->qps = qps_inner;
   }
-
   *qps = svm_binary->qps;
   PetscFunctionReturn(0);
 }
@@ -913,6 +912,7 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
     PetscCall(QPTFromOptions(qp));
     PetscCall(QPSSetFromOptions(qps));
   }
+
   PetscCall(QPSSetUp(qps));
 
   /* Create work vectors */
@@ -1629,8 +1629,8 @@ PetscErrorCode SVMComputePGminPGmax_Binary_Private(SVM svm,PetscReal *PG_min,Pet
   PetscCall(SVMGetQPS(svm,&qps));
   PetscCall(QPSGetQP(qps,&qp));
 
-  PetscCall(QPGetSolutionVector(qp,&x));
-  PetscCall(QPGetBox(qp,NULL,&lb,&ub));
+  PetscCall(QPGetSolutionVector(qp,&x)); // this function returns borrowed reference
+  PetscCall(QPGetBox(qp,NULL,&lb,&ub)); // this function returns borrowed reference
 
   y = svm_binary->y_inner; // labels remapped to +1 and -1
   g = qps->work[0];        // get gradient
@@ -1678,11 +1678,6 @@ PetscErrorCode SVMComputePGminPGmax_Binary_Private(SVM svm,PetscReal *PG_min,Pet
   PetscCall(ISDestroy(&is_ym));
   PetscCall(ISDestroy(&is_xgl));
   PetscCall(ISDestroy(&is_xlu));
-  // PetscCall(VecDestroy(&x));
-  // PetscCall(VecDestroy(&lb));
-  // PetscCall(VecDestroy(&ub));
-  // PetscCall(QPSDestroy(&qps));
-  // PetscCall(QPDestroy(&qp));
   PetscFunctionReturn(0);
 }
 
@@ -1809,7 +1804,7 @@ PetscErrorCode SVMConvergedSetUp_Binary(SVM svm)
   PetscCall(SVMGetMod(svm,&svm_mod));
   PetscCall(SVMGetQPS(svm,&qps));
   if (svm_mod == 1) {
-    PetscCall(QPSSMALXEGetInnerQPS(qps,&qps_inner));
+    PetscCall(QPSSMALXEGetInnerQPS(qps,&qps_inner)); // this returns borrowed reference
   } else {
     qps_inner = qps;
   }
