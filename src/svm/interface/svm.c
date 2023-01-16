@@ -2087,7 +2087,7 @@ PetscErrorCode SVMConvergedSetUp(SVM svm)
 /*@
 
 @*/
-PetscErrorCode SVMDefaultConvergedCreate(void **ctx, SVM svm)
+PetscErrorCode SVMDefaultConvergedCreate(SVM svm, void **ctx)
 {
   SVMConvergedCtx *cctx;
 

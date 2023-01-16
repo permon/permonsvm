@@ -197,7 +197,7 @@ FLLOP_EXTERN PetscErrorCode SVMPredict(SVM,Mat,Vec *);
 FLLOP_EXTERN PetscErrorCode SVMTest(SVM);
 
 FLLOP_EXTERN PetscErrorCode SVMConvergedSetUp(SVM);
-FLLOP_EXTERN PetscErrorCode SVMDefaultConvergedCreate(void **, SVM);
+FLLOP_EXTERN PetscErrorCode SVMDefaultConvergedCreate(SVM, void **);
 FLLOP_EXTERN PetscErrorCode SVMDefaultConvergedDestroy(void *);
 
 FLLOP_EXTERN PetscErrorCode SVMComputeModelScores(SVM,Vec,Vec);
