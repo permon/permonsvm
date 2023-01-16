@@ -1633,7 +1633,6 @@ PetscErrorCode SVMComputePGminPGmax_Binary_Private(SVM svm,PetscReal *PG_min,Pet
   PetscCall(QPGetBox(qp,NULL,&lb,&ub));
 
   y = svm_binary->y_inner; // labels remapped to +1 and -1
-  // TODO function to get gradient QPS
   g = qps->work[0];        // get gradient
 
   PetscCall(VecWhichGreaterThan(y,lb,&is_yp));       // lb = zeros, then is_yp contains indices of samples related to class +1
@@ -1725,7 +1724,7 @@ PetscErrorCode SVMConvergedMaximalDualViolation_Binary(QPS qps,KSPConvergedReaso
   }
 
   if ((v <= atol) && PetscAbsReal(PGmax) <= atol && PetscAbsReal(PGmin) <= atol) {
-    *reason = KSP_CONVERGED_RTOL;
+    *reason = KSP_CONVERGED_ATOL;
     PetscCall(PetscInfo(qps,"QP solver has converged. Dual violation %14.12e at iteration %" PetscInt_FMT "\n",(double) v,it));
   }
 
@@ -1804,7 +1803,7 @@ PetscErrorCode SVMConvergedSetUp_Binary(SVM svm)
 
   type_stop_criteria = SVM_CONVERGED_DEFAULT;
 
-  PetscCall(PetscOptionsGetEnum(NULL,((PetscObject) svm)->prefix,"-svm_binary_stopping_criteria",SVMConvergedTypes,(PetscEnum*)&type_stop_criteria,NULL));
+  PetscCall(PetscOptionsGetEnum(NULL,((PetscObject) svm)->prefix,"-svm_binary_convergence_test",SVMConvergedTypes,(PetscEnum*)&type_stop_criteria,NULL));
   if (type_stop_criteria == SVM_CONVERGED_DEFAULT) PetscFunctionReturn(0);
 
   PetscCall(SVMGetMod(svm,&svm_mod));
@@ -1818,12 +1817,12 @@ PetscErrorCode SVMConvergedSetUp_Binary(SVM svm)
   switch (type_stop_criteria) {
     // convergence test based on maximal dual violation
     case SVM_CONVERGED_MAXIMAL_DUAL_VIOLATION:
-      PetscCall(SVMDefaultConvergedCreate(&ctx,svm));
+      PetscCall(SVMDefaultConvergedCreate(svm,&ctx));
       PetscCall(QPSSetConvergenceTest(qps_inner,SVMConvergedMaximalDualViolation_Binary,ctx,SVMDefaultConvergedDestroy));
       break;
     // convergence test based on duality gap
     case SVM_CONVERGED_DUALITY_GAP:
-      PetscCall(SVMDefaultConvergedCreate(&ctx,svm));
+      PetscCall(SVMDefaultConvergedCreate(svm,&ctx));
       PetscCall(QPSSetConvergenceTest(qps_inner,SVMConvergedDualityGap_Binary,ctx,SVMDefaultConvergedDestroy));
       break;
     default:
