@@ -153,15 +153,27 @@ PetscErrorCode SVMDestroyDefault(SVM svm)
 @*/
 PetscErrorCode SVMDestroy(SVM *svm)
 {
+  QPS  qps;
+  void *cctx;
 
   PetscFunctionBegin;
   if (!*svm) PetscFunctionReturn(0);
 
   PetscValidHeaderSpecific(*svm,SVM_CLASSID,1);
-  if (--((PetscObject) (*svm))->refct > 0) {
+  --((PetscObject)(*svm))->refct;
+  if (((PetscObject)(*svm))->refct == 1) {
+    PetscCall(SVMGetQPS(*svm,&qps));
+    PetscCall(QPSGetConvergenceContext(qps,&cctx));
+    if (*svm != cctx) {
+      *svm = 0;
+      PetscFunctionReturn(0);
+    }
+  } else if (((PetscObject)(*svm))->refct > 1) {
     *svm = 0;
     PetscFunctionReturn(0);
   }
+  if (((PetscObject)(*svm))->refct < 0) PetscFunctionReturn(0);
+  ((PetscObject)(*svm))->refct = 0;
 
   PetscCall(SVMReset(*svm));
   if ((*svm)->ops->destroy) {
@@ -2089,15 +2101,9 @@ PetscErrorCode SVMConvergedSetUp(SVM svm)
 @*/
 PetscErrorCode SVMDefaultConvergedCreate(SVM svm, void **ctx)
 {
-  SVMConvergedCtx *cctx;
-
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-
-  PetscCall(PetscNew(&cctx));
-  cctx->svm = svm;
-  PetscCall(PetscObjectReference((PetscObject) svm));
-  *ctx = cctx;
+  *ctx = svm;
   PetscFunctionReturn(0);
 }
 
@@ -2108,11 +2114,8 @@ PetscErrorCode SVMDefaultConvergedCreate(SVM svm, void **ctx)
 @*/
 PetscErrorCode SVMDefaultConvergedDestroy(void *ctx)
 {
-  SVMConvergedCtx *cctx = (SVMConvergedCtx *) ctx;
-
   PetscFunctionBegin;
-  PetscCall(SVMDestroy(&cctx->svm));
-  PetscCall(PetscFree(cctx));
+  PetscCall(SVMDestroy((SVM*)&ctx));
   PetscFunctionReturn(0);
 }
 

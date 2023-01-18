@@ -1687,9 +1687,6 @@ PetscErrorCode SVMConvergedMaximalDualViolation_Binary(QPS qps,KSPConvergedReaso
 {
   SVM              svm;
 
-  void            *ctx;
-  SVMConvergedCtx *cctx;
-
   PetscInt         max_it;
   PetscReal        atol;
 
@@ -1699,12 +1696,9 @@ PetscErrorCode SVMConvergedMaximalDualViolation_Binary(QPS qps,KSPConvergedReaso
   PetscFunctionBegin;
   PetscValidHeaderSpecific(qps,QPS_CLASSID,1);
 
-  PetscCall(QPSGetConvergenceContext(qps,&ctx));
+  PetscCall(QPSGetConvergenceContext(qps,(void*)&svm));
   PetscCall(QPSGetIterationNumber(qps,&it));
   PetscCall(QPSGetTolerances(qps,NULL,&atol,NULL,&max_it));
-
-  cctx = (SVMConvergedCtx *) ctx;
-  svm  = cctx->svm;
 
   *reason = KSP_CONVERGED_ITERATING;
   if (it == 0) PetscFunctionReturn(0);
@@ -1730,29 +1724,24 @@ PetscErrorCode SVMConvergedMaximalDualViolation_Binary(QPS qps,KSPConvergedReaso
 #define __FUNCT__ "SVMConvergedDualityGap_Binary"
 PetscErrorCode SVMConvergedDualityGap_Binary(QPS qps,KSPConvergedReason *reason)
 {
-  SVM_Binary      *svm_binary;
-  SVM              svm;
+  SVM_Binary *svm_binary;
+  SVM         svm;
 
-  void            *ctx;
-  SVMConvergedCtx *cctx;
+  PetscInt    max_it;
+  PetscReal   rtol;
 
-  PetscInt  max_it;
-  PetscReal rtol;
+  PetscReal   D,P;
 
-  PetscReal D,P;
-
-  PetscReal gap;
-  PetscInt  it;
+  PetscReal   gap;
+  PetscInt    it;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(qps,QPS_CLASSID,1);
 
-  PetscCall(QPSGetConvergenceContext(qps,&ctx));
+  PetscCall(QPSGetConvergenceContext(qps,(void*)&svm));
   PetscCall(QPSGetIterationNumber(qps,&it));
   PetscCall(QPSGetTolerances(qps,&rtol,NULL,NULL,&max_it));
 
-  cctx = (SVMConvergedCtx *) ctx;
-  svm  = cctx->svm;
   svm_binary = (SVM_Binary *) svm->data;
 
   *reason = KSP_CONVERGED_ITERATING;
