@@ -59,7 +59,7 @@ int main(int argc,char **argv)
     args: -svm_loss_type L2
     args: -f_training $PERMON_SVM_DIR/src/tutorials/data/heart_scale.bin
     args: -f_test $PERMON_SVM_DIR/src/tutorials/data/heart_scale.t.bin
-    output_file: output/ex4.out
+    output_file: output/ex4_duality_gap.out
 
   test:
     suffix: dual_violation
@@ -68,5 +68,5 @@ int main(int argc,char **argv)
     args: -svm_loss_type L1 -svm_binary_mod 2
     args: -f_training $PERMON_SVM_DIR/src/tutorials/data/heart_scale.bin
     args: -f_test $PERMON_SVM_DIR/src/tutorials/data/heart_scale.t.bin
-    output_file: output/ex4_dv.out
+    output_file: output/ex4_dual_violation.out
 TEST*/
