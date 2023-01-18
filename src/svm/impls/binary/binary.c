@@ -1789,8 +1789,6 @@ PetscErrorCode SVMConvergedSetUp_Binary(SVM svm)
   void             *ctx;
 
   QPS               qps;
-  QPS               qps_inner;
-
   PetscInt          svm_mod;
 
   PetscFunctionBegin;
@@ -1803,22 +1801,17 @@ PetscErrorCode SVMConvergedSetUp_Binary(SVM svm)
 
   PetscCall(SVMGetMod(svm,&svm_mod));
   PetscCall(SVMGetQPS(svm,&qps));
-  if (svm_mod == 1) {
-    PetscCall(QPSSMALXEGetInnerQPS(qps,&qps_inner)); // this returns borrowed reference
-  } else {
-    qps_inner = qps;
-  }
 
   switch (type_stop_criteria) {
     // convergence test based on maximal dual violation
     case SVM_CONVERGED_MAXIMAL_DUAL_VIOLATION:
       PetscCall(SVMDefaultConvergedCreate(svm,&ctx));
-      PetscCall(QPSSetConvergenceTest(qps_inner,SVMConvergedMaximalDualViolation_Binary,ctx,SVMDefaultConvergedDestroy));
+      PetscCall(QPSSetConvergenceTest(qps,SVMConvergedMaximalDualViolation_Binary,ctx,SVMDefaultConvergedDestroy));
       break;
     // convergence test based on duality gap
     case SVM_CONVERGED_DUALITY_GAP:
       PetscCall(SVMDefaultConvergedCreate(svm,&ctx));
-      PetscCall(QPSSetConvergenceTest(qps_inner,SVMConvergedDualityGap_Binary,ctx,SVMDefaultConvergedDestroy));
+      PetscCall(QPSSetConvergenceTest(qps,SVMConvergedDualityGap_Binary,ctx,SVMDefaultConvergedDestroy));
       break;
     default:
       break;
