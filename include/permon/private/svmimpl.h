@@ -65,10 +65,6 @@ struct _p_SVM {
   void *data;
 };
 
-typedef struct {
-  SVM svm;
-} SVMConvergedCtx;
-
 FLLOP_EXTERN PetscLogEvent SVM_LoadDataset;
 FLLOP_EXTERN PetscLogEvent SVM_LoadGramian;
 
