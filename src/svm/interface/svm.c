@@ -153,15 +153,27 @@ PetscErrorCode SVMDestroyDefault(SVM svm)
 @*/
 PetscErrorCode SVMDestroy(SVM *svm)
 {
+  QPS  qps;
+  void *cctx;
 
   PetscFunctionBegin;
   if (!*svm) PetscFunctionReturn(0);
 
   PetscValidHeaderSpecific(*svm,SVM_CLASSID,1);
-  if (--((PetscObject) (*svm))->refct > 0) {
+  --((PetscObject)(*svm))->refct;
+  if (((PetscObject)(*svm))->refct == 1) {
+    PetscCall(SVMGetQPS(*svm,&qps));
+    PetscCall(QPSGetConvergenceContext(qps,&cctx));
+    if (*svm != cctx) {
+      *svm = 0;
+      PetscFunctionReturn(0);
+    }
+  } else if (((PetscObject)(*svm))->refct > 1) {
     *svm = 0;
     PetscFunctionReturn(0);
   }
+  if (((PetscObject)(*svm))->refct < 0) PetscFunctionReturn(0);
+  ((PetscObject)(*svm))->refct = 0;
 
   PetscCall(SVMReset(*svm));
   if ((*svm)->ops->destroy) {
@@ -2065,6 +2077,46 @@ PetscErrorCode SVMTest(SVM svm)
     PetscCall(PetscViewerDestroy(&v));
   }
   PetscFunctionReturnI(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMConvergedSetUp"
+/*@
+
+@*/
+PetscErrorCode SVMConvergedSetUp(SVM svm)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  // call specific implementation of setting convergence test
+  if (svm->ops->convergedsetup) PetscCall(svm->ops->convergedsetup(svm));
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMDefaultConvergedCreate"
+/*@
+
+@*/
+PetscErrorCode SVMDefaultConvergedCreate(SVM svm, void **ctx)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  *ctx = svm;
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMDefaultConvergedDestroy"
+/*@
+
+@*/
+PetscErrorCode SVMDefaultConvergedDestroy(void *ctx)
+{
+  PetscFunctionBegin;
+  PetscCall(SVMDestroy((SVM*)&ctx));
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__

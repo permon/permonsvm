@@ -196,6 +196,10 @@ FLLOP_EXTERN PetscErrorCode SVMSetAutoPostTrain(SVM,PetscBool);
 FLLOP_EXTERN PetscErrorCode SVMPredict(SVM,Mat,Vec *);
 FLLOP_EXTERN PetscErrorCode SVMTest(SVM);
 
+FLLOP_EXTERN PetscErrorCode SVMConvergedSetUp(SVM);
+FLLOP_EXTERN PetscErrorCode SVMDefaultConvergedCreate(SVM, void **);
+FLLOP_EXTERN PetscErrorCode SVMDefaultConvergedDestroy(void *);
+
 FLLOP_EXTERN PetscErrorCode SVMComputeModelScores(SVM,Vec,Vec);
 FLLOP_EXTERN PetscErrorCode SVMGetModelScore(SVM,ModelScore,PetscReal *);
 FLLOP_EXTERN PetscErrorCode SVMComputeHingeLoss(SVM svm);

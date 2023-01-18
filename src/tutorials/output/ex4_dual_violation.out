@@ -1,0 +1,24 @@
+  type: mpgp
+  last QPSSolve CONVERGED due to CONVERGED_ATOL, KSPReason=3, required 122 iterations
+  all 1 QPSSolves from last QPSReset/QPSResetStatistics have required 122 iterations
+  tolerances: rtol=1.0e-01, abstol=1.0e-02, dtol=1.0e+100, maxits=10000
+  mpgp specific:
+    from the last QPSReset:
+    number of Hessian multiplications 200
+    number of CG steps 44
+    number of expansion steps 77
+    number of proportioning steps 1
+  type: binary
+  model parameters:
+    ||w||=2.1926    bias=0.0000    margin=0.9121    NSV=12
+  L1 hinge loss:
+    sum(xi_i)=60.3532
+  objective functions:
+    primalObj=62.7570    dualObj=62.7426    gap=0.0144
+  type: binary
+  model performance score with training parameters C=1.000, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   27      FP =    9
+      FN =    8      TN =   46
+    accuracy=81.11%    precision=75.00%    sensitivity=77.14%
+    F1=0.76    MCC=0.60    AUC_ROC=0.80    G1=0.61

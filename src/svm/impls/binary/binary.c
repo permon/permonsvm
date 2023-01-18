@@ -2,6 +2,7 @@
 #include "binaryimpl.h"
 
 const char *const SVMLossTypes[]={"L1","L2","SVMLossType","SVM_",0};
+const char *const SVMConvergedTypes[] = {"default", "duality_gap", "dual_violation", "SVMConvergedType", "SVM_", 0};
 
 typedef struct {
   SVM svm_inner;
@@ -477,7 +478,6 @@ PetscErrorCode SVMGetQPS_Binary(SVM svm,QPS *qps)
     PetscCall(SVMCreateQPS_Binary_Private(svm,&qps_inner));
     svm_binary->qps = qps_inner;
   }
-
   *qps = svm_binary->qps;
   PetscFunctionReturn(0);
 }
@@ -904,11 +904,15 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
     }
   }
 
+  /* Set stopping criteria */
+  PetscCall(SVMConvergedSetUp(svm));
+
   /* Set QPS */
   if (svm->setfromoptionscalled) {
     PetscCall(QPTFromOptions(qp));
     PetscCall(QPSSetFromOptions(qps));
   }
+
   PetscCall(QPSSetUp(qps));
 
   /* Create work vectors */
@@ -1597,6 +1601,214 @@ PetscErrorCode SVMTest_Binary(SVM svm)
   PetscFunctionReturn(0);
 }
 
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMComputePGmaxPGmin_Binary_Private"
+PetscErrorCode SVMComputePGminPGmax_Binary_Private(SVM svm,PetscReal *PG_min,PetscReal *PG_max)
+{
+  // https://www.jmlr.org/papers/volume8/loosli07a/loosli07a.pdf
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
+  Vec         x,g,sg;
+  Vec         y;
+
+  Vec         lb,ub;
+
+  IS          is_yp,is_ym;
+  IS          is_xgl,is_xlu,is_int;
+
+  PetscReal   min_1,min_2,max_1,max_2;
+  PetscInt    rstart,rend;
+
+  QPS         qps;
+  QP          qp;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+
+  PetscCall(SVMGetQPS(svm,&qps));
+  PetscCall(QPSGetQP(qps,&qp));
+
+  PetscCall(QPGetSolutionVector(qp,&x)); // this function returns borrowed reference
+  PetscCall(QPGetBox(qp,NULL,&lb,&ub)); // this function returns borrowed reference
+
+  y = svm_binary->y_inner; // labels remapped to +1 and -1
+  g = qps->work[0];        // get gradient
+
+  PetscCall(VecWhichGreaterThan(y,lb,&is_yp));       // lb = zeros, then is_yp contains indices of samples related to class +1
+  PetscCall(VecGetOwnershipRange(y,&rstart,&rend));
+  PetscCall(ISComplement(is_yp,rstart,rend,&is_ym)); // is_y, contains indices of samples related to class -1
+
+  PetscCall(VecWhichGreaterThan(x,lb,&is_xgl));     // get index set for x < C or x < Cp, x < Cm
+  PetscCall(VecWhichLessThan(x,ub,&is_xlu));        // get index set for x > 0
+
+  /* Compute PG_max */
+  PetscCall(ISIntersect(is_yp,is_xlu,&is_int));     // get index set for x < C & y = +1
+  PetscCall(VecGetSubVector(g,is_int,&sg));         // get sub gradient sg = g(x < C & y = +1)
+  PetscCall(VecMin(sg,NULL,&max_1));
+  max_1 *= -1.0;                                    // max_1 = max(-sg) = -min(sg) = -min(g(x < C & y = 1))
+  PetscCall(VecRestoreSubVector(g,is_int,&sg));
+  PetscCall(ISDestroy(&is_int));
+
+  PetscCall(ISIntersect(is_ym,is_xgl,&is_int));    // get index set for x > 0 & y == -1
+  PetscCall(VecGetSubVector(g,is_int,&sg));        // get sub gradient sg = g(x > 0 & y == -1)
+  PetscCall(VecMax(sg,NULL,&max_2));               // max_2 = max(sg) = max(g(x > 0 & y = -1))
+  PetscCall(VecRestoreSubVector(g,is_int,&sg));
+  PetscCall(ISDestroy(&is_int));
+
+  *PG_max = PetscMax(max_1,max_2);
+
+  /* Compute PG_min */
+  PetscCall(ISIntersect(is_ym,is_xlu,&is_int));   // get index set x < C & y = -1
+  PetscCall(VecGetSubVector(g,is_int,&sg));       // min_1 = min(sg) = min(g(x < C & y = -1))
+  PetscCall(VecMin(sg,NULL,&min_1));
+  PetscCall(VecRestoreSubVector(g,is_int,&sg));
+  PetscCall(ISDestroy(&is_int));
+
+  PetscCall(ISIntersect(is_yp,is_xgl,&is_int));  // get index set x > 0 & y = +1
+  PetscCall(VecGetSubVector(g,is_int,&sg));
+  PetscCall(VecMax(sg,NULL,&min_2));
+  min_2 *= -1.0;
+  PetscCall(VecRestoreSubVector(g,is_int,&sg));
+  PetscCall(ISDestroy(&is_int));
+
+  *PG_min = PetscMin(min_1,min_2);
+
+  PetscCall(ISDestroy(&is_yp));
+  PetscCall(ISDestroy(&is_ym));
+  PetscCall(ISDestroy(&is_xgl));
+  PetscCall(ISDestroy(&is_xlu));
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMConvergedMaximalDualViolation_Binary"
+PetscErrorCode SVMConvergedMaximalDualViolation_Binary(QPS qps,KSPConvergedReason *reason)
+{
+  SVM              svm;
+
+  PetscInt         max_it;
+  PetscReal        atol;
+
+  PetscReal        PGmin,PGmax,v=0.;
+  PetscInt         it;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(qps,QPS_CLASSID,1);
+
+  PetscCall(QPSGetConvergenceContext(qps,(void*)&svm));
+  PetscCall(QPSGetIterationNumber(qps,&it));
+  PetscCall(QPSGetTolerances(qps,NULL,&atol,NULL,&max_it));
+
+  *reason = KSP_CONVERGED_ITERATING;
+  if (it == 0) PetscFunctionReturn(0);
+
+  PetscCall(SVMComputePGminPGmax_Binary_Private(svm,&PGmin,&PGmax));
+  v = PGmax - PGmin;
+
+  if (it > max_it) {
+    *reason = KSP_DIVERGED_ITS;
+    PetscCall(PetscInfo(qps,"QP solver is diverging (iteration count reached the maximum). Current dual violation %14.12e at iteration %" PetscInt_FMT "\n",(double) v,it));
+    PetscFunctionReturn(0);
+  }
+
+  if ((v <= atol) && PetscAbsReal(PGmax) <= atol && PetscAbsReal(PGmin) <= atol) {
+    *reason = KSP_CONVERGED_ATOL;
+    PetscCall(PetscInfo(qps,"QP solver has converged. Dual violation %14.12e at iteration %" PetscInt_FMT "\n",(double) v,it));
+  }
+
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMConvergedDualityGap_Binary"
+PetscErrorCode SVMConvergedDualityGap_Binary(QPS qps,KSPConvergedReason *reason)
+{
+  SVM_Binary *svm_binary;
+  SVM         svm;
+
+  PetscInt    max_it;
+  PetscReal   rtol;
+
+  PetscReal   D,P;
+
+  PetscReal   gap;
+  PetscInt    it;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(qps,QPS_CLASSID,1);
+
+  PetscCall(QPSGetConvergenceContext(qps,(void*)&svm));
+  PetscCall(QPSGetIterationNumber(qps,&it));
+  PetscCall(QPSGetTolerances(qps,&rtol,NULL,NULL,&max_it));
+
+  svm_binary = (SVM_Binary *) svm->data;
+
+  *reason = KSP_CONVERGED_ITERATING;
+  if (it == 0) PetscFunctionReturn(0);
+
+  // compute duality gap
+  PetscCall(SVMReconstructHyperplane(svm));
+  PetscCall(SVMComputeObjFuncValues_Binary_Private(svm));
+
+  P = svm_binary->primalObj;
+  D = svm_binary->dualObj;
+
+  gap = PetscAbsReal(P - D);
+
+  if (it > max_it) {
+    *reason = KSP_DIVERGED_ITS;
+    PetscCall(PetscInfo(qps,"QP solver is diverging (iteration count reached the maximum). Current duality gap %14.12e at iteration %" PetscInt_FMT "\n",(double) gap,it));
+    PetscFunctionReturn(0);
+  }
+
+  if (gap <= rtol * P) {
+    *reason = KSP_CONVERGED_RTOL;
+    PetscCall(PetscInfo(qps,"QP solver has converged. Duality gap %14.12e at iteration %" PetscInt_FMT "\n",(double) gap,it));
+  }
+
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMConvergedSetUp_Binary"
+PetscErrorCode SVMConvergedSetUp_Binary(SVM svm)
+{
+  SVMConvergedType  type_stop_criteria;
+  void             *ctx;
+
+  QPS               qps;
+  PetscInt          svm_mod;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+
+  type_stop_criteria = SVM_CONVERGED_DEFAULT;
+
+  PetscCall(PetscOptionsGetEnum(NULL,((PetscObject) svm)->prefix,"-svm_binary_convergence_test",SVMConvergedTypes,(PetscEnum*)&type_stop_criteria,NULL));
+  if (type_stop_criteria == SVM_CONVERGED_DEFAULT) PetscFunctionReturn(0);
+
+  PetscCall(SVMGetMod(svm,&svm_mod));
+  PetscCall(SVMGetQPS(svm,&qps));
+
+  switch (type_stop_criteria) {
+    // convergence test based on maximal dual violation
+    case SVM_CONVERGED_MAXIMAL_DUAL_VIOLATION:
+      PetscCall(SVMDefaultConvergedCreate(svm,&ctx));
+      PetscCall(QPSSetConvergenceTest(qps,SVMConvergedMaximalDualViolation_Binary,ctx,SVMDefaultConvergedDestroy));
+      break;
+    // convergence test based on duality gap
+    case SVM_CONVERGED_DUALITY_GAP:
+      PetscCall(SVMDefaultConvergedCreate(svm,&ctx));
+      PetscCall(QPSSetConvergenceTest(qps,SVMConvergedDualityGap_Binary,ctx,SVMDefaultConvergedDestroy));
+      break;
+    default:
+      break;
+  }
+
+  PetscFunctionReturn(0);
+}
+
 #undef __FUNCT__
 #define __FUNCT__ "SVMGetModelScore_Binary"
 PetscErrorCode SVMGetModelScore_Binary(SVM svm,ModelScore score_type,PetscReal *s)
@@ -1930,6 +2142,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm->ops->reset                   = SVMReset_Binary;
   svm->ops->destroy                 = SVMDestroy_Binary;
   svm->ops->setfromoptions          = SVMSetFromOptions_Binary;
+  svm->ops->convergedsetup          = SVMConvergedSetUp_Binary;
   svm->ops->train                   = SVMTrain_Binary;
   svm->ops->posttrain               = SVMPostTrain_Binary;
   svm->ops->reconstructhyperplane   = SVMReconstructHyperplane_Binary;
