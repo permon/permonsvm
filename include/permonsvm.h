@@ -19,8 +19,9 @@ typedef struct _p_SVM* SVM;
 FLLOP_EXTERN PetscClassId SVM_CLASSID;
 #define SVM_CLASS_NAME  "svm"
 
-#define SVMType       char*
-#define SVM_BINARY    "binary"
+#define SVMType  char*
+#define SVM_BINARY      "binary"
+#define SVM_PROBABILITY "probability"
 
 /*E
   SVMLossType - Determines the loss function for soft-margin SVM (non-separable samples).

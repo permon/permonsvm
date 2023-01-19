@@ -2,6 +2,7 @@
 #include <permon/private/svmimpl.h>
 
 FLLOP_EXTERN PetscErrorCode SVMCreate_Binary(SVM);
+FLLOP_EXTERN PetscErrorCode SVMCreate_Probability(SVM);
 
 /*
    Contains the list of registered Create routines of all SVM types
@@ -19,6 +20,7 @@ PetscErrorCode SVMRegisterAll()
   SVMRegisterAllCalled = PETSC_TRUE;
 
   PetscCall(SVMRegister(SVM_BINARY,SVMCreate_Binary));
+  PetscCall(SVMRegister(SVM_PROBABILITY,SVMCreate_Probability));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 

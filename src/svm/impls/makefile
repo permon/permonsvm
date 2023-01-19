@@ -2,7 +2,7 @@
 ALL: lib
 
 LIBBASE  = libpermon
-DIRS     = binary
+DIRS     = binary probability
 LOCDIR   = src/svm/impls/
 MANSEX   = SVM
 
