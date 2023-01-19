@@ -1320,10 +1320,10 @@ PetscErrorCode SVMSetFromOptions_Binary(PetscOptionItems *PetscOptionsObject,SVM
 
   PetscFunctionBegin;
   PetscObjectOptionsBegin((PetscObject) svm);
-  PetscCall(PetscOptionsReal("-svm_bias","","SVMSetBias",svm_binary->b,&b,&flg));
-  if (flg) {
-    PetscCall(SVMSetBias(svm,b));
-  }
+//  PetscCall(PetscOptionsReal("-svm_bias","","SVMSetBias",svm_binary->b,&b,&flg));
+//  if (flg) {
+//    PetscCall(SVMSetBias(svm,b));
+//  }
   PetscOptionsEnd();
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -2159,8 +2159,6 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm->ops->computemodelparams      = SVMComputeModelParams_Binary;
   svm->ops->loadgramian             = SVMLoadGramian_Binary;
   svm->ops->viewgramian             = SVMViewGramian_Binary;
-  svm->ops->loadtrainingdataset     = SVMLoadTrainingDataset_Binary;
-  svm->ops->viewtrainingdataset     = SVMViewTrainingDataset_Binary;
   svm->ops->viewtrainingpredictions = SVMViewTrainingPredictions_Binary;
   svm->ops->viewtestpredictions     = SVMViewTestPredictions_Binary;
 

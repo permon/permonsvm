@@ -167,6 +167,8 @@ FLLOP_EXTERN PetscErrorCode SVMComputeOperator(SVM,Mat *);
 
 FLLOP_EXTERN PetscErrorCode SVMSetTrainingDataset(SVM,Mat,Vec);
 FLLOP_EXTERN PetscErrorCode SVMGetTrainingDataset(SVM,Mat *,Vec *);
+FLLOP_EXTERN PetscErrorCode SVMSetCalibrationDataset(SVM,Mat,Vec);
+FLLOP_EXTERN PetscErrorCode SVMGetCalibrationDataset(SVM,Mat *,Vec *);
 FLLOP_EXTERN PetscErrorCode SVMSetTestDataset(SVM,Mat,Vec);
 FLLOP_EXTERN PetscErrorCode SVMGetTestDataset(SVM,Mat *,Vec *);
 
@@ -189,6 +191,8 @@ FLLOP_EXTERN PetscErrorCode SVMSetSeparatingHyperplane(SVM,Vec,PetscReal);
 FLLOP_EXTERN PetscErrorCode SVMGetSeparatingHyperplane(SVM,Vec *,PetscReal *);
 FLLOP_EXTERN PetscErrorCode SVMSetBias(SVM,PetscReal);
 FLLOP_EXTERN PetscErrorCode SVMGetBias(SVM,PetscReal *);
+FLLOP_EXTERN PetscErrorCode SVMSetUserBias(SVM,PetscReal);
+FLLOP_EXTERN PetscErrorCode SVMGetUserBias(SVM,PetscReal *);
 
 FLLOP_EXTERN PetscErrorCode SVMTrain(SVM);
 FLLOP_EXTERN PetscErrorCode SVMPostTrain(SVM);
@@ -254,6 +258,8 @@ FLLOP_EXTERN PetscErrorCode SVMLoadTrainingDataset(SVM,PetscViewer);
 FLLOP_EXTERN PetscErrorCode SVMViewTrainingDataset(SVM,PetscViewer);
 FLLOP_EXTERN PetscErrorCode SVMLoadTestDataset(SVM,PetscViewer);
 FLLOP_EXTERN PetscErrorCode SVMViewTestDataset(SVM,PetscViewer);
+FLLOP_EXTERN PetscErrorCode SVMLoadCalibrationDataset(SVM,PetscViewer);
+FLLOP_EXTERN PetscErrorCode SVMViewCalibrationDataset(SVM,PetscViewer);
 
 FLLOP_EXTERN PetscErrorCode SVMViewTrainingPredictions(SVM,PetscViewer);
 FLLOP_EXTERN PetscErrorCode SVMViewTestPredictions(SVM,PetscViewer);

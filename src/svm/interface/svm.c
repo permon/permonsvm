@@ -58,6 +58,7 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
   svm->logCn_step  =  1.;
 
   svm->loss_type  = SVM_L1;
+  svm->user_bias  = 1.;
   svm->svm_mod    = 2;
 
   PetscCall(PetscMemzero(svm->hopt_score_types,7 * sizeof(ModelScore)));
@@ -203,6 +204,7 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   PetscInt            svm_mod;
   SVMLossType         loss_type;
   PetscInt            penalty_type;
+  PetscReal           bias;
   PetscReal           C;
 
   PetscBool           hyperoptset;
@@ -221,45 +223,60 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
   PetscObjectOptionsBegin((PetscObject)svm);
+  // TODO move to SetFromOptions_Binary
   PetscCall(PetscOptionsInt("-svm_binary_mod","","SVMSetMod",svm->svm_mod,&svm_mod,&flg));
   if (flg) {
     PetscCall(SVMSetMod(svm,svm_mod));
   }
+
   PetscCall(PetscOptionsEnum("-svm_loss_type","Specify the loss function for soft-margin SVM (non-separable samples).","SVMSetLossType",SVMLossTypes,(PetscEnum)svm->loss_type,(PetscEnum*)&loss_type,&flg));
   if (flg) {
     PetscCall(SVMSetLossType(svm,loss_type));
   }
+
   PetscCall(PetscOptionsInt("-svm_penalty_type","Set type of misclasification error penalty.","SVMSetPenaltyType",svm->penalty_type,&penalty_type,&flg));
   if (flg) {
     PetscCall(SVMSetPenaltyType(svm,penalty_type));
   }
+
+  PetscCall(PetscOptionsReal("-svm_user_bias","Set a user defined bias for a relaxed bias formulation.","SVMSetUserBias",svm->user_bias,&bias,&flg));
+  if (flg) {
+    PetscCall(SVMSetUserBias(svm,bias));
+  }
+
   PetscCall(PetscOptionsReal("-svm_C","Set SVM C (C).","SVMSetC",svm->C,&C,&flg));
   if (flg) {
     PetscCall(SVMSetC(svm,C));
   }
+
   PetscCall(PetscOptionsReal("-svm_Cp","Set SVM Cp (Cp).","SVMSetCp",svm->Cp,&C,&flg));
   if (flg) {
     PetscCall(SVMSetCp(svm,C));
   }
+
   PetscCall(PetscOptionsReal("-svm_Cn","Set SVM Cn (Cn).","SVMSetCn",svm->Cn,&C,&flg));
   if (flg) {
     PetscCall(SVMSetCn(svm,C));
   }
+
   /* Hyperparameter optimization options */
   PetscCall(PetscOptionsBool("-svm_hyperopt","Specify whether hyperparameter optimization will be performed.","SVMSetHyperOpt",svm->hyperoptset,&hyperoptset,&flg));
   if (flg) {
     PetscCall(SVMSetHyperOpt(svm,hyperoptset));
   }
+
   n = 7;
   PetscCall(PetscOptionsEnumArray("-svm_hyperopt_score_types","Specify the score types for evaluating performance of model during hyperparameter optimization.","SVMSetHyperOptScoreTypes",ModelScores,(PetscEnum *) hyperopt_score_types,&n,&flg));
   if (flg) {
     PetscCall(SVMSetHyperOptScoreTypes(svm,n,hyperopt_score_types));
   }
+
   /* Grid search options (penalty type 1) */
   PetscCall(PetscOptionsReal("-svm_gs_logC_base","Base of log of C values that specify grid (penalty type 1).","SVMGridSearchSetBaseLogC",svm->logC_base,&logC_base,&flg));
   if (flg) {
     PetscCall(SVMGridSearchSetBaseLogC(svm,logC_base));
   }
+
   n = 3;
   logC_stride[1] =  2.;
   logC_stride[2] =  1.;
@@ -267,11 +284,13 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   if (flg) {
     PetscCall(SVMGridSearchSetStrideLogC(svm,logC_stride[0],logC_stride[1],logC_stride[2]));
   }
+
   /* Grid search options (penalty type 2) */
   PetscCall(PetscOptionsReal("-svm_gs_logCp_base","Base of log of C+ values that specify grid (penalty type 2).","SVMGridSearchSetPositiveBaseLogC",svm->logCp_base,&logC_base,&flg));
   if (flg) {
     PetscCall(SVMGridSearchSetPositiveBaseLogC(svm,logC_base));
   }
+
   n = 3;
   logC_stride[1] = 2.;
   logC_stride[2] = 1.;
@@ -279,10 +298,12 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   if (flg) {
     PetscCall(SVMGridSearchSetPositiveStrideLogC(svm,logC_stride[0],logC_stride[1],logC_stride[2]));
   }
+
   PetscCall(PetscOptionsReal("-svm_gs_logCn_base","Base of log of C- values that specify grid (penalty type 2).","SVMGridSearchSetNegativeBaseLogC",svm->logCn_base,&logC_base,&flg));
   if (flg) {
     PetscCall(SVMGridSearchSetNegativeBaseLogC(svm,logC_base));
   }
+
   n = 3;
   logC_stride[1] = 2.;
   logC_stride[2] = 1.;
@@ -290,15 +311,18 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   if (flg) {
     PetscCall(SVMGridSearchSetNegativeStrideLogC(svm,logC_stride[0],logC_stride[1],logC_stride[2]));
   }
+
   /* Cross validation options */
   PetscCall(PetscOptionsEnum("-svm_cv_type","Specify the type of cross validation.","SVMSetCrossValidationType",CrossValidationTypes,(PetscEnum)svm->cv_type,(PetscEnum*)&cv_type,&flg));
   if (flg) {
     PetscCall(SVMSetCrossValidationType(svm,cv_type));
   }
+
   PetscCall(PetscOptionsInt("-svm_nfolds","Set number of folds (nfolds).","SVMSetNfolds",svm->nfolds,&nfolds,&flg));
   if (flg) {
     PetscCall(SVMSetNfolds(svm,nfolds));
   }
+
   /* Warm start */
   PetscCall(PetscOptionsBool("-svm_warm_start","Specify whether warm start is used in cross-validation.","SVMSetWarmStart",svm->warm_start,&warm_start,&flg));
   if (flg) {
@@ -1666,7 +1690,7 @@ PetscErrorCode SVMComputeOperator(SVM svm,Mat *A)
   Input Parameter:
 + svm - SVM context
 . Xt_training - samples data
-- y - known labels of training samples
+- y_training - known labels of training samples
 
   Level: beginner
 
@@ -1712,6 +1736,56 @@ PetscErrorCode SVMGetTrainingDataset(SVM svm,Mat *Xt_training,Vec *y_training)
 
   PetscUseMethod(svm,"SVMGetTrainingDataset_C",(SVM,Mat *,Vec *),(svm,Xt_training,y_training));
   PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+/*@
+  SVMSetCalibrationDataset - Sets the calibration samples and labels.
+
+  Not Collective
+
+  Input Parameter:
++ svm - SVM context
+. Xt_calib - calibration samples data
+- y_calib - known labels of calibration samples
+
+  Level: beginner
+
+.seealso SVMSetTrainingDataset(), SVMGetTrainingDataset(), SVMSetTestDataset(), SVMGetTestDataset()
+@*/
+PetscErrorCode SVMSetCalibrationDataset(SVM svm,Mat Xt_calib,Vec y_calib)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+
+  PetscTryMethod(svm,"SVMSetCalibrationDataset_C",(SVM,Mat,Vec),(svm,Xt_calib,y_calib));
+  PetscFunctionReturn(0);
+}
+
+/*@
+  SVMGetTrainingDataset - Returns the calibration samples and labels.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
++ Xt_calib- calibration samples
+- y_calib - known labels of calibration samples
+
+  Level: beginner
+
+.seealso SVMSetTrainingDataset(), SVMGetTrainingDataset(), SVMSetTestDataset(), SVMGetTestDataset()
+@*/
+PetscErrorCode SVMGetCalibrationDataset(SVM svm,Mat *Xt_calib,Vec *y_calib)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+
+  PetscUseMethod(svm,"SVMGetCalibrationDataset_C",(SVM,Mat *,Vec *),(svm,Xt_calib,y_calib));
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -1984,6 +2058,33 @@ PetscErrorCode SVMGetBias(SVM svm,PetscReal *bias)
 
   PetscUseMethod(svm,"SVMGetBias_C",(SVM,PetscReal *),(svm,bias));
   PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+/*@
+
+@*/
+PetscErrorCode SVMSetUserBias(SVM svm,PetscReal bias)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveReal(svm,bias,2);
+
+  if (svm->user_bias != bias) {
+    svm->user_bias = bias;
+    svm->setupcalled = PETSC_FALSE;
+  }
+  PetscFunctionReturn(0);
+}
+
+/*@
+
+@*/
+PetscErrorCode SVMGetUserBias(SVM svm,PetscReal *bias)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  *bias = svm->user_bias;
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__
@@ -2590,25 +2691,58 @@ PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat Xt,Vec y)
 
   Level: intermediate
 
-.seealso SVMLoadTestDataset(), SVM
+.seealso SVMLoadCalibrationDataset(), SVMLoadTestDataset(), SVM
 @*/
 PetscErrorCode SVMLoadTrainingDataset(SVM svm,PetscViewer v)
 {
-  PetscBool  view_io,view_dataset;
+  MPI_Comm  comm;
+
+  Mat       Xt_training;
+  Mat       Xt_biased;
+  Vec       y_training;
+
+  PetscReal user_bias;
+  PetscInt  mod;
+
+  PetscBool view_io,view_dataset;
 
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
 
-  if (svm->ops->loadtrainingdataset) {
-    PetscCall(svm->ops->loadtrainingdataset(svm,v));
+  PetscCall(PetscObjectGetComm((PetscObject) svm,&comm));
+  /* Create matrix of training samples */
+  PetscCall(MatCreate(comm,&Xt_training));
+  PetscCall(PetscObjectSetName((PetscObject) Xt_training,"Xt_training"));
+  PetscCall(PetscObjectSetOptionsPrefix((PetscObject) Xt_training,"Xt_training_"));
+  PetscCall(MatSetFromOptions(Xt_training));
+
+  PetscCall(VecCreate(comm,&y_training));
+  PetscCall(VecSetFromOptions(y_training));
+  PetscCall(PetscObjectSetName((PetscObject) y_training,"y_training"));
+
+  PetscCall(PetscLogEventBegin(SVM_LoadDataset,svm,0,0,0));
+  PetscCall(PetscViewerLoadSVMDataset(Xt_training,y_training,v));
+  PetscCall(PetscLogEventEnd(SVM_LoadDataset,svm,0,0,0));
+
+  PetscCall(SVMGetMod(svm,&mod));
+  if (mod == 2) {
+    PetscCall(SVMGetUserBias(svm,&user_bias));
+    PetscCall(MatBiasedCreate(Xt_training,user_bias,&Xt_biased));
+    Xt_training = Xt_biased;
   }
+  PetscCall(SVMSetTrainingDataset(svm,Xt_training,y_training));
 
   PetscCall(PetscOptionsHasName(NULL,NULL,"-svm_view_io",&view_io));
   PetscCall(PetscOptionsHasName(NULL,NULL,"-svm_view_training_dataset",&view_dataset));
   if (view_io || view_dataset) {
     PetscCall(SVMViewTrainingDataset(svm,PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject) v))));
   }
+
+  /* Free memory */
+  PetscCall(MatDestroy(&Xt_training));
+  PetscCall(VecDestroy(&y_training));
+
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
@@ -2631,13 +2765,34 @@ PetscErrorCode SVMLoadTrainingDataset(SVM svm,PetscViewer v)
 @*/
 PetscErrorCode SVMViewTrainingDataset(SVM svm,PetscViewer v)
 {
+  MPI_Comm   comm;
+
+  Mat        Xt;
+  Vec        y;
+
+  PetscBool  isascii;
+  const char *type_name = NULL;
 
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
+  PetscCall(SVMGetTrainingDataset(svm,&Xt,&y));
+  if (!Xt || !y) {
+    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
+    SETERRQ(comm,PETSC_ERR_ARG_NULL,"Training dataset is not set");
+  }
 
-  if (svm->ops->viewtrainingdataset) {
-    PetscCall(svm->ops->viewtrainingdataset(svm,v) );
+  PetscCall(PetscObjectTypeCompare((PetscObject)v,PETSCVIEWERASCII,&isascii));
+  if (isascii) {
+    /* Print info related to svm type */
+    PetscCall(PetscObjectPrintClassNamePrefixType((PetscObject) svm,v));
+
+    PetscCall(PetscViewerASCIIPushTab(v));
+    PetscCall(SVMViewDataset(svm,Xt,y,v));
+    PetscCall(PetscViewerASCIIPopTab(v));
+  } else {
+    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
+    PetscCall(PetscObjectGetType((PetscObject) v,&type_name));
+
+    SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewTrainingDataset",type_name);
   }
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -2653,7 +2808,7 @@ PetscErrorCode SVMViewTrainingDataset(SVM svm,PetscViewer v)
 
   Level: intermediate
 
-.seealso SVMLoadTrainingDataset(), SVM
+.seealso SVMLoadTrainingDataset(), SVMLoadCalibrationDataset(), SVM
 @*/
 PetscErrorCode SVMLoadTestDataset(SVM svm,PetscViewer v)
 {
@@ -2663,7 +2818,7 @@ PetscErrorCode SVMLoadTestDataset(SVM svm,PetscViewer v)
   Mat         Xt_biased;
   Vec         y_test;
 
-  PetscReal   bias;
+  PetscReal   user_bias;
   PetscInt    mod;
 
   PetscBool  view_io,view_test_dataset;
@@ -2689,8 +2844,8 @@ PetscErrorCode SVMLoadTestDataset(SVM svm,PetscViewer v)
 
   PetscCall(SVMGetMod(svm,&mod));
   if (mod == 2) {
-    PetscCall(SVMGetBias(svm,&bias));
-    PetscCall(MatBiasedCreate(Xt_test,bias,&Xt_biased));
+    PetscCall(SVMGetUserBias(svm,&user_bias));
+    PetscCall(MatBiasedCreate(Xt_test,user_bias,&Xt_biased));
     Xt_test = Xt_biased;
   }
   PetscCall(SVMSetTestDataset(svm,Xt_test,y_test));
@@ -2759,6 +2914,62 @@ PetscErrorCode SVMViewTestDataset(SVM svm,PetscViewer v)
 
     SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewTestDataset",type_name);
   }
+  PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMLoadCalibrationDataset"
+/*@
+  SVMLoadCalibrationDataset - Loads calibration dataset.
+
+  Input Parameters:
++ svm - SVM context
+- v - viewer
+
+  Level: intermediate
+
+.seealso SVMLoadTrainingDataset(), SVMLoadTestDataset(), SVM
+@*/
+PetscErrorCode SVMLoadCalibrationDataset(SVM svm,PetscViewer v)
+{
+  MPI_Comm  comm;
+  PetscBool view_io,view_calibration_dataset;
+
+  PetscFunctionBeginI;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
+  PetscTryMethod(svm,"SVMLoadCalibrationDataset_C",(SVM,PetscViewer),(svm,v));
+
+  PetscCall(PetscOptionsHasName(NULL,NULL,"-svm_view_io",&view_io));
+  PetscCall(PetscOptionsHasName(NULL,NULL,"-svm_view_calibration_dataset",&view_calibration_dataset));
+  if (view_io || view_calibration_dataset) {
+    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
+    PetscCall(SVMViewCalibrationDataset(svm,PETSC_VIEWER_STDOUT_(comm)));
+  }
+  PetscFunctionReturnI(0);
+}
+
+/*@
+  SVMViewCalibrationDataset - Views details associated with calibration dataset such as number of positive and negative samples, features, etc.
+
+  Input Parameters:
++ svm - SVM context
+- v - visualization context
+
+  Level: beginner
+
+  Options Database Keys:
++ -svm_view_io - Prints info on calibration dataset (as well as training/Test dataset) at the end of SVMLoadCalibrationDataset(), and SVMLoadTrainingDataset()/SVMLoadTestDataset(), respectively.
+- -svm_view_calibration_dataset - Prints info just on calibration dataset at the end of SVMLoadCalibrationDataset().
+
+.seealso SVM, PetscViewer, SVMViewDataset(), SVMViewTrainingDataset(), SVMViewTestDataset()
+@*/
+PetscErrorCode SVMViewCalibrationDataset(SVM svm,PetscViewer v)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscTryMethod(svm,"SVMViewCalibrationDataset_C",(SVM,PetscViewer),(svm,v));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 

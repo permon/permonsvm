@@ -27,8 +27,6 @@ struct _SVMOps {
   PetscErrorCode (*computemodelparams)(SVM);
   PetscErrorCode (*loadgramian)(SVM,PetscViewer);
   PetscErrorCode (*viewgramian)(SVM,PetscViewer);
-  PetscErrorCode (*loadtrainingdataset)(SVM,PetscViewer);
-  PetscErrorCode (*viewtrainingdataset)(SVM,PetscViewer);
   PetscErrorCode (*viewtrainingpredictions)(SVM,PetscViewer);
   PetscErrorCode (*viewtestpredictions)(SVM,PetscViewer);
 };
@@ -42,10 +40,12 @@ struct _p_SVM {
   ModelScore          hopt_score_types[7];
   PetscInt            hopt_nscore_types;
   CrossValidationType cv_type;
+
   PetscInt            penalty_type;
   PetscReal           C,C_old;
   PetscReal           Cp,Cp_old;
   PetscReal           Cn,Cn_old;
+
   PetscReal           logC_base,logC_start,logC_end,logC_step;
   PetscReal           logCp_base,logCp_start,logCp_end,logCp_step;
   PetscReal           logCn_base,logCn_start,logCn_end,logCn_step;
@@ -53,6 +53,7 @@ struct _p_SVM {
 
   SVMLossType         loss_type;
   PetscInt            svm_mod;
+  PetscReal           user_bias;
 
   PetscBool           warm_start;
 
