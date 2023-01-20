@@ -1423,6 +1423,30 @@ PetscErrorCode SVMSetWarmStart(SVM svm,PetscBool flg)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+/*@
+
+@*/
+PetscErrorCode SVMGetInnerSVM(SVM svm,SVM *out)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscUseMethod(svm,"SVMGetInnerSVM_C",(SVM,SVM *),(svm,out));
+  PetscFunctionReturn(0);
+}
+
+/*@
+
+@*/
+PetscErrorCode SVMGetTao(SVM svm,Tao *tao)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscUseMethod(svm,"SVMGetTao_C",(SVM,Tao *),(svm,tao));
+  PetscFunctionReturn(0);
+}
+
 #undef __FUNCT__
 #define __FUNCT__ "SVMSetUp"
 /*@
@@ -1870,8 +1894,6 @@ PetscErrorCode SVMGetTestDataset(SVM svm,Mat *Xt_test,Vec *y_test)
 
   Input Parameter:
 . svm - SVM context
-
-  Output Parameter:
 . flg - flag
 
   Level: developer
@@ -1887,6 +1909,29 @@ PetscErrorCode SVMSetAutoPostTrain(SVM svm,PetscBool flg)
 
   svm->autoposttrain = flg;
   PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+/*@
+  SVMGetAutoPostTrain - Returns auto post train flag.
+
+  Not Collective
+
+  Input Parameter:
+. svm - SVM context
+
+  Output Parameter:
+. flg - flag
+
+  Level: developer
+@*/
+PetscErrorCode SVMGetAutoPostTrain(SVM svm,PetscBool *flg)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidPointer(flg,2);
+  *flg = svm->autoposttrain;
+  PetscFunctionReturn(0);
 }
 
 #undef __FUNCT__

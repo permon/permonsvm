@@ -33,6 +33,8 @@ int main(int argc,char **argv)
   PetscCall(SVMLoadCalibrationDataset(svm,viewer));
   PetscCall(PetscViewerDestroy(&viewer));
 
+  PetscCall(SVMTrain(svm));
+
   /* Free memory */
   PetscCall(SVMDestroy(&svm));
   PetscCall(PermonFinalize());
@@ -46,5 +48,6 @@ int main(int argc,char **argv)
 
     args: -svm_loss_type L2 -svm_view_io
     args: -f_training $PERMON_SVM_DIR/src/tutorials/data/heart_scale.bin
+    args: -f_calibration $PERMON_SVM_DIR/src/tutorials/data/heart_scale.bin
 
 TEST*/

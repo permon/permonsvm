@@ -11,7 +11,17 @@ typedef struct {
   Mat Xt_calib;
   Vec y_calib;
 
-  SVM svm_inner;
+
+  SVM inner;
+  Tao tao;
+
+  PetscReal *target;
+  PetscReal *deci;
+
+  PetscInt  Np_calib;
+  PetscInt  Nn_calib;
+
+  PetscBool labels_to_target_probs;
 
 } SVM_Probability;
 
