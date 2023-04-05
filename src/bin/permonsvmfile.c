@@ -163,11 +163,11 @@ PetscErrorCode SVMRunBinaryClassification()
 #define __FUNCT__ "main"
 int main(int argc,char **argv)
 {
-  PermonInitialize(&argc,&argv,(char *) 0,(char *) 0);
 
   PetscFunctionBegin;
+  PetscCall(PermonInitialize(&argc,&argv,(char *) 0,(char *) 0));
   comm = PETSC_COMM_WORLD;
   PetscCall(SVMRunBinaryClassification());
   PetscCall(PermonFinalize());
-  PetscFunctionReturn(0);
+  return 0;
 }

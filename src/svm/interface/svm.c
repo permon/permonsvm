@@ -345,7 +345,7 @@ PetscErrorCode SVMSetType(SVM svm,const SVMType type)
   if (!create_svm) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_UNKNOWN_TYPE,"Unable to find requested SVM type %s",type);
 
   /* Destroy the pre-existing private SVM context */
-  if (svm->ops->destroy) svm->ops->destroy(svm);
+  if (svm->ops->destroy) PetscCall(svm->ops->destroy(svm));
   /* Reinitialize function pointers in SVMOps structure */
   PetscCall(PetscMemzero(svm->ops,sizeof(struct _SVMOps)));
 

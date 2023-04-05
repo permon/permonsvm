@@ -300,7 +300,7 @@ PetscErrorCode MatBiasedCreate(Mat A,PetscReal bias,Mat *A_biased)
   PetscValidLogicalCollectiveReal(A,bias,2);
   PetscValidPointer(A_biased,3);
 
-  PetscObjectGetComm((PetscObject) A,&comm);
+  PetscCall(PetscObjectGetComm((PetscObject) A,&comm));
   PetscCallMPI(MPI_Comm_size(comm,&comm_size));
   PetscCallMPI(MPI_Comm_rank(comm,&comm_rank));
 
