@@ -384,9 +384,9 @@ PetscErrorCode DatasetLoad_Binary(Mat Xt,Vec y,PetscViewer v)
 
   PetscFunctionBegin;
   PetscCall(PetscObjectGetName((PetscObject) Xt,&Xt_name_tmp));
-  PetscCall(PetscStrcpy(Xt_name,Xt_name_tmp));
+  PetscCall(PetscStrncpy(Xt_name,Xt_name_tmp,sizeof(Xt_name)));
   PetscCall(PetscObjectGetName((PetscObject) y,&y_name_tmp));
-  PetscCall(PetscStrcpy(y_name,y_name_tmp));
+  PetscCall(PetscStrncpy(y_name,y_name_tmp,sizeof(y_name)));
 
   PetscCall(PetscObjectSetName((PetscObject) Xt,"X"));
   PetscCall(MatLoad(Xt,v));
