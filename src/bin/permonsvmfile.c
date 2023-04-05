@@ -15,7 +15,7 @@ PetscErrorCode GetFilenameExtension(const char *filename,char **extension)
   PetscFunctionBegin;
   PetscCall(PetscStrrchr(filename,'.',&extension_inner));
   *extension = extension_inner;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -156,7 +156,7 @@ PetscErrorCode SVMRunBinaryClassification()
   }
 
   PetscCall(SVMDestroy(&svm));
-  PetscFunctionReturnI(0);
+  PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__

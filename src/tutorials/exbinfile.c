@@ -20,7 +20,7 @@ PetscErrorCode GetFilenameExtension(const char *filename,char **extension)
   PetscFunctionBegin;
   PetscCall(PetscStrrchr(filename,'.',&extension_inner));
   *extension = extension_inner;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc,char **argv)

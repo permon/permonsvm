@@ -20,8 +20,8 @@ PetscErrorCode MatDestroy_Biased(Mat A)
 
   PetscCall(MatDestroy(&ctx->inner));
   PetscCall(PetscFree(ctx));
-  PetscFunctionReturn(0);
   PetscCall(PetscObjectComposeFunction((PetscObject)A,"MatGetOwnershipIS_C",NULL));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -73,7 +73,7 @@ PetscErrorCode MatMult_Biased(Mat A,Vec x,Vec y)
 
   /* Free memory */
   PetscCall(ISDestroy(&is_col));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -119,7 +119,7 @@ PetscErrorCode MatMultTranspose_Biased(Mat A,Vec x,Vec y)
   PetscCall(VecAssemblyEnd(y));
 
   PetscCall(ISDestroy(&is_col));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -133,7 +133,7 @@ PetscErrorCode MatGetOwnershipIS_Biased(Mat mat,IS *rows,IS *cols)
   PetscCall(MatShellGetContext(mat,&ptr));
   ctx = (MatCtx *) ptr;
   PetscCall(MatGetOwnershipIS(ctx->inner,rows,cols));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -187,7 +187,7 @@ PetscErrorCode MatCreateSubMatrix_Biased(Mat A,IS isrow,IS iscol,MatReuse cll,Ma
   PetscCall(MatShellSetVecType(mat_inner,vtype));
 
   *out = mat_inner;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -225,7 +225,7 @@ PetscErrorCode MatBiasedGetInnerMat(Mat A,Mat *inner)
   ctx = (MatCtx *) ptr;
 
   *inner = ctx->inner;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -258,7 +258,7 @@ PetscErrorCode MatBiasedGetBias(Mat A,PetscReal *bias)
   ctx = (MatCtx *) ptr;
 
   *bias = ctx->bias;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -337,5 +337,5 @@ PetscErrorCode MatBiasedCreate(Mat A,PetscReal bias,Mat *A_biased)
   PetscCall(PetscObjectAppendOptionsPrefix((PetscObject) A_biased_inner,"biased_"));
 
   *A_biased = A_biased_inner;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

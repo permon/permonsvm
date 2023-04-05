@@ -9,7 +9,7 @@ PetscErrorCode SVMInitializePackage()
 {
 
   PetscFunctionBegin;
-  if (SVMPackageInitialized) PetscFunctionReturn(0);
+  if (SVMPackageInitialized) PetscFunctionReturn(PETSC_SUCCESS);
   SVMPackageInitialized = PETSC_TRUE;
 
   /* Register Classes */
@@ -21,7 +21,7 @@ PetscErrorCode SVMInitializePackage()
   PetscCall(PetscLogEventRegister("SVMLoadGramian",SVM_CLASSID,&SVM_LoadGramian));
 
   PetscCall(PetscRegisterFinalize(SVMFinalizePackage));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -36,5 +36,5 @@ PetscErrorCode SVMFinalizePackage()
 
   SVMPackageInitialized = PETSC_FALSE;
   SVMRegisterAllCalled = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

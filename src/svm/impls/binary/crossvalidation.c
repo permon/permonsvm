@@ -14,7 +14,7 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt m,Pe
   } else {
     PetscCall(SVMStratifiedKFoldCrossValidation(svm,c_arr,m,score));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -123,7 +123,7 @@ PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt
   for (i = 0; i < n; ++i) score[i] /= (PetscReal) nscores * nfolds;
 
   PetscCall(SVMDestroy(&cross_svm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -160,7 +160,7 @@ static PetscErrorCode SVMFoldVecIdx_Binary_Private(Vec idx,PetscInt nfolds,Petsc
   /* Free memory */
   PetscCall(ISDestroy(&is_idx));
   PetscCall(ISDestroy(&is_idx_training));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -295,5 +295,5 @@ PetscErrorCode SVMStratifiedKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[
   PetscCall(VecDestroy(&idx_n));
   PetscCall(VecDestroy(&idx_p));
   PetscCall(SVMDestroy(&cross_svm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
