@@ -21,6 +21,7 @@ PetscErrorCode MatDestroy_Biased(Mat A)
   PetscCall(MatDestroy(&ctx->inner));
   PetscCall(PetscFree(ctx));
   PetscFunctionReturn(0);
+  PetscCall(PetscObjectComposeFunction((PetscObject)A,"MatGetOwnershipIS_C",NULL));
 }
 
 #undef __FUNCT__

@@ -91,6 +91,8 @@ PetscErrorCode SVMDestroy_Binary(SVM svm)
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetOptionsPrefix_C",NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetOptionsPrefix_C",NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMAppendOptionsPrefix_C",NULL));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMKFoldCrossValidation_C",NULL));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMStratifiedKFoldCrossValidation_C",NULL));
 
   PetscCall(QPSDestroy(&svm_binary->qps));
   PetscCall(SVMDestroyDefault(svm));
