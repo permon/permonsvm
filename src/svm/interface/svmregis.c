@@ -15,11 +15,11 @@ PetscErrorCode SVMRegisterAll()
 {
 
   PetscFunctionBegin;
-  if (SVMRegisterAllCalled) PetscFunctionReturn(0);
+  if (SVMRegisterAllCalled) PetscFunctionReturn(PETSC_SUCCESS);
   SVMRegisterAllCalled = PETSC_TRUE;
 
   PetscCall(SVMRegister(SVM_BINARY,SVMCreate_Binary));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -29,5 +29,5 @@ PetscErrorCode SVMRegister(const char sname[],PetscErrorCode (*function)(SVM))
 
   PetscFunctionBegin;
   PetscCall(PetscFunctionListAdd(&SVMList,sname,function));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

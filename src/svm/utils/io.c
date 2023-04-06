@@ -159,7 +159,7 @@ static PetscErrorCode IOReadBuffer_SVMLight_Private(MPI_Comm comm,const char *fi
   *chunk_buff = chunk_buff_inner;
 
   PetscCallMPI(MPI_File_close(&fh));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -283,7 +283,7 @@ static PetscErrorCode IOParseBuffer_SVMLight_Private(MPI_Comm comm,char *buff,st
   *k = k_in;
   *y = y_in;
   *N = N_in;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -334,7 +334,7 @@ static PetscErrorCode DatasetAssembly_SVMLight_Private(Mat Xt,Vec labels,char *b
   if (j.data) DynamicArrayClear(j);
   if (a.data) DynamicArrayClear(a);
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -354,7 +354,7 @@ PetscErrorCode DatasetLoad_SVMLight(Mat Xt,Vec y,PetscViewer v)
   PetscCall(DatasetAssembly_SVMLight_Private(Xt,y,chunk_buff));
 
   if (chunk_buff) { PetscCall(PetscFree(chunk_buff)); }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -370,7 +370,7 @@ PetscErrorCode PetscViewerSVMLightOpen(MPI_Comm comm,const char name[],PetscView
   PetscCall(PetscViewerFileSetName(v_inner,name));
 
   *v = v_inner;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -384,9 +384,9 @@ PetscErrorCode DatasetLoad_Binary(Mat Xt,Vec y,PetscViewer v)
 
   PetscFunctionBegin;
   PetscCall(PetscObjectGetName((PetscObject) Xt,&Xt_name_tmp));
-  PetscCall(PetscStrcpy(Xt_name,Xt_name_tmp));
+  PetscCall(PetscStrncpy(Xt_name,Xt_name_tmp,sizeof(Xt_name)));
   PetscCall(PetscObjectGetName((PetscObject) y,&y_name_tmp));
-  PetscCall(PetscStrcpy(y_name,y_name_tmp));
+  PetscCall(PetscStrncpy(y_name,y_name_tmp,sizeof(y_name)));
 
   PetscCall(PetscObjectSetName((PetscObject) Xt,"X"));
   PetscCall(MatLoad(Xt,v));
@@ -395,7 +395,7 @@ PetscErrorCode DatasetLoad_Binary(Mat Xt,Vec y,PetscViewer v)
 
   PetscCall(PetscObjectSetName((PetscObject) Xt,Xt_name));
   PetscCall(PetscObjectSetName((PetscObject) y,y_name));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -441,5 +441,5 @@ PetscErrorCode PetscViewerLoadSVMDataset(Mat Xt,Vec y,PetscViewer v)
     SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for PetscViewerLoadDataset",type_name);
   }
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

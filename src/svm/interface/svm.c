@@ -79,7 +79,7 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
   svm->y_test  = NULL;
 
   *svm_out = svm;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -111,7 +111,7 @@ PetscErrorCode SVMReset(SVM svm)
 
   svm->setupcalled          = PETSC_FALSE;
   svm->posttraincalled      = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -134,7 +134,7 @@ PetscErrorCode SVMDestroyDefault(SVM svm)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscCall(PetscFree(svm->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -157,7 +157,7 @@ PetscErrorCode SVMDestroy(SVM *svm)
   void *cctx;
 
   PetscFunctionBegin;
-  if (!*svm) PetscFunctionReturn(0);
+  if (!*svm) PetscFunctionReturn(PETSC_SUCCESS);
 
   PetscValidHeaderSpecific(*svm,SVM_CLASSID,1);
   --((PetscObject)(*svm))->refct;
@@ -166,13 +166,13 @@ PetscErrorCode SVMDestroy(SVM *svm)
     PetscCall(QPSGetConvergenceContext(qps,&cctx));
     if (*svm != cctx) {
       *svm = 0;
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
   } else if (((PetscObject)(*svm))->refct > 1) {
     *svm = 0;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
-  if (((PetscObject)(*svm))->refct < 0) PetscFunctionReturn(0);
+  if (((PetscObject)(*svm))->refct < 0) PetscFunctionReturn(PETSC_SUCCESS);
   ((PetscObject)(*svm))->refct = 0;
 
   PetscCall(SVMReset(*svm));
@@ -181,7 +181,7 @@ PetscErrorCode SVMDestroy(SVM *svm)
   }
 
   PetscCall(PetscHeaderDestroy(svm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -311,7 +311,7 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   PetscOptionsEnd();
 
   svm->setfromoptionscalled = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -339,19 +339,19 @@ PetscErrorCode SVMSetType(SVM svm,const SVMType type)
   PetscValidCharPointer(type,2);
 
   PetscCall(PetscObjectTypeCompare((PetscObject) svm,type,&issame));
-  if (issame) PetscFunctionReturn(0);
+  if (issame) PetscFunctionReturn(PETSC_SUCCESS);
 
   PetscCall(PetscFunctionListFind(SVMList,type,(void(**)(void))&create_svm));
   if (!create_svm) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_UNKNOWN_TYPE,"Unable to find requested SVM type %s",type);
 
   /* Destroy the pre-existing private SVM context */
-  if (svm->ops->destroy) svm->ops->destroy(svm);
+  if (svm->ops->destroy) PetscCall(svm->ops->destroy(svm));
   /* Reinitialize function pointers in SVMOps structure */
   PetscCall(PetscMemzero(svm->ops,sizeof(struct _SVMOps)));
 
   PetscCall((*create_svm)(svm));
   PetscCall(PetscObjectChangeTypeName((PetscObject)svm,type));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -377,7 +377,7 @@ PetscErrorCode SVMSetQPS(SVM svm,QPS qps)
   PetscValidHeaderSpecific(qps,QPS_CLASSID,2);
 
   PetscTryMethod(svm,"SVMSetQPS_C",(SVM,QPS),(svm,qps));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -405,7 +405,7 @@ PetscErrorCode SVMGetQPS(SVM svm,QPS *qps)
   PetscValidPointer(qps,2);
 
   PetscUseMethod(svm,"SVMGetQPS_C",(SVM,QPS *),(svm,qps));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -433,7 +433,7 @@ PetscErrorCode SVMGetQP(SVM svm,QP *qp)
   PetscValidPointer(qp,2);
 
   PetscUseMethod(svm,"SVMGetQP_C",(SVM,QP *),(svm,qp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -461,7 +461,7 @@ PetscErrorCode SVMSetNfolds(SVM svm,PetscInt nfolds)
   if (nfolds < 2) SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be greater than 1.");
   svm->nfolds = nfolds;
   svm->setupcalled = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -488,7 +488,7 @@ PetscErrorCode SVMGetNfolds(SVM svm,PetscInt *nfolds)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidRealPointer(nfolds,2);
   *nfolds = svm->nfolds;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -510,13 +510,13 @@ PetscErrorCode SVMSetPenaltyType(SVM svm,PetscInt type)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidLogicalCollectiveInt(svm,type,2);
-  if (svm->penalty_type == type) PetscFunctionReturn(0);
+  if (svm->penalty_type == type) PetscFunctionReturn(PETSC_SUCCESS);
 
   if (type != 1 && type != 2) SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_SUP,"Type of penalty (%" PetscInt_FMT ") is not supported. It must be 1 or 2",type);
 
   svm->penalty_type = type;
   svm->setupcalled = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -541,7 +541,7 @@ PetscErrorCode SVMGetPenaltyType(SVM svm,PetscInt *type)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidRealPointer(type,2);
   *type = svm->penalty_type;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -568,7 +568,7 @@ PetscErrorCode SVMSetC(SVM svm,PetscReal C)
 
   if (svm->C == C) {
     svm->C_old = C;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   if (C <= 0) {
@@ -578,7 +578,7 @@ PetscErrorCode SVMSetC(SVM svm,PetscReal C)
   svm->C_old = svm->C;
   svm->C     = C;
   svm->setupcalled = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -605,7 +605,7 @@ PetscErrorCode SVMGetC(SVM svm,PetscReal *C)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidRealPointer(C,2);
   *C = svm->C;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -632,7 +632,7 @@ PetscErrorCode SVMSetCp(SVM svm,PetscReal Cp)
 
   if (svm->Cp == Cp) {
     svm->Cp_old = Cp;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   if (Cp <= 0) {
@@ -642,7 +642,7 @@ PetscErrorCode SVMSetCp(SVM svm,PetscReal Cp)
   svm->Cp_old = svm->Cp;
   svm->Cp     = Cp;
   svm->setupcalled = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -669,7 +669,7 @@ PetscErrorCode SVMGetCp(SVM svm,PetscReal *Cp)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidRealPointer(Cp,2);
   *Cp = svm->Cp;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -696,7 +696,7 @@ PetscErrorCode SVMSetCn(SVM svm,PetscReal Cn)
 
   if (svm->Cn == Cn) {
     svm->Cn_old = Cn;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   if (Cn <= 0) {
@@ -706,7 +706,7 @@ PetscErrorCode SVMSetCn(SVM svm,PetscReal Cn)
   svm->Cn_old = svm->Cn;
   svm->Cn     = Cn;
   svm->setupcalled = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -733,7 +733,7 @@ PetscErrorCode SVMGetCn(SVM svm,PetscReal *Cn)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidRealPointer(Cn,2);
   *Cn = svm->Cn;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -780,7 +780,7 @@ PetscErrorCode SVMSetPenalty(SVM svm,PetscInt m,PetscReal p[])
       PetscCall(SVMSetCn(svm,p[1]));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -809,7 +809,7 @@ PetscErrorCode SVMGridSearchSetBaseLogC(SVM svm,PetscReal logC_base)
 
   svm->logC_base = logC_base;
   svm->setupcalled = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -837,7 +837,7 @@ PetscErrorCode SVMGridSearchGetBaseLogC(SVM svm,PetscReal *logC_base)
   PetscValidRealPointer(logC_base,2);
 
   *logC_base = svm->logC_base;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -875,7 +875,7 @@ PetscErrorCode SVMGridSearchSetStrideLogC(SVM svm,PetscReal logC_start,PetscReal
   svm->logC_start = logC_start;
   svm->logC_end  = logC_end;
   svm->logC_step  = logC_step;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -915,7 +915,7 @@ PetscErrorCode SVMGridSearchGetStrideLogC(SVM svm,PetscReal *logC_start,PetscRea
   if (logC_step) {
     *logC_step = svm->logC_step;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -944,7 +944,7 @@ PetscErrorCode SVMGridSearchSetPositiveBaseLogC(SVM svm,PetscReal logCp_base)
 
   svm->logCp_base = logCp_base;
   svm->setupcalled = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -972,7 +972,7 @@ PetscErrorCode SVMGridSearchGetPositiveBaseLogC(SVM svm,PetscReal *logCp_base)
   PetscValidRealPointer(logCp_base,2);
 
   *logCp_base = svm->logCp_base;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1010,7 +1010,7 @@ PetscErrorCode SVMGridSearchSetPositiveStrideLogC(SVM svm,PetscReal logC_start,P
   svm->logCp_start = logC_start;
   svm->logCp_end   = logC_end;
   svm->logCp_step  = logC_step;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1050,7 +1050,7 @@ PetscErrorCode SVMGridSearchGetPositiveStrideLogC(SVM svm,PetscReal *logC_start,
   if (logC_step) {
     *logC_step = svm->logCp_step;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1079,7 +1079,7 @@ PetscErrorCode SVMGridSearchSetNegativeBaseLogC(SVM svm,PetscReal logCn_base)
 
   svm->logCn_base = logCn_base;
   svm->setupcalled = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1107,7 +1107,7 @@ PetscErrorCode SVMGridSearchGetNegativeBaseLogC(SVM svm,PetscReal *logCn_base)
   PetscValidRealPointer(logCn_base,2);
 
   *logCn_base = svm->logCn_base;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1145,7 +1145,7 @@ PetscErrorCode SVMGridSearchSetNegativeStrideLogC(SVM svm,PetscReal logC_start,P
   svm->logCn_start = logC_start;
   svm->logCn_end   = logC_end;
   svm->logCn_step  = logC_step;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1185,7 +1185,7 @@ PetscErrorCode SVMGridSearchGetNegativeStrideLogC(SVM svm,PetscReal *logC_start,
   if (logC_step) {
     *logC_step = svm->logCn_step;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1213,7 +1213,7 @@ PetscErrorCode SVMSetLossType(SVM svm,SVMLossType type)
     svm->loss_type = type;
     svm->setupcalled = PETSC_FALSE;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1240,7 +1240,7 @@ PetscErrorCode SVMGetLossType(SVM svm,SVMLossType *type)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidPointer(type,2);
   *type = svm->loss_type;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1268,7 +1268,7 @@ PetscErrorCode SVMSetMod(SVM svm,PetscInt mod)
     svm->svm_mod = mod;
     svm->setupcalled = PETSC_FALSE;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1294,7 +1294,7 @@ PetscErrorCode SVMGetMod(SVM svm,PetscInt *mod)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   *mod = svm->svm_mod;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1318,7 +1318,7 @@ PetscErrorCode SVMSetOptionsPrefix(SVM svm,const char prefix[])
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscTryMethod(svm,"SVMSetOptionsPrefix_C",(SVM,const char []),(svm,prefix));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1342,7 +1342,7 @@ PetscErrorCode SVMAppendOptionsPrefix(SVM svm,const char prefix[])
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscTryMethod(svm,"SVMAppendOptionsPrefix_C",(SVM,const char []),(svm,prefix));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1368,7 +1368,7 @@ PetscErrorCode SVMGetOptionsPrefix(SVM svm,const char *prefix[])
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscUseMethod(svm,"SVMGetOptionsPrefix_C",(SVM,const char *[]),(svm,prefix));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1396,7 +1396,7 @@ PetscErrorCode SVMSetWarmStart(SVM svm,PetscBool flg)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidLogicalCollectiveBool(svm,flg,2);
   svm->warm_start = flg;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1418,11 +1418,11 @@ PetscErrorCode SVMSetUp(SVM svm)
 
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  if (svm->setupcalled) PetscFunctionReturnI(0);
+  if (svm->setupcalled) PetscFunctionReturnI(PETSC_SUCCESS);
 
   PetscCall(svm->ops->setup(svm));
   svm->setupcalled = PETSC_TRUE;
-  PetscFunctionReturnI(0);
+  PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1449,7 +1449,7 @@ PetscErrorCode SVMView(SVM svm,PetscViewer v)
   if (svm->ops->view) {
     PetscCall(svm->ops->view(svm,v));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -1472,7 +1472,7 @@ PetscErrorCode SVMViewTrainingPredictions(SVM svm,PetscViewer v)
   if (svm->ops->viewtrainingpredictions) {
     PetscCall(svm->ops->viewtrainingpredictions(svm,v));
   }
-  PetscFunctionReturnI(0);
+  PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
 /*@
@@ -1495,7 +1495,7 @@ PetscErrorCode SVMViewTestPredictions(SVM svm,PetscViewer v)
   if (svm->ops->viewtestpredictions) {
     PetscCall(svm->ops->viewtestpredictions(svm,v));
   }
-  PetscFunctionReturnI(0);
+  PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1522,7 +1522,7 @@ PetscErrorCode SVMViewScore(SVM svm,PetscViewer v)
   if (svm->ops->viewscore) {
     PetscCall(svm->ops->viewscore(svm,v));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1546,7 +1546,7 @@ PetscErrorCode SVMSetGramian(SVM svm,Mat G)
   PetscValidHeaderSpecific(G,MAT_CLASSID,2);
 
   PetscTryMethod(svm,"SVMSetGramian_C",(SVM,Mat),(svm,G));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1572,7 +1572,7 @@ PetscErrorCode SVMGetGramian(SVM svm,Mat *G)
   PetscValidPointer(G,2);
 
   PetscUseMethod(svm,"SVMGetGramian_C",(SVM,Mat *),(svm,G));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1598,7 +1598,7 @@ PetscErrorCode SVMSetOperator(SVM svm,Mat A)
   PetscValidHeaderSpecific(A,MAT_CLASSID,2);
 
   PetscTryMethod(svm,"SVMSetOperator_C",(SVM,Mat),(svm,A));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1626,7 +1626,7 @@ PetscErrorCode SVMGetOperator(SVM svm,Mat *A)
   PetscValidPointer(A,2);
 
   PetscUseMethod(svm,"SVMGetOperator_C",(SVM,Mat *),(svm,A));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1653,7 +1653,7 @@ PetscErrorCode SVMComputeOperator(SVM svm,Mat *A)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
   PetscTryMethod(svm,"SVMComputeOperator_C",(SVM,Mat *),(svm,A));
-  PetscFunctionReturnI(0);
+  PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1683,7 +1683,7 @@ PetscErrorCode SVMSetTrainingDataset(SVM svm,Mat Xt_training,Vec y_training)
   PetscCheckSameComm(svm,1,y_training,3);
 
   PetscTryMethod(svm,"SVMSetTrainingDataset_C",(SVM,Mat,Vec),(svm,Xt_training,y_training));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1711,7 +1711,7 @@ PetscErrorCode SVMGetTrainingDataset(SVM svm,Mat *Xt_training,Vec *y_training)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
   PetscUseMethod(svm,"SVMGetTrainingDataset_C",(SVM,Mat *,Vec *),(svm,Xt_training,y_training));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1747,7 +1747,7 @@ PetscErrorCode SVMSetTestDataset(SVM svm,Mat Xt_test,Vec y_test)
   PetscCall(VecDestroy(&svm->y_test));
   svm->y_test = y_test;
   PetscCall(PetscObjectReference((PetscObject) y_test));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1783,7 +1783,7 @@ PetscErrorCode SVMGetTestDataset(SVM svm,Mat *Xt_test,Vec *y_test)
     PetscValidPointer(y_test,2);
     *y_test = svm->y_test;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 
@@ -1812,7 +1812,7 @@ PetscErrorCode SVMSetAutoPostTrain(SVM svm,PetscBool flg)
   PetscValidLogicalCollectiveBool(svm,flg,2);
 
   svm->autoposttrain = flg;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1835,7 +1835,7 @@ PetscErrorCode SVMTrain(SVM svm)
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscCall(svm->ops->train(svm));
-  PetscFunctionReturnI(0);
+  PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1877,7 +1877,7 @@ PetscErrorCode SVMPostTrain(SVM svm)
     PetscCall(PetscViewerPopFormat(v));
     PetscCall(PetscViewerDestroy(&v));
   }
-  PetscFunctionReturnI(0);
+  PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1903,7 +1903,7 @@ PetscErrorCode SVMSetSeparatingHyperplane(SVM svm,Vec w,PetscReal b)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
   PetscTryMethod(svm,"SVMSetSeparatingHyperplane_C",(SVM,Vec,PetscReal),(svm,w,b));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1931,7 +1931,7 @@ PetscErrorCode SVMGetSeparatingHyperplane(SVM svm,Vec *w,PetscReal *b)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
   PetscUseMethod(svm,"SVMGetSeparatingHyperplane_C",(SVM,Vec *,PetscReal *),(svm,w,b));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1956,7 +1956,7 @@ PetscErrorCode SVMSetBias(SVM svm,PetscReal bias)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
   PetscTryMethod(svm,"SVMSetBias_C",(SVM,PetscReal),(svm,bias));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1983,7 +1983,7 @@ PetscErrorCode SVMGetBias(SVM svm,PetscReal *bias)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
   PetscUseMethod(svm,"SVMGetBias_C",(SVM,PetscReal *),(svm,bias));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2007,7 +2007,7 @@ PetscErrorCode SVMReconstructHyperplane(SVM svm)
   if (svm->ops->reconstructhyperplane) {
     PetscCall(svm->ops->reconstructhyperplane(svm));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2034,7 +2034,7 @@ PetscErrorCode SVMPredict(SVM svm,Mat Xt_pred,Vec *y_pred)
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscCall(svm->ops->predict(svm,Xt_pred,y_pred));
-  PetscFunctionReturnI(0);
+  PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2076,7 +2076,7 @@ PetscErrorCode SVMTest(SVM svm)
     PetscCall(PetscViewerPopFormat(v));
     PetscCall(PetscViewerDestroy(&v));
   }
-  PetscFunctionReturnI(0);
+  PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2091,7 +2091,7 @@ PetscErrorCode SVMConvergedSetUp(SVM svm)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   // call specific implementation of setting convergence test
   if (svm->ops->convergedsetup) PetscCall(svm->ops->convergedsetup(svm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2104,7 +2104,7 @@ PetscErrorCode SVMDefaultConvergedCreate(SVM svm, void **ctx)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   *ctx = svm;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2116,7 +2116,7 @@ PetscErrorCode SVMDefaultConvergedDestroy(void *ctx)
 {
   PetscFunctionBegin;
   PetscCall(SVMDestroy((SVM*)&ctx));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2142,7 +2142,7 @@ PetscErrorCode SVMGetModelScore(SVM svm,ModelScore score_type,PetscReal *s)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
   PetscUseMethod(svm,"SVMGetModelScore_C",(SVM,ModelScore,PetscReal *),(svm,score_type,s));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2166,7 +2166,7 @@ PetscErrorCode SVMSetHyperOpt(SVM svm,PetscBool flg)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidLogicalCollectiveBool(svm,2,flg);
   svm->hyperoptset = flg;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2189,7 +2189,7 @@ PetscErrorCode SVMGridSearch(SVM svm)
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscCall(svm->ops->gridsearch(svm));
-  PetscFunctionReturnI(0);
+  PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2214,7 +2214,7 @@ PetscErrorCode SVMSetHyperOptScoreTypes(SVM svm,PetscInt n,ModelScore types[])
   for (i = 0; i < n; ++i) PetscValidLogicalCollectiveEnum(svm,types[i],2);
   PetscCall(PetscMemcpy(svm->hopt_score_types,types,n * sizeof(ModelScore)));
   svm->hopt_nscore_types = n;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2239,7 +2239,7 @@ PetscErrorCode SVMGetHyperOptNScoreTypes(SVM svm,PetscInt *n)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidPointer(n,2);
   *n = svm->hopt_nscore_types;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2264,7 +2264,7 @@ PetscErrorCode SVMGetHyperOptScoreTypes(SVM svm,const ModelScore *types[])
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidPointer(types,2);
   *types = svm->hopt_score_types;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2287,7 +2287,7 @@ PetscErrorCode SVMSetCrossValidationType(SVM svm,CrossValidationType type)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidLogicalCollectiveEnum(svm,type,2);
   svm->cv_type = type;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2312,7 +2312,7 @@ PetscErrorCode SVMGetCrossValidationType(SVM svm,CrossValidationType *type)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidPointer(type,2);
   *type = svm->cv_type;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2340,7 +2340,7 @@ PetscErrorCode SVMCrossValidation(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscCall(svm->ops->crossvalidation(svm,c_arr,m,score));
-  PetscFunctionReturnI(0);
+  PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2368,7 +2368,7 @@ PetscErrorCode SVMKFoldCrossValidation(SVM svm,PetscReal c_arr[],PetscInt m,Pets
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscTryMethod(svm,"SVMKFoldCrossValidation_C",(SVM,PetscReal [],PetscInt, PetscReal []),(svm,c_arr,m,score));
-  PetscFunctionReturnI(0);
+  PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2382,7 +2382,7 @@ PetscErrorCode SVMStratifiedKFoldCrossValidation(SVM svm,PetscReal c_arr[],Petsc
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscTryMethod(svm,"SVMStratifiedKFoldCrossValidation_C",(SVM,PetscReal [],PetscInt, PetscReal []),(svm,c_arr,m,score));
-  PetscFunctionReturnI(0);
+  PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2409,7 +2409,7 @@ PetscErrorCode SVMComputeModelScores(SVM svm,Vec y_pred,Vec y_known)
   if (svm->ops->computemodelscores) {
     PetscCall(svm->ops->computemodelscores(svm,y_pred,y_known));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2434,7 +2434,7 @@ PetscErrorCode SVMComputeHingeLoss(SVM svm)
   if (svm->ops->computehingeloss) {
     PetscCall(svm->ops->computehingeloss(svm));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2459,7 +2459,7 @@ PetscErrorCode SVMComputeModelParams(SVM svm)
   if (svm->ops->computemodelparams) {
     PetscCall(svm->ops->computemodelparams(svm));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2498,7 +2498,7 @@ PetscErrorCode SVMLoadGramian(SVM svm,PetscViewer v)
     PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
     PetscCall(SVMViewGramian(svm,PETSC_VIEWER_STDOUT_(comm)));
   }
-  PetscFunctionReturnI(0);
+  PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2526,7 +2526,7 @@ PetscErrorCode SVMViewGramian(SVM svm,PetscViewer v)
   if (svm->ops->viewgramian) {
     PetscCall(svm->ops->viewgramian(svm,v) );
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2576,7 +2576,7 @@ PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat Xt,Vec y)
   }
   PetscLogEventEnd(SVM_LoadDataset,svm,0,0,0);
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2609,7 +2609,7 @@ PetscErrorCode SVMLoadTrainingDataset(SVM svm,PetscViewer v)
   if (view_io || view_dataset) {
     PetscCall(SVMViewTrainingDataset(svm,PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject) v))));
   }
-  PetscFunctionReturnI(0);
+  PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2639,7 +2639,7 @@ PetscErrorCode SVMViewTrainingDataset(SVM svm,PetscViewer v)
   if (svm->ops->viewtrainingdataset) {
     PetscCall(svm->ops->viewtrainingdataset(svm,v) );
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2705,7 +2705,7 @@ PetscErrorCode SVMLoadTestDataset(SVM svm,PetscViewer v)
   /* Free memory */
   PetscCall(MatDestroy(&Xt_test));
   PetscCall(VecDestroy(&y_test));
-  PetscFunctionReturnI(0);
+  PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2759,7 +2759,7 @@ PetscErrorCode SVMViewTestDataset(SVM svm,PetscViewer v)
 
     SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewTestDataset",type_name);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2854,5 +2854,5 @@ PetscErrorCode SVMViewDataset(SVM svm,Mat Xt,Vec y,PetscViewer v)
     SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewDataset",type_name);
   }
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

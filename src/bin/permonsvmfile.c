@@ -15,7 +15,7 @@ PetscErrorCode GetFilenameExtension(const char *filename,char **extension)
   PetscFunctionBegin;
   PetscCall(PetscStrrchr(filename,'.',&extension_inner));
   *extension = extension_inner;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -156,18 +156,18 @@ PetscErrorCode SVMRunBinaryClassification()
   }
 
   PetscCall(SVMDestroy(&svm));
-  PetscFunctionReturnI(0);
+  PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
 #define __FUNCT__ "main"
 int main(int argc,char **argv)
 {
-  PermonInitialize(&argc,&argv,(char *) 0,(char *) 0);
 
   PetscFunctionBegin;
+  PetscCall(PermonInitialize(&argc,&argv,(char *) 0,(char *) 0));
   comm = PETSC_COMM_WORLD;
   PetscCall(SVMRunBinaryClassification());
   PetscCall(PermonFinalize());
-  PetscFunctionReturn(0);
+  return 0;
 }
