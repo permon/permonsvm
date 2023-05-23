@@ -14,7 +14,7 @@ PetscErrorCode SVMReset_Probability(SVM svm)
 
   PetscCall(PetscFree(svm_prob->deci));
   PetscCall(PetscFree(svm_prob->target));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMDestroy_Probability(SVM svm)
@@ -34,21 +34,21 @@ PetscErrorCode SVMDestroy_Probability(SVM svm)
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMAppendOptionsPrefix_C"   ,NULL));
 
   PetscCall(SVMDestroyDefault(svm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMView_Probability(SVM svm,PetscViewer v)
 {
 
   PetscFunctionBegin;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMViewScore_Probability(SVM svm,PetscViewer v)
 {
 
   PetscFunctionBegin;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMSetTrainingDataset_Probability(SVM svm,Mat Xt_training,Vec y_training)
@@ -91,7 +91,7 @@ PetscErrorCode SVMSetTrainingDataset_Probability(SVM svm,Mat Xt_training,Vec y_t
   PetscCall(VecDestroy(&svm_prob->y_training));
   svm_prob->y_training = y_training;
   PetscCall(PetscObjectReference((PetscObject) y_training));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMGetTrainingDataset_Probability(SVM svm,Mat *Xt_training,Vec *y_training)
@@ -107,7 +107,7 @@ PetscErrorCode SVMGetTrainingDataset_Probability(SVM svm,Mat *Xt_training,Vec *y
     PetscValidPointer(y_training,3);
     *y_training = svm_prob->y_training;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode SVMGetNumberPositiveNegativeSamples_Probability_Private(Vec y,PetscInt *ntarget_lo,PetscInt *ntarget_hi)
@@ -139,7 +139,7 @@ static PetscErrorCode SVMGetNumberPositiveNegativeSamples_Probability_Private(Ve
   PetscCall(VecDestroy(&tmp));
   PetscCall(ISDestroy(&is_p));
   PetscCall(ISDestroy(&is_n));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMSetCalibrationDataset_Probability(SVM svm,Mat Xt_calib,Vec y_calib)
@@ -192,7 +192,7 @@ PetscErrorCode SVMSetCalibrationDataset_Probability(SVM svm,Mat Xt_calib,Vec y_c
   svm_prob->Nn_calib = ntargets_lo;
   svm_prob->Np_calib = ntargets_hi;
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMGetCalibrationDataset_Probability(SVM svm,Mat *Xt_calib,Vec *y_calib)
@@ -208,7 +208,7 @@ PetscErrorCode SVMGetCalibrationDataset_Probability(SVM svm,Mat *Xt_calib,Vec *y
     PetscValidPointer(y_calib,3);
     *y_calib = svm_prob->y_calib;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode SVMCreateTAO_Probability_Private(SVM svm,Tao *tao)
@@ -222,7 +222,7 @@ static PetscErrorCode SVMCreateTAO_Probability_Private(SVM svm,Tao *tao)
 
   PetscFunctionBegin;
   PetscCall(TaoCreate(MPI_COMM_SELF,&tao_inner));
-  PetscCall(TaoSetType(tao_inner,TAONLS)); // TODO possible to also set TAONTL, TAONTR
+  PetscCall(TaoSetType(tao_inner,TAONLS)); // TODO possible to also set TAONTL, TAONLS, TAONTR
 
   /* Disable preconditioning */
   PetscCall(TaoGetKSP(tao_inner,&ksp));
@@ -238,7 +238,8 @@ static PetscErrorCode SVMCreateTAO_Probability_Private(SVM svm,Tao *tao)
 
   /* Clean up */
   PetscCall(PCDestroy(&pc));
-  PetscFunctionReturn(0);
+
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMGetTao_Probability(SVM svm,Tao *tao)
@@ -255,23 +256,215 @@ PetscErrorCode SVMGetTao_Probability(SVM svm,Tao *tao)
 
   PetscCall(PetscObjectReference((PetscObject) svm_prob->tao));
   *tao = svm_prob->tao;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-static PetscErrorCode TaoFormFunctionGradient_Probability_Private(Tao tao,Vec X,PetscReal *fnc,Vec G,void *ctx)
+static PetscErrorCode SVMTransformUncalibratedPredictions_Probability_Private(SVM svm)
 {
+    SVM_Probability *svm_prob = (SVM_Probability *) svm->data;
+    SVM         svm_inner;
 
-  PetscFunctionBegin;
-  // TODO implement
-  PetscFunctionReturn(0);
+    Mat         Xt_calib;
+    Vec         y_calib;
+
+    Vec         w;
+    PetscReal   b;
+
+    Vec         Xtw,Xtw_seq;
+    VecScatter  scatter;
+
+    PetscBool   label_to_target_prob;
+    PetscReal   hi_target;
+    PetscReal   lo_target;
+
+    PetscInt    i;
+    PetscInt    N,Np,Nn;
+
+    const PetscScalar *Xtw_arr = NULL;
+    const PetscScalar *y_arr   = NULL;
+
+    PetscFunctionBegin;
+    PetscCall(SVMGetInnerSVM(svm,&svm_inner));
+    PetscCall(SVMGetCalibrationDataset(svm,&Xt_calib,&y_calib));
+
+    /* Get uncalibrated prediction (based on distance of sample from separating hyperplane) */
+    PetscCall(SVMReconstructHyperplane(svm_inner));
+    PetscCall(SVMGetSeparatingHyperplane(svm_inner,&w,&b));
+    PetscCall(MatCreateVecs(Xt_calib,NULL,&Xtw));
+    PetscCall(MatMult(Xt_calib,w,Xtw));
+
+    /* Scatter Xtw to root process */
+    PetscCall(VecScatterCreateToZero(Xtw,&scatter,&Xtw_seq));
+    PetscCall(VecScatterBegin(scatter,Xtw,Xtw_seq,INSERT_VALUES,SCATTER_FORWARD));
+    PetscCall(VecScatterEnd(scatter,Xtw,Xtw_seq,INSERT_VALUES,SCATTER_FORWARD));
+
+    /* Clean up previous helper arrays */
+    PetscCall(PetscFree(svm_prob->deci));
+    PetscCall(PetscFree(svm_prob->target));
+
+    /* Alloc helper arrays again (distance sample from hyperplane and target) */
+    PetscCall(VecGetSize(Xtw_seq,&N));
+    PetscCall(PetscMalloc(N * sizeof(PetscReal),&svm_prob->deci));
+    PetscCall(PetscMalloc(N * sizeof(PetscReal),&svm_prob->target));
+
+    PetscCall(SVMProbGetConvertLabelsToTargetProbability(svm,&label_to_target_prob));
+    if (label_to_target_prob) {
+        /*
+         Transform labels to target probabilities proposed in
+         http://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf
+        */
+        Nn = svm_prob->Nn_calib;
+        Np = svm_prob->Np_calib;
+
+        PetscCall(SVMGetNumberPositiveNegativeSamples_Probability_Private(y_calib,&Np,&Nn));
+        lo_target = 1. / (Nn + 2);
+        hi_target = (Np + 1.) / (Np + 2.);
+    } else {
+        lo_target = 0.;
+        hi_target = 1.;
+    }
+
+    /* Transform labels to target probabilities */
+    PetscCall(VecGetArrayRead(Xtw_seq,&Xtw_arr));
+    PetscCall(VecGetArrayRead(y_calib,&y_arr));
+
+    for (i = 0; i < N; ++i) {
+        svm_prob->deci[i]   = Xtw_arr[i]; // distance from hyperplane
+        svm_prob->target[i] = (y_arr[i] == -1) ? lo_target : hi_target; // labels converted to probability
+    }
+
+    PetscCall(VecRestoreArrayRead(Xtw_seq,&Xtw_arr));
+    PetscCall(VecRestoreArrayRead(Xtw_seq,&y_arr));
+
+    /* Clean up */
+    PetscCall(SVMDestroy(&svm_inner));
+    PetscCall(VecScatterDestroy(&scatter));
+    PetscCall(VecDestroy(&Xtw));
+    PetscCall(VecDestroy(&Xtw_seq));
+
+    PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-static PetscErrorCode TaoFormHessian_Probability_Private(Tao tao,Vec X,Mat H,Mat Hpre,void *ctx)
+static PetscErrorCode TaoFormFunctionGradient_Probability_Private(Tao tao,Vec x,PetscReal *fnc,Vec g,void *ctx)
 {
+  SVM             svm   = (SVM) ctx;
+  SVM_Probability *prob = (SVM_Probability *) svm->data;
+
+  PetscReal fnc_inner = 0.;
+
+  PetscReal g_arr[2] = {0.,0.};
+  PetscInt  idx[2] = {0,1};
+
+  PetscReal ApB;
+  PetscReal p;
+
+  PetscInt  i,N;
+
+  const PetscReal *x_arr = NULL;
+  Vec   y;
 
   PetscFunctionBegin;
-  // TODO implement
-  PetscFunctionReturn(0);
+
+  if (!prob->deci && !prob->target) {
+    PetscCall(SVMTransformUncalibratedPredictions_Probability_Private(svm));
+  }
+
+  PetscCall(SVMGetCalibrationDataset(svm,NULL,&y));
+  PetscCall(VecGetSize(y,&N));
+  PetscCall(VecGetArrayRead(x,&x_arr));
+
+  /*
+    Gradient and objective function evaluation. Implementation proposed in https://www.csie.ntu.edu.tw/~cjlin/papers/plattprob.pdf.
+   */
+  for (i = 0; i < N; ++i) {
+
+    ApB = x_arr[0] * prob->deci[i] + x_arr[1];
+
+    if (ApB >= 0.) {
+      fnc_inner += prob->target[i] * ApB + PetscLogReal(1. + PetscExpReal(-ApB));
+      p = PetscExpReal(-ApB) / (1. + PetscExpReal(-ApB));
+    } else {
+      fnc_inner += (prob->target[i] - 1.) * ApB + PetscLogReal(1. + PetscExpReal(ApB));
+      p = 1. / (1. + PetscExpReal(ApB) );
+    }
+
+    g_arr[0] += prob->deci[i] * (prob->target[i] - p);
+    g_arr[1] += prob->target[i] - p;
+  }
+
+  PetscCall(VecRestoreArrayRead(x,&x_arr));
+
+  *fnc = fnc_inner;
+
+  /* update gradient */
+  PetscCall(VecSetValues(g,2,idx,g_arr,INSERT_VALUES));
+  PetscCall(VecAssemblyBegin(g));
+  PetscCall(VecAssemblyEnd(g));
+
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+static PetscErrorCode TaoFormHessian_Probability_Private(Tao tao,Vec x,Mat H,Mat Hpre,void *ctx)
+{
+  SVM             svm   = (SVM) ctx;
+  SVM_Probability *prob = (SVM_Probability *) svm->data;
+
+  PetscReal       H_arr[4] = {0.,0.,0.,0.};
+  PetscInt        idxm[2]  = {0,1};
+  PetscInt        idxn[2]  = {0,1};
+
+  PetscReal       d,p,q;
+  PetscReal       AdpB;
+
+  PetscInt        i,N;
+
+  const PetscReal *x_arr = NULL;
+  Vec   y;
+
+  PetscFunctionBegin;
+
+  if (!prob->deci && !prob->target) {
+      PetscCall(SVMTransformUncalibratedPredictions_Probability_Private(svm));
+  }
+
+  PetscCall(SVMGetCalibrationDataset(svm,NULL,&y));
+  PetscCall(VecGetSize(y,&N));
+  PetscCall(VecGetArrayRead(x,&x_arr));
+
+  /*
+    Hessian evaluation. Implementation proposed in https://www.csie.ntu.edu.tw/~cjlin/papers/plattprob.pdf.
+   */
+  for (i = 0; i < N; ++i) {
+
+    AdpB = prob->deci[i] * x_arr[0] + x_arr[1];
+
+    if (AdpB >= 0.) {
+      p = PetscExpReal(-AdpB) / (1. + PetscExpReal(-AdpB));
+      q =  1. / (1. + PetscExpReal(-AdpB));
+    } else {
+      p = 1. / (1. + PetscExpReal(AdpB));
+      q =  PetscExpReal(AdpB) / (1. + PetscExpReal(AdpB));
+    }
+
+    d = p * q;
+
+    H_arr[0] += prob->deci[i] * prob->deci[i] * d;
+    H_arr[1] += prob->deci[i] * d;
+    H_arr[2] += prob->deci[i] * d;
+    H_arr[3] += d;
+  }
+
+  PetscCall(VecRestoreArrayRead(x,&x_arr));
+
+  H_arr[0] += 1e-12;
+  H_arr[3] += 1e-12;
+
+  /* Update Hessian */
+  PetscCall(MatSetValues(H,2,idxm,2,idxn,H_arr,INSERT_VALUES));
+  PetscCall(MatAssemblyBegin(H,MAT_FINAL_ASSEMBLY));
+  PetscCall(MatAssemblyEnd(H,MAT_FINAL_ASSEMBLY));
+
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode SVMSetUp_Tao_Private(SVM svm)
@@ -299,14 +492,18 @@ static PetscErrorCode SVMSetUp_Tao_Private(SVM svm)
   Nn = svm_prob->Nn_calib;
   Np = svm_prob->Np_calib;
 
-  PetscCall(VecSetValue(x_init,0,0.,INSERT_VALUES));
-  v = (Nn + 1.) / (Np + 1.);
-  PetscCall(VecSetValue(x_init,1,v,INSERT_VALUES));
-  PetscCall(TaoSetSolution(tao,x_init));
-
   /* Set a function for forming and updating gradient and Hessian */
   PetscCall(TaoSetObjectiveAndGradient(tao,g,TaoFormFunctionGradient_Probability_Private,svm));
   PetscCall(TaoSetHessian(tao,H,H,TaoFormHessian_Probability_Private,svm));
+
+  /* Set initial guess */
+  PetscCall(VecSetValue(x_init,0,0.,INSERT_VALUES));
+  v = PetscLogReal((Nn + 1.) / (Np + 1.));
+  PetscCall(VecSetValue(x_init,1,v,INSERT_VALUES));
+
+  PetscCall(VecAssemblyBegin(x_init));
+  PetscCall(VecAssemblyEnd(x_init));
+  PetscCall(TaoSetSolution(tao,x_init));
 
   PetscCall(TaoSetTolerances(tao,1e-5,1e-5,1e-5));
 
@@ -321,14 +518,16 @@ static PetscErrorCode SVMSetUp_Tao_Private(SVM svm)
   PetscCall(VecDestroy(&g));
   PetscCall(VecDestroy(&x_init));
 
-  PetscFunctionReturn(0);
+  svm->setupcalled = PETSC_TRUE;
+
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMSetUp_Probability(SVM svm)
 {
   MPI_Comm comm;
 
-  SVM      svm_inner;
+  SVM      svm_binary;
 
   Mat      Xt_training;
   Vec      y_training;
@@ -341,9 +540,9 @@ PetscErrorCode SVMSetUp_Probability(SVM svm)
   PetscFunctionBegin;
   if (svm->setupcalled) PetscFunctionReturn(0);
 
-  PetscCall(SVMGetInnerSVM(svm,&svm_inner));
+  PetscCall(SVMGetInnerSVM(svm,&svm_binary));
   if (svm->setfromoptionscalled) {
-    PetscCall(SVMSetFromOptions(svm_inner));
+    PetscCall(SVMSetFromOptions(svm_binary));
   }
 
   PetscCall(SVMGetCalibrationDataset(svm,&Xt_calib,&y_calib));
@@ -355,7 +554,8 @@ PetscErrorCode SVMSetUp_Probability(SVM svm)
     y_training  = y_calib;
   }
 
-  PetscCall(SVMSetTrainingDataset(svm_inner,Xt_training,y_training));
+  PetscCall(SVMSetTrainingDataset(svm_binary,Xt_training,y_training));
+  PetscCall(SVMSetUp(svm_binary));
 
   PetscCall(PetscObjectGetComm((PetscObject)svm,&comm));
   MPI_Comm_rank(comm,&rank);
@@ -365,9 +565,9 @@ PetscErrorCode SVMSetUp_Probability(SVM svm)
   }
 
   /* Clean up */
-  PetscCall(SVMDestroy(&svm_inner));
+  PetscCall(SVMDestroy(&svm_binary));
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMSetOptionsPrefix_Probability(SVM svm,const char prefix[])
@@ -379,7 +579,7 @@ PetscErrorCode SVMSetOptionsPrefix_Probability(SVM svm,const char prefix[])
   PetscCall(SVMGetInnerSVM(svm,&inner));
   PetscCall(PetscObjectSetOptionsPrefix((PetscObject) inner,prefix));
   PetscCall(SVMDestroy(&inner));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMAppendOptionsPrefix_Probability(SVM svm,const char prefix[])
@@ -391,14 +591,14 @@ PetscErrorCode SVMAppendOptionsPrefix_Probability(SVM svm,const char prefix[])
   PetscCall(SVMGetInnerSVM(svm,&inner));
   PetscCall(PetscObjectAppendOptionsPrefix((PetscObject) inner,prefix));
   PetscCall(SVMDestroy(&inner));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMGetOptionsPrefix_Probability(SVM svm,const char *prefix[])
 {
   PetscFunctionBegin;
   PetscCall(PetscObjectGetOptionsPrefix((PetscObject) svm,prefix));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMSetFromOptions_Probability(PetscOptionItems *PetscOptionsObject,SVM svm)
@@ -418,110 +618,23 @@ PetscErrorCode SVMSetFromOptions_Probability(PetscOptionItems *PetscOptionsObjec
     PetscCall(SVMProbSetConvertLabelsToTargetProbability(svm,to_target_probs));
   }
   PetscOptionsEnd();
-  PetscFunctionReturn(0);
-}
-
-static PetscErrorCode SVMTransformUncalibratedPredictions_Probability_Private(SVM svm)
-{
-  SVM_Probability *svm_prob = (SVM_Probability *) svm->data;
-  SVM         svm_inner;
-
-  Mat         Xt_calib;
-  Vec         y_calib;
-
-  Vec         w;
-  PetscReal   b;
-
-  Vec         Xtw,Xtw_seq;
-  VecScatter  scatter;
-
-  PetscBool   label_to_target_prob;
-  PetscReal   hi_target;
-  PetscReal   lo_target;
-
-  PetscInt    i;
-  PetscInt    N,Np,Nn;
-
-  const PetscScalar *Xtw_arr = NULL;
-  const PetscScalar *y_arr   = NULL;
-
-  PetscFunctionBegin;
-  PetscCall(SVMGetInnerSVM(svm,&svm_inner));
-  PetscCall(SVMGetCalibrationDataset(svm,&Xt_calib,&y_calib));
-
-  /* Get uncalibrated prediction (based on distance of sample from separating hyperplane) */
-  PetscCall(SVMReconstructHyperplane(svm_inner));
-  PetscCall(SVMGetSeparatingHyperplane(svm_inner,&w,&b));
-  PetscCall(MatCreateVecs(Xt_calib,NULL,&Xtw));
-  PetscCall(MatMult(Xt_calib,w,Xtw));
-
-  /* Scatter Xtw to main process */
-  PetscCall(VecScatterCreateToZero(Xtw,&scatter,&Xtw_seq));
-  PetscCall(VecScatterBegin(scatter,Xtw,Xtw_seq,INSERT_VALUES,SCATTER_FORWARD));
-  PetscCall(VecScatterEnd(scatter,Xtw,Xtw_seq,INSERT_VALUES,SCATTER_FORWARD));
-
-  /* Clean up previous helper arrays */
-  PetscCall(PetscFree(svm_prob->deci));
-  PetscCall(PetscFree(svm_prob->target));
-
-  /* Alloc helper arrays again (distance sample from hyperplane and target) */
-  PetscCall(VecGetSize(Xtw_seq,&N));
-  PetscCall(PetscMalloc(N * sizeof(PetscReal),&svm_prob->deci));
-  PetscCall(PetscMalloc(N * sizeof(PetscReal),&svm_prob->target));
-
-  PetscCall(SVMProbGetConvertLabelsToTargetProbability(svm,&label_to_target_prob));
-  if (label_to_target_prob) {
-    /*
-     Transform labels to target probabilities proposed in
-     http://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf
-    */
-    Nn = svm_prob->Nn_calib;
-    Np = svm_prob->Np_calib;
-
-    PetscCall(SVMGetNumberPositiveNegativeSamples_Probability_Private(y_calib,&Np,&Nn));
-    lo_target = 1. / (Nn + 2);
-    hi_target = (Np + 1.) / (Np + 2.);
-  } else {
-    lo_target = 0.;
-    hi_target = 1.;
-  }
-
-  /* Transform labels to target probabilities */
-  PetscCall(VecGetArrayRead(Xtw_seq,&Xtw_arr));
-  PetscCall(VecGetArrayRead(y_calib,&y_arr));
-
-  for (i = 0; i < N; ++i) {
-    svm_prob->deci[i]   = Xtw_arr[i]; // distance from hyperplane
-    svm_prob->target[i] = (y_arr[i] == -1) ? lo_target : hi_target; // labels converted to probability
-  }
-
-  PetscCall(VecRestoreArrayRead(Xtw_seq,&Xtw_arr));
-  PetscCall(VecRestoreArrayRead(Xtw_seq,&y_arr));
-
-  /* Clean up */
-  PetscCall(SVMDestroy(&svm_inner));
-  PetscCall(VecScatterDestroy(&scatter));
-  PetscCall(VecDestroy(&Xtw));
-  PetscCall(VecDestroy(&Xtw_seq));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMTrain_Probability(SVM svm)
 {
-  SVM svm_inner;
+  SVM svm_binary;
   Tao tao;
 
   PetscBool post_train;
 
   PetscFunctionBegin;
   PetscCall(SVMSetUp(svm));
-  PetscCall(SVMGetInnerSVM(svm,&svm_inner));
+  PetscCall(SVMGetInnerSVM(svm,&svm_binary));
 
   // Train uncalibrated svm model
-  PetscCall(SVMGetAutoPostTrain(svm_inner,&post_train));
-  PetscCall(SVMSetAutoPostTrain(svm_inner,PETSC_FALSE));
-  PetscCall(SVMTrain(svm_inner));
-  PetscCall(SVMSetAutoPostTrain(svm_inner,post_train));
+  PetscCall(SVMGetAutoPostTrain(svm_binary,&post_train));
+  PetscCall(SVMTrain(svm_binary));
 
   // Train logistic regression over uncalibrated model (Platt's scaling)
   PetscCall(SVMTransformUncalibratedPredictions_Probability_Private(svm));
@@ -534,10 +647,10 @@ PetscErrorCode SVMTrain_Probability(SVM svm)
   }
 
   /* Clean up */
-  PetscCall(SVMDestroy(&svm_inner));
+  PetscCall(SVMDestroy(&svm_binary));
   PetscCall(TaoDestroy(&tao));
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMPostTrain_Probability(SVM svm)
@@ -545,28 +658,28 @@ PetscErrorCode SVMPostTrain_Probability(SVM svm)
 
   PetscFunctionBegin;
   // TODO implement
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMPredict_Probability(SVM svm,Mat Xt_pred,Vec *y_out)
 {
 
   PetscFunctionBegin;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMComputeModelScores_Probability(SVM svm,Vec y_pred,Vec y_known)
 {
 
   PetscFunctionBegin;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMTest_Probability(SVM svm)
 {
 
   PetscFunctionBegin;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMGetInnerSVM_Probability(SVM svm,SVM *inner_out)
@@ -594,7 +707,7 @@ PetscErrorCode SVMGetInnerSVM_Probability(SVM svm,SVM *inner_out)
 
   PetscCall(PetscObjectReference((PetscObject) svm_prob->inner));
   *inner_out = svm_prob->inner;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMLoadCalibrationDataset_Probability(SVM svm,PetscViewer v)
@@ -634,7 +747,8 @@ PetscErrorCode SVMLoadCalibrationDataset_Probability(SVM svm,PetscViewer v)
   /* Clean up */
   PetscCall(MatDestroy(&Xt_calib));
   PetscCall(VecDestroy(&y_calib));
-  PetscFunctionReturn(0);
+
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMViewCalibrationDataset_Probability(SVM svm,PetscViewer v)
@@ -668,7 +782,8 @@ PetscErrorCode SVMViewCalibrationDataset_Probability(SVM svm,PetscViewer v)
 
     SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewCalibrationDataset",type_name);
   }
-  PetscFunctionReturn(0);
+
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMCreate_Probability(SVM svm)
@@ -718,7 +833,7 @@ PetscErrorCode SVMCreate_Probability(SVM svm)
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetOptionsPrefix_C"      ,SVMGetOptionsPrefix_Probability));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMAppendOptionsPrefix_C"   ,SVMAppendOptionsPrefix_Probability));
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMProbSetConvertLabelsToTargetProbability(SVM svm,PetscBool flg)
@@ -728,11 +843,11 @@ PetscErrorCode SVMProbSetConvertLabelsToTargetProbability(SVM svm,PetscBool flg)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   if (svm_prob->labels_to_target_probs == flg) {
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   svm_prob->labels_to_target_probs = flg;
   svm->setupcalled = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMProbGetConvertLabelsToTargetProbability(SVM svm,PetscBool *flg)
@@ -742,5 +857,5 @@ PetscErrorCode SVMProbGetConvertLabelsToTargetProbability(SVM svm,PetscBool *flg
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   *flg = svm_prob->labels_to_target_probs;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

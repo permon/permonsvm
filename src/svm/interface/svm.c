@@ -1432,7 +1432,7 @@ PetscErrorCode SVMGetInnerSVM(SVM svm,SVM *out)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscUseMethod(svm,"SVMGetInnerSVM_C",(SVM,SVM *),(svm,out));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -1444,7 +1444,7 @@ PetscErrorCode SVMGetTao(SVM svm,Tao *tao)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscUseMethod(svm,"SVMGetTao_C",(SVM,Tao *),(svm,tao));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -1783,7 +1783,7 @@ PetscErrorCode SVMSetCalibrationDataset(SVM svm,Mat Xt_calib,Vec y_calib)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
   PetscTryMethod(svm,"SVMSetCalibrationDataset_C",(SVM,Mat,Vec),(svm,Xt_calib,y_calib));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -1809,7 +1809,7 @@ PetscErrorCode SVMGetCalibrationDataset(SVM svm,Mat *Xt_calib,Vec *y_calib)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
   PetscUseMethod(svm,"SVMGetCalibrationDataset_C",(SVM,Mat *,Vec *),(svm,Xt_calib,y_calib));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
