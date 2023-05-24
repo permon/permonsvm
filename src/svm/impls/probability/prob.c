@@ -112,8 +112,8 @@ PetscErrorCode SVMGetTrainingDataset_Probability(SVM svm,Mat *Xt_training,Vec *y
 
 static PetscErrorCode SVMGetNumberPositiveNegativeSamples_Probability_Private(Vec y,PetscInt *ntarget_lo,PetscInt *ntarget_hi)
 {
-  Vec tmp;
-  IS  is_p,is_n;
+  Vec      tmp;
+  IS       is_p,is_n;
 
   PetscInt lo,hi,n;
   PetscReal max;
@@ -222,7 +222,7 @@ static PetscErrorCode SVMCreateTAO_Probability_Private(SVM svm,Tao *tao)
 
   PetscFunctionBegin;
   PetscCall(TaoCreate(MPI_COMM_SELF,&tao_inner));
-  PetscCall(TaoSetType(tao_inner,TAONLS)); // TODO possible to also set TAONTL, TAONLS, TAONTR
+  PetscCall(TaoSetType(tao_inner,TAONLS));
 
   /* Disable preconditioning */
   PetscCall(TaoGetKSP(tao_inner,&ksp));
@@ -310,7 +310,7 @@ static PetscErrorCode SVMTransformUncalibratedPredictions_Probability_Private(SV
     PetscCall(SVMProbGetConvertLabelsToTargetProbability(svm,&label_to_target_prob));
     if (label_to_target_prob) {
         /*
-         Transform labels to target probabilities proposed in
+         Transform labels to target probabilities as it proposed in
          http://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf
         */
         Nn = svm_prob->Nn_calib;
@@ -324,7 +324,6 @@ static PetscErrorCode SVMTransformUncalibratedPredictions_Probability_Private(SV
         hi_target = 1.;
     }
 
-    /* Transform labels to target probabilities */
     PetscCall(VecGetArrayRead(Xtw_seq,&Xtw_arr));
     PetscCall(VecGetArrayRead(y_calib,&y_arr));
 
@@ -353,7 +352,7 @@ static PetscErrorCode TaoFormFunctionGradient_Probability_Private(Tao tao,Vec x,
   PetscReal fnc_inner = 0.;
 
   PetscReal g_arr[2] = {0.,0.};
-  PetscInt  idx[2] = {0,1};
+  PetscInt  idx[2]   = {0,1};
 
   PetscReal ApB;
   PetscReal p;
@@ -374,7 +373,8 @@ static PetscErrorCode TaoFormFunctionGradient_Probability_Private(Tao tao,Vec x,
   PetscCall(VecGetArrayRead(x,&x_arr));
 
   /*
-    Gradient and objective function evaluation. Implementation proposed in https://www.csie.ntu.edu.tw/~cjlin/papers/plattprob.pdf.
+    Gradient and objective function evaluation.
+    Implementation proposed in https://www.csie.ntu.edu.tw/~cjlin/papers/plattprob.pdf.
    */
   for (i = 0; i < N; ++i) {
 
@@ -557,9 +557,12 @@ PetscErrorCode SVMSetUp_Probability(SVM svm)
   PetscCall(SVMSetTrainingDataset(svm_binary,Xt_training,y_training));
   PetscCall(SVMSetUp(svm_binary));
 
+  /*
+    Set up TAO solver. Since problem is small (dim=2), it is being solved on a root process.
+  */
   PetscCall(PetscObjectGetComm((PetscObject)svm,&comm));
   MPI_Comm_rank(comm,&rank);
-  // Set up TAO solver for master
+
   if (rank == 0) {
     PetscCall(SVMSetUp_Tao_Private(svm));
   }
@@ -611,7 +614,7 @@ PetscErrorCode SVMSetFromOptions_Probability(PetscOptionItems *PetscOptionsObjec
   PetscFunctionBegin;
   PetscObjectOptionsBegin((PetscObject)svm);
   PetscCall(PetscOptionsBool("-svm_convert_labels_to_target_probs",
-                             "Convert sample labels to target probability as suggested by Platt",
+                             "Convert sample labels to target probability as suggested by Platt. Default (true).",
                              "SVMProbSetConvertLabelsToTargetProbability",
                              svm_prob->labels_to_target_probs,&to_target_probs,&flg));
   if (flg) {
@@ -623,10 +626,13 @@ PetscErrorCode SVMSetFromOptions_Probability(PetscOptionItems *PetscOptionsObjec
 
 PetscErrorCode SVMTrain_Probability(SVM svm)
 {
+  MPI_Comm    comm;
+  PetscMPIInt rank;
+
   SVM svm_binary;
   Tao tao;
 
-  PetscBool post_train;
+  PetscBool  post_train;
 
   PetscFunctionBegin;
   PetscCall(SVMSetUp(svm));
@@ -639,7 +645,14 @@ PetscErrorCode SVMTrain_Probability(SVM svm)
   // Train logistic regression over uncalibrated model (Platt's scaling)
   PetscCall(SVMTransformUncalibratedPredictions_Probability_Private(svm));
   PetscCall(SVMGetTao(svm,&tao));
-  PetscCall(TaoSolve(tao));
+
+  // Solve on root process
+  PetscCall(PetscObjectGetComm((PetscObject)svm,&comm));
+  MPI_Comm_rank(comm,&rank);
+  if (rank == 0) {
+    PetscCall(TaoSolve(tao));
+  }
+
   // Run post-processing (training) of a trained probability model
   PetscCall(SVMGetAutoPostTrain(svm,&post_train));
   if (post_train) {
