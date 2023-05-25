@@ -5,18 +5,19 @@
 #include <permon/private/svmimpl.h>
 
 typedef struct {
-  Mat Xt_training;
-  Vec y_training;
+  Mat       Xt_training;
+  Vec       y_training;
 
-  Mat Xt_calib;
-  Vec y_calib;
+  Mat       Xt_calib;
+  Vec       y_calib;
 
-
-  SVM inner;
-  Tao tao;
+  SVM       inner;
+  Tao       tao;
 
   PetscReal *target;
   PetscReal *deci;
+
+  PetscReal sigmoid_params[2];
 
   PetscInt  Np_calib;
   PetscInt  Nn_calib;
