@@ -14,10 +14,11 @@ typedef struct {
   SVM       inner;
   Tao       tao;
 
-  PetscReal *target;
-  PetscReal *deci;
+  PetscReal *target; // TODO as Vec
+  PetscReal *deci;   // TODO as Vec
 
   PetscReal sigmoid_params[2];
+  PetscReal threshold;
 
   PetscInt  Np_calib;
   PetscInt  Nn_calib;

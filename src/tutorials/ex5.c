@@ -10,6 +10,7 @@ int main(int argc,char **argv)
   // TODO change to data set containing calibration data set
   char        training_file[PETSC_MAX_PATH_LEN] = "data/heart_scale.bin";
   char        calibration_file[PETSC_MAX_PATH_LEN] = "data/heart_scale.bin";
+  char        test_file[PETSC_MAX_PATH_LEN] = "data/heart_scale.t.bin";
 
   PetscViewer viewer;
 
@@ -17,6 +18,7 @@ int main(int argc,char **argv)
 
   PetscCall(PetscOptionsGetString(NULL,NULL,"-f_training",training_file,sizeof(training_file),NULL));
   PetscCall(PetscOptionsGetString(NULL,NULL,"-f_calibration",calibration_file,sizeof(calibration_file),NULL));
+  PetscCall(PetscOptionsGetString(NULL,NULL,"-f_test",test_file,sizeof(test_file),NULL));
 
   /* Create SVM object */
   PetscCall(SVMCreate(PETSC_COMM_WORLD,&svm));
@@ -33,7 +35,13 @@ int main(int argc,char **argv)
   PetscCall(SVMLoadCalibrationDataset(svm,viewer));
   PetscCall(PetscViewerDestroy(&viewer));
 
+  /* Load test data set */
+  PetscCall(PetscViewerBinaryOpen(PETSC_COMM_WORLD,test_file,FILE_MODE_READ,&viewer));
+  PetscCall(SVMLoadTestDataset(svm,viewer));
+  PetscCall(PetscViewerDestroy(&viewer));
+
   PetscCall(SVMTrain(svm));
+  PetscCall(SVMTest(svm));
 
   /* Free memory */
   PetscCall(SVMDestroy(&svm));

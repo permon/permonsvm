@@ -290,7 +290,11 @@ static PetscErrorCode SVMTransformUncalibratedPredictions_Probability_Private(SV
     PetscCall(SVMGetInnerSVM(svm,&svm_inner));
     PetscCall(SVMGetCalibrationDataset(svm,&Xt_calib,&y_calib));
 
-    /* Get uncalibrated prediction (based on distance of sample from separating hyperplane) */
+    /*
+      TODO use following function SVMGetDistancesFromHyperplane
+      Get uncalibrated prediction (based on distance of sample from separating hyperplane)
+    */
+
     PetscCall(SVMReconstructHyperplane(svm_inner));
     PetscCall(SVMGetSeparatingHyperplane(svm_inner,&w,&b));
     PetscCall(MatCreateVecs(Xt_calib,NULL,&Xtw));
@@ -682,47 +686,77 @@ PetscErrorCode SVMPostTrain_Probability(SVM svm)
     PetscCall(VecGetArrayRead(x,&x_arr));
     PetscCall(PetscMemcpy(svm_prob->sigmoid_params,x_arr,2 * sizeof(PetscReal)));
     PetscCall(VecRestoreArrayRead(x,&x_arr));
+    /* Clean up */
+    PetscCall(TaoDestroy(&tao));
   }
 
   /* Broad cast */
   PetscCallMPI(MPI_Bcast(svm_prob->sigmoid_params,2,MPIU_REAL,0,comm));
 
   /* Clean up */
-  PetscCall(TaoDestroy(&tao));
   svm->posttraincalled = PETSC_TRUE;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode SVMPredict_Probability(SVM svm,Mat Xt_pred,Vec *y_out)
+PetscErrorCode SVMPredict_Probability(SVM svm,Mat Xt,Vec *y_out)
 {
   SVM       svm_binary;
 
-  Vec       w,w_inner,w_sub;
-  PetscReal b;
+  Vec       pred,pred_sub; /* distances of samples (Xt_pred) from a separating hyperplane */
+  PetscReal A,B;           /* sigmoid params */
 
-  PetscReal A,B;              /* sigmoid params */
+  IS        is_p,is_n;
+  PetscInt  lo,hi;
 
-  PetscInt  N_training,N_predict;
+  Vec       *work = NULL;
+  PetscInt  N_work = 3;
 
   PetscFunctionBegin;
   if (!svm->posttraincalled) {
     PetscCall(SVMPostTrain(svm));
   }
 
-  /* Get params of models (calibrated and uncalibrated) */
+  /* Get distances from hyperplane */
   PetscCall(SVMGetInnerSVM(svm,&svm_binary));
-  PetscCall(SVMGetSeparatingHyperplane(svm_binary,&w,&b));
+
+  PetscCall(SVMGetDistancesFromHyperplane(svm_binary,Xt,&pred));
   PetscCall(SVMProbGetSigmoidParams(svm,&A,&B));
 
-  PetscCall(VecGetSize(w,&N_training));
-  PetscCall(MatGetSize(Xt_pred,NULL,&N_predict));
-  /* Check number of features */
-  if (N_training > N_predict) {
-    // TODO implement
-  } else if (N_training < N_predict) {
-    // TODO implement
-  }
+  PetscCall(VecDuplicateVecs(pred,N_work,&work)); // create work vectors
+  PetscCall(VecSet(work[0],1.));
+  PetscCall(VecSet(work[1],0.));
 
+  PetscCall(VecAXPBY(pred,B,A,work[0]));  /* pred <- A * pred + B */
+
+  PetscCall(VecWhichGreaterThan(pred,work[1],&is_p));
+  PetscCall(VecGetOwnershipRange(pred,&lo,&hi));
+  PetscCall(ISComplement(is_p,lo,hi,&is_n));
+
+  /* Compute posterior probability */
+
+  /* if A * pred + B >= 0. then y = exp(-pred) / (1. + exp(-pred)) */
+  PetscCall(VecGetSubVector(pred,is_p,&pred_sub));
+  PetscCall(VecGetSubVector(work[0],is_p,&work[2]));
+
+  PetscCall(VecScale(pred_sub,-1.));
+  PetscCall(VecExp(pred_sub));
+  PetscCall(VecAXPY(work[2],1.,pred_sub));
+  PetscCall(VecPointwiseDivide(pred_sub,pred_sub,work[2]));
+
+  PetscCall(VecRestoreSubVector(pred,is_p,&pred_sub));
+  PetscCall(VecRestoreSubVector(work[0],is_p,&work[2]));
+
+  /* if A * pred + B < 0. then y = 1 / (1 + exp(pred)) */
+  PetscCall(VecGetSubVector(pred,is_n,&pred_sub));
+  PetscCall(VecExp(pred_sub));
+  PetscCall(VecShift(pred_sub,1.));
+  PetscCall(VecReciprocal(pred_sub));
+  PetscCall(VecRestoreSubVector(pred,is_n,&pred_sub));
+
+  *y_out = pred;
+
+  /* Clean up */
+  PetscCall(VecDestroyVecs(N_work,&work));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -735,8 +769,15 @@ PetscErrorCode SVMComputeModelScores_Probability(SVM svm,Vec y_pred,Vec y_known)
 
 PetscErrorCode SVMTest_Probability(SVM svm)
 {
+  Mat Xt_test;
+  Vec y_test;
+
+  Vec y_pred;
 
   PetscFunctionBegin;
+  PetscCall(SVMGetTestDataset(svm,&Xt_test,&y_test));
+  PetscCall(SVMPredict(svm,Xt_test,&y_pred));
+  // TODO implement
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -864,6 +905,8 @@ PetscErrorCode SVMCreate_Probability(SVM svm)
   svm_prob->Nn_calib    = -1;
   svm_prob->labels_to_target_probs = true;
 
+  svm_prob->threshold   = .5;
+
   svm->ops->setup              = SVMSetUp_Probability;
   svm->ops->reset              = SVMReset_Probability;
   svm->ops->destroy            = SVMDestroy_Probability;
@@ -927,5 +970,27 @@ PetscErrorCode SVMProbGetSigmoidParams(SVM svm,PetscReal *A,PetscReal *B)
     PetscValidPointer(B,2);
     *B = svm_prob->sigmoid_params[1];
   }
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode SVMProbSetThreshold(SVM svm,PetscReal v)
+{
+  SVM_Probability *svm_prob = (SVM_Probability *) svm->data;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidLogicalCollectiveReal(svm,v,2);
+  svm_prob->threshold = v;
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode SVMProbGetThreshold(SVM svm,PetscReal *v)
+{
+  SVM_Probability *svm_prob = (SVM_Probability *) svm->data;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidRealPointer(v,2);
+  *v = svm_prob->threshold;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
