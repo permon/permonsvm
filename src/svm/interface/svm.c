@@ -2156,6 +2156,32 @@ PetscErrorCode SVMReconstructHyperplane(SVM svm)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+/*@
+  SVMGetDistancesFromHyperplane - Gets distances of samples from a separating hyperplane.
+
+  Collected on SVM
+
+  Input Parameters:
++ svm - SVM context
+- Xt - matrix of samples
+
+  Output Parameter:
+. dist - distances of samples from hyperplane
+
+  Level: intermediate
+
+.seealso: SVMPredict()
+@*/
+PetscErrorCode SVMGetDistancesFromHyperplane(SVM svm,Mat Xt,Vec *dist)
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+
+  PetscUseMethod(svm,"SVMGetDistancesFromHyperplane_C",(SVM,Mat,Vec *),(svm,Xt,dist));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
 #undef __FUNCT__
 #define __FUNCT__ "SVMPredict"
 /*@

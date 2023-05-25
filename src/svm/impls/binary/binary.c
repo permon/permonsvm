@@ -87,6 +87,7 @@ PetscErrorCode SVMDestroy_Binary(SVM svm)
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetBias_C",NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetSeparatingHyperplane_C",NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetSeparatingHyperplane_C",NULL));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetDistancesFromHyperplane_C",NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetModelScore_C",NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetOptionsPrefix_C",NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetOptionsPrefix_C",NULL));
@@ -1313,10 +1314,10 @@ PetscErrorCode SVMPostTrain_Binary(SVM svm)
 #define __FUNCT__ "SVMSetFromOptions_Binary"
 PetscErrorCode SVMSetFromOptions_Binary(PetscOptionItems *PetscOptionsObject,SVM svm)
 {
-  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+  /* SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
   PetscReal b;
-  PetscBool flg;
+  PetscBool flg; */
 
   PetscFunctionBegin;
   PetscObjectOptionsBegin((PetscObject) svm);
@@ -1424,22 +1425,19 @@ PetscErrorCode SVMCreateSubPredictDataset_Binary_Private(SVM svm,Mat Xt_predict,
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "SVMPredict_Binary"
-PetscErrorCode SVMPredict_Binary(SVM svm,Mat Xt_pred,Vec *y_out)
+#define __FUNCT__ "SVMGetDistancesFromHyperplane_Binary"
+PetscErrorCode SVMGetDistancesFromHyperplane_Binary(SVM svm,Mat Xt_pred,Vec *dist_out)
 {
-  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
-
   /* Hyperplane */
   Vec       w,w_tmp;
   PetscReal b;
 
+  IS        is_w;
+
   Mat       Xt_training,Xt_sub;
   PetscInt  N_training,N_predict;
-  PetscInt  lo,hi;
 
-  Vec       Xtw,y,sub_y;
-  Vec       o;
-  IS        is_p,is_n,is_w;
+  Vec       dist;
 
   PetscFunctionBegin;
   if (!svm->posttraincalled) {
@@ -1462,16 +1460,49 @@ PetscErrorCode SVMPredict_Binary(SVM svm,Mat Xt_pred,Vec *y_out)
   }
 
   /* Predict labels of unseen samples */
-  PetscCall(MatCreateVecs(Xt_pred,NULL,&Xtw));
-  PetscCall(VecGetOwnershipRange(Xtw,&lo,&hi));
-  PetscCall(VecDuplicate(Xtw,&y));
-  PetscCall(VecDuplicate(Xtw,&o));
+  PetscCall(MatCreateVecs(Xt_pred,NULL,&dist));
+
+  PetscCall(MatMult(Xt_pred,w,dist));
+  PetscCall(VecShift(dist,b)); /* shifting is not performed in case of b = 0 (inner implementation) */
+
+  *dist_out = dist;
+
+  /* Clean up */
+  if (N_training > N_predict) {
+    PetscCall(SVMGetSeparatingHyperplane(svm,&w_tmp,NULL));
+    PetscCall(VecRestoreSubVector(w_tmp,is_w,&w));
+    PetscCall(ISDestroy(&is_w));
+  } else if (N_training < N_predict) {
+    PetscCall(MatDestroy(&Xt_pred));
+  }
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "SVMPredict_Binary"
+PetscErrorCode SVMPredict_Binary(SVM svm,Mat Xt_pred,Vec *y_out)
+{
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
+  Vec       dist;
+  Vec       o;
+  Vec       y,sub_y;
+
+  IS        is_p,is_n;
+  PetscInt  lo,hi;
+
+  PetscFunctionBegin;
+  if (!svm->posttraincalled) {
+    PetscCall(SVMPostTrain(svm));
+  }
+
+  PetscCall(SVMGetDistancesFromHyperplane(svm,Xt_pred,&dist));
+  PetscCall(VecGetOwnershipRange(dist,&lo,&hi));
+  PetscCall(VecDuplicate(dist,&y));
+  PetscCall(VecDuplicate(dist,&o));
   PetscCall(VecSet(o,0));
 
-  PetscCall(MatMult(Xt_pred,w,Xtw));
-  PetscCall(VecShift(Xtw,b)); /* shifting is not performed in case of b = 0 (inner implementation) */
-
-  PetscCall(VecWhichGreaterThan(Xtw,o,&is_p));
+  PetscCall(VecWhichGreaterThan(dist,o,&is_p));
   PetscCall(ISComplement(is_p,lo,hi,&is_n));
 
   PetscCall(VecGetSubVector(y,is_n,&sub_y));
@@ -1484,18 +1515,11 @@ PetscErrorCode SVMPredict_Binary(SVM svm,Mat Xt_pred,Vec *y_out)
 
   *y_out = y;
 
-  /* Free memory */
-  PetscCall(VecDestroy(&Xtw));
+  /* Clean up memory */
+  PetscCall(VecDestroy(&dist));
   PetscCall(VecDestroy(&o));
   PetscCall(ISDestroy(&is_n));
   PetscCall(ISDestroy(&is_p));
-  if (N_training > N_predict) {
-    PetscCall(SVMGetSeparatingHyperplane(svm,&w_tmp,NULL));
-    PetscCall(VecRestoreSubVector(w_tmp,is_w,&w));
-    PetscCall(ISDestroy(&is_w));
-  } else if (N_training < N_predict) {
-    PetscCall(MatDestroy(&Xt_pred));
-  }
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -2176,6 +2200,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetBias_C",SVMGetBias_Binary));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetSeparatingHyperplane_C",SVMSetSeparatingHyperplane_Binary));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetSeparatingHyperplane_C",SVMGetSeparatingHyperplane_Binary));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetDistancesFromHyperplane_C",SVMGetDistancesFromHyperplane_Binary));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetModelScore_C",SVMGetModelScore_Binary));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetOptionsPrefix_C",SVMSetOptionsPrefix_Binary));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetOptionsPrefix_C",SVMGetOptionsPrefix_Binary));

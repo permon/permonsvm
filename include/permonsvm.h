@@ -199,6 +199,7 @@ FLLOP_EXTERN PetscErrorCode SVMPostTrain(SVM);
 FLLOP_EXTERN PetscErrorCode SVMReconstructHyperplane(SVM);
 FLLOP_EXTERN PetscErrorCode SVMSetAutoPostTrain(SVM,PetscBool);
 FLLOP_EXTERN PetscErrorCode SVMGetAutoPostTrain(SVM,PetscBool *);
+FLLOP_EXTERN PetscErrorCode SVMGetDistancesFromHyperplane(SVM,Mat,Vec *);
 FLLOP_EXTERN PetscErrorCode SVMPredict(SVM,Mat,Vec *);
 FLLOP_EXTERN PetscErrorCode SVMTest(SVM);
 
@@ -253,6 +254,7 @@ FLLOP_EXTERN PetscErrorCode SVMGetInnerSVM(SVM,SVM *);
 /* SVM probability */
 FLLOP_EXTERN PetscErrorCode SVMProbSetConvertLabelsToTargetProbability(SVM,PetscBool);
 FLLOP_EXTERN PetscErrorCode SVMProbGetConvertLabelsToTargetProbability(SVM,PetscBool *);
+FLLOP_EXTERN PetscErrorCode SVMProbGetSigmoidParams(SVM,PetscReal *,PetscReal *);
 
 /* Input/Output functions */
 FLLOP_EXTERN PetscErrorCode PetscViewerLoadSVMDataset(Mat,Vec,PetscViewer);

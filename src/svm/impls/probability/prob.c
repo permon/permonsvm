@@ -687,13 +687,42 @@ PetscErrorCode SVMPostTrain_Probability(SVM svm)
   /* Broad cast */
   PetscCallMPI(MPI_Bcast(svm_prob->sigmoid_params,2,MPIU_REAL,0,comm));
 
+  /* Clean up */
+  PetscCall(TaoDestroy(&tao));
+  svm->posttraincalled = PETSC_TRUE;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMPredict_Probability(SVM svm,Mat Xt_pred,Vec *y_out)
 {
+  SVM       svm_binary;
+
+  Vec       w,w_inner,w_sub;
+  PetscReal b;
+
+  PetscReal A,B;              /* sigmoid params */
+
+  PetscInt  N_training,N_predict;
 
   PetscFunctionBegin;
+  if (!svm->posttraincalled) {
+    PetscCall(SVMPostTrain(svm));
+  }
+
+  /* Get params of models (calibrated and uncalibrated) */
+  PetscCall(SVMGetInnerSVM(svm,&svm_binary));
+  PetscCall(SVMGetSeparatingHyperplane(svm_binary,&w,&b));
+  PetscCall(SVMProbGetSigmoidParams(svm,&A,&B));
+
+  PetscCall(VecGetSize(w,&N_training));
+  PetscCall(MatGetSize(Xt_pred,NULL,&N_predict));
+  /* Check number of features */
+  if (N_training > N_predict) {
+    // TODO implement
+  } else if (N_training < N_predict) {
+    // TODO implement
+  }
+
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -882,5 +911,21 @@ PetscErrorCode SVMProbGetConvertLabelsToTargetProbability(SVM svm,PetscBool *flg
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   *flg = svm_prob->labels_to_target_probs;
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode SVMProbGetSigmoidParams(SVM svm,PetscReal *A,PetscReal *B)
+{
+  SVM_Probability *svm_prob = (SVM_Probability *) svm->data;
+
+  PetscFunctionBegin;
+  if (A) {
+    PetscValidPointer(A,1);
+    *A = svm_prob->sigmoid_params[0];
+  }
+  if (B) {
+    PetscValidPointer(B,2);
+    *B = svm_prob->sigmoid_params[1];
+  }
   PetscFunctionReturn(PETSC_SUCCESS);
 }
