@@ -1,5 +1,6 @@
 
 #include "probimpl.h"
+#include "../binary/binaryimpl.h"
 
 PetscErrorCode SVMReset_Probability(SVM svm)
 {
@@ -756,14 +757,21 @@ PetscErrorCode SVMPredict_Probability(SVM svm,Mat Xt,Vec *y_out)
   *y_out = pred;
 
   /* Clean up */
+  PetscCall(ISDestroy(&is_n));
+  PetscCall(ISDestroy(&is_p));
   PetscCall(VecDestroyVecs(N_work,&work));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMComputeModelScores_Probability(SVM svm,Vec y_pred,Vec y_known)
 {
+  PetscReal threshold;
 
   PetscFunctionBegin;
+  PetscCall(SVMProbGetThreshold(svm,&threshold));
+  /* Convert probability to labels */
+  PetscCall(SVMProbConvertProbabilityToLabels(svm,y_pred));
+
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -777,7 +785,9 @@ PetscErrorCode SVMTest_Probability(SVM svm)
   PetscFunctionBegin;
   PetscCall(SVMGetTestDataset(svm,&Xt_test,&y_test));
   PetscCall(SVMPredict(svm,Xt_test,&y_pred));
-  // TODO implement
+  PetscCall(SVMComputeModelScores(svm,y_pred,y_test));
+  /* Clean */
+  PetscCall(VecDestroy(&y_pred));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -954,6 +964,46 @@ PetscErrorCode SVMProbGetConvertLabelsToTargetProbability(SVM svm,PetscBool *flg
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   *flg = svm_prob->labels_to_target_probs;
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode SVMProbConvertProbabilityToLabels(SVM svm,Vec y)
+{
+  SVM        svm_binary;
+  SVM_Binary *ptr_binary = NULL;
+
+  Vec        vec_threshold;
+  PetscReal  threshold;
+
+  Vec        y_sub;
+
+  IS         is_p,is_n;
+  PetscInt   lo,hi;
+
+  PetscFunctionBegin;
+  PetscCall(SVMProbGetThreshold(svm,&threshold));
+  PetscCall(SVMGetInnerSVM(svm,&svm_binary));
+  ptr_binary = (SVM_Binary *) svm_binary->data;
+
+  PetscCall(VecDuplicate(y,&vec_threshold));
+  PetscCall(VecSet(vec_threshold,threshold));
+
+  PetscCall(VecWhichGreaterThan(y,vec_threshold,&is_p));
+  PetscCall(VecGetOwnershipRange(y,&lo,&hi));
+  PetscCall(ISComplement(is_p,lo,hi,&is_n));
+
+  PetscCall(VecGetSubVector(y,is_n,&y_sub));
+  PetscCall(VecSet(y_sub,ptr_binary->y_map[0]));
+  PetscCall(VecRestoreSubVector(y,is_n,&y_sub));
+
+  PetscCall(VecGetSubVector(y,is_p,&y_sub));
+  PetscCall(VecSet(y_sub,ptr_binary->y_map[1]));
+  PetscCall(VecRestoreSubVector(y,is_p,&y_sub));
+
+  /* Clean up */
+  PetscCall(ISDestroy(&is_p));
+  PetscCall(ISDestroy(&is_n));
+  PetscCall(VecDestroy(&vec_threshold));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
