@@ -172,6 +172,8 @@ FLLOP_EXTERN PetscErrorCode SVMGetCalibrationDataset(SVM,Mat *,Vec *);
 FLLOP_EXTERN PetscErrorCode SVMSetTestDataset(SVM,Mat,Vec);
 FLLOP_EXTERN PetscErrorCode SVMGetTestDataset(SVM,Mat *,Vec *);
 
+FLLOP_EXTERN PetscErrorCode SVMGetLabels(SVM,const PetscReal *[]);
+
 FLLOP_EXTERN PetscErrorCode SVMSetMod(SVM,PetscInt);
 FLLOP_EXTERN PetscErrorCode SVMGetMod(SVM,PetscInt *);
 FLLOP_EXTERN PetscErrorCode SVMSetLossType(SVM,SVMLossType);

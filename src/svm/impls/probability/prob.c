@@ -2,6 +2,9 @@
 #include "probimpl.h"
 #include "../binary/binaryimpl.h"
 
+// #include "../../utils/report.h"
+
+
 PetscErrorCode SVMReset_Probability(SVM svm)
 {
   SVM_Probability *svm_prob = (SVM_Probability *) svm->data;
@@ -28,6 +31,7 @@ PetscErrorCode SVMDestroy_Probability(SVM svm)
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C"    ,NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetCalibrationDataset_C" ,NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetCalibrationDataset_C" ,NULL));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetLabels_C"             ,NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMLoadCalibrationDataset_C",NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMViewCalibrationDataset_C",NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetOptionsPrefix_C"      ,NULL));
@@ -210,6 +214,19 @@ PetscErrorCode SVMGetCalibrationDataset_Probability(SVM svm,Mat *Xt_calib,Vec *y
     PetscValidPointer(y_calib,3);
     *y_calib = svm_prob->y_calib;
   }
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode SVMGetLabels_Probability(SVM svm,const PetscReal *labels[])
+{
+  SVM             binary;
+
+  const PetscReal *labels_inner;
+
+  PetscFunctionBegin;
+  PetscCall(SVMGetInnerSVM(svm,&binary));
+  PetscCall(SVMGetLabels(binary,&labels_inner));
+  *labels = labels_inner;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -763,15 +780,10 @@ PetscErrorCode SVMPredict_Probability(SVM svm,Mat Xt,Vec *y_out)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode SVMComputeModelScores_Probability(SVM svm,Vec y_pred,Vec y_known)
+PetscErrorCode SVMComputeModelScores_Probability(SVM svm,Vec y_prob,Vec y_known)
 {
-  PetscReal threshold;
-
+  // TODO remove
   PetscFunctionBegin;
-  PetscCall(SVMProbGetThreshold(svm,&threshold));
-  /* Convert probability to labels */
-  PetscCall(SVMProbConvertProbabilityToLabels(svm,y_pred));
-
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -785,7 +797,10 @@ PetscErrorCode SVMTest_Probability(SVM svm)
   PetscFunctionBegin;
   PetscCall(SVMGetTestDataset(svm,&Xt_test,&y_test));
   PetscCall(SVMPredict(svm,Xt_test,&y_pred));
-  PetscCall(SVMComputeModelScores(svm,y_pred,y_test));
+
+  PetscCall(SVMProbConvertProbabilityToLabels(svm,y_pred));
+  // PetscCall(ClassificationReport(svm,y_pred,y_test));
+
   /* Clean */
   PetscCall(VecDestroy(&y_pred));
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -935,6 +950,7 @@ PetscErrorCode SVMCreate_Probability(SVM svm)
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C"    ,SVMGetTrainingDataset_Probability));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetCalibrationDataset_C" ,SVMSetCalibrationDataset_Probability));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetCalibrationDataset_C" ,SVMGetCalibrationDataset_Probability));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetLabels_C"             ,SVMGetLabels_Probability));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMLoadCalibrationDataset_C",SVMLoadCalibrationDataset_Probability));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMViewCalibrationDataset_C",SVMViewCalibrationDataset_Probability));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetOptionsPrefix_C"      ,SVMSetOptionsPrefix_Probability));
@@ -969,21 +985,19 @@ PetscErrorCode SVMProbGetConvertLabelsToTargetProbability(SVM svm,PetscBool *flg
 
 PetscErrorCode SVMProbConvertProbabilityToLabels(SVM svm,Vec y)
 {
-  SVM        svm_binary;
-  SVM_Binary *ptr_binary = NULL;
+  Vec            vec_threshold;
+  PetscReal      threshold;
 
-  Vec        vec_threshold;
-  PetscReal  threshold;
+  Vec             y_sub;
 
-  Vec        y_sub;
+  IS              is_p,is_n;
+  PetscInt        lo,hi;
 
-  IS         is_p,is_n;
-  PetscInt   lo,hi;
+  const PetscReal *labels = NULL;
 
   PetscFunctionBegin;
   PetscCall(SVMProbGetThreshold(svm,&threshold));
-  PetscCall(SVMGetInnerSVM(svm,&svm_binary));
-  ptr_binary = (SVM_Binary *) svm_binary->data;
+  PetscCall(SVMGetLabels(svm,&labels));
 
   PetscCall(VecDuplicate(y,&vec_threshold));
   PetscCall(VecSet(vec_threshold,threshold));
@@ -993,11 +1007,11 @@ PetscErrorCode SVMProbConvertProbabilityToLabels(SVM svm,Vec y)
   PetscCall(ISComplement(is_p,lo,hi,&is_n));
 
   PetscCall(VecGetSubVector(y,is_n,&y_sub));
-  PetscCall(VecSet(y_sub,ptr_binary->y_map[0]));
+  PetscCall(VecSet(y_sub,labels[0]));
   PetscCall(VecRestoreSubVector(y,is_n,&y_sub));
 
   PetscCall(VecGetSubVector(y,is_p,&y_sub));
-  PetscCall(VecSet(y_sub,ptr_binary->y_map[1]));
+  PetscCall(VecSet(y_sub,labels[1]));
   PetscCall(VecRestoreSubVector(y,is_p,&y_sub));
 
   /* Clean up */

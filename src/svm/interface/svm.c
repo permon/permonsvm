@@ -1884,6 +1884,28 @@ PetscErrorCode SVMGetTestDataset(SVM svm,Mat *Xt_test,Vec *y_test)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+/*@
+  SVMGetLabels - Returns original labels related to each category.
+
+  Not Collective
+
+  Input Parameters:
+. svm - SVM context
+. labels - labels related to each category
+
+  Level: intermediate
+
+.seealso SVMSetTrainingDataset, SVMGetTrainingDataset
+@*/
+PetscErrorCode SVMGetLabels(SVM svm,const PetscReal *labels[])
+{
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscUseMethod(svm,"SVMGetLabels_C",(SVM,const PetscReal *[]),(svm,labels));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMSetAutoPostTrain"
@@ -1892,7 +1914,7 @@ PetscErrorCode SVMGetTestDataset(SVM svm,Mat *Xt_test,Vec *y_test)
 
   Logically Collective on SVM
 
-  Input Parameter:
+  Input Parameters:
 . svm - SVM context
 . flg - flag
 

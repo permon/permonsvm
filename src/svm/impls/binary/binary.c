@@ -73,26 +73,28 @@ PetscErrorCode SVMDestroy_Binary(SVM svm)
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
   PetscFunctionBegin;
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetGramian_C",NULL));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetGramian_C",NULL));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetOperator_C",NULL));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetOperator_C",NULL));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingDataset_C",NULL));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C",NULL));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMComputeOperator_C",NULL));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetQPS_C",NULL));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetQPS_C",NULL));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetQP_C",NULL));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetBias_C",NULL));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetBias_C",NULL));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetSeparatingHyperplane_C",NULL));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetSeparatingHyperplane_C",NULL));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetGramian_C"                ,NULL));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetGramian_C"                ,NULL));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetOperator_C"               ,NULL));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetOperator_C"               ,NULL));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingDataset_C"        ,NULL));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C"        ,NULL));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetLabels_C"                 ,NULL));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMComputeOperator_C"           ,NULL));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetQPS_C"                    ,NULL));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetQPS_C"                    ,NULL));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetQP_C"                     ,NULL));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetBias_C"                   ,NULL));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetBias_C"                   ,NULL));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetSeparatingHyperplane_C"   ,NULL));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetSeparatingHyperplane_C"   ,NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetDistancesFromHyperplane_C",NULL));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetModelScore_C",NULL));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetOptionsPrefix_C",NULL));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetOptionsPrefix_C",NULL));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMAppendOptionsPrefix_C",NULL));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMKFoldCrossValidation_C",NULL));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetModelScore_C"             ,NULL));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetOptionsPrefix_C"          ,NULL));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetOptionsPrefix_C"          ,NULL));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMAppendOptionsPrefix_C"       ,NULL));
+
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMKFoldCrossValidation_C"          ,NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMStratifiedKFoldCrossValidation_C",NULL));
 
   PetscCall(QPSDestroy(&svm_binary->qps));
@@ -383,18 +385,27 @@ PetscErrorCode SVMGetTrainingDataset_Binary(SVM svm,Mat *Xt_training,Vec *y_trai
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+PetscErrorCode SVMGetLabels_Binary(SVM svm,const PetscReal *labels[])
+{
+  SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
+
+  PetscFunctionBegin;
+  *labels = svm_binary->y_map;
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
 #undef __FUNCT__
 #define __FUNCT__ "SVMSetUp_Remapy_Binary_Private"
 static PetscErrorCode SVMSetUp_Remapy_Binary_Private(SVM svm)
 {
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
-  Vec         y;
-  PetscInt    i,n;
+  Vec               y;
+  PetscInt          i,n;
 
-  PetscScalar min,max;
+  PetscScalar       min,max;
   const PetscScalar *y_arr;
-  PetscScalar *y_inner_arr;
+  PetscScalar       *y_inner_arr;
 
   PetscFunctionBegin;
   PetscCall(SVMGetTrainingDataset(svm,NULL,&y));
@@ -2186,27 +2197,28 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
   svm->ops->viewtrainingpredictions = SVMViewTrainingPredictions_Binary;
   svm->ops->viewtestpredictions     = SVMViewTestPredictions_Binary;
 
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetGramian_C",SVMSetGramian_Binary));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetGramian_C",SVMGetGramian_Binary));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetOperator_C",SVMSetOperator_Binary));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetOperator_C",SVMGetOperator_Binary));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingDataset_C",SVMSetTrainingDataset_Binary));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C",SVMGetTrainingDataset_Binary));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMComputeOperator_C",SVMComputeOperator_Binary));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetQPS_C",SVMSetQPS_Binary));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetQPS_C",SVMGetQPS_Binary));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetQP_C",SVMGetQP_Binary));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetBias_C",SVMSetBias_Binary));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetBias_C",SVMGetBias_Binary));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetSeparatingHyperplane_C",SVMSetSeparatingHyperplane_Binary));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetSeparatingHyperplane_C",SVMGetSeparatingHyperplane_Binary));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetGramian_C"                ,SVMSetGramian_Binary));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetGramian_C"                ,SVMGetGramian_Binary));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetOperator_C"               ,SVMSetOperator_Binary));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetOperator_C"               ,SVMGetOperator_Binary));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetTrainingDataset_C"        ,SVMSetTrainingDataset_Binary));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetTrainingDataset_C"        ,SVMGetTrainingDataset_Binary));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetLabels_C"                 ,SVMGetLabels_Binary));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMComputeOperator_C"           ,SVMComputeOperator_Binary));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetQPS_C"                    ,SVMSetQPS_Binary));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetQPS_C"                    ,SVMGetQPS_Binary));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetQP_C"                     ,SVMGetQP_Binary));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetBias_C"                   ,SVMSetBias_Binary));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetBias_C"                   ,SVMGetBias_Binary));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetSeparatingHyperplane_C"   ,SVMSetSeparatingHyperplane_Binary));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetSeparatingHyperplane_C"   ,SVMGetSeparatingHyperplane_Binary));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetDistancesFromHyperplane_C",SVMGetDistancesFromHyperplane_Binary));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetModelScore_C",SVMGetModelScore_Binary));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetOptionsPrefix_C",SVMSetOptionsPrefix_Binary));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetOptionsPrefix_C",SVMGetOptionsPrefix_Binary));
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMAppendOptionsPrefix_C",SVMAppendOptionsPrefix_Binary));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetModelScore_C"             ,SVMGetModelScore_Binary));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMSetOptionsPrefix_C"          ,SVMSetOptionsPrefix_Binary));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetOptionsPrefix_C"          ,SVMGetOptionsPrefix_Binary));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMAppendOptionsPrefix_C"       ,SVMAppendOptionsPrefix_Binary));
 
-  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMKFoldCrossValidation_C",SVMKFoldCrossValidation_Binary));
+  PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMKFoldCrossValidation_C"          ,SVMKFoldCrossValidation_Binary));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMStratifiedKFoldCrossValidation_C",SVMStratifiedKFoldCrossValidation_Binary));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
