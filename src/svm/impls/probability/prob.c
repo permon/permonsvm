@@ -2,7 +2,7 @@
 #include "probimpl.h"
 #include "../binary/binaryimpl.h"
 
-// #include "../../utils/report.h"
+#include "../../utils/report.h"
 
 
 PetscErrorCode SVMReset_Probability(SVM svm)
@@ -799,7 +799,7 @@ PetscErrorCode SVMTest_Probability(SVM svm)
   PetscCall(SVMPredict(svm,Xt_test,&y_pred));
 
   PetscCall(SVMProbConvertProbabilityToLabels(svm,y_pred));
-  // PetscCall(ClassificationReport(svm,y_pred,y_test));
+  PetscCall(ClassificationReport(svm,y_pred,y_test));
 
   /* Clean */
   PetscCall(VecDestroy(&y_pred));

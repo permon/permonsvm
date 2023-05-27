@@ -2,9 +2,9 @@ ALL: lib
 
 CFLAGS   =
 FFLAGS   =
-SOURCEC  = io.c matutils.c
+SOURCEC  = io.c report.c matutils.c
 SOURCEF  =
-SOURCEH  = io.h
+SOURCEH  = io.h report.h
 OBJSC    = ${SOURCEC:.c=.o}
 LIBBASE  = libpermon
 DIRS     =
