@@ -65,8 +65,6 @@ PetscErrorCode BinaryConfusionMatrix(SVM svm,Vec y_pred,Vec y_known,PetscInt con
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetBinaryClassificationReport"
 PetscErrorCode SVMGetBinaryClassificationReport(SVM svm,Vec y_pred,Vec y_known,PetscInt *cmat, PetscReal *scores)
 {
   PetscInt  confusion_mat[4];
@@ -85,7 +83,7 @@ PetscErrorCode SVMGetBinaryClassificationReport(SVM svm,Vec y_pred,Vec y_known,P
 
   PetscInt  i;
 
-  PetscFunctionBeginI;
+  PetscFunctionBegin;
   PetscCall(BinaryConfusionMatrix(svm,y_pred,y_known,confusion_mat));
 
   TP = confusion_mat[0];
@@ -98,7 +96,7 @@ PetscErrorCode SVMGetBinaryClassificationReport(SVM svm,Vec y_pred,Vec y_known,P
   }
 
   if (scores == NULL) {
-    PetscFunctionReturnI(PETSC_SUCCESS);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   precision[0] = (PetscReal) TP / (PetscReal) (TP + FP); /* precision (positive class) */
@@ -115,7 +113,7 @@ PetscErrorCode SVMGetBinaryClassificationReport(SVM svm,Vec y_pred,Vec y_known,P
 
   jaccard_index[0] = (PetscReal) TP / (PetscReal) (TP + FP + FN); /* Jaccard index (positive class) */
   jaccard_index[1] = (PetscReal) TN / (PetscReal) (TN + FN + FP); /* Jaccard index (negative class) */
-  jaccard_index[2] = (jaccard_index[0] + jaccard_index[1]) / 2.;  /* Jaccard index (negative class) */
+  jaccard_index[2] = (jaccard_index[0] + jaccard_index[1]) / 2.;  /* Jaccard index (average) */
 
   /* Area under curve (trapezoidal rule) */
   specifity = (PetscReal) TN / (PetscReal) (TN + FP);
@@ -158,7 +156,7 @@ PetscErrorCode SVMGetBinaryClassificationReport(SVM svm,Vec y_pred,Vec y_known,P
 
   scores[14] = auc_roc;
 
-  PetscFunctionReturnI(PETSC_SUCCESS);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMPrintBinaryClassificationReport(SVM svm,PetscInt *cmat,PetscReal *scores,PetscViewer v)
@@ -179,15 +177,15 @@ PetscErrorCode SVMPrintBinaryClassificationReport(SVM svm,PetscInt *cmat,PetscRe
 
   /* Print classification report */
   PetscCall(PetscViewerASCIIPrintf(v,"Classification report:\n"));
+  /* Header */
   PetscCall(PetscViewerASCIIPushTab(v));
   PetscCall(PetscViewerASCIIPrintf(v,"label\tprecision\trecall\tF1\tJaccard index\n"));
-  PetscCall(PetscViewerASCIIPrintf(v,"%.1f  \t%.2f\t\t%.2f\t%.2f\t%.2f\n",labels[0],scores[2],scores[5] ,scores[8] ,scores[11]));
-  PetscCall(PetscViewerASCIIPrintf(v,"%.1f  \t%.2f\t\t%.2f\t%.2f\t%.2f\n",labels[1],scores[3],scores[6] ,scores[9] ,scores[12]));
-  PetscCall(PetscViewerASCIIPrintf(v,"mean \t%.2f\t\t%.2f\t%.2f\t%.2f\n" ,scores[4],scores[7],scores[10],scores[13]));
+  PetscCall(PetscViewerASCIIPrintf(v,"%.1f  \t%.2f\t\t%.2f\t%.2f\t%.2f\n",labels[0],scores[3],scores[6] ,scores[9] ,scores[12]));
+  PetscCall(PetscViewerASCIIPrintf(v,"%.1f  \t%.2f\t\t%.2f\t%.2f\t%.2f\n",labels[1],scores[2],scores[5] ,scores[8] ,scores[11]));
+  PetscCall(PetscViewerASCIIPrintf(v,"mean  \t%.2f\t\t%.2f\t%.2f\t%.2f\n" ,scores[4],scores[7],scores[10],scores[13]));
   PetscCall(PetscViewerASCIIPrintf(v,"accuracy          = %.2f%%\n",(double) scores[0] * 100));
   PetscCall(PetscViewerASCIIPrintf(v,"accuracy_balanced = %.2f%%\n",(double) scores[1] * 100));
   PetscCall(PetscViewerASCIIPrintf(v,"auc_roc           = %.2f%%\n",(double) scores[14] * 100));
   PetscCall(PetscViewerASCIIPopTab(v));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
-/* TODO print classification report */
