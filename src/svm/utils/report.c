@@ -161,4 +161,33 @@ PetscErrorCode SVMGetBinaryClassificationReport(SVM svm,Vec y_pred,Vec y_known,P
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
+PetscErrorCode SVMPrintBinaryClassificationReport(SVM svm,PetscInt *cmat,PetscReal *scores,PetscViewer v)
+{
+  const PetscReal *labels;
+
+  PetscFunctionBegin;
+  PetscCall(SVMGetLabels(svm,&labels));
+
+  /* Print confusion matrix */
+  PetscCall(PetscViewerASCIIPrintf(v,"Confusion matrix:\n"));
+  PetscCall(PetscViewerASCIIPushTab(v));
+  PetscCall(PetscViewerASCIIPrintf(v,"TP = %4" PetscInt_FMT ""  ,cmat[0]));
+  PetscCall(PetscViewerASCIIPrintf(v,"FP = %4" PetscInt_FMT "\n",cmat[1]));
+  PetscCall(PetscViewerASCIIPrintf(v,"FN = %4" PetscInt_FMT ""  ,cmat[2]));
+  PetscCall(PetscViewerASCIIPrintf(v,"TN = %4" PetscInt_FMT "\n",cmat[3]));
+  PetscCall(PetscViewerASCIIPopTab(v));
+
+  /* Print classification report */
+  PetscCall(PetscViewerASCIIPrintf(v,"Classification report:\n"));
+  PetscCall(PetscViewerASCIIPushTab(v));
+  PetscCall(PetscViewerASCIIPrintf(v,"label\tprecision\trecall\tF1\tJaccard index\n"));
+  PetscCall(PetscViewerASCIIPrintf(v,"0.0  \t%.2f\t\t%.2f\t%.2f\t%.2f\n",scores[2],scores[5],scores[8] ,scores[11]));
+  PetscCall(PetscViewerASCIIPrintf(v,"1.0  \t%.2f\t\t%.2f\t%.2f\t%.2f\n",scores[3],scores[6],scores[9] ,scores[12]));
+  PetscCall(PetscViewerASCIIPrintf(v,"mean \t%.2f\t\t%.2f\t%.2f\t%.2f\n",scores[4],scores[7],scores[10],scores[13]));
+  PetscCall(PetscViewerASCIIPrintf(v,"accuracy          = %.2f%%\n",(double) scores[0] * 100));
+  PetscCall(PetscViewerASCIIPrintf(v,"accuracy_balanced = %.2f%%\n",(double) scores[1] * 100));
+  PetscCall(PetscViewerASCIIPrintf(v,"auc_roc           = %.2f%%\n",(double) scores[14] * 100));
+  PetscCall(PetscViewerASCIIPopTab(v));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
 /* TODO print classification report */

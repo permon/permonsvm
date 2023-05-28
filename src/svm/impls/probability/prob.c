@@ -51,8 +51,36 @@ PetscErrorCode SVMView_Probability(SVM svm,PetscViewer v)
 
 PetscErrorCode SVMViewScore_Probability(SVM svm,PetscViewer v)
 {
+  MPI_Comm        comm;
+
+  SVM_Probability *svm_prob = (SVM_Probability *) svm->data;
+  SVM             binary;
+
+  PetscReal       threshold;
+  PetscBool       isascii;
 
   PetscFunctionBegin;
+  comm = PetscObjectComm((PetscObject) svm);
+  if (!v) v = PETSC_VIEWER_STDOUT_(comm);
+
+  PetscCall(PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERASCII,&isascii));
+  if (isascii) {
+    PetscCall(SVMGetInnerSVM(svm,&binary));
+    PetscCall(SVMViewScore(binary,v));
+    PetscCall(SVMProbGetThreshold(svm,&threshold));
+
+    PetscCall(PetscObjectPrintClassNamePrefixType((PetscObject) svm,v));
+    PetscCall(PetscViewerASCIIPushTab(v));
+    PetscCall(PetscViewerASCIIPrintf(v,"model performance scores with threshold=%.2f\n",(double) threshold));
+    PetscCall(PetscViewerASCIIPushTab(v));
+    PetscCall(SVMPrintBinaryClassificationReport(svm,svm_prob->confusion_matrix,svm_prob->model_scores,v));
+    PetscCall(PetscViewerASCIIPopTab(v));
+    PetscCall(PetscViewerASCIIPopTab(v));
+  } else {
+    SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewScore", ((PetscObject)v)->type_name);
+  }
+
+
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -791,20 +819,28 @@ PetscErrorCode SVMComputeModelScores_Probability(SVM svm,Vec y,Vec y_known)
 
 PetscErrorCode SVMTest_Probability(SVM svm)
 {
+  SVM c_svm;
+
   Mat Xt_test;
   Vec y_test;
 
-  Vec y_pred;
+  Vec y_pred_label;
+  Vec y_pred_prob;
 
   PetscFunctionBegin;
   PetscCall(SVMGetTestDataset(svm,&Xt_test,&y_test));
-  PetscCall(SVMPredict(svm,Xt_test,&y_pred));
 
-  PetscCall(SVMProbConvertProbabilityToLabels(svm,y_pred));
-  PetscCall(SVMComputeModelScores(svm,y_pred,y_test));
+  PetscCall(SVMGetInnerSVM(svm,&c_svm));
+  PetscCall(SVMPredict(c_svm,Xt_test,&y_pred_label));
+  PetscCall(SVMComputeModelScores(c_svm,y_pred_label,y_test));
+
+  PetscCall(SVMPredict(svm,Xt_test,&y_pred_prob));
+  PetscCall(SVMProbConvertProbabilityToLabels(svm,y_pred_prob));
+  PetscCall(SVMComputeModelScores(svm,y_pred_prob,y_test));
 
   /* Clean */
-  PetscCall(VecDestroy(&y_pred));
+  PetscCall(VecDestroy(&y_pred_prob));
+  PetscCall(VecDestroy(&y_pred_label));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -823,7 +859,7 @@ PetscErrorCode SVMGetInnerSVM_Probability(SVM svm,SVM *inner_out)
     PetscCall(SVMCreate(comm,&inner));
     PetscCall(SVMSetType(inner,SVM_BINARY));
 
-    PetscCall(SVMSetOptionsPrefix(inner,"prob_binary_")); // TODO change prefix
+    PetscCall(SVMSetOptionsPrefix(inner,"uncalibrated_"));
     PetscCall(SVMGetOptionsPrefix(svm,&prefix));
     PetscCall(SVMAppendOptionsPrefix(inner,prefix));
 
