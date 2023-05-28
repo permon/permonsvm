@@ -1,5 +1,6 @@
 
 #include "binaryimpl.h"
+#include "../../utils/report.h"
 
 const char *const SVMLossTypes[]={"L1","L2","SVMLossType","SVM_",0};
 const char *const SVMConvergedTypes[] = {"default", "duality_gap", "dual_violation", "SVMConvergedType", "SVM_", 0};
@@ -203,24 +204,8 @@ PetscErrorCode SVMViewScore_Binary(SVM svm,PetscViewer v)
       PetscCall(PetscViewerASCIIPrintf(v,"model performance score with training parameters C+=%.3f, C-=%.3f, mod=%" PetscInt_FMT ", loss=%s:\n",(double)Cp,(double)Cn,mod,SVMLossTypes[loss_type]));
     }
     PetscCall(PetscViewerASCIIPushTab(v));
-
-    PetscCall(PetscViewerASCIIPrintf(v,"Confusion matrix:\n"));
-    PetscCall(PetscViewerASCIIPushTab(v));
-    PetscCall(PetscViewerASCIIPrintf(v,"TP = %4" PetscInt_FMT "",svm_binary->confusion_matrix[0]));
-    PetscCall(PetscViewerASCIIPrintf(v,"FP = %4" PetscInt_FMT "\n",svm_binary->confusion_matrix[1]));
-    PetscCall(PetscViewerASCIIPrintf(v,"FN = %4" PetscInt_FMT "",svm_binary->confusion_matrix[2]));
-    PetscCall(PetscViewerASCIIPrintf(v,"TN = %4" PetscInt_FMT "\n",svm_binary->confusion_matrix[3]));
+    PetscCall(SVMPrintBinaryClassificationReport(svm,svm_binary->confusion_matrix,svm_binary->model_scores,v));
     PetscCall(PetscViewerASCIIPopTab(v));
-
-    PetscCall(PetscViewerASCIIPrintf(v,"accuracy=%.2f%%",(double)(svm_binary->model_scores[0]) * 100.));
-    PetscCall(PetscViewerASCIIPrintf(v,"precision=%.2f%%",(double)(svm_binary->model_scores[1]) * 100.));
-    PetscCall(PetscViewerASCIIPrintf(v,"sensitivity=%.2f%%\n",(double)(svm_binary->model_scores[2]) * 100.));
-    PetscCall(PetscViewerASCIIPrintf(v,"F1=%.2f",(double)svm_binary->model_scores[3]));
-    PetscCall(PetscViewerASCIIPrintf(v,"MCC=%.2f",(double)svm_binary->model_scores[4]));
-    PetscCall(PetscViewerASCIIPrintf(v,"AUC_ROC=%.2f",(double)svm_binary->model_scores[5]));
-    PetscCall(PetscViewerASCIIPrintf(v,"G1=%.2f\n",(double)svm_binary->model_scores[6]));
-    PetscCall(PetscViewerASCIIPopTab(v));
-
     PetscCall(PetscViewerASCIIPopTab(v));
   } else {
     SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewScore", ((PetscObject)v)->type_name);
@@ -1536,87 +1521,12 @@ PetscErrorCode SVMPredict_Binary(SVM svm,Mat Xt_pred,Vec *y_out)
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMComputeModelScores_Binary"
-PetscErrorCode SVMComputeModelScores_Binary(SVM svm,Vec y_pred,Vec y_known)
+PetscErrorCode SVMComputeModelScores_Binary(SVM svm,Vec y,Vec y_known)
 {
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
-  Vec       label,y_pred_sub,y_known_sub;
-  IS        is_label,is_eq;
-
-  PetscInt  TP,FP,TN,FN,N;
-  /* AUC ROC */
-  PetscReal specifity;
-  PetscReal TPR,FPR;
-  PetscReal x[3],y[3],dx;
-  PetscInt  i;
-
   PetscFunctionBegin;
-  PetscCall(VecDuplicate(y_known,&label));
-
-  /* TN and FN samples */
-  PetscCall(VecSet(label,svm_binary->y_map[0]));
-  PetscCall(VecWhichEqual(y_known,label,&is_label));
-  PetscCall(VecGetSubVector(y_known,is_label,&y_known_sub));
-  PetscCall(VecGetSubVector(y_pred,is_label,&y_pred_sub));
-  PetscCall(VecWhichEqual(y_known_sub,y_pred_sub,&is_eq));
-
-  PetscCall(ISGetSize(is_eq,&TN));
-  PetscCall(VecGetSize(y_known_sub,&N));
-  FN = N - TN;
-
-  PetscCall(VecRestoreSubVector(y_known,is_label,&y_known_sub));
-  PetscCall(VecRestoreSubVector(y_pred,is_label,&y_pred_sub));
-  PetscCall(ISDestroy(&is_label));
-  PetscCall(ISDestroy(&is_eq));
-
-  /* TP and FP samples */
-  PetscCall(VecSet(label,svm_binary->y_map[1]));
-  PetscCall(VecWhichEqual(y_known,label,&is_label));
-  PetscCall(VecGetSubVector(y_known,is_label,&y_known_sub));
-  PetscCall(VecGetSubVector(y_pred,is_label,&y_pred_sub));
-  PetscCall(VecWhichEqual(y_known_sub,y_pred_sub,&is_eq));
-
-  PetscCall(ISGetSize(is_eq,&TP));
-  PetscCall(VecGetSize(y_known_sub,&N));
-  FP = N - TP;
-
-  PetscCall(VecRestoreSubVector(y_known,is_label,&y_known_sub));
-  PetscCall(VecRestoreSubVector(y_pred,is_label,&y_pred_sub));
-  PetscCall(ISDestroy(&is_label));
-  PetscCall(ISDestroy(&is_eq));
-
-  /* confusion matrix */
-  svm_binary->confusion_matrix[0] = TP;
-  svm_binary->confusion_matrix[1] = FP;
-  svm_binary->confusion_matrix[2] = FN;
-  svm_binary->confusion_matrix[3] = TN;
-
-  /* performance scores of model */
-  svm_binary->model_scores[0] = (PetscReal) (TP + TN) / (PetscReal) (TP + TN + FP + FN); /* accuracy */
-  svm_binary->model_scores[1] = (PetscReal) TP / (PetscReal) (TP + FP); /* precision */
-  svm_binary->model_scores[2] = (PetscReal) TP / (TP + FN); /* sensitivity */
-  /* F1 */
-  svm_binary->model_scores[3] = 2. * (svm_binary->model_scores[1] * svm_binary->model_scores[2]) / (svm_binary->model_scores[1] + svm_binary->model_scores[2]);
-  /* Matthews correlation coefficient */
-  svm_binary->model_scores[4] = (PetscReal) (TP * TN - FP * FN);
-  svm_binary->model_scores[4] /= (PetscSqrtReal(TP + FP) * PetscSqrtReal(TP + FN) * PetscSqrtReal(TN + FP) * PetscSqrtReal(TN + FN) );
-  /* Area Under Curve (AUC) Receiver Operating Characteristics (ROC) */
-  TPR = svm_binary->model_scores[2];
-  specifity = (PetscReal) TN / (PetscReal) (TN + FP);
-  FPR = 1 - specifity;
-  /* Area under curve (trapezoidal rule) */
-  x[0] = 0; x[1] = FPR; x[2] = 1;
-  y[0] = 0; y[1] = TPR; y[2] = 1;
-
-  svm_binary->model_scores[5] = 0.;
-  for (i = 0; i < 2; ++i) {
-    dx = x[i+1] - x[i];
-    svm_binary->model_scores[5] += ((y[i] + y[i+1]) / 2.) * dx;
-  }
-
-  /* Gini coefficient */
-  svm_binary->model_scores[6] = 2 * svm_binary->model_scores[5] - 1;
-  PetscCall(VecDestroy(&label));
+  PetscCall(SVMGetBinaryClassificationReport(svm,y,y_known,svm_binary->confusion_matrix,svm_binary->model_scores));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 

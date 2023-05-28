@@ -79,8 +79,6 @@ PetscErrorCode SVMViewScore_Probability(SVM svm,PetscViewer v)
   } else {
     SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewScore", ((PetscObject)v)->type_name);
   }
-
-
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -654,6 +652,7 @@ PetscErrorCode SVMSetFromOptions_Probability(PetscOptionItems *PetscOptionsObjec
   SVM_Probability *svm_prob = (SVM_Probability *) svm->data;
 
   PetscBool       to_target_probs;
+  PetscReal       threshold;
   PetscBool       flg;
 
   PetscFunctionBegin;
@@ -664,6 +663,13 @@ PetscErrorCode SVMSetFromOptions_Probability(PetscOptionItems *PetscOptionsObjec
                              svm_prob->labels_to_target_probs,&to_target_probs,&flg));
   if (flg) {
     PetscCall(SVMProbSetConvertLabelsToTargetProbability(svm,to_target_probs));
+  }
+  PetscCall(PetscOptionsReal("-svm_threshold",
+                             "Convert sample labels to target probability as suggested by Platt. Default (true).",
+                             "SVMProbSetConvertLabelsToTargetProbability",
+                             svm_prob->threshold,&threshold,&flg));
+  if (flg) {
+    PetscCall(SVMProbSetThreshold(svm,threshold));
   }
   PetscOptionsEnd();
   PetscFunctionReturn(PETSC_SUCCESS);
