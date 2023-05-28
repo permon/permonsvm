@@ -25,6 +25,9 @@ typedef struct {
 
   PetscBool labels_to_target_probs;
 
+  PetscInt  confusion_matrix[4]; // TODO move to _p_SVM
+  PetscReal model_scores[15];    // TODO move to _p_SVM
+
 } SVM_Probability;
 
 #endif

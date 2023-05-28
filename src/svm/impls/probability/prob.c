@@ -780,10 +780,12 @@ PetscErrorCode SVMPredict_Probability(SVM svm,Mat Xt,Vec *y_out)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode SVMComputeModelScores_Probability(SVM svm,Vec y_prob,Vec y_known)
+PetscErrorCode SVMComputeModelScores_Probability(SVM svm,Vec y,Vec y_known)
 {
-  // TODO remove
+  SVM_Probability *svm_prob = (SVM_Probability *) svm->data;
+
   PetscFunctionBegin;
+  PetscCall(SVMGetBinaryClassificationReport(svm,y,y_known,svm_prob->confusion_matrix,svm_prob->model_scores));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -799,7 +801,7 @@ PetscErrorCode SVMTest_Probability(SVM svm)
   PetscCall(SVMPredict(svm,Xt_test,&y_pred));
 
   PetscCall(SVMProbConvertProbabilityToLabels(svm,y_pred));
-  PetscCall(ClassificationReport(svm,y_pred,y_test));
+  PetscCall(SVMComputeModelScores(svm,y_pred,y_test));
 
   /* Clean */
   PetscCall(VecDestroy(&y_pred));

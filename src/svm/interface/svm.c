@@ -2255,7 +2255,7 @@ PetscErrorCode SVMTest(SVM svm)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscCall(svm->ops->test(svm));
 
-  PetscCall(PetscOptionsGetViewer(((PetscObject)svm)->comm,NULL,((PetscObject)svm)->prefix,"-svm_view_score",&v,&format,&view));
+  PetscCall(PetscOptionsGetViewer(((PetscObject)svm)->comm,NULL,((PetscObject)svm)->prefix,"-svm_view_report",&v,&format,&view));
   if (view) {
     PetscCall(PetscViewerPushFormat(v,format));
     PetscCall(SVMViewScore(svm,v));
