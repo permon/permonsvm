@@ -14,8 +14,11 @@ typedef struct {
   SVM       inner;
   Tao       tao;
 
-  PetscReal *target; // TODO as Vec
-  PetscReal *deci;   // TODO as Vec
+  PetscReal *target; // TODO remove
+  PetscReal *deci;   // TODO remove
+
+  Vec       vec_dist;
+  Vec       vec_targets;
 
   PetscReal sigmoid_params[2];
   PetscReal threshold;
@@ -25,8 +28,8 @@ typedef struct {
 
   PetscBool labels_to_target_probs;
 
-  PetscInt  confusion_matrix[4]; // TODO move to _p_SVM
-  PetscReal model_scores[15];    // TODO move to _p_SVM
+  PetscInt  confusion_matrix[4];
+  PetscReal model_scores[15];
 
 } SVM_Probability;
 

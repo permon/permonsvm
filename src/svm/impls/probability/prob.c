@@ -309,163 +309,221 @@ PetscErrorCode SVMGetTao_Probability(SVM svm,Tao *tao)
 static PetscErrorCode SVMTransformUncalibratedPredictions_Probability_Private(SVM svm)
 {
     SVM_Probability   *svm_prob = (SVM_Probability *) svm->data;
-    SVM               svm_inner;
+    SVM               svm_uncalibrated;
 
-    MPI_Comm          comm;
-    PetscMPIInt       rank;
+    MPI_Comm          comm; // TODO remove
+    PetscMPIInt       rank; // TODO remove
 
     Mat               Xt_calib;
     Vec               y_calib;
-    Vec               y_seq;
 
-    Vec               w;
-    PetscReal         b;
-
-    Vec               Xtw,Xtw_seq;
     VecScatter        scatter;
+    Vec               dist;
+
+    Vec               vec_labels;
+    IS                is_labels;
+
+    Vec               vec_targets;
+    Vec               vec_targets_sub;
+
+    const PetscReal   *labels = NULL;
+    PetscReal         target_prob[2];
 
     PetscBool         label_to_target_prob;
-    PetscReal         hi_target;
-    PetscReal         lo_target;
 
+    PetscInt          N,Np,Nn;  // TODO remove N
     PetscInt          i;
-    PetscInt          N,Np,Nn;
 
-    const PetscScalar *Xtw_arr = NULL;
-    const PetscScalar *y_arr   = NULL;
+    const PetscScalar *Xtw_arr = NULL; // TODO remove
+    const PetscScalar *y_arr   = NULL; // TODO remove
 
     PetscFunctionBegin;
-    PetscCall(SVMGetInnerSVM(svm,&svm_inner));
+    PetscCall(SVMGetInnerSVM(svm,&svm_uncalibrated));
     PetscCall(SVMGetCalibrationDataset(svm,&Xt_calib,&y_calib));
 
-    /*
-      TODO use following function SVMGetDistancesFromHyperplane
-      Get uncalibrated prediction (based on distance of sample from separating hyperplane)
-    */
+    /* Get distance samples from a separating hyperplane */
+    PetscCall(VecDestroy(&svm_prob->vec_dist));
 
-    PetscCall(SVMReconstructHyperplane(svm_inner));
-    PetscCall(SVMGetSeparatingHyperplane(svm_inner,&w,&b));
-    PetscCall(MatCreateVecs(Xt_calib,NULL,&Xtw));
-    PetscCall(MatMult(Xt_calib,w,Xtw));
-    PetscCall(VecShift(Xtw,b));
+    PetscCall(SVMGetDistancesFromHyperplane(svm_uncalibrated,Xt_calib,&dist));
+    PetscCall(VecScatterCreateToZero(dist,&scatter,&svm_prob->vec_dist));
+    PetscCall(VecScatterBegin(scatter,dist,svm_prob->vec_dist,INSERT_VALUES,SCATTER_FORWARD));
+    PetscCall(VecScatterEnd(scatter,dist,svm_prob->vec_dist,INSERT_VALUES,SCATTER_FORWARD));
 
-    /* Scatter labels to a root process */
-    PetscCall(VecScatterCreateToZero(y_calib,&scatter,&y_seq));
-    PetscCall(VecScatterBegin(scatter,y_calib,y_seq,INSERT_VALUES,SCATTER_FORWARD));
-    PetscCall(VecScatterEnd(scatter,y_calib,y_seq,INSERT_VALUES,SCATTER_FORWARD));
-
-    /* Scatter Xtw to a root process */
-    PetscCall(VecScatterCreateToZero(Xtw,&scatter,&Xtw_seq));
-    PetscCall(VecScatterBegin(scatter,Xtw,Xtw_seq,INSERT_VALUES,SCATTER_FORWARD));
-    PetscCall(VecScatterEnd(scatter,Xtw,Xtw_seq,INSERT_VALUES,SCATTER_FORWARD));
-
-    /* Clean up previous helper arrays */
-    PetscCall(PetscFree(svm_prob->deci));
-    PetscCall(PetscFree(svm_prob->target));
-
-    /* Alloc helper arrays again (distance sample from hyperplane and target) */
-    PetscCall(PetscObjectGetComm((PetscObject)svm,&comm));
-    PetscCallMPI(MPI_Comm_rank(comm,&rank));
-
-    if (rank == 0) {
-      PetscCall(VecGetSize(Xtw_seq,&N));
-
-      PetscCall(PetscMalloc(N * sizeof(PetscReal),&svm_prob->deci));
-      PetscCall(PetscMalloc(N * sizeof(PetscReal),&svm_prob->target));
-
-      PetscCall(SVMProbGetConvertLabelsToTargetProbability(svm,&label_to_target_prob));
-
-      if (label_to_target_prob) {
-        /*
-         Transform labels to target probabilities as it proposed in
-         http://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf
-        */
-        PetscCall(SVMGetNumberPositiveNegativeSamples_Probability_Private(y_seq,&Np,&Nn));
-        lo_target = 1. / (Nn + 2);
-        hi_target = (Np + 1.) / (Np + 2.);
-      } else {
-        lo_target = 0.;
-        hi_target = 1.;
-      }
-
-      PetscCall(VecGetArrayRead(Xtw_seq,&Xtw_arr));
-      PetscCall(VecGetArrayRead(y_seq,&y_arr));
-
-      for (i = 0; i < N; ++i) {
-        svm_prob->deci[i]   = Xtw_arr[i];                                // distance from hyperplane
-        svm_prob->target[i] = (y_arr[i] == -1.) ? lo_target : hi_target; // labels converted to probability
-      }
-
-      PetscCall(VecRestoreArrayRead(Xtw_seq,&Xtw_arr));
-      PetscCall(VecRestoreArrayRead(Xtw_seq,&y_arr));
+    PetscCall(SVMProbGetConvertLabelsToTargetProbability(svm,&label_to_target_prob));
+    if (label_to_target_prob) {
+      /*
+       Transform labels to target probabilities as it proposed in
+       http://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf
+      */
+      PetscCall(SVMGetNumberPositiveNegativeSamples_Probability_Private(y_calib,&Np,&Nn));
+      target_prob[0] = 1. / (Nn + 2);
+      target_prob[1] = (Np + 1.) / (Np + 2.);
+    } else {
+      target_prob[0] = 0.;
+      target_prob[1] = 1.;
     }
 
-    /* Clean up */
-    PetscCall(SVMDestroy(&svm_inner));
+    PetscCall(SVMGetLabels(svm,&labels));
+    PetscCall(VecDuplicate(y_calib,&vec_labels));
+    PetscCall(VecDuplicate(y_calib,&vec_targets));
+
+    for (i = 0; i < 2; ++i) {
+      PetscCall(VecSet(vec_labels,labels[i]));
+      PetscCall(VecWhichEqual(y_calib,vec_labels,&is_labels));
+      PetscCall(VecGetSubVector(vec_targets,is_labels,&vec_targets_sub));
+      PetscCall(VecSet(vec_targets_sub,target_prob[i]));
+      PetscCall(VecRestoreSubVector(vec_targets,is_labels,&vec_targets_sub));
+      PetscCall(ISDestroy(&is_labels));
+    }
+
+    /* Scatter targets to a root process */
+    PetscCall(VecScatterCreateToZero(vec_targets,&scatter,&svm_prob->vec_targets));
+    PetscCall(VecScatterBegin(scatter,vec_targets,svm_prob->vec_targets,INSERT_VALUES,SCATTER_FORWARD));
+    PetscCall(VecScatterEnd(scatter,vec_targets,svm_prob->vec_targets,INSERT_VALUES,SCATTER_FORWARD));
     PetscCall(VecScatterDestroy(&scatter));
-    PetscCall(VecDestroy(&Xtw));
-    PetscCall(VecDestroy(&Xtw_seq));
-    PetscCall(VecDestroy(&y_seq));
+
+//    // TODO remove below
+//
+//    /* Clean up previous helper arrays */
+//    PetscCall(PetscFree(svm_prob->deci));   // TODO remove
+//    PetscCall(PetscFree(svm_prob->target)); // TODO remove
+//
+//    /* Alloc helper arrays again (distance sample from hyperplane and target) */
+//    PetscCall(PetscObjectGetComm((PetscObject)svm,&comm));
+//    PetscCallMPI(MPI_Comm_rank(comm,&rank));
+//
+//    if (rank == 0) {
+//      PetscCall(VecGetSize(svm_prob->vec_dist,&N));
+//
+//      PetscCall(PetscMalloc(N * sizeof(PetscReal),&svm_prob->deci));
+//      PetscCall(PetscMalloc(N * sizeof(PetscReal),&svm_prob->target));
+//
+//      PetscCall(VecGetArrayRead(svm_prob->vec_dist,&Xtw_arr));
+//      PetscCall(VecGetArrayRead(svm_prob->vec_targets,&y_arr));
+//
+//      for (i = 0; i < N; ++i) {
+//        svm_prob->deci[i]   = Xtw_arr[i];   // distance from hyperplane
+//        svm_prob->target[i] = y_arr[i];     // labels converted to probability
+//      }
+//
+//      PetscCall(VecRestoreArrayRead(svm_prob->vec_dist,&Xtw_arr));
+//      PetscCall(VecRestoreArrayRead(svm_prob->vec_targets,&y_arr));
+//    }
+//
+//    /* Clean up */
+//    // TODO clean up
+//    PetscCall(VecDestroy(&dist));
+//    PetscCall(VecDestroy(&vec_labels));
+//    PetscCall(VecDestroy(&vec_targets));
+
     PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-static PetscErrorCode TaoFormFunctionGradient_Probability_Private(Tao tao,Vec x,PetscReal *fnc,Vec g,void *ctx)
+static PetscErrorCode TaoFormFunctionGradient_Probability_Private(Tao tao,Vec params_sigmoid,PetscReal *fnc,Vec g,void *ctx)
 {
   SVM             svm   = (SVM) ctx;
   SVM_Probability *prob = (SVM_Probability *) svm->data;
 
-  PetscReal       fnc_inner = 0.;
-
   PetscReal       g_arr[2]  = {0.,0.};
   PetscInt        idx[2]    = {0,1};
 
-  PetscReal       ApB;
-  PetscReal       p;
+  PetscReal       fnc_inner = 0.;
+  PetscReal       tmp;
 
-  PetscInt        i,N;
+  PetscInt        N_works = 2;       // TODO move to SVM_Probability
+  Vec             sub_work[N_works]; // TODO move to SVM_Probability
+  Vec             *work = NULL;      // TODO move to SVM_Probability
 
-  Vec             y;
-  const PetscReal *x_arr = NULL;
+  IS              is_p,is_n;
+  PetscInt        N;
+
+  PetscReal       A,B;
+  const PetscReal *params_sigmoid_arr = NULL;
 
   PetscFunctionBegin;
-  PetscCall(SVMGetCalibrationDataset(svm,NULL,&y));
-  PetscCall(VecGetSize(y,&N));
+  PetscCall(VecGetSize(prob->vec_dist,&N));
 
-  PetscCall(VecGetArrayRead(x,&x_arr));
+  PetscCall(VecDuplicateVecs(prob->vec_dist,N_works,&work));  // TODO move to SetUp
+  PetscCall(VecSet(work[0],1.));
+  PetscCall(VecSet(work[1],0.));
+
+  PetscCall(VecGetArrayRead(params_sigmoid,&params_sigmoid_arr)); /* Actual parameters of sigmoid */
+  A = params_sigmoid_arr[0]; B = params_sigmoid_arr[1];
+  PetscCall(VecRestoreArrayRead(params_sigmoid,&params_sigmoid_arr));
+
+  PetscCall(VecAXPBY(work[0],A,B,prob->vec_dist));   /* work[0] <- A * dist + B  (AdpB) */
+  PetscCall(VecDot(prob->vec_targets,work[0],&tmp)); /* target^T * AdpB */
+  fnc_inner = tmp;
+
+  PetscCall(VecWhichGreaterThan(work[0],work[1],&is_p));
+  PetscCall(ISComplement(is_p,0,N,&is_n));
 
   /*
-    Gradient and objective function evaluation.
-    Implementation proposed in https://www.csie.ntu.edu.tw/~cjlin/papers/plattprob.pdf.
+    CASE: A * dist + B >= 0
    */
-  for (i = 0; i < N; ++i) {
 
-    ApB = x_arr[0] * prob->deci[i] + x_arr[1];
+  PetscCall(VecGetSubVector(work[0],is_p,&sub_work[0]));
+  PetscCall(VecGetSubVector(work[1],is_p,&sub_work[1]));
 
-    if (ApB >= 0.) {
-      fnc_inner += prob->target[i] * ApB + PetscLogReal(1. + PetscExpReal(-ApB));
-      p = PetscExpReal(-ApB) / (1. + PetscExpReal(-ApB));
-    } else {
-      fnc_inner += (prob->target[i] - 1.) * ApB + PetscLogReal(1. + PetscExpReal(ApB));
-      p = 1. / (1. + PetscExpReal(ApB) );
-    }
+  PetscCall(VecScale(sub_work[0],-1.));                               /* work[0,is+] <- -1. * AdpB[is+]                             */
+  PetscCall(VecExp(sub_work[0]));                                     /* work[0,is+] <- exp(-1. * AdpB[is+])                        */
+  PetscCall(VecCopy(sub_work[0],sub_work[1]));                        /* work[1,is+] <- work[0,is+]                                 */
+  PetscCall(VecShift(sub_work[0],1.));                                /* work[0,is+] <- 1. + work[0,is+]                            */
 
-    g_arr[0] += prob->deci[i] * (prob->target[i] - p);
-    g_arr[1] += prob->target[i] - p;
-  }
+  PetscCall(VecPointwiseDivide(sub_work[1],sub_work[1],sub_work[0])); /* work[1,is+] <- exp(-work[0,is+]) / (1 + exp(-work[0,is+])) */
 
-  PetscCall(VecRestoreArrayRead(x,&x_arr));
+  PetscCall(VecRestoreSubVector(work[0],is_p,&sub_work[0]));
+  PetscCall(VecRestoreSubVector(work[1],is_p,&sub_work[1]));
 
-  /* Update a value of objective function */
-  *fnc = fnc_inner;
+  /*
+    CASE: A * dist + B < 0
+   */
 
-  /* Update gradient */
+  PetscCall(VecGetSubVector(work[0],is_n,&sub_work[0]));
+  PetscCall(VecGetSubVector(work[1],is_n,&sub_work[1]));
+
+  PetscCall(VecSum(sub_work[0],&tmp));
+  fnc_inner -= tmp;
+
+  PetscCall(VecExp(sub_work[0]));                                   /* work[0,is-] <- exp(AdpB[is-])                        */
+  PetscCall(VecShift(sub_work[0],1.));                              /* work[0,is-] <- 1. + exp(AdpB[is-])                   */
+  PetscCall(VecCopy(sub_work[0],sub_work[1]));                      /* work[1,is-] <- work[0,is-]                           */
+
+  PetscCall(VecReciprocal(sub_work[1]));                            /* work[1,is-] <- 1. / (1. + exp(AdpB[is-])             */
+
+  PetscCall(VecRestoreSubVector(work[0],is_n,&sub_work[0]));
+  PetscCall(VecRestoreSubVector(work[1],is_n,&sub_work[1]));
+
+  /*
+    Compute value of objective function
+   */
+
+  PetscCall(VecLog(work[0]));
+  PetscCall(VecSum(work[0],&tmp));
+  fnc_inner += tmp;
+
+  *fnc = fnc_inner; /* Update a value of objective function */
+
+  /*
+    Compute gradient
+   */
+
+  PetscCall(VecAYPX(work[1],-1.,prob->vec_targets));
+  PetscCall(VecSum(work[1],&g_arr[1]));
+  PetscCall(VecDot(work[1],prob->vec_dist,&g_arr[0]));
+
   PetscCall(VecSetValues(g,2,idx,g_arr,INSERT_VALUES));
   PetscCall(VecAssemblyBegin(g));
   PetscCall(VecAssemblyEnd(g));
+
+  /* Clean up */
+  PetscCall(VecDestroyVecs(N_works,&work));    // TODO move to posttrain or reset
+  PetscCall(ISDestroy(&is_p));
+  PetscCall(ISDestroy(&is_n));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-static PetscErrorCode TaoFormHessian_Probability_Private(Tao tao,Vec x,Mat H,Mat Hpre,void *ctx)
+static PetscErrorCode TaoFormHessian_Probability_Private(Tao tao,Vec params_sigmoid,Mat H,Mat Hpre,void *ctx)
 {
   SVM             svm   = (SVM) ctx;
   SVM_Probability *prob = (SVM_Probability *) svm->data;
@@ -474,41 +532,76 @@ static PetscErrorCode TaoFormHessian_Probability_Private(Tao tao,Vec x,Mat H,Mat
   PetscInt        idxm[2]  = {0,1};
   PetscInt        idxn[2]  = {0,1};
 
-  PetscReal       d,p,q;
-  PetscReal       AdpB;
+  PetscInt        N_works = 2;       // TODO move to SVM_Probability
+  Vec             sub_work[N_works]; // TODO move to SVM_Probability
+  Vec             *work = NULL;      // TODO move to SVM_Probability
 
-  PetscInt        i,N;
+  IS              is_p,is_n;
+  PetscInt        N;
 
-  Vec             y;
-  const PetscReal *x_arr = NULL;
+  PetscReal       A,B;
+  const PetscReal *params_sigmoid_arr = NULL;
 
   PetscFunctionBegin;
-  PetscCall(SVMGetCalibrationDataset(svm,NULL,&y));
-  PetscCall(VecGetSize(y,&N));
-  PetscCall(VecGetArrayRead(x,&x_arr));
+  PetscCall(VecGetSize(prob->vec_dist,&N));
 
-  /* Hessian evaluation. Implementation proposed in https://www.csie.ntu.edu.tw/~cjlin/papers/plattprob.pdf. */
-  for (i = 0; i < N; ++i) {
+  PetscCall(VecDuplicateVecs(prob->vec_dist,N_works,&work)); // TODO move to SetUp
+  PetscCall(VecSet(work[0],1.));
+  PetscCall(VecSet(work[1],0.));
 
-    AdpB = prob->deci[i] * x_arr[0] + x_arr[1];
+  PetscCall(VecGetArrayRead(params_sigmoid,&params_sigmoid_arr)); /* Actual parameters of sigmoid */
+  A = params_sigmoid_arr[0]; B = params_sigmoid_arr[1];
+  PetscCall(VecRestoreArrayRead(params_sigmoid,&params_sigmoid_arr));
 
-    if (AdpB >= 0.) {
-      p = PetscExpReal(-AdpB) / (1. + PetscExpReal(-AdpB));
-      q =  1. / (1. + PetscExpReal(-AdpB));
-    } else {
-      p = 1. / (1. + PetscExpReal(AdpB));
-      q =  PetscExpReal(AdpB) / (1. + PetscExpReal(AdpB));
-    }
+  PetscCall(VecAXPBY(work[0],A,B,prob->vec_dist));                /* work[0] <- A * dist + B  (AdpB) */
 
-    d = p * q;
+  PetscCall(VecWhichGreaterThan(work[0],work[1],&is_p));
+  PetscCall(ISComplement(is_p,0,N,&is_n));
 
-    H_arr[0] += prob->deci[i] * prob->deci[i] * d;
-    H_arr[1] += prob->deci[i] * d;
-    H_arr[2] += prob->deci[i] * d;
-    H_arr[3] += d;
-  }
+  /*
+   CASE: A * dist + B >= 0
+   */
 
-  PetscCall(VecRestoreArrayRead(x,&x_arr));
+  PetscCall(VecGetSubVector(work[0],is_p,&sub_work[0]));
+  PetscCall(VecGetSubVector(work[1],is_p,&sub_work[1]));
+
+  PetscCall(VecScale(sub_work[0],-1.));                               /* work[0,is+] <- -1. * AdpB[is+]           */
+  PetscCall(VecExp(sub_work[0]));                                     /* work[0,is+] <- exp(-1. * AdpB[is+])      */
+  PetscCall(VecCopy(sub_work[0],sub_work[1]));                        /* work[1,is+] <- work[0,is+]               */
+
+  PetscCall(VecShift(sub_work[1],1.));                                /* work[1,is+] <- 1. + work[1,is+]          */
+
+  PetscCall(VecPointwiseDivide(sub_work[0],sub_work[0],sub_work[1])); /* work[0,is+] <- work[0,is+] / work[1,is+] */
+  PetscCall(VecReciprocal(sub_work[1]));                              /* work[1,is+] <- 1. / work[1,is+]          */
+
+  PetscCall(VecRestoreSubVector(work[1],is_p,&sub_work[1]));
+  PetscCall(VecRestoreSubVector(work[0],is_p,&sub_work[0]));
+
+  /*
+   CASE: A * dist + B < 0
+   */
+
+  PetscCall(VecGetSubVector(work[0],is_n,&sub_work[0]));
+  PetscCall(VecGetSubVector(work[1],is_n,&sub_work[1]));
+
+  PetscCall(VecExp(sub_work[0]));                                     /* work[0,is-] <- exp(AdpB[is-])           */
+  PetscCall(VecCopy(sub_work[0],sub_work[1]));                        /* work[1,is-] <- work[0,is-]              */
+  PetscCall(VecShift(sub_work[0],1.));                                /* work[0,is-] <- 1. + exp(AdpB[is-])      */
+
+  PetscCall(VecPointwiseDivide(sub_work[1],sub_work[1],sub_work[0])); /* work[1,is-] <- work[1,is-] / work[0,is-] */
+  PetscCall(VecReciprocal(sub_work[0]));                              /* work[0,is-] <- 1. / work[0,is-]          */
+
+  PetscCall(VecRestoreSubVector(work[0],is_n,&sub_work[0]));
+  PetscCall(VecRestoreSubVector(work[1],is_n,&sub_work[1]));
+
+  /* Form Hessian */
+  PetscCall(VecPointwiseMult(work[0],work[1],work[0]));
+  PetscCall(VecPointwiseMult(work[1],prob->vec_dist,prob->vec_dist));
+
+  PetscCall(VecDot(work[0],work[1],&H_arr[0]));
+  PetscCall(VecDot(prob->vec_dist,work[0],&H_arr[1]));
+  H_arr[2] = H_arr[1];
+  PetscCall(VecSum(work[0],&H_arr[3]));
 
   H_arr[0] += 1e-12;
   H_arr[3] += 1e-12;
@@ -517,6 +610,11 @@ static PetscErrorCode TaoFormHessian_Probability_Private(Tao tao,Vec x,Mat H,Mat
   PetscCall(MatSetValues(H,2,idxm,2,idxn,H_arr,INSERT_VALUES));
   PetscCall(MatAssemblyBegin(H,MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(H,MAT_FINAL_ASSEMBLY));
+
+  /* Clean up */
+  PetscCall(VecDestroyVecs(N_works,&work));    // TODO move to posttrain or reset
+  PetscCall(ISDestroy(&is_p));
+  PetscCall(ISDestroy(&is_n));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -754,7 +852,7 @@ PetscErrorCode SVMPostTrain_Probability(SVM svm)
     PetscCall(TaoDestroy(&tao));
   }
 
-  /* Broad cast solution */
+  /* Broadcast solution */
   PetscCallMPI(MPI_Bcast(svm_prob->sigmoid_params,2,MPIU_REAL,0,comm));
 
   /* Clean up */
@@ -800,15 +898,15 @@ PetscErrorCode SVMPredict_Probability(SVM svm,Mat Xt,Vec *y_out)
 
   /* if A * pred + B >= 0. then y = exp(-pred) / (1. + exp(-pred)) */
   PetscCall(VecGetSubVector(pred,is_p,&pred_sub));
-  PetscCall(VecGetSubVector(work[0],is_p,&work[2]));
+  PetscCall(VecGetSubVector(work[0],is_p,&work[2])); // TODO fix memory leak
 
   PetscCall(VecScale(pred_sub,-1.));
   PetscCall(VecExp(pred_sub));
   PetscCall(VecAXPY(work[2],1.,pred_sub));
-  PetscCall(VecPointwiseDivide(pred_sub,pred_sub,work[2]));
+  PetscCall(VecPointwiseDivide(pred_sub,pred_sub,work[2])); // TODO fix memory leak
 
   PetscCall(VecRestoreSubVector(pred,is_p,&pred_sub));
-  PetscCall(VecRestoreSubVector(work[0],is_p,&work[2]));
+  PetscCall(VecRestoreSubVector(work[0],is_p,&work[2])); // TODO fix memory leak
 
   /* if A * pred + B < 0. then y = 1 / (1 + exp(pred)) */
   PetscCall(VecGetSubVector(pred,is_n,&pred_sub));
