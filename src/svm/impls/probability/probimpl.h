@@ -11,22 +11,23 @@ typedef struct {
   Mat       Xt_calib;
   Vec       y_calib;
 
-  SVM       inner;
-  Tao       tao;
+  PetscInt  Np_calib;
+  PetscInt  Nn_calib;
 
-  // PetscReal *target; // TODO remove
-  // PetscReal *deci;   // TODO remove
+  SVM       inner;  // TODO change name to uncalibrated
 
   Vec       vec_dist;
   Vec       vec_targets;
 
+  PetscBool labels_to_target_probs;
+
+  Tao       tao;
+
+  Vec       sub_work[2];
+  Vec       *work;
+
   PetscReal sigmoid_params[2];
   PetscReal threshold;
-
-  PetscInt  Np_calib;
-  PetscInt  Nn_calib;
-
-  PetscBool labels_to_target_probs;
 
   PetscInt  confusion_matrix[4];
   PetscReal model_scores[15];

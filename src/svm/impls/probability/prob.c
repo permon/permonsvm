@@ -14,7 +14,26 @@ PetscErrorCode SVMReset_Probability(SVM svm)
   PetscCall(VecDestroy(&svm_prob->y_training));
   PetscCall(MatDestroy(&svm_prob->Xt_calib));
   PetscCall(VecDestroy(&svm_prob->y_calib));
+
   PetscCall(SVMDestroy(&svm_prob->inner));
+  PetscCall(TaoDestroy(&svm_prob->tao));
+
+  PetscCall(VecDestroyVecs(2,&svm_prob->work));
+  PetscCall(VecDestroy(&svm_prob->vec_dist));
+  PetscCall(VecDestroy(&svm_prob->vec_targets));
+
+  svm_prob->Xt_training = NULL;
+  svm_prob->y_training  = NULL;
+
+  svm_prob->Xt_calib    = NULL;
+  svm_prob->y_calib     = NULL;
+
+  svm_prob->inner       = NULL;
+  svm_prob->tao         = NULL;
+
+  svm_prob->work        = NULL;
+  svm_prob->vec_dist    = NULL;
+  svm_prob->vec_targets = NULL;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -246,13 +265,12 @@ PetscErrorCode SVMGetCalibrationDataset_Probability(SVM svm,Mat *Xt_calib,Vec *y
 
 PetscErrorCode SVMGetLabels_Probability(SVM svm,const PetscReal *labels[])
 {
-  SVM             binary;
-
+  SVM             svm_uncalibrated;
   const PetscReal *labels_inner;
 
   PetscFunctionBegin;
-  PetscCall(SVMGetInnerSVM(svm,&binary));
-  PetscCall(SVMGetLabels(binary,&labels_inner));
+  PetscCall(SVMGetInnerSVM(svm,&svm_uncalibrated));
+  PetscCall(SVMGetLabels(svm_uncalibrated,&labels_inner));
   *labels = labels_inner;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -380,8 +398,8 @@ static PetscErrorCode SVMTransformUncalibratedPredictions_Probability_Private(SV
 
 static PetscErrorCode TaoFormFunctionGradient_Probability_Private(Tao tao,Vec params_sigmoid,PetscReal *fnc,Vec g,void *ctx)
 {
-  SVM             svm   = (SVM) ctx;
-  SVM_Probability *prob = (SVM_Probability *) svm->data;
+  SVM             svm       = (SVM) ctx;
+  SVM_Probability *svm_prob = (SVM_Probability *) svm->data;
 
   PetscReal       g_arr[2]  = {0.,0.};
   PetscInt        idx[2]    = {0,1};
@@ -389,9 +407,9 @@ static PetscErrorCode TaoFormFunctionGradient_Probability_Private(Tao tao,Vec pa
   PetscReal       fnc_inner = 0.;
   PetscReal       tmp;
 
-  PetscInt        N_works = 2;       // TODO move to SVM_Probability
-  Vec             sub_work[N_works]; // TODO move to SVM_Probability
-  Vec             *work = NULL;      // TODO move to SVM_Probability
+  Vec             *sub_work = NULL;
+  Vec             *work     = NULL;
+  PetscInt        N_works   = 2;
 
   IS              is_p,is_n;
   PetscInt        N;
@@ -400,18 +418,27 @@ static PetscErrorCode TaoFormFunctionGradient_Probability_Private(Tao tao,Vec pa
   const PetscReal *params_sigmoid_arr = NULL;
 
   PetscFunctionBegin;
-  PetscCall(VecGetSize(prob->vec_dist,&N));
+  PetscCall(VecGetSize(svm_prob->vec_dist,&N));
 
-  PetscCall(VecDuplicateVecs(prob->vec_dist,N_works,&work));  // TODO move to SetUp
+  if (!svm_prob->work) {
+    PetscCall(VecDuplicateVecs(svm_prob->vec_dist,N_works,&work));
+    svm_prob->work = work;
+  } else {
+    work  = svm_prob->work;
+  }
+
+  sub_work = svm_prob->sub_work;
+
   PetscCall(VecSet(work[0],1.));
   PetscCall(VecSet(work[1],0.));
 
-  PetscCall(VecGetArrayRead(params_sigmoid,&params_sigmoid_arr)); /* Actual parameters of sigmoid */
+  /* Actual parameters of sigmoid */
+  PetscCall(VecGetArrayRead(params_sigmoid,&params_sigmoid_arr));
   A = params_sigmoid_arr[0]; B = params_sigmoid_arr[1];
   PetscCall(VecRestoreArrayRead(params_sigmoid,&params_sigmoid_arr));
 
-  PetscCall(VecAXPBY(work[0],A,B,prob->vec_dist));   /* work[0] <- A * dist + B  (AdpB) */
-  PetscCall(VecDot(prob->vec_targets,work[0],&tmp)); /* target^T * AdpB */
+  PetscCall(VecAXPBY(work[0],A,B,svm_prob->vec_dist));   /* work[0] <- A * dist + B  (AdpB) */
+  PetscCall(VecDot(svm_prob->vec_targets,work[0],&tmp)); /* target^T * AdpB */
   fnc_inner = tmp;
 
   PetscCall(VecWhichGreaterThan(work[0],work[1],&is_p));
@@ -467,16 +494,15 @@ static PetscErrorCode TaoFormFunctionGradient_Probability_Private(Tao tao,Vec pa
     Compute gradient
    */
 
-  PetscCall(VecAYPX(work[1],-1.,prob->vec_targets));
+  PetscCall(VecAYPX(work[1],-1.,svm_prob->vec_targets));
   PetscCall(VecSum(work[1],&g_arr[1]));
-  PetscCall(VecDot(work[1],prob->vec_dist,&g_arr[0]));
+  PetscCall(VecDot(work[1],svm_prob->vec_dist,&g_arr[0]));
 
   PetscCall(VecSetValues(g,2,idx,g_arr,INSERT_VALUES));
   PetscCall(VecAssemblyBegin(g));
   PetscCall(VecAssemblyEnd(g));
 
   /* Clean up */
-  PetscCall(VecDestroyVecs(N_works,&work));    // TODO move to posttrain or reset
   PetscCall(ISDestroy(&is_p));
   PetscCall(ISDestroy(&is_n));
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -487,13 +513,13 @@ static PetscErrorCode TaoFormHessian_Probability_Private(Tao tao,Vec params_sigm
   SVM             svm   = (SVM) ctx;
   SVM_Probability *prob = (SVM_Probability *) svm->data;
 
-  PetscReal       H_arr[4] = {0.,0.,0.,0.};
-  PetscInt        idxm[2]  = {0,1};
-  PetscInt        idxn[2]  = {0,1};
+  PetscReal       H_arr[4]  = {0.,0.,0.,0.};
+  PetscInt        idxm[2]   = {0,1};
+  PetscInt        idxn[2]   = {0,1};
 
-  PetscInt        N_works = 2;       // TODO move to SVM_Probability
-  Vec             sub_work[N_works]; // TODO move to SVM_Probability
-  Vec             *work = NULL;      // TODO move to SVM_Probability
+  Vec             *sub_work = NULL;
+  Vec             *work     = NULL;
+  PetscInt        N_works   = 2;
 
   IS              is_p,is_n;
   PetscInt        N;
@@ -504,15 +530,24 @@ static PetscErrorCode TaoFormHessian_Probability_Private(Tao tao,Vec params_sigm
   PetscFunctionBegin;
   PetscCall(VecGetSize(prob->vec_dist,&N));
 
-  PetscCall(VecDuplicateVecs(prob->vec_dist,N_works,&work)); // TODO move to SetUp
+  if (!prob->work) {
+    PetscCall(VecDuplicateVecs(prob->vec_dist,N_works,&work));
+    prob->work = work;
+  } else {
+    work  = prob->work;
+  }
+
+  sub_work = prob->sub_work;
+
   PetscCall(VecSet(work[0],1.));
   PetscCall(VecSet(work[1],0.));
 
-  PetscCall(VecGetArrayRead(params_sigmoid,&params_sigmoid_arr)); /* actual parameters of sigmoid */
+  /* Actual parameters of sigmoid */
+  PetscCall(VecGetArrayRead(params_sigmoid,&params_sigmoid_arr));
   A = params_sigmoid_arr[0]; B = params_sigmoid_arr[1];
   PetscCall(VecRestoreArrayRead(params_sigmoid,&params_sigmoid_arr));
 
-  PetscCall(VecAXPBY(work[0],A,B,prob->vec_dist));                /* work[0] <- A * dist + B  (AdpB) */
+  PetscCall(VecAXPBY(work[0],A,B,prob->vec_dist));                   /* work[0] <- A * dist + B  (AdpB) */
 
   PetscCall(VecWhichGreaterThan(work[0],work[1],&is_p));
   PetscCall(ISComplement(is_p,0,N,&is_n));
@@ -571,7 +606,6 @@ static PetscErrorCode TaoFormHessian_Probability_Private(Tao tao,Vec params_sigm
   PetscCall(MatAssemblyEnd(H,MAT_FINAL_ASSEMBLY));
 
   /* Clean up */
-  PetscCall(VecDestroyVecs(N_works,&work));    // TODO move to posttrain or reset
   PetscCall(ISDestroy(&is_p));
   PetscCall(ISDestroy(&is_n));
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -821,6 +855,7 @@ PetscErrorCode SVMPostTrain_Probability(SVM svm)
 
 PetscErrorCode SVMPredict_Probability(SVM svm,Mat Xt,Vec *y_out)
 {
+  /* TODO reduce number of work vec */
   SVM       svm_uncalibrated;
 
   Vec       pred,pred_sub; /* distances of samples (Xt_pred) from a separating hyperplane */
@@ -1032,6 +1067,7 @@ PetscErrorCode SVMCreate_Probability(SVM svm)
 
   svm_prob->inner       = NULL;
   svm_prob->tao         = NULL;
+  svm_prob->work        = NULL;
 
   svm_prob->Xt_training = NULL;
   svm_prob->y_training  = NULL;
