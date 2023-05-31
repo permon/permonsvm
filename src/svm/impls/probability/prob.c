@@ -18,7 +18,7 @@ PetscErrorCode SVMReset_Probability(SVM svm)
   PetscCall(SVMDestroy(&svm_prob->inner));
   PetscCall(TaoDestroy(&svm_prob->tao));
 
-  PetscCall(VecDestroyVecs(2,&svm_prob->work));
+  PetscCall(VecDestroyVecs(2,&svm_prob->work_vecs));
   PetscCall(VecDestroy(&svm_prob->vec_dist));
   PetscCall(VecDestroy(&svm_prob->vec_targets));
 
@@ -31,7 +31,7 @@ PetscErrorCode SVMReset_Probability(SVM svm)
   svm_prob->inner       = NULL;
   svm_prob->tao         = NULL;
 
-  svm_prob->work        = NULL;
+  svm_prob->work_vecs   = NULL;
   svm_prob->vec_dist    = NULL;
   svm_prob->vec_targets = NULL;
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -407,9 +407,9 @@ static PetscErrorCode TaoFormFunctionGradient_Probability_Private(Tao tao,Vec pa
   PetscReal       fnc_inner = 0.;
   PetscReal       tmp;
 
-  Vec             *sub_work = NULL;
-  Vec             *work     = NULL;
-  PetscInt        N_works   = 2;
+  Vec             *work_vecs = NULL;
+  Vec             *work_sub  = NULL;
+  PetscInt        N_works    = 2;
 
   IS              is_p,is_n;
   PetscInt        N;
@@ -420,72 +420,72 @@ static PetscErrorCode TaoFormFunctionGradient_Probability_Private(Tao tao,Vec pa
   PetscFunctionBegin;
   PetscCall(VecGetSize(svm_prob->vec_dist,&N));
 
-  if (!svm_prob->work) {
-    PetscCall(VecDuplicateVecs(svm_prob->vec_dist,N_works,&work));
-    svm_prob->work = work;
+  if (!svm_prob->work_vecs) {
+    PetscCall(VecDuplicateVecs(svm_prob->vec_dist,N_works,&work_vecs));
+    svm_prob->work_vecs = work_vecs;
   } else {
-    work  = svm_prob->work;
+    work_vecs = svm_prob->work_vecs;
   }
 
-  sub_work = svm_prob->sub_work;
+  work_sub = svm_prob->work_sub;
 
-  PetscCall(VecSet(work[0],1.));
-  PetscCall(VecSet(work[1],0.));
+  PetscCall(VecSet(work_vecs[0],1.));
+  PetscCall(VecSet(work_vecs[1],0.));
 
   /* Actual parameters of sigmoid */
   PetscCall(VecGetArrayRead(params_sigmoid,&params_sigmoid_arr));
   A = params_sigmoid_arr[0]; B = params_sigmoid_arr[1];
   PetscCall(VecRestoreArrayRead(params_sigmoid,&params_sigmoid_arr));
 
-  PetscCall(VecAXPBY(work[0],A,B,svm_prob->vec_dist));   /* work[0] <- A * dist + B  (AdpB) */
-  PetscCall(VecDot(svm_prob->vec_targets,work[0],&tmp)); /* target^T * AdpB */
+  PetscCall(VecAXPBY(work_vecs[0],A,B,svm_prob->vec_dist));        /* work[0] <- A * dist + B  (AdpB) */
+  PetscCall(VecDot(svm_prob->vec_targets,work_vecs[0],&tmp));      /* target^T * AdpB */
   fnc_inner = tmp;
 
-  PetscCall(VecWhichGreaterThan(work[0],work[1],&is_p));
+  PetscCall(VecWhichGreaterThan(work_vecs[0],work_vecs[1],&is_p));
   PetscCall(ISComplement(is_p,0,N,&is_n));
 
   /*
     CASE: A * dist + B >= 0
    */
 
-  PetscCall(VecGetSubVector(work[0],is_p,&sub_work[0]));
-  PetscCall(VecGetSubVector(work[1],is_p,&sub_work[1]));
+  PetscCall(VecGetSubVector(work_vecs[0],is_p,&work_sub[0]));
+  PetscCall(VecGetSubVector(work_vecs[1],is_p,&work_sub[1]));
 
-  PetscCall(VecScale(sub_work[0],-1.));                               /* work[0,is+] <- -1. * AdpB[is+]                             */
-  PetscCall(VecExp(sub_work[0]));                                     /* work[0,is+] <- exp(-1. * AdpB[is+])                        */
-  PetscCall(VecCopy(sub_work[0],sub_work[1]));                        /* work[1,is+] <- work[0,is+]                                 */
-  PetscCall(VecShift(sub_work[0],1.));                                /* work[0,is+] <- 1. + work[0,is+]                            */
+  PetscCall(VecScale(work_sub[0],-1.));                               /* work[0,is+] <- -1. * AdpB[is+]                             */
+  PetscCall(VecExp(work_sub[0]));                                     /* work[0,is+] <- exp(-1. * AdpB[is+])                        */
+  PetscCall(VecCopy(work_sub[0],work_sub[1]));                        /* work[1,is+] <- work[0,is+]                                 */
+  PetscCall(VecShift(work_sub[0],1.));                                /* work[0,is+] <- 1. + work[0,is+]                            */
 
-  PetscCall(VecPointwiseDivide(sub_work[1],sub_work[1],sub_work[0])); /* work[1,is+] <- exp(-work[0,is+]) / (1 + exp(-work[0,is+])) */
+  PetscCall(VecPointwiseDivide(work_sub[1],work_sub[1],work_sub[0])); /* work[1,is+] <- exp(-work[0,is+]) / (1 + exp(-work[0,is+])) */
 
-  PetscCall(VecRestoreSubVector(work[0],is_p,&sub_work[0]));
-  PetscCall(VecRestoreSubVector(work[1],is_p,&sub_work[1]));
+  PetscCall(VecRestoreSubVector(work_vecs[0],is_p,&work_sub[0]));
+  PetscCall(VecRestoreSubVector(work_vecs[1],is_p,&work_sub[1]));
 
   /*
     CASE: A * dist + B < 0
    */
 
-  PetscCall(VecGetSubVector(work[0],is_n,&sub_work[0]));
-  PetscCall(VecGetSubVector(work[1],is_n,&sub_work[1]));
+  PetscCall(VecGetSubVector(work_vecs[0],is_n,&work_sub[0]));
+  PetscCall(VecGetSubVector(work_vecs[1],is_n,&work_sub[1]));
 
-  PetscCall(VecSum(sub_work[0],&tmp));
+  PetscCall(VecSum(work_sub[0],&tmp));
   fnc_inner -= tmp;
 
-  PetscCall(VecExp(sub_work[0]));                                   /* work[0,is-] <- exp(AdpB[is-])                        */
-  PetscCall(VecShift(sub_work[0],1.));                              /* work[0,is-] <- 1. + exp(AdpB[is-])                   */
-  PetscCall(VecCopy(sub_work[0],sub_work[1]));                      /* work[1,is-] <- work[0,is-]                           */
+  PetscCall(VecExp(work_sub[0]));                                   /* work[0,is-] <- exp(AdpB[is-])                        */
+  PetscCall(VecShift(work_sub[0],1.));                              /* work[0,is-] <- 1. + exp(AdpB[is-])                   */
+  PetscCall(VecCopy(work_sub[0],work_sub[1]));                      /* work[1,is-] <- work[0,is-]                           */
 
-  PetscCall(VecReciprocal(sub_work[1]));                            /* work[1,is-] <- 1. / (1. + exp(AdpB[is-])             */
+  PetscCall(VecReciprocal(work_sub[1]));                            /* work[1,is-] <- 1. / (1. + exp(AdpB[is-])             */
 
-  PetscCall(VecRestoreSubVector(work[0],is_n,&sub_work[0]));
-  PetscCall(VecRestoreSubVector(work[1],is_n,&sub_work[1]));
+  PetscCall(VecRestoreSubVector(work_vecs[0],is_n,&work_sub[0]));
+  PetscCall(VecRestoreSubVector(work_vecs[1],is_n,&work_sub[1]));
 
   /*
     Compute value of objective function
    */
 
-  PetscCall(VecLog(work[0]));
-  PetscCall(VecSum(work[0],&tmp));
+  PetscCall(VecLog(work_vecs[0]));
+  PetscCall(VecSum(work_vecs[0],&tmp));
   fnc_inner += tmp;
 
   *fnc = fnc_inner; /* Update a value of objective function */
@@ -494,9 +494,9 @@ static PetscErrorCode TaoFormFunctionGradient_Probability_Private(Tao tao,Vec pa
     Compute gradient
    */
 
-  PetscCall(VecAYPX(work[1],-1.,svm_prob->vec_targets));
-  PetscCall(VecSum(work[1],&g_arr[1]));
-  PetscCall(VecDot(work[1],svm_prob->vec_dist,&g_arr[0]));
+  PetscCall(VecAYPX(work_vecs[1],-1.,svm_prob->vec_targets));
+  PetscCall(VecSum(work_vecs[1],&g_arr[1]));
+  PetscCall(VecDot(work_vecs[1],svm_prob->vec_dist,&g_arr[0]));
 
   PetscCall(VecSetValues(g,2,idx,g_arr,INSERT_VALUES));
   PetscCall(VecAssemblyBegin(g));
@@ -510,16 +510,16 @@ static PetscErrorCode TaoFormFunctionGradient_Probability_Private(Tao tao,Vec pa
 
 static PetscErrorCode TaoFormHessian_Probability_Private(Tao tao,Vec params_sigmoid,Mat H,Mat Hpre,void *ctx)
 {
-  SVM             svm   = (SVM) ctx;
-  SVM_Probability *prob = (SVM_Probability *) svm->data;
+  SVM             svm       = (SVM) ctx;
+  SVM_Probability *svm_prob = (SVM_Probability *) svm->data;
 
   PetscReal       H_arr[4]  = {0.,0.,0.,0.};
   PetscInt        idxm[2]   = {0,1};
   PetscInt        idxn[2]   = {0,1};
 
-  Vec             *sub_work = NULL;
-  Vec             *work     = NULL;
-  PetscInt        N_works   = 2;
+  Vec             *work_vecs = NULL;
+  Vec             *work_sub  = NULL;
+  PetscInt        N_works    = 2;
 
   IS              is_p,is_n;
   PetscInt        N;
@@ -528,74 +528,74 @@ static PetscErrorCode TaoFormHessian_Probability_Private(Tao tao,Vec params_sigm
   const PetscReal *params_sigmoid_arr = NULL;
 
   PetscFunctionBegin;
-  PetscCall(VecGetSize(prob->vec_dist,&N));
+  PetscCall(VecGetSize(svm_prob->vec_dist,&N));
 
-  if (!prob->work) {
-    PetscCall(VecDuplicateVecs(prob->vec_dist,N_works,&work));
-    prob->work = work;
+  if (!svm_prob->work_vecs) {
+    PetscCall(VecDuplicateVecs(svm_prob->vec_dist,N_works,&work_vecs));
+    svm_prob->work_vecs = work_vecs;
   } else {
-    work  = prob->work;
+    work_vecs = svm_prob->work_vecs;
   }
 
-  sub_work = prob->sub_work;
+  work_sub = svm_prob->work_sub;
 
-  PetscCall(VecSet(work[0],1.));
-  PetscCall(VecSet(work[1],0.));
+  PetscCall(VecSet(work_vecs[0],1.));
+  PetscCall(VecSet(work_vecs[1],0.));
 
   /* Actual parameters of sigmoid */
   PetscCall(VecGetArrayRead(params_sigmoid,&params_sigmoid_arr));
   A = params_sigmoid_arr[0]; B = params_sigmoid_arr[1];
   PetscCall(VecRestoreArrayRead(params_sigmoid,&params_sigmoid_arr));
 
-  PetscCall(VecAXPBY(work[0],A,B,prob->vec_dist));                    /* work[0] <- A * dist + B  (AdpB) */
+  PetscCall(VecAXPBY(work_vecs[0],A,B,svm_prob->vec_dist));           /* work[0] <- A * dist + B  (AdpB) */
 
-  PetscCall(VecWhichGreaterThan(work[0],work[1],&is_p));
+  PetscCall(VecWhichGreaterThan(work_vecs[0],work_vecs[1],&is_p));
   PetscCall(ISComplement(is_p,0,N,&is_n));
 
   /*
    CASE: A * dist + B >= 0
    */
 
-  PetscCall(VecGetSubVector(work[0],is_p,&sub_work[0]));
-  PetscCall(VecGetSubVector(work[1],is_p,&sub_work[1]));
+  PetscCall(VecGetSubVector(work_vecs[0],is_p,&work_sub[0]));
+  PetscCall(VecGetSubVector(work_vecs[1],is_p,&work_sub[1]));
 
-  PetscCall(VecScale(sub_work[0],-1.));                               /* work[0,is+] <- -1. * AdpB[is+]           */
-  PetscCall(VecExp(sub_work[0]));                                     /* work[0,is+] <- exp(-1. * AdpB[is+])      */
-  PetscCall(VecCopy(sub_work[0],sub_work[1]));                        /* work[1,is+] <- work[0,is+]               */
+  PetscCall(VecScale(work_sub[0],-1.));                               /* work[0,is+] <- -1. * AdpB[is+]           */
+  PetscCall(VecExp(work_sub[0]));                                     /* work[0,is+] <- exp(-1. * AdpB[is+])      */
+  PetscCall(VecCopy(work_sub[0],work_sub[1]));                        /* work[1,is+] <- work[0,is+]               */
 
-  PetscCall(VecShift(sub_work[1],1.));                                /* work[1,is+] <- 1. + work[1,is+]          */
+  PetscCall(VecShift(work_sub[1],1.));                                /* work[1,is+] <- 1. + work[1,is+]          */
 
-  PetscCall(VecPointwiseDivide(sub_work[0],sub_work[0],sub_work[1])); /* work[0,is+] <- work[0,is+] / work[1,is+] */
-  PetscCall(VecReciprocal(sub_work[1]));                              /* work[1,is+] <- 1. / work[1,is+]          */
+  PetscCall(VecPointwiseDivide(work_sub[0],work_sub[0],work_sub[1])); /* work[0,is+] <- work[0,is+] / work[1,is+] */
+  PetscCall(VecReciprocal(work_sub[1]));                              /* work[1,is+] <- 1. / work[1,is+]          */
 
-  PetscCall(VecRestoreSubVector(work[1],is_p,&sub_work[1]));
-  PetscCall(VecRestoreSubVector(work[0],is_p,&sub_work[0]));
+  PetscCall(VecRestoreSubVector(work_vecs[1],is_p,&work_sub[1]));
+  PetscCall(VecRestoreSubVector(work_vecs[0],is_p,&work_sub[0]));
 
   /*
    CASE: A * dist + B < 0
    */
 
-  PetscCall(VecGetSubVector(work[0],is_n,&sub_work[0]));
-  PetscCall(VecGetSubVector(work[1],is_n,&sub_work[1]));
+  PetscCall(VecGetSubVector(work_vecs[0],is_n,&work_sub[0]));
+  PetscCall(VecGetSubVector(work_vecs[1],is_n,&work_sub[1]));
 
-  PetscCall(VecExp(sub_work[0]));                                     /* work[0,is-] <- exp(AdpB[is-])           */
-  PetscCall(VecCopy(sub_work[0],sub_work[1]));                        /* work[1,is-] <- work[0,is-]              */
-  PetscCall(VecShift(sub_work[0],1.));                                /* work[0,is-] <- 1. + exp(AdpB[is-])      */
+  PetscCall(VecExp(work_sub[0]));                                     /* work[0,is-] <- exp(AdpB[is-])           */
+  PetscCall(VecCopy(work_sub[0],work_sub[1]));                        /* work[1,is-] <- work[0,is-]              */
+  PetscCall(VecShift(work_sub[0],1.));                                /* work[0,is-] <- 1. + exp(AdpB[is-])      */
 
-  PetscCall(VecPointwiseDivide(sub_work[1],sub_work[1],sub_work[0])); /* work[1,is-] <- work[1,is-] / work[0,is-] */
-  PetscCall(VecReciprocal(sub_work[0]));                              /* work[0,is-] <- 1. / work[0,is-]          */
+  PetscCall(VecPointwiseDivide(work_sub[1],work_sub[1],work_sub[0])); /* work[1,is-] <- work[1,is-] / work[0,is-] */
+  PetscCall(VecReciprocal(work_sub[0]));                              /* work[0,is-] <- 1. / work[0,is-]          */
 
-  PetscCall(VecRestoreSubVector(work[0],is_n,&sub_work[0]));
-  PetscCall(VecRestoreSubVector(work[1],is_n,&sub_work[1]));
+  PetscCall(VecRestoreSubVector(work_vecs[0],is_n,&work_sub[0]));
+  PetscCall(VecRestoreSubVector(work_vecs[1],is_n,&work_sub[1]));
 
   /* Form Hessian */
-  PetscCall(VecPointwiseMult(work[0],work[1],work[0]));
-  PetscCall(VecPointwiseMult(work[1],prob->vec_dist,prob->vec_dist));
+  PetscCall(VecPointwiseMult(work_vecs[0],work_vecs[1],work_vecs[0]));
+  PetscCall(VecPointwiseMult(work_vecs[1],svm_prob->vec_dist,svm_prob->vec_dist));
 
-  PetscCall(VecDot(work[0],work[1],&H_arr[0]));
-  PetscCall(VecDot(prob->vec_dist,work[0],&H_arr[1]));
+  PetscCall(VecDot(work_vecs[0],work_vecs[1],&H_arr[0]));
+  PetscCall(VecDot(svm_prob->vec_dist,work_vecs[0],&H_arr[1]));
   H_arr[2] = H_arr[1];
-  PetscCall(VecSum(work[0],&H_arr[3]));
+  PetscCall(VecSum(work_vecs[0],&H_arr[3]));
 
   H_arr[0] += 1e-12;
   H_arr[3] += 1e-12;
@@ -1080,7 +1080,7 @@ PetscErrorCode SVMCreate_Probability(SVM svm)
 
   svm_prob->inner       = NULL;
   svm_prob->tao         = NULL;
-  svm_prob->work        = NULL;
+  svm_prob->work_vecs   = NULL;
 
   svm_prob->Xt_training = NULL;
   svm_prob->y_training  = NULL;

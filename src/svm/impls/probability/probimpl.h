@@ -23,8 +23,8 @@ typedef struct {
 
   Tao       tao;
 
-  Vec       sub_work[2];
-  Vec       *work;
+  Vec       *work_vecs;
+  Vec       work_sub[2];
 
   PetscReal sigmoid_params[2];
   PetscReal threshold;
