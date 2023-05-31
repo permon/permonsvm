@@ -14,8 +14,8 @@ typedef struct {
   SVM       inner;
   Tao       tao;
 
-  PetscReal *target; // TODO remove
-  PetscReal *deci;   // TODO remove
+  // PetscReal *target; // TODO remove
+  // PetscReal *deci;   // TODO remove
 
   Vec       vec_dist;
   Vec       vec_targets;

@@ -15,9 +15,6 @@ PetscErrorCode SVMReset_Probability(SVM svm)
   PetscCall(MatDestroy(&svm_prob->Xt_calib));
   PetscCall(VecDestroy(&svm_prob->y_calib));
   PetscCall(SVMDestroy(&svm_prob->inner));
-
-  PetscCall(PetscFree(svm_prob->deci));
-  PetscCall(PetscFree(svm_prob->target));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -308,115 +305,77 @@ PetscErrorCode SVMGetTao_Probability(SVM svm,Tao *tao)
 
 static PetscErrorCode SVMTransformUncalibratedPredictions_Probability_Private(SVM svm)
 {
-    SVM_Probability   *svm_prob = (SVM_Probability *) svm->data;
-    SVM               svm_uncalibrated;
+  SVM_Probability   *svm_prob = (SVM_Probability *) svm->data;
+  SVM               svm_uncalibrated;
 
-    MPI_Comm          comm; // TODO remove
-    PetscMPIInt       rank; // TODO remove
+  Mat               Xt_calib;
+  Vec               y_calib;
 
-    Mat               Xt_calib;
-    Vec               y_calib;
+  VecScatter        scatter;
+  Vec               dist;
 
-    VecScatter        scatter;
-    Vec               dist;
+  Vec               vec_labels;
+  const PetscReal   *labels = NULL;
+  IS                is_labels;
 
-    Vec               vec_labels;
-    IS                is_labels;
+  Vec               vec_targets,vec_targets_sub;
+  PetscReal         target_prob[2];
 
-    Vec               vec_targets;
-    Vec               vec_targets_sub;
+  PetscBool         label_to_target_prob;
 
-    const PetscReal   *labels = NULL;
-    PetscReal         target_prob[2];
+  PetscInt          Np,Nn;
+  PetscInt          i;
 
-    PetscBool         label_to_target_prob;
+  PetscFunctionBegin;
+  PetscCall(SVMGetInnerSVM(svm,&svm_uncalibrated));
+  PetscCall(SVMGetCalibrationDataset(svm,&Xt_calib,&y_calib));
 
-    PetscInt          N,Np,Nn;  // TODO remove N
-    PetscInt          i;
+  /* Get distance samples from a separating hyperplane */
+  PetscCall(VecDestroy(&svm_prob->vec_dist));
 
-    const PetscScalar *Xtw_arr = NULL; // TODO remove
-    const PetscScalar *y_arr   = NULL; // TODO remove
+  PetscCall(SVMGetDistancesFromHyperplane(svm_uncalibrated,Xt_calib,&dist));
+  PetscCall(VecScatterCreateToZero(dist,&scatter,&svm_prob->vec_dist));
+  PetscCall(VecScatterBegin(scatter,dist,svm_prob->vec_dist,INSERT_VALUES,SCATTER_FORWARD));
+  PetscCall(VecScatterEnd(scatter,dist,svm_prob->vec_dist,INSERT_VALUES,SCATTER_FORWARD));
 
-    PetscFunctionBegin;
-    PetscCall(SVMGetInnerSVM(svm,&svm_uncalibrated));
-    PetscCall(SVMGetCalibrationDataset(svm,&Xt_calib,&y_calib));
+  PetscCall(SVMProbGetConvertLabelsToTargetProbability(svm,&label_to_target_prob));
+  if (label_to_target_prob) {
+    /*
+     Transform labels to target probabilities as it proposed in
+     http://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf
+    */
+    PetscCall(SVMGetNumberPositiveNegativeSamples_Probability_Private(y_calib,&Np,&Nn));
+    target_prob[0] = 1. / (Nn + 2);
+    target_prob[1] = (Np + 1.) / (Np + 2.);
+  } else {
+    target_prob[0] = 0.;
+    target_prob[1] = 1.;
+  }
 
-    /* Get distance samples from a separating hyperplane */
-    PetscCall(VecDestroy(&svm_prob->vec_dist));
+  PetscCall(SVMGetLabels(svm,&labels));
+  PetscCall(VecDuplicate(y_calib,&vec_labels));
+  PetscCall(VecDuplicate(y_calib,&vec_targets));
 
-    PetscCall(SVMGetDistancesFromHyperplane(svm_uncalibrated,Xt_calib,&dist));
-    PetscCall(VecScatterCreateToZero(dist,&scatter,&svm_prob->vec_dist));
-    PetscCall(VecScatterBegin(scatter,dist,svm_prob->vec_dist,INSERT_VALUES,SCATTER_FORWARD));
-    PetscCall(VecScatterEnd(scatter,dist,svm_prob->vec_dist,INSERT_VALUES,SCATTER_FORWARD));
+  for (i = 0; i < 2; ++i) {
+    PetscCall(VecSet(vec_labels,labels[i]));
+    PetscCall(VecWhichEqual(y_calib,vec_labels,&is_labels));
+    PetscCall(VecGetSubVector(vec_targets,is_labels,&vec_targets_sub));
+    PetscCall(VecSet(vec_targets_sub,target_prob[i]));
+    PetscCall(VecRestoreSubVector(vec_targets,is_labels,&vec_targets_sub));
+    PetscCall(ISDestroy(&is_labels));
+  }
 
-    PetscCall(SVMProbGetConvertLabelsToTargetProbability(svm,&label_to_target_prob));
-    if (label_to_target_prob) {
-      /*
-       Transform labels to target probabilities as it proposed in
-       http://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf
-      */
-      PetscCall(SVMGetNumberPositiveNegativeSamples_Probability_Private(y_calib,&Np,&Nn));
-      target_prob[0] = 1. / (Nn + 2);
-      target_prob[1] = (Np + 1.) / (Np + 2.);
-    } else {
-      target_prob[0] = 0.;
-      target_prob[1] = 1.;
-    }
+  /* Scatter targets to a root process */
+  PetscCall(VecScatterCreateToZero(vec_targets,&scatter,&svm_prob->vec_targets));
+  PetscCall(VecScatterBegin(scatter,vec_targets,svm_prob->vec_targets,INSERT_VALUES,SCATTER_FORWARD));
+  PetscCall(VecScatterEnd(scatter,vec_targets,svm_prob->vec_targets,INSERT_VALUES,SCATTER_FORWARD));
+  PetscCall(VecScatterDestroy(&scatter));
 
-    PetscCall(SVMGetLabels(svm,&labels));
-    PetscCall(VecDuplicate(y_calib,&vec_labels));
-    PetscCall(VecDuplicate(y_calib,&vec_targets));
-
-    for (i = 0; i < 2; ++i) {
-      PetscCall(VecSet(vec_labels,labels[i]));
-      PetscCall(VecWhichEqual(y_calib,vec_labels,&is_labels));
-      PetscCall(VecGetSubVector(vec_targets,is_labels,&vec_targets_sub));
-      PetscCall(VecSet(vec_targets_sub,target_prob[i]));
-      PetscCall(VecRestoreSubVector(vec_targets,is_labels,&vec_targets_sub));
-      PetscCall(ISDestroy(&is_labels));
-    }
-
-    /* Scatter targets to a root process */
-    PetscCall(VecScatterCreateToZero(vec_targets,&scatter,&svm_prob->vec_targets));
-    PetscCall(VecScatterBegin(scatter,vec_targets,svm_prob->vec_targets,INSERT_VALUES,SCATTER_FORWARD));
-    PetscCall(VecScatterEnd(scatter,vec_targets,svm_prob->vec_targets,INSERT_VALUES,SCATTER_FORWARD));
-    PetscCall(VecScatterDestroy(&scatter));
-
-//    // TODO remove below
-//
-//    /* Clean up previous helper arrays */
-//    PetscCall(PetscFree(svm_prob->deci));   // TODO remove
-//    PetscCall(PetscFree(svm_prob->target)); // TODO remove
-//
-//    /* Alloc helper arrays again (distance sample from hyperplane and target) */
-//    PetscCall(PetscObjectGetComm((PetscObject)svm,&comm));
-//    PetscCallMPI(MPI_Comm_rank(comm,&rank));
-//
-//    if (rank == 0) {
-//      PetscCall(VecGetSize(svm_prob->vec_dist,&N));
-//
-//      PetscCall(PetscMalloc(N * sizeof(PetscReal),&svm_prob->deci));
-//      PetscCall(PetscMalloc(N * sizeof(PetscReal),&svm_prob->target));
-//
-//      PetscCall(VecGetArrayRead(svm_prob->vec_dist,&Xtw_arr));
-//      PetscCall(VecGetArrayRead(svm_prob->vec_targets,&y_arr));
-//
-//      for (i = 0; i < N; ++i) {
-//        svm_prob->deci[i]   = Xtw_arr[i];   // distance from hyperplane
-//        svm_prob->target[i] = y_arr[i];     // labels converted to probability
-//      }
-//
-//      PetscCall(VecRestoreArrayRead(svm_prob->vec_dist,&Xtw_arr));
-//      PetscCall(VecRestoreArrayRead(svm_prob->vec_targets,&y_arr));
-//    }
-//
-//    /* Clean up */
-//    // TODO clean up
-//    PetscCall(VecDestroy(&dist));
-//    PetscCall(VecDestroy(&vec_labels));
-//    PetscCall(VecDestroy(&vec_targets));
-
-    PetscFunctionReturn(PETSC_SUCCESS);
+  /* Clean up */
+  PetscCall(VecDestroy(&dist));
+  PetscCall(VecDestroy(&vec_labels));
+  PetscCall(VecDestroy(&vec_targets));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TaoFormFunctionGradient_Probability_Private(Tao tao,Vec params_sigmoid,PetscReal *fnc,Vec g,void *ctx)
@@ -549,7 +508,7 @@ static PetscErrorCode TaoFormHessian_Probability_Private(Tao tao,Vec params_sigm
   PetscCall(VecSet(work[0],1.));
   PetscCall(VecSet(work[1],0.));
 
-  PetscCall(VecGetArrayRead(params_sigmoid,&params_sigmoid_arr)); /* Actual parameters of sigmoid */
+  PetscCall(VecGetArrayRead(params_sigmoid,&params_sigmoid_arr)); /* actual parameters of sigmoid */
   A = params_sigmoid_arr[0]; B = params_sigmoid_arr[1];
   PetscCall(VecRestoreArrayRead(params_sigmoid,&params_sigmoid_arr));
 
@@ -803,11 +762,11 @@ PetscErrorCode SVMTrain_Probability(SVM svm)
   PetscCall(SVMGetAutoPostTrain(svm_uncalibrated,&post_train));
   PetscCall(SVMTrain(svm_uncalibrated));
 
-  /* Train logistic regression over uncalibrated model (Platt's scaling) */
+  /* Train logistic regression over uncalibrated model (known as Platt's scaling) */
   PetscCall(SVMTransformUncalibratedPredictions_Probability_Private(svm));
   PetscCall(SVMGetTao(svm,&tao));
 
-  /* Solve on root */
+  /* Solve underlying unconstrained problem on root */
   PetscCall(PetscObjectGetComm((PetscObject)svm,&comm));
   PetscCallMPI(MPI_Comm_rank(comm,&rank));
   if (rank == 0) {
@@ -1078,9 +1037,6 @@ PetscErrorCode SVMCreate_Probability(SVM svm)
   svm_prob->y_training  = NULL;
   svm_prob->Xt_calib    = NULL;
   svm_prob->y_calib     = NULL;
-
-  svm_prob->deci        = NULL;
-  svm_prob->target      = NULL;
 
   svm_prob->Np_calib    = -1;
   svm_prob->Nn_calib    = -1;
