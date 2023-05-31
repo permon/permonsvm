@@ -547,7 +547,7 @@ static PetscErrorCode TaoFormHessian_Probability_Private(Tao tao,Vec params_sigm
   A = params_sigmoid_arr[0]; B = params_sigmoid_arr[1];
   PetscCall(VecRestoreArrayRead(params_sigmoid,&params_sigmoid_arr));
 
-  PetscCall(VecAXPBY(work[0],A,B,prob->vec_dist));                   /* work[0] <- A * dist + B  (AdpB) */
+  PetscCall(VecAXPBY(work[0],A,B,prob->vec_dist));                    /* work[0] <- A * dist + B  (AdpB) */
 
   PetscCall(VecWhichGreaterThan(work[0],work[1],&is_p));
   PetscCall(ISComplement(is_p,0,N,&is_n));
@@ -855,66 +855,79 @@ PetscErrorCode SVMPostTrain_Probability(SVM svm)
 
 PetscErrorCode SVMPredict_Probability(SVM svm,Mat Xt,Vec *y_out)
 {
-  /* TODO reduce number of work vec */
   SVM       svm_uncalibrated;
 
-  Vec       pred,pred_sub; /* distances of samples (Xt_pred) from a separating hyperplane */
-  PetscReal A,B;           /* sigmoid params */
+  Vec       pred;
+
+  PetscInt  N_work_vec = 2;
+  Vec       *work_vecs = NULL;
+  Vec       work_sub[N_work_vec];
 
   IS        is_p,is_n;
   PetscInt  lo,hi;
 
-  Vec       *work = NULL;
-  PetscInt  N_work = 3;
+  PetscReal A,B;
 
   PetscFunctionBegin;
   if (!svm->posttraincalled) {
     PetscCall(SVMPostTrain(svm));
   }
 
-  /* Get distances from hyperplane */
   PetscCall(SVMGetInnerSVM(svm,&svm_uncalibrated));
 
-  PetscCall(SVMGetDistancesFromHyperplane(svm_uncalibrated,Xt,&pred));
+  PetscCall(SVMGetDistancesFromHyperplane(svm_uncalibrated,Xt,&pred));  /* Get distances from hyperplane */
   PetscCall(SVMProbGetSigmoidParams(svm,&A,&B));
 
-  PetscCall(VecDuplicateVecs(pred,N_work,&work)); // create work vectors
-  PetscCall(VecSet(work[0],1.));
-  PetscCall(VecSet(work[1],0.));
+  /* Create working vectors */
+  PetscCall(VecDuplicateVecs(pred,N_work_vec,&work_vecs));
+  PetscCall(VecSet(work_vecs[0],1.));
+  PetscCall(VecSet(work_vecs[1],0.));
 
-  PetscCall(VecAXPBY(pred,B,A,work[0]));  /* pred <- A * pred + B */
-
-  PetscCall(VecWhichGreaterThan(pred,work[1],&is_p));
+  PetscCall(VecWhichGreaterThan(pred,work_vecs[1],&is_p));
   PetscCall(VecGetOwnershipRange(pred,&lo,&hi));
   PetscCall(ISComplement(is_p,lo,hi,&is_n));
 
-  /* Compute posterior probability */
+  PetscCall(VecAXPBY(pred,B,A,work_vecs[0])); /* pred <- A * dist + B (AdpB) */
 
-  /* if A * pred + B >= 0. then y = exp(-pred) / (1. + exp(-pred)) */
-  PetscCall(VecGetSubVector(pred,is_p,&pred_sub));
-  PetscCall(VecGetSubVector(work[0],is_p,&work[2])); // TODO fix memory leak
+  PetscCall(VecWhichGreaterThan(pred,work_vecs[1],&is_p));
+  PetscCall(VecGetOwnershipRange(pred,&lo,&hi));
+  PetscCall(ISComplement(is_p,lo,hi,&is_n));
 
-  PetscCall(VecScale(pred_sub,-1.));
-  PetscCall(VecExp(pred_sub));
-  PetscCall(VecAXPY(work[2],1.,pred_sub));
-  PetscCall(VecPointwiseDivide(pred_sub,pred_sub,work[2])); // TODO fix memory leak
+  /*
+    Compute posterior probability
+   */
 
-  PetscCall(VecRestoreSubVector(pred,is_p,&pred_sub));
-  PetscCall(VecRestoreSubVector(work[0],is_p,&work[2])); // TODO fix memory leak
+  /*
+    CASE: A * dist + B >= 0
+   */
+  PetscCall(VecGetSubVector(pred        ,is_p,&work_sub[0]));
+  PetscCall(VecGetSubVector(work_vecs[0],is_p,&work_sub[1]));
 
-  /* if A * pred + B < 0. then y = 1 / (1 + exp(pred)) */
-  PetscCall(VecGetSubVector(pred,is_n,&pred_sub));
-  PetscCall(VecExp(pred_sub));
-  PetscCall(VecShift(pred_sub,1.));
-  PetscCall(VecReciprocal(pred_sub));
-  PetscCall(VecRestoreSubVector(pred,is_n,&pred_sub));
+  PetscCall(VecScale(work_sub[0],-1.));
+  PetscCall(VecExp(work_sub[0]));
+  PetscCall(VecAXPY(work_sub[1],1.,work_sub[0]));
+  PetscCall(VecPointwiseDivide(work_sub[0],work_sub[0],work_sub[1]));
+
+  PetscCall(VecRestoreSubVector(pred        ,is_p,&work_sub[0]));
+  PetscCall(VecRestoreSubVector(work_vecs[0],is_p,&work_sub[1]));
+
+  /*
+    CASE: A * dist + B < 0
+   */
+  PetscCall(VecGetSubVector(pred,is_n,&work_sub[0]));
+
+  PetscCall(VecExp(work_sub[0]));
+  PetscCall(VecShift(work_sub[0],1.));
+  PetscCall(VecReciprocal(work_sub[0]));
+
+  PetscCall(VecRestoreSubVector(pred,is_n,&work_sub[0]));
 
   *y_out = pred;
 
   /* Clean up */
   PetscCall(ISDestroy(&is_n));
   PetscCall(ISDestroy(&is_p));
-  PetscCall(VecDestroyVecs(N_work,&work));
+  PetscCall(VecDestroyVecs(N_work_vec,&work_vecs));
   PetscCall(SVMDestroy(&svm_uncalibrated));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
