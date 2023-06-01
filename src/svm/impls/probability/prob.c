@@ -1085,6 +1085,54 @@ PetscErrorCode SVMViewCalibrationDataset_Probability(SVM svm,PetscViewer v)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+PetscErrorCode SVMViewTrainingPredictions_Probability(SVM svm,PetscViewer v)
+{
+  MPI_Comm   comm;
+
+  Mat        Xt_training;
+  Vec        y_pred;
+
+  PetscFunctionBegin;
+  PetscCall(SVMGetTrainingDataset(svm,&Xt_training,NULL));
+  if (!Xt_training) {
+    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
+    SETERRQ(comm,PETSC_ERR_ARG_NULL,"Training dataset is not set");
+  }
+
+  /* View predictions on training samples */
+  PetscCall(SVMPredict(svm,Xt_training,&y_pred));
+  PetscCall(PetscObjectSetName((PetscObject) y_pred,"y_training_predictions"));
+  PetscCall(VecView(y_pred,v));
+
+  /* Free memory */
+  PetscCall(VecDestroy(&y_pred));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode SVMViewTestPredictions_Probability(SVM svm,PetscViewer v)
+{
+  MPI_Comm   comm;
+
+  Mat        Xt_test;
+  Vec        y_pred;
+
+  PetscFunctionBegin;
+  PetscCall(SVMGetTestDataset(svm,&Xt_test,NULL));
+  if (!Xt_test) {
+    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
+    SETERRQ(comm,PETSC_ERR_ARG_NULL,"Test dataset is not set");
+  }
+
+  /* View predictions on test samples */
+  PetscCall(SVMPredict(svm,Xt_test,&y_pred));
+  PetscCall(PetscObjectSetName((PetscObject) y_pred,"y_test_predictions"));
+  PetscCall(VecView(y_pred,v));
+
+  /* Free memory */
+  PetscCall(VecDestroy(&y_pred));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
 PetscErrorCode SVMCreate_Probability(SVM svm)
 {
   SVM_Probability *svm_prob = NULL;
@@ -1108,17 +1156,19 @@ PetscErrorCode SVMCreate_Probability(SVM svm)
 
   svm_prob->threshold   = .5;
 
-  svm->ops->setup              = SVMSetUp_Probability;
-  svm->ops->reset              = SVMReset_Probability;
-  svm->ops->destroy            = SVMDestroy_Probability;
-  svm->ops->setfromoptions     = SVMSetFromOptions_Probability;
-  svm->ops->train              = SVMTrain_Probability;
-  svm->ops->posttrain          = SVMPostTrain_Probability;
-  svm->ops->predict            = SVMPredict_Probability;
-  svm->ops->test               = SVMTest_Probability;
-  svm->ops->view               = SVMView_Probability;
-  svm->ops->viewscore          = SVMViewScore_Probability;
-  svm->ops->computemodelscores = SVMComputeModelScores_Probability;
+  svm->ops->setup                   = SVMSetUp_Probability;
+  svm->ops->reset                   = SVMReset_Probability;
+  svm->ops->destroy                 = SVMDestroy_Probability;
+  svm->ops->setfromoptions          = SVMSetFromOptions_Probability;
+  svm->ops->train                   = SVMTrain_Probability;
+  svm->ops->posttrain               = SVMPostTrain_Probability;
+  svm->ops->predict                 = SVMPredict_Probability;
+  svm->ops->test                    = SVMTest_Probability;
+  svm->ops->view                    = SVMView_Probability;
+  svm->ops->viewscore               = SVMViewScore_Probability;
+  svm->ops->computemodelscores      = SVMComputeModelScores_Probability;
+  svm->ops->viewtrainingpredictions = SVMViewTrainingPredictions_Probability;
+  svm->ops->viewtestpredictions     = SVMViewTestPredictions_Probability;
 
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetInnerSVM_C"           ,SVMGetInnerSVM_Probability));
   PetscCall(PetscObjectComposeFunction((PetscObject) svm,"SVMGetTao_C"                ,SVMGetTao_Probability));
