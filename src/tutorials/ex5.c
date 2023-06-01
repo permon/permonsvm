@@ -53,9 +53,13 @@ int main(int argc,char **argv)
 /*TEST
 
   test:
-
-    args: -svm_loss_type L2 -svm_view_io
+    filter: grep -v MPI
+    args: -uncalibrated_svm_loss_type L1 -svm_view_io
     args: -f_training $PERMON_SVM_DIR/src/tutorials/data/heart_scale.bin
     args: -f_calibration $PERMON_SVM_DIR/src/tutorials/data/heart_scale.bin
-
+    args: -f_test $PERMON_SVM_DIR/src/tutorials/data/heart_scale.t.bin
+    args: -tao_type nls tao_view -svm_view_report
+    args: -view_test_predictions
+    args: -svm_threshold 0.47
+    output_file: output/ex5.out
 TEST*/
