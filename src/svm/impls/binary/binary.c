@@ -1457,6 +1457,7 @@ PetscErrorCode SVMGetDistancesFromHyperplane_Binary(SVM svm,Mat Xt_pred,Vec *dis
 
   /* Predict labels of unseen samples */
   PetscCall(MatCreateVecs(Xt_pred,NULL,&dist));
+  PetscCall(VecSetFromOptions(dist));
 
   PetscCall(MatMult(Xt_pred,w,dist));
   PetscCall(VecShift(dist,b)); /* shifting is not performed in case of b = 0 (inner implementation) */
