@@ -15,13 +15,6 @@
     sum(xi_i)=60.5409
   objective functions:
     primalObj=63.1920    dualObj=61.7067    gap=1.4854
-  type: binary
-  model performance score with training parameters C=1.000, mod=2, loss=L1:
-    Confusion matrix:
-      TP =   27      FP =    9
-      FN =    7      TN =   47
-    accuracy=82.22%    precision=75.00%    sensitivity=79.41%
-    F1=0.77    MCC=0.63    AUC_ROC=0.82    G1=0.63
   type: seq
 -1.
 1.
@@ -203,6 +196,18 @@
 -1.
 -1.
 -1.
+  type: binary
+  model performance score with training parameters C=1.000, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   27      FP =    9
+      FN =    7      TN =   47
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.8704		0.8393	0.8545	0.7460
+      1.0  	0.7500		0.7941	0.7714	0.6279
+      mean  	0.8102		0.8167	0.8130	0.6870
+      accuracy = 0.8222
+      auc_roc  = 0.8167
   type: seq
 1.
 -1.

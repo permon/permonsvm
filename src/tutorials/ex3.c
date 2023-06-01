@@ -73,9 +73,9 @@ int main(int argc,char **argv)
 
   test:
     filter: grep -v MPI
-    args: -qps_view_convergence -svm_view -svm_view_score
+    args: -qps_view_convergence -svm_view -svm_view_report
     args: -f_training $PERMON_SVM_DIR/src/tutorials/data/heart_scale.bin
     args: -f_test $PERMON_SVM_DIR/src/tutorials/data/heart_scale.t.bin
-    args: -view_training_predictions -view_test_predictions
+    args: -svm_view_training_predictions -svm_view_test_predictions
     output_file: output/ex3.out
 TEST*/

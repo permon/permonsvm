@@ -20,8 +20,13 @@
     Confusion matrix:
       TP =   26      FP =    5
       FN =    6      TN =   23
-    accuracy=81.67%    precision=83.87%    sensitivity=81.25%
-    F1=0.83    MCC=0.63    AUC_ROC=0.82    G1=0.63
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.7931		0.8214	0.8070	0.6765
+      1.0  	0.8387		0.8125	0.8254	0.7027
+      mean  	0.8159		0.8170	0.8162	0.6896
+      accuracy = 0.8167
+      auc_roc  = 0.8170
   type: mpgp
   last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 18 iterations
   all 2 QPSSolves from last QPSReset/QPSResetStatistics have required 31 iterations
@@ -44,8 +49,13 @@
     Confusion matrix:
       TP =   26      FP =    5
       FN =    6      TN =   23
-    accuracy=81.67%    precision=83.87%    sensitivity=81.25%
-    F1=0.83    MCC=0.63    AUC_ROC=0.82    G1=0.63
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.7931		0.8214	0.8070	0.6765
+      1.0  	0.8387		0.8125	0.8254	0.7027
+      mean  	0.8159		0.8170	0.8162	0.6896
+      accuracy = 0.8167
+      auc_roc  = 0.8170
   type: mpgp
   last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 22 iterations
   all 3 QPSSolves from last QPSReset/QPSResetStatistics have required 53 iterations
@@ -68,8 +78,13 @@
     Confusion matrix:
       TP =   27      FP =    4
       FN =    7      TN =   22
-    accuracy=81.67%    precision=87.10%    sensitivity=79.41%
-    F1=0.83    MCC=0.63    AUC_ROC=0.82    G1=0.64
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.7586		0.8462	0.8000	0.6667
+      1.0  	0.8710		0.7941	0.8308	0.7105
+      mean  	0.8148		0.8201	0.8154	0.6886
+      accuracy = 0.8167
+      auc_roc  = 0.8201
   type: mpgp
   last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 35 iterations
   all 4 QPSSolves from last QPSReset/QPSResetStatistics have required 88 iterations
@@ -92,8 +107,13 @@
     Confusion matrix:
       TP =   29      FP =    2
       FN =    7      TN =   22
-    accuracy=85.00%    precision=93.55%    sensitivity=80.56%
-    F1=0.87    MCC=0.71    AUC_ROC=0.86    G1=0.72
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.7586		0.9167	0.8302	0.7097
+      1.0  	0.9355		0.8056	0.8657	0.7632
+      mean  	0.8471		0.8611	0.8479	0.7364
+      accuracy = 0.8500
+      auc_roc  = 0.8611
   type: mpgp
   last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 36 iterations
   all 5 QPSSolves from last QPSReset/QPSResetStatistics have required 124 iterations
@@ -116,8 +136,13 @@
     Confusion matrix:
       TP =   27      FP =    4
       FN =    7      TN =   22
-    accuracy=81.67%    precision=87.10%    sensitivity=79.41%
-    F1=0.83    MCC=0.63    AUC_ROC=0.82    G1=0.64
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.7586		0.8462	0.8000	0.6667
+      1.0  	0.8710		0.7941	0.8308	0.7105
+      mean  	0.8148		0.8201	0.8154	0.6886
+      accuracy = 0.8167
+      auc_roc  = 0.8201
   type: mpgp
   last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 41 iterations
   all 6 QPSSolves from last QPSReset/QPSResetStatistics have required 165 iterations
@@ -140,8 +165,13 @@
     Confusion matrix:
       TP =   27      FP =    4
       FN =    8      TN =   21
-    accuracy=80.00%    precision=87.10%    sensitivity=77.14%
-    F1=0.82    MCC=0.60    AUC_ROC=0.81    G1=0.61
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.7241		0.8400	0.7778	0.6364
+      1.0  	0.8710		0.7714	0.8182	0.6923
+      mean  	0.7976		0.8057	0.7980	0.6643
+      accuracy = 0.8000
+      auc_roc  = 0.8057
   type: mpgp
   last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 52 iterations
   all 7 QPSSolves from last QPSReset/QPSResetStatistics have required 217 iterations
@@ -164,8 +194,13 @@
     Confusion matrix:
       TP =   26      FP =    5
       FN =    6      TN =   23
-    accuracy=81.67%    precision=83.87%    sensitivity=81.25%
-    F1=0.83    MCC=0.63    AUC_ROC=0.82    G1=0.63
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.7931		0.8214	0.8070	0.6765
+      1.0  	0.8387		0.8125	0.8254	0.7027
+      mean  	0.8159		0.8170	0.8162	0.6896
+      accuracy = 0.8167
+      auc_roc  = 0.8170
   type: mpgp
   last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 73 iterations
   all 8 QPSSolves from last QPSReset/QPSResetStatistics have required 290 iterations
@@ -188,8 +223,13 @@
     Confusion matrix:
       TP =   27      FP =    4
       FN =    6      TN =   23
-    accuracy=83.33%    precision=87.10%    sensitivity=81.82%
-    F1=0.84    MCC=0.67    AUC_ROC=0.84    G1=0.67
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.7931		0.8519	0.8214	0.6970
+      1.0  	0.8710		0.8182	0.8438	0.7297
+      mean  	0.8320		0.8350	0.8326	0.7133
+      accuracy = 0.8333
+      auc_roc  = 0.8350
   type: mpgp
   last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 84 iterations
   all 9 QPSSolves from last QPSReset/QPSResetStatistics have required 374 iterations
@@ -212,8 +252,13 @@
     Confusion matrix:
       TP =   27      FP =    4
       FN =    7      TN =   22
-    accuracy=81.67%    precision=87.10%    sensitivity=79.41%
-    F1=0.83    MCC=0.63    AUC_ROC=0.82    G1=0.64
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.7586		0.8462	0.8000	0.6667
+      1.0  	0.8710		0.7941	0.8308	0.7105
+      mean  	0.8148		0.8201	0.8154	0.6886
+      accuracy = 0.8167
+      auc_roc  = 0.8201
   type: mpgp
   last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 19 iterations
   all 1 QPSSolves from last QPSReset/QPSResetStatistics have required 19 iterations
@@ -236,8 +281,13 @@
     Confusion matrix:
       TP =   23      FP =    7
       FN =    7      TN =   23
-    accuracy=76.67%    precision=76.67%    sensitivity=76.67%
-    F1=0.77    MCC=0.53    AUC_ROC=0.77    G1=0.53
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.7667		0.7667	0.7667	0.6216
+      1.0  	0.7667		0.7667	0.7667	0.6216
+      mean  	0.7667		0.7667	0.7667	0.6216
+      accuracy = 0.7667
+      auc_roc  = 0.7667
   type: mpgp
   last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 21 iterations
   all 2 QPSSolves from last QPSReset/QPSResetStatistics have required 40 iterations
@@ -260,8 +310,13 @@
     Confusion matrix:
       TP =   23      FP =    7
       FN =    7      TN =   23
-    accuracy=76.67%    precision=76.67%    sensitivity=76.67%
-    F1=0.77    MCC=0.53    AUC_ROC=0.77    G1=0.53
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.7667		0.7667	0.7667	0.6216
+      1.0  	0.7667		0.7667	0.7667	0.6216
+      mean  	0.7667		0.7667	0.7667	0.6216
+      accuracy = 0.7667
+      auc_roc  = 0.7667
   type: mpgp
   last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 25 iterations
   all 3 QPSSolves from last QPSReset/QPSResetStatistics have required 65 iterations
@@ -284,8 +339,13 @@
     Confusion matrix:
       TP =   23      FP =    7
       FN =    7      TN =   23
-    accuracy=76.67%    precision=76.67%    sensitivity=76.67%
-    F1=0.77    MCC=0.53    AUC_ROC=0.77    G1=0.53
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.7667		0.7667	0.7667	0.6216
+      1.0  	0.7667		0.7667	0.7667	0.6216
+      mean  	0.7667		0.7667	0.7667	0.6216
+      accuracy = 0.7667
+      auc_roc  = 0.7667
   type: mpgp
   last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 30 iterations
   all 4 QPSSolves from last QPSReset/QPSResetStatistics have required 95 iterations
@@ -308,8 +368,13 @@
     Confusion matrix:
       TP =   22      FP =    8
       FN =    7      TN =   23
-    accuracy=75.00%    precision=73.33%    sensitivity=75.86%
-    F1=0.75    MCC=0.50    AUC_ROC=0.75    G1=0.50
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.7667		0.7419	0.7541	0.6053
+      1.0  	0.7333		0.7586	0.7458	0.5946
+      mean  	0.7500		0.7503	0.7499	0.5999
+      accuracy = 0.7500
+      auc_roc  = 0.7503
   type: mpgp
   last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 34 iterations
   all 5 QPSSolves from last QPSReset/QPSResetStatistics have required 129 iterations
@@ -332,8 +397,13 @@
     Confusion matrix:
       TP =   22      FP =    8
       FN =    7      TN =   23
-    accuracy=75.00%    precision=73.33%    sensitivity=75.86%
-    F1=0.75    MCC=0.50    AUC_ROC=0.75    G1=0.50
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.7667		0.7419	0.7541	0.6053
+      1.0  	0.7333		0.7586	0.7458	0.5946
+      mean  	0.7500		0.7503	0.7499	0.5999
+      accuracy = 0.7500
+      auc_roc  = 0.7503
   type: mpgp
   last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 39 iterations
   all 6 QPSSolves from last QPSReset/QPSResetStatistics have required 168 iterations
@@ -356,8 +426,13 @@
     Confusion matrix:
       TP =   21      FP =    9
       FN =    6      TN =   24
-    accuracy=75.00%    precision=70.00%    sensitivity=77.78%
-    F1=0.74    MCC=0.50    AUC_ROC=0.75    G1=0.51
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.8000		0.7273	0.7619	0.6154
+      1.0  	0.7000		0.7778	0.7368	0.5833
+      mean  	0.7500		0.7525	0.7494	0.5994
+      accuracy = 0.7500
+      auc_roc  = 0.7525
   type: mpgp
   last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 50 iterations
   all 7 QPSSolves from last QPSReset/QPSResetStatistics have required 218 iterations
@@ -380,8 +455,13 @@
     Confusion matrix:
       TP =   22      FP =    8
       FN =    6      TN =   24
-    accuracy=76.67%    precision=73.33%    sensitivity=78.57%
-    F1=0.76    MCC=0.53    AUC_ROC=0.77    G1=0.54
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.8000		0.7500	0.7742	0.6316
+      1.0  	0.7333		0.7857	0.7586	0.6111
+      mean  	0.7667		0.7679	0.7664	0.6213
+      accuracy = 0.7667
+      auc_roc  = 0.7679
   type: mpgp
   last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 82 iterations
   all 8 QPSSolves from last QPSReset/QPSResetStatistics have required 300 iterations
@@ -404,8 +484,13 @@
     Confusion matrix:
       TP =   22      FP =    8
       FN =    6      TN =   24
-    accuracy=76.67%    precision=73.33%    sensitivity=78.57%
-    F1=0.76    MCC=0.53    AUC_ROC=0.77    G1=0.54
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.8000		0.7500	0.7742	0.6316
+      1.0  	0.7333		0.7857	0.7586	0.6111
+      mean  	0.7667		0.7679	0.7664	0.6213
+      accuracy = 0.7667
+      auc_roc  = 0.7679
   type: mpgp
   last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 108 iterations
   all 9 QPSSolves from last QPSReset/QPSResetStatistics have required 408 iterations
@@ -428,8 +513,13 @@
     Confusion matrix:
       TP =   22      FP =    8
       FN =    6      TN =   24
-    accuracy=76.67%    precision=73.33%    sensitivity=78.57%
-    F1=0.76    MCC=0.53    AUC_ROC=0.77    G1=0.54
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.8000		0.7500	0.7742	0.6316
+      1.0  	0.7333		0.7857	0.7586	0.6111
+      mean  	0.7667		0.7679	0.7664	0.6213
+      accuracy = 0.7667
+      auc_roc  = 0.7679
   type: mpgp
   last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 14 iterations
   all 1 QPSSolves from last QPSReset/QPSResetStatistics have required 14 iterations
@@ -452,8 +542,13 @@
     Confusion matrix:
       TP =   18      FP =    5
       FN =    2      TN =   35
-    accuracy=88.33%    precision=78.26%    sensitivity=90.00%
-    F1=0.84    MCC=0.75    AUC_ROC=0.89    G1=0.77
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.9459		0.8750	0.9091	0.8333
+      1.0  	0.7826		0.9000	0.8372	0.7200
+      mean  	0.8643		0.8875	0.8732	0.7767
+      accuracy = 0.8833
+      auc_roc  = 0.8875
   type: mpgp
   last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 19 iterations
   all 2 QPSSolves from last QPSReset/QPSResetStatistics have required 33 iterations
@@ -476,8 +571,13 @@
     Confusion matrix:
       TP =   19      FP =    4
       FN =    2      TN =   35
-    accuracy=90.00%    precision=82.61%    sensitivity=90.48%
-    F1=0.86    MCC=0.79    AUC_ROC=0.90    G1=0.80
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.9459		0.8974	0.9211	0.8537
+      1.0  	0.8261		0.9048	0.8636	0.7600
+      mean  	0.8860		0.9011	0.8923	0.8068
+      accuracy = 0.9000
+      auc_roc  = 0.9011
   type: mpgp
   last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 22 iterations
   all 3 QPSSolves from last QPSReset/QPSResetStatistics have required 55 iterations
@@ -500,8 +600,13 @@
     Confusion matrix:
       TP =   20      FP =    3
       FN =    3      TN =   34
-    accuracy=90.00%    precision=86.96%    sensitivity=86.96%
-    F1=0.87    MCC=0.79    AUC_ROC=0.89    G1=0.79
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.9189		0.9189	0.9189	0.8500
+      1.0  	0.8696		0.8696	0.8696	0.7692
+      mean  	0.8942		0.8942	0.8942	0.8096
+      accuracy = 0.9000
+      auc_roc  = 0.8942
   type: mpgp
   last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 33 iterations
   all 4 QPSSolves from last QPSReset/QPSResetStatistics have required 88 iterations
@@ -524,8 +629,13 @@
     Confusion matrix:
       TP =   20      FP =    3
       FN =    3      TN =   34
-    accuracy=90.00%    precision=86.96%    sensitivity=86.96%
-    F1=0.87    MCC=0.79    AUC_ROC=0.89    G1=0.79
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.9189		0.9189	0.9189	0.8500
+      1.0  	0.8696		0.8696	0.8696	0.7692
+      mean  	0.8942		0.8942	0.8942	0.8096
+      accuracy = 0.9000
+      auc_roc  = 0.8942
   type: mpgp
   last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 45 iterations
   all 5 QPSSolves from last QPSReset/QPSResetStatistics have required 133 iterations
@@ -548,8 +658,13 @@
     Confusion matrix:
       TP =   19      FP =    4
       FN =    4      TN =   33
-    accuracy=86.67%    precision=82.61%    sensitivity=82.61%
-    F1=0.83    MCC=0.72    AUC_ROC=0.86    G1=0.72
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.8919		0.8919	0.8919	0.8049
+      1.0  	0.8261		0.8261	0.8261	0.7037
+      mean  	0.8590		0.8590	0.8590	0.7543
+      accuracy = 0.8667
+      auc_roc  = 0.8590
   type: mpgp
   last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 55 iterations
   all 6 QPSSolves from last QPSReset/QPSResetStatistics have required 188 iterations
@@ -572,8 +687,13 @@
     Confusion matrix:
       TP =   20      FP =    3
       FN =    5      TN =   32
-    accuracy=86.67%    precision=86.96%    sensitivity=80.00%
-    F1=0.83    MCC=0.72    AUC_ROC=0.86    G1=0.71
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.8649		0.9143	0.8889	0.8000
+      1.0  	0.8696		0.8000	0.8333	0.7143
+      mean  	0.8672		0.8571	0.8611	0.7571
+      accuracy = 0.8667
+      auc_roc  = 0.8571
   type: mpgp
   last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 72 iterations
   all 7 QPSSolves from last QPSReset/QPSResetStatistics have required 260 iterations
@@ -596,8 +716,13 @@
     Confusion matrix:
       TP =   19      FP =    4
       FN =    5      TN =   32
-    accuracy=85.00%    precision=82.61%    sensitivity=79.17%
-    F1=0.81    MCC=0.69    AUC_ROC=0.84    G1=0.68
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.8649		0.8889	0.8767	0.7805
+      1.0  	0.8261		0.7917	0.8085	0.6786
+      mean  	0.8455		0.8403	0.8426	0.7295
+      accuracy = 0.8500
+      auc_roc  = 0.8403
   type: mpgp
   last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 89 iterations
   all 8 QPSSolves from last QPSReset/QPSResetStatistics have required 349 iterations
@@ -620,8 +745,13 @@
     Confusion matrix:
       TP =   20      FP =    3
       FN =    5      TN =   32
-    accuracy=86.67%    precision=86.96%    sensitivity=80.00%
-    F1=0.83    MCC=0.72    AUC_ROC=0.86    G1=0.71
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.8649		0.9143	0.8889	0.8000
+      1.0  	0.8696		0.8000	0.8333	0.7143
+      mean  	0.8672		0.8571	0.8611	0.7571
+      accuracy = 0.8667
+      auc_roc  = 0.8571
   type: mpgp
   last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 116 iterations
   all 9 QPSSolves from last QPSReset/QPSResetStatistics have required 465 iterations
@@ -644,8 +774,13 @@
     Confusion matrix:
       TP =   20      FP =    3
       FN =    4      TN =   33
-    accuracy=88.33%    precision=86.96%    sensitivity=83.33%
-    F1=0.85    MCC=0.76    AUC_ROC=0.88    G1=0.75
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.8919		0.9167	0.9041	0.8250
+      1.0  	0.8696		0.8333	0.8511	0.7407
+      mean  	0.8807		0.8750	0.8776	0.7829
+      accuracy = 0.8833
+      auc_roc  = 0.8750
   type: mpgp
   last QPSSolve CONVERGED due to CONVERGED_RTOL, KSPReason=2, required 46 iterations
   all 1 QPSSolves from last QPSReset/QPSResetStatistics have required 46 iterations
@@ -668,5 +803,10 @@
     Confusion matrix:
       TP =   26      FP =   10
       FN =    7      TN =   47
-    accuracy=81.11%    precision=72.22%    sensitivity=78.79%
-    F1=0.75    MCC=0.60    AUC_ROC=0.81    G1=0.61
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.8704		0.8246	0.8468	0.7344
+      1.0  	0.7222		0.7879	0.7536	0.6047
+      mean  	0.7963		0.8062	0.8002	0.6695
+      accuracy = 0.8111
+      auc_roc  = 0.8062

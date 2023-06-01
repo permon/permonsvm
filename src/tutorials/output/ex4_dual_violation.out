@@ -20,5 +20,10 @@
     Confusion matrix:
       TP =   27      FP =    9
       FN =    8      TN =   46
-    accuracy=81.11%    precision=75.00%    sensitivity=77.14%
-    F1=0.76    MCC=0.60    AUC_ROC=0.80    G1=0.61
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.8519		0.8364	0.8440	0.7302
+      1.0  	0.7500		0.7714	0.7606	0.6136
+      mean  	0.8009		0.8039	0.8023	0.6719
+      accuracy = 0.8111
+      auc_roc  = 0.8039

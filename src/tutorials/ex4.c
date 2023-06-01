@@ -55,7 +55,7 @@ int main(int argc,char **argv)
   test:
     suffix: duality_gap
     filter: grep -v MPI
-    args: -qps_view_convergence -svm_view -svm_view_score -svm_binary_convergence_test duality_gap
+    args: -qps_view_convergence -svm_view -svm_view_report -svm_binary_convergence_test duality_gap
     args: -svm_loss_type L2
     args: -f_training $PERMON_SVM_DIR/src/tutorials/data/heart_scale.bin
     args: -f_test $PERMON_SVM_DIR/src/tutorials/data/heart_scale.t.bin
@@ -64,7 +64,7 @@ int main(int argc,char **argv)
   test:
     suffix: dual_violation
     filter: grep -v MPI
-    args: -qps_view_convergence -svm_view -svm_view_score -svm_binary_convergence_test dual_violation
+    args: -qps_view_convergence -svm_view -svm_view_report -svm_binary_convergence_test dual_violation
     args: -svm_loss_type L1 -svm_binary_mod 2 -qps_atol 1e-2
     args: -f_training $PERMON_SVM_DIR/src/tutorials/data/heart_scale.bin
     args: -f_test $PERMON_SVM_DIR/src/tutorials/data/heart_scale.t.bin

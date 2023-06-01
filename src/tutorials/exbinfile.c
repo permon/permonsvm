@@ -104,7 +104,7 @@ int main(int argc,char **argv)
 /*TEST
   testset:
     suffix: 1
-    args: -qps_view_convergence -svm_view -svm_view_score
+    args: -qps_view_convergence -svm_view -svm_view_report
     filter: grep -v MPI
     test:
       args: -f $PERMON_SVM_DIR/src/tutorials/data/heart_scale.bin -f_test $PERMON_SVM_DIR/src/tutorials/data/heart_scale.t.bin
@@ -125,7 +125,7 @@ int main(int argc,char **argv)
     requires: hdf5
     filter: grep -v MPI
     nsize: 2
-    args: -qps_view_convergence -svm_view -svm_view_score
+    args: -qps_view_convergence -svm_view -svm_view_report
     args: -f $PERMON_SVM_DIR/src/tutorials/data/heart_scale.h5 -f_test $PERMON_SVM_DIR/src/tutorials/data/heart_scale.t.h5
     output_file: output/exbinfile_1.out
 TEST*/
