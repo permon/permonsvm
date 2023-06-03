@@ -1101,7 +1101,7 @@ PetscErrorCode SVMViewTrainingPredictions_Probability(SVM svm,PetscViewer v)
 
   /* View predictions on training samples */
   PetscCall(SVMPredict(svm,Xt_training,&y_pred));
-  PetscCall(PetscObjectSetName((PetscObject) y_pred,"y_training_predictions"));
+  PetscCall(PetscObjectSetName((PetscObject) y_pred,"y_predictions"));
   PetscCall(VecView(y_pred,v));
 
   /* Free memory */
@@ -1125,7 +1125,7 @@ PetscErrorCode SVMViewTestPredictions_Probability(SVM svm,PetscViewer v)
 
   /* View predictions on test samples */
   PetscCall(SVMPredict(svm,Xt_test,&y_pred));
-  PetscCall(PetscObjectSetName((PetscObject) y_pred,"y_test_predictions"));
+  PetscCall(PetscObjectSetName((PetscObject) y_pred,"y_predictions"));
   PetscCall(VecView(y_pred,v));
 
   /* Free memory */
