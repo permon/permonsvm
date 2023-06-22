@@ -66,11 +66,11 @@
       FN =    7      TN =   47
     Classification report:
       label	precision	recall	F1	Jaccard index
-      -1.0  	0.87		0.84	0.85	0.75
-      1.0  	0.75		0.79	0.77	0.63
-      mean  	0.81		0.82	0.81	0.69
-      accuracy = 82.22%
-      auc_roc  = 81.67%
+      -1.0  	0.8393		0.8704	0.8545	0.7460
+      1.0  	0.7941		0.7500	0.7714	0.6279
+      mean  	0.8167		0.8102	0.8130	0.6870
+      accuracy = 0.8222
+      auc_roc  = 0.8548
   type: probability
   model performance scores with threshold=0.47
     Confusion matrix:
@@ -78,11 +78,11 @@
       FN =    7      TN =   47
     Classification report:
       label	precision	recall	F1	Jaccard index
-      -1.0  	0.87		0.85	0.86	0.76
-      1.0  	0.78		0.80	0.79	0.65
-      mean  	0.82		0.83	0.83	0.70
-      accuracy = 83.33%
-      auc_roc  = 82.73%
+      -1.0  	0.8545		0.8704	0.8624	0.7581
+      1.0  	0.8000		0.7778	0.7887	0.6512
+      mean  	0.8273		0.8241	0.8256	0.7046
+      accuracy = 0.8333
+      auc_roc  = 0.8625
   type: seq
 0.692152
 0.358265

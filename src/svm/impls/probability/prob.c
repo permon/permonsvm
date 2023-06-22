@@ -272,6 +272,7 @@ PetscErrorCode SVMGetLabels_Probability(SVM svm,const PetscReal *labels[])
   PetscCall(SVMGetInnerSVM(svm,&svm_uncalibrated));
   PetscCall(SVMGetLabels(svm_uncalibrated,&labels_inner));
   *labels = labels_inner;
+  PetscCall(SVMDestroy(&svm_uncalibrated));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -355,6 +356,7 @@ static PetscErrorCode SVMTransformUncalibratedPredictions_Probability_Private(SV
   PetscCall(VecScatterCreateToZero(dist,&scatter,&svm_prob->vec_dist));
   PetscCall(VecScatterBegin(scatter,dist,svm_prob->vec_dist,INSERT_VALUES,SCATTER_FORWARD));
   PetscCall(VecScatterEnd(scatter,dist,svm_prob->vec_dist,INSERT_VALUES,SCATTER_FORWARD));
+  PetscCall(VecScatterDestroy(&scatter));
 
   PetscCall(SVMProbGetConvertLabelsToTargetProbability(svm,&label_to_target_prob));
   if (label_to_target_prob) {
@@ -395,6 +397,7 @@ static PetscErrorCode SVMTransformUncalibratedPredictions_Probability_Private(SV
   PetscCall(VecDestroy(&dist));
   PetscCall(VecDestroy(&vec_labels));
   PetscCall(VecDestroy(&vec_targets));
+  PetscCall(SVMDestroy(&svm_uncalibrated));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -897,10 +900,6 @@ PetscErrorCode SVMPredict_Probability(SVM svm,Mat Xt,Vec *y_out)
   PetscCall(VecDuplicateVecs(pred,N_work_vec,&work_vecs));
   PetscCall(VecSet(work_vecs[0],1.));
   PetscCall(VecSet(work_vecs[1],0.));
-
-  PetscCall(VecWhichGreaterThan(pred,work_vecs[1],&is_p));
-  PetscCall(VecGetOwnershipRange(pred,&lo,&hi));
-  PetscCall(ISComplement(is_p,lo,hi,&is_n));
 
   PetscCall(VecAXPBY(pred,B,A,work_vecs[0])); /* pred <- A * dist + B (AdpB) */
 

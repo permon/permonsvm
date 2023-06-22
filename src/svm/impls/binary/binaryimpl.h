@@ -31,7 +31,7 @@ typedef struct {
     QPS         qps;
 
     PetscInt    confusion_matrix[4];
-    PetscReal   model_scores[15];
+    PetscReal   model_scores[16];
 
     /* Work vecs */
     Vec         work[3]; /* xi, c, Xtw */

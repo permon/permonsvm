@@ -43,7 +43,7 @@ PetscErrorCode SVMReset_Binary(SVM svm)
 
   PetscCall(PetscMemzero(svm_binary->y_map,2 * sizeof(PetscScalar)));
   PetscCall(PetscMemzero(svm_binary->confusion_matrix,4 * sizeof(PetscInt)));
-  PetscCall(PetscMemzero(svm_binary->model_scores,7 * sizeof(PetscReal)));
+  PetscCall(PetscMemzero(svm_binary->model_scores,16 * sizeof(PetscReal)));
 
   svm_binary->w           = NULL;
   svm_binary->Xt_training = NULL;
@@ -1710,7 +1710,7 @@ PetscErrorCode SVMConvergedDualityGap_Binary(QPS qps,KSPConvergedReason *reason)
     PetscFunctionReturn(PETSC_SUCCESS);
   }
 
-  if (gap <= rtol * P) {
+  if (gap <= rtol * PetscAbs(P)) {
     *reason = KSP_CONVERGED_RTOL;
     PetscCall(PetscInfo(qps,"QP solver has converged. Duality gap %14.12e at iteration %" PetscInt_FMT "\n",(double) gap,it));
   }
@@ -1766,7 +1766,7 @@ PetscErrorCode SVMGetModelScore_Binary(SVM svm,ModelScore score_type,PetscReal *
   PetscFunctionBegin;
   PetscValidRealPointer(s,3);
 
-  *s = svm_binary->model_scores[score_type];
+  *s = svm_binary->model_scores[3 * score_type];
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -1975,7 +1975,7 @@ PetscErrorCode SVMViewTrainingPredictions_Binary(SVM svm,PetscViewer v)
 
   /* View predictions on training samples */
   PetscCall(SVMPredict(svm,Xt_training,&y_pred));
-  PetscCall(PetscObjectSetName((PetscObject) y_pred,"y_training_predictions"));
+  PetscCall(PetscObjectSetName((PetscObject) y_pred,"y_predictions"));
   PetscCall(VecView(y_pred,v));
 
   /* Free memory */
@@ -1999,7 +1999,7 @@ PetscErrorCode SVMViewTestPredictions_Binary(SVM svm,PetscViewer v)
 
   /* View predictions on test samples */
   PetscCall(SVMPredict(svm,Xt_test,&y_pred));
-  PetscCall(PetscObjectSetName((PetscObject) y_pred,"y_test_predictions"));
+  PetscCall(PetscObjectSetName((PetscObject) y_pred,"y_predictions"));
   PetscCall(VecView(y_pred,v));
 
   /* Free memory */
@@ -2037,7 +2037,7 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
 
   PetscCall(PetscMemzero(svm_binary->y_map,2 * sizeof(PetscScalar)));
   PetscCall(PetscMemzero(svm_binary->confusion_matrix,4 * sizeof(PetscInt)));
-  PetscCall(PetscMemzero(svm_binary->model_scores,7 * sizeof(PetscReal)));
+  PetscCall(PetscMemzero(svm_binary->model_scores,16 * sizeof(PetscReal)));
 
   for (i = 0; i < 3; ++i) {
     svm_binary->work[i] = NULL;
@@ -2224,7 +2224,7 @@ PetscErrorCode SVMMonitorScores_Binary(QPS qps,PetscInt it,PetscReal rnorm,void 
   PetscCall(PetscViewerASCIIPrintf(v,"mean_recall_test=%.2f"   ,(double)svm_binary->model_scores[6]));
   PetscCall(PetscViewerASCIIPrintf(v,"mean_F1_test=%.2f,"      ,(double)svm_binary->model_scores[9]));
   PetscCall(PetscViewerASCIIPrintf(v,"mean_Jaccard_test=%.2f," ,(double)svm_binary->model_scores[12]));
-  PetscCall(PetscViewerASCIIPrintf(v,"auc_roc_test=%.2f\n"     ,(double)svm_binary->model_scores[13]));
+  PetscCall(PetscViewerASCIIPrintf(v,"auc_roc_test=%.2f\n"     ,(double)svm_binary->model_scores[15]));
   PetscCall(PetscViewerASCIIPopTab(v));
 
   PetscCall(VecDestroy(&y_pred));
@@ -2269,7 +2269,7 @@ PetscErrorCode SVMMonitorTrainingScores_Binary(QPS qps,PetscInt it,PetscReal rno
   PetscCall(PetscViewerASCIIPrintf(v,"mean_recall_training=%.2f"   ,(double)svm_binary->model_scores[6]));
   PetscCall(PetscViewerASCIIPrintf(v,"mean_F1_training=%.2f"       ,(double)svm_binary->model_scores[9]));
   PetscCall(PetscViewerASCIIPrintf(v,"mean_Jaccard_training=%.2f"  ,(double)svm_binary->model_scores[12]));
-  PetscCall(PetscViewerASCIIPrintf(v,"auc_roc_training=%.2f\n"     ,(double)svm_binary->model_scores[13]));
+  PetscCall(PetscViewerASCIIPrintf(v,"auc_roc_training=%.2f\n"     ,(double)svm_binary->model_scores[15]));
   PetscCall(PetscViewerASCIIPopTab(v));
 
   PetscCall(VecDestroy(&y_pred));
