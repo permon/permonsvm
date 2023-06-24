@@ -61,7 +61,7 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
   svm->user_bias  = 1.;
   svm->svm_mod    = 2;
 
-  PetscCall(PetscMemzero(svm->hopt_score_types,7 * sizeof(ModelScore)));
+  PetscCall(PetscMemzero(svm->hopt_score_types,6* sizeof(ModelScore)));
 
   svm->penalty_type        = 1;
   svm->hyperoptset         = PETSC_FALSE;
@@ -2811,8 +2811,8 @@ PetscErrorCode SVMLoadTrainingDataset(SVM svm,PetscViewer v)
   PetscCall(MatSetFromOptions(Xt_training));
 
   PetscCall(VecCreate(comm,&y_training));
-  PetscCall(VecSetFromOptions(y_training));
   PetscCall(PetscObjectSetName((PetscObject) y_training,"y_training"));
+  PetscCall(VecSetFromOptions(y_training));
 
   PetscCall(PetscLogEventBegin(SVM_LoadDataset,svm,0,0,0));
   PetscCall(PetscViewerLoadSVMDataset(Xt_training,y_training,v));

@@ -37,7 +37,7 @@ struct _p_SVM {
   Mat                 Xt_test;
   Vec                 y_test;
 
-  ModelScore          hopt_score_types[7];
+  ModelScore          hopt_score_types[6];
   PetscInt            hopt_nscore_types;
   CrossValidationType cv_type;
 
