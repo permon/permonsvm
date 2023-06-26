@@ -33,11 +33,14 @@ PetscErrorCode SVMReset_Binary(SVM svm)
   }
   PetscCall(VecDestroy(&svm_binary->w));
   PetscCall(MatDestroy(&svm_binary->Xt_training));
+
   PetscCall(MatDestroy(&svm_binary->G));
   PetscCall(MatDestroy(&svm_binary->J));
   PetscCall(VecDestroy(&svm_binary->diag));
+
   PetscCall(VecDestroy(&svm_binary->y_training));
   PetscCall(VecDestroy(&svm_binary->y_inner));
+
   PetscCall(ISDestroy(&svm_binary->is_p));
   PetscCall(ISDestroy(&svm_binary->is_n));
 
@@ -2051,18 +2054,24 @@ PetscErrorCode SVMCreate_Binary(SVM svm)
 
   svm_binary->w           = NULL;
   svm_binary->b           = 1.;
+
   svm_binary->qps         = NULL;
+
   svm_binary->Xt_training = NULL;
+
   svm_binary->G           = NULL;
   svm_binary->J           = NULL;
   svm_binary->diag        = NULL;
+
   svm_binary->y_training  = NULL;
   svm_binary->y_inner     = NULL;
+
   svm_binary->is_p        = NULL;
   svm_binary->is_n        = NULL;
 
   svm_binary->nsv         = 0;
   svm_binary->is_sv       = NULL;
+
   svm_binary->chop_tol    = PETSC_MACHINE_EPSILON;
 
   PetscCall(PetscMemzero(svm_binary->y_map,2 * sizeof(PetscScalar)));

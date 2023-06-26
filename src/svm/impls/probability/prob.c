@@ -32,6 +32,7 @@ PetscErrorCode SVMReset_Probability(SVM svm)
   svm_prob->tao         = NULL;
 
   svm_prob->work_vecs   = NULL;
+
   svm_prob->vec_dist    = NULL;
   svm_prob->vec_targets = NULL;
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -1148,6 +1149,9 @@ PetscErrorCode SVMCreate_Probability(SVM svm)
   svm_prob->y_training  = NULL;
   svm_prob->Xt_calib    = NULL;
   svm_prob->y_calib     = NULL;
+
+  svm_prob->vec_dist    = NULL;
+  svm_prob->vec_targets = NULL;
 
   svm_prob->Np_calib    = -1;
   svm_prob->Nn_calib    = -1;

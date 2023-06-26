@@ -33,6 +33,7 @@ PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt
   PetscInt          i,j,k,l,nfolds;
 
   IS                is_training,is_test;
+  IS                is_cols;
 
   PetscInt          p;       /* penalty type */
   PetscInt          svm_mod;
@@ -68,11 +69,14 @@ PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt
 
   PetscCall(SVMGetTrainingDataset(svm,&Xt,&y));
   PetscCall(MatGetOwnershipRange(Xt,&lo,&hi));
+  PetscCall(MatGetOwnershipIS(Xt,NULL,&is_cols));
 
   PetscCall(SVMGetHyperOptNScoreTypes(svm,&nscores));
   PetscCall(SVMGetHyperOptScoreTypes(svm,&model_scores));
   PetscCall(SVMGetNfolds(svm,&nfolds));
+
   for (i = 0; i < nfolds; ++i) {
+
     if (info_set) {
       PetscCall(PetscPrintf(comm,"SVM: fold %" PetscInt_FMT " of %" PetscInt_FMT "\n",i+1,nfolds));
     }
@@ -83,12 +87,12 @@ PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt
 
     /* Create test dataset */
     PetscCall(ISCreateStride(comm,n,first,nfolds,&is_test));
-    PetscCall(MatCreateSubMatrix(Xt,is_test,NULL,MAT_INITIAL_MATRIX,&Xt_test));
+    PetscCall(MatCreateSubMatrix(Xt,is_test,is_cols,MAT_INITIAL_MATRIX,&Xt_test));
     PetscCall(VecGetSubVector(y,is_test,&y_test));
 
     /* Create training dataset */
     PetscCall(ISComplement(is_test,lo,hi,&is_training));
-    PetscCall(MatCreateSubMatrix(Xt,is_training,NULL,MAT_INITIAL_MATRIX,&Xt_training));
+    PetscCall(MatCreateSubMatrix(Xt,is_training,is_cols,MAT_INITIAL_MATRIX,&Xt_training));
     PetscCall(VecGetSubVector(y,is_training,&y_training));
 
     PetscCall(SVMSetTrainingDataset(cross_svm,Xt_training,y_training));
@@ -122,6 +126,7 @@ PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[],PetscInt
   n = m / p;
   for (i = 0; i < n; ++i) score[i] /= (PetscReal) nscores * nfolds;
 
+  PetscCall(ISDestroy(&is_cols));
   PetscCall(SVMDestroy(&cross_svm));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -176,7 +181,9 @@ PetscErrorCode SVMStratifiedKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[
 
   Mat              Xt,Xt_training,Xt_test;
   Vec              y,y_training,y_test;
+
   IS               is_training,is_test;
+  IS               is_cols;
 
   IS               is_p,is_n;
   Vec              idx_p,idx_n;
@@ -220,6 +227,8 @@ PetscErrorCode SVMStratifiedKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[
   PetscCall(PetscOptionsHasName(NULL,prefix,"-svm_info",&info_set));
 
   PetscCall(SVMGetTrainingDataset(svm,&Xt,&y));
+  PetscCall(MatGetOwnershipIS(Xt,NULL,&is_cols));
+
   /* Split positive and negative training samples */
   is_p = svm_binary->is_p;
   is_n = svm_binary->is_n;
@@ -232,7 +241,9 @@ PetscErrorCode SVMStratifiedKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[
   PetscCall(SVMGetHyperOptNScoreTypes(svm,&nscores));
   PetscCall(SVMGetHyperOptScoreTypes(svm,&model_scores));
   PetscCall(SVMGetNfolds(svm,&nfolds));
+
   for (i = 0; i < nfolds; ++i) {
+
     if (info_set) {
       PetscCall(PetscPrintf(comm,"SVM: fold %" PetscInt_FMT " of %" PetscInt_FMT "\n",i+1,nfolds));
     }
@@ -248,30 +259,35 @@ PetscErrorCode SVMStratifiedKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[
     PetscCall(ISExpand(is_test_p,is_test_n,&is_test));
 
     /* Create training dataset */
-    PetscCall(MatCreateSubMatrix(Xt,is_training,NULL,MAT_INITIAL_MATRIX,&Xt_training));
+    PetscCall(MatCreateSubMatrix(Xt,is_training,is_cols,MAT_INITIAL_MATRIX,&Xt_training));
     PetscCall(VecGetSubVector(y,is_training,&y_training));
 
     /* Create test dataset */
-    PetscCall(MatCreateSubMatrix(Xt,is_test,NULL,MAT_INITIAL_MATRIX,&Xt_test));
+    PetscCall(MatCreateSubMatrix(Xt,is_test,is_cols,MAT_INITIAL_MATRIX,&Xt_test));
     PetscCall(VecGetSubVector(y,is_test,&y_test));
 
     PetscCall(SVMSetTrainingDataset(cross_svm,Xt_training,y_training));
     PetscCall(SVMSetTestDataset(cross_svm,Xt_test,y_test));
+
     /* Test C values on fold */
     PetscCall(SVMGetQPS(cross_svm,&qps));
     qps->max_it = 1e7;
     k = 0;
+
     for (j = 0; j < m; j += p) {
       PetscCall(SVMSetPenalty(cross_svm,p,&c_arr[j]));
       PetscCall(SVMTrain(cross_svm));
       PetscCall(SVMTest(cross_svm));
+
       /* Get model scores */
       for (l = 0; l < nscores; ++l) {
         PetscCall(SVMGetModelScore(cross_svm,model_scores[l],&s));
         score[k] += s;
       }
+
       ++k;
     }
+
     PetscCall(SVMReset(cross_svm));
     PetscCall(SVMSetOptionsPrefix(cross_svm,prefix));
 
@@ -292,6 +308,7 @@ PetscErrorCode SVMStratifiedKFoldCrossValidation_Binary(SVM svm,PetscReal c_arr[
   for (i = 0; i < k; ++i) score[i] /= (PetscReal) nscores * nfolds;
 
   /* Free memory */
+  PetscCall(ISDestroy(&is_cols));
   PetscCall(VecDestroy(&idx_n));
   PetscCall(VecDestroy(&idx_p));
   PetscCall(SVMDestroy(&cross_svm));
