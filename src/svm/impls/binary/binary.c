@@ -166,7 +166,7 @@ PetscErrorCode SVMView_Binary(SVM svm,PetscViewer v)
 
     PetscCall(PetscViewerASCIIPopTab(v));
   } else {
-    SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewScore", ((PetscObject)v)->type_name);
+    SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMView", ((PetscObject)v)->type_name);
   }
   PetscFunctionReturn(PETSC_SUCCESS);
 }

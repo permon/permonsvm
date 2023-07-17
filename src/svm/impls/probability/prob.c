@@ -61,8 +61,36 @@ PetscErrorCode SVMDestroy_Probability(SVM svm)
 
 PetscErrorCode SVMView_Probability(SVM svm,PetscViewer v)
 {
+  MPI_Comm  comm;
+  SVM       svm_uncalibrated;
+
+  PetscReal A,B;
+  PetscBool isascii;
 
   PetscFunctionBegin;
+
+  comm = PetscObjectComm((PetscObject) svm);
+  if (!v) v = PETSC_VIEWER_STDOUT_(comm);
+  PetscCall(PetscObjectTypeCompare((PetscObject)v,PETSCVIEWERASCII,&isascii));
+
+  if (isascii) {
+    PetscCall(SVMGetInnerSVM(svm,&svm_uncalibrated));
+    PetscCall(SVMView(svm_uncalibrated,v));
+    PetscCall(SVMDestroy(&svm_uncalibrated));
+
+    PetscCall(PetscObjectPrintClassNamePrefixType((PetscObject) svm,v));
+    PetscCall(SVMProbGetSigmoidParams(svm,&A,&B));
+
+    PetscCall(PetscViewerASCIIPushTab(v));
+    PetscCall(PetscViewerASCIIPrintf(v,"model parameters:\n"));
+    PetscCall(PetscViewerASCIIPushTab(v));
+    PetscCall(PetscViewerASCIIPrintf(v,"A=%.4f",(double)A));
+    PetscCall(PetscViewerASCIIPrintf(v,"B=%.4f\n",(double)B));
+    PetscCall(PetscViewerASCIIPopTab(v));
+    PetscCall(PetscViewerASCIIPopTab(v));
+  } else {
+    SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMView", ((PetscObject)v)->type_name);
+  }
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
