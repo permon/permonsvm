@@ -376,8 +376,6 @@ static PetscErrorCode SVMTransformUncalibratedPredictions_Probability_Private(SV
   PetscCall(SVMGetLabels(svm,&labels));
   PetscCall(VecDuplicate(y_calib,&vec_labels));
   PetscCall(VecDuplicate(y_calib,&vec_targets));
-  PetscCall(VecSetFromOptions(vec_labels));
-  PetscCall(VecSetFromOptions(vec_targets));
 
   for (i = 0; i < 2; ++i) {
     PetscCall(VecSet(vec_labels,labels[i]));
@@ -418,7 +416,7 @@ static PetscErrorCode TaoFormFunctionGradient_Probability_Private(Tao tao,Vec pa
   PetscInt        N_works    = 2;
 
   IS              is_p,is_n;
-  PetscInt        i,N;
+  PetscInt        N;
 
   PetscReal       A,B;
   const PetscReal *params_sigmoid_arr = NULL;
@@ -428,9 +426,6 @@ static PetscErrorCode TaoFormFunctionGradient_Probability_Private(Tao tao,Vec pa
 
   if (!svm_prob->work_vecs) {
     PetscCall(VecDuplicateVecs(svm_prob->vec_dist,N_works,&work_vecs));
-    for (i = 0; i < N_works; ++i) {
-      PetscCall(VecSetFromOptions(work_vecs[i]));
-    }
     svm_prob->work_vecs = work_vecs;
   } else {
     work_vecs = svm_prob->work_vecs;
@@ -531,7 +526,7 @@ static PetscErrorCode TaoFormHessian_Probability_Private(Tao tao,Vec params_sigm
   PetscInt        N_works    = 2;
 
   IS              is_p,is_n;
-  PetscInt        i,N;
+  PetscInt        N;
 
   PetscReal       A,B;
   const PetscReal *params_sigmoid_arr = NULL;
@@ -541,9 +536,6 @@ static PetscErrorCode TaoFormHessian_Probability_Private(Tao tao,Vec params_sigm
 
   if (!svm_prob->work_vecs) {
     PetscCall(VecDuplicateVecs(svm_prob->vec_dist,N_works,&work_vecs));
-    for (i = 0; i < N_works; ++i) {
-      PetscCall(VecSetFromOptions(work_vecs[i]));
-    }
     svm_prob->work_vecs = work_vecs;
   } else {
     work_vecs = svm_prob->work_vecs;

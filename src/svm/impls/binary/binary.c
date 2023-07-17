@@ -340,8 +340,6 @@ PetscErrorCode SVMSetTrainingDataset_Binary(SVM svm,Mat Xt_training,Vec y_traini
   PetscCall(VecMax(y_training,NULL,&max));
 
   PetscCall(VecDuplicate(y_training,&tmp));
-  PetscCall(VecSetFromOptions(tmp));
-
   PetscCall(VecSet(tmp,max));
 
   /* Index set for positive samples */
@@ -409,9 +407,7 @@ static PetscErrorCode SVMSetUp_Remapy_Binary_Private(SVM svm)
     PetscCall(PetscObjectReference((PetscObject) y));
   } else {
     PetscCall(VecGetLocalSize(y,&n));
-
     PetscCall(VecDuplicate(y,&svm_binary->y_inner));
-    PetscCall(VecSetFromOptions(svm_binary->y_inner));
 
     PetscCall(VecGetArrayRead(y,&y_arr));
     PetscCall(VecGetArray(svm_binary->y_inner,&y_inner_arr));
@@ -714,7 +710,6 @@ PetscErrorCode SVMComputeOperator_Binary(SVM svm,Mat *A)
 
       PetscCall(VecDestroy(&svm_binary->diag));
       PetscCall(VecDuplicate(y,&svm_binary->diag));
-      PetscCall(VecSetFromOptions(svm_binary->diag));
 
       diag = svm_binary->diag;
 
@@ -798,8 +793,6 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
 
   /* Set RHS */
   PetscCall(VecDuplicate(y,&e));  /* creating vector e same size and type as y_training */
-  PetscCall(VecSetFromOptions(e));
-
   PetscCall(VecSet(e,1.));
   PetscCall(QPSetRhs(qp,e));      /* set linear term of QP problem */
 
@@ -814,7 +807,6 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
 
   /* Create box constraint */
   PetscCall(VecDuplicate(y,&lb));  /* create lower bound constraint */
-  PetscCall(VecSetFromOptions(lb));
   PetscCall(VecSet(lb,0.));
 
   PetscCall(SVMGetPenaltyType(svm,&p));
@@ -828,7 +820,6 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   PetscCall(SVMGetLossType(svm,&loss_type));
   if (loss_type == SVM_L1) {
     PetscCall(VecDuplicate(lb,&ub));
-    PetscCall(VecSetFromOptions(ub));
 
     if (p == 1) {
       PetscCall(VecSet(ub,C));
@@ -850,7 +841,6 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   /* TODO create public method for setting initial vector */
   /* Set initial guess */
   PetscCall(VecDuplicate(lb,&x_init));
-  PetscCall(VecSetFromOptions(x_init));
 
   if (p == 1) {
     PetscCall(VecSet(x_init,C - 100 * PETSC_MACHINE_EPSILON));
@@ -940,10 +930,6 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   PetscCall(VecDuplicate(svm_binary->work[0],&svm_binary->work[1]));
   PetscCall(VecDuplicate(svm_binary->work[0],&svm_binary->work[2]));
 
-  for (i = 0; i < 3; ++i) {
-    PetscCall(VecSetFromOptions(svm_binary->work[i]));
-  }
-
   /* Decreasing reference counts using destroy methods */
   PetscCall(MatDestroy(&H));
   PetscCall(MatDestroy(&Be));
@@ -1032,9 +1018,7 @@ PetscErrorCode SVMReconstructHyperplane_Binary(SVM svm)
   /* Reconstruction of hyperplane normal */
   PetscCall(SVMGetQP(svm,&qp));
   PetscCall(QPGetSolutionVector(qp,&x));
-
   PetscCall(VecDuplicate(x,&yx));
-  PetscCall(VecSetFromOptions(yx));
 
   PetscCall(VecPointwiseMult(yx,y,x)); /* yx = y.*x */
   PetscCall(MatCreateVecs(Xt,&w_inner,NULL));
@@ -1059,8 +1043,6 @@ PetscErrorCode SVMReconstructHyperplane_Binary(SVM svm)
     PetscCall(VecGetSubVector(svm_binary->work[2],svm_binary->is_sv,&Xtw_sv)); /* Xtw_sv = Xt(is_sv) */
 
     PetscCall(VecDuplicate(y_sv,&t));
-    PetscCall(VecSetFromOptions(t));
-
     PetscCall(VecWAXPY(t,-1.,Xtw_sv,y_sv));
 
     PetscCall(VecRestoreSubVector(y,svm_binary->is_sv,&y_sv));
@@ -1525,10 +1507,7 @@ PetscErrorCode SVMPredict_Binary(SVM svm,Mat Xt_pred,Vec *y_out)
   PetscCall(VecGetOwnershipRange(dist,&lo,&hi));
 
   PetscCall(VecDuplicate(dist,&y));
-  PetscCall(VecSetFromOptions(y));
-
   PetscCall(VecDuplicate(dist,&o));
-  PetscCall(VecSetFromOptions(o));
 
   PetscCall(VecSet(o,0));
 
