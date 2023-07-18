@@ -69,7 +69,7 @@ int main(int argc,char **argv)
   test:
     filter: grep -v MPI
     args: -f_training $PERMON_SVM_DIR/src/tutorials/data/heart_scale.bin -f_test $PERMON_SVM_DIR/src/tutorials/data/heart_scale.t.bin
-    args: -cross_svm_view -cross_svm_view_score -cross_qps_view_convergence
-    args: -svm_view -svm_view_score -qps_view_convergence
+    args: -cross_svm_view -cross_svm_view_report -cross_qps_view_convergence
+    args: -svm_view -svm_view_report -qps_view_convergence
     output_file: output/ex2.out
 TEST*/

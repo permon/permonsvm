@@ -1,0 +1,176 @@
+  type: probability
+    type: shell
+    Samples are augmented with additional dimension by means of bias 1.00
+      type: seqaij
+      samples	  180
+      samples+	   84 (46.67%)
+      samples-	   96 (53.33%)
+      features	   13 (14)
+  type: probability
+    type: shell
+    Samples are augmented with additional dimension by means of bias 1.00
+      type: seqaij
+      samples	  180
+      samples+	   84 (46.67%)
+      samples-	   96 (53.33%)
+      features	   13 (14)
+  type: probability
+    type: shell
+    Samples are augmented with additional dimension by means of bias 1.00
+      type: seqaij
+      samples	   90
+      samples+	   36 (40.00%)
+      samples-	   54 (60.00%)
+      features	   13 (14)
+  type: nls
+    Newton steps: 4
+    BFGS steps: 0
+    Gradient steps: 0
+    nls ksp atol: 0
+    nls ksp rtol: 4
+    nls ksp ctol: 0
+    nls ksp negc: 0
+    nls ksp dtol: 0
+    nls ksp iter: 0
+    nls ksp othr: 0
+    type: more-thuente
+    maximum function evaluations=30
+    tolerances: ftol=0.0001, rtol=1e-10, gtol=0.9
+    total number of function evaluations=0
+    total number of gradient evaluations=0
+    total number of function/gradient evaluations=1
+    Termination reason: 1
+    type: stcg
+    maximum iterations=10000, initial guess is zero
+    tolerances:  relative=1e-05, absolute=1e-50, divergence=10000.
+    left preconditioning
+    using UNPRECONDITIONED norm type for convergence test
+    type: none
+    linear system matrix = precond matrix:
+      type: seqdense
+      rows=2, cols=2
+      total: nonzeros=4, allocated nonzeros=4
+      total number of mallocs used during MatSetValues calls=0
+  total KSP iterations: 8
+  convergence tolerances: gatol=1e-05,   steptol=0.,   gttol=1e-05
+  Residual in Function/Gradient:=4.68591e-05
+  Objective value=65.4017
+  total number of iterations=4,                          (max: 50)
+  total number of function/gradient evaluations=11,      (max: -1)
+  total number of Hessian evaluations=5
+  Solution converged:    ||g(X)||/|f(X)| <= grtol
+  type: binary
+  model performance score with training parameters C=1.000, mod=2, loss=L1:
+    Confusion matrix:
+      TP =   27      FP =    9
+      FN =    7      TN =   47
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.8393		0.8704	0.8545	0.7460
+      1.0  	0.7941		0.7500	0.7714	0.6279
+      mean  	0.8167		0.8102	0.8130	0.6870
+      accuracy = 0.8222
+      auc_roc  = 0.8548
+  type: probability
+  model performance scores with threshold=0.47
+    Confusion matrix:
+      TP =   28      FP =    8
+      FN =    7      TN =   47
+    Classification report:
+      label	precision	recall	F1	Jaccard index
+      -1.0  	0.8545		0.8704	0.8624	0.7581
+      1.0  	0.8000		0.7778	0.7887	0.6512
+      mean  	0.8273		0.8241	0.8256	0.7046
+      accuracy = 0.8333
+      auc_roc  = 0.8625
+  type: seq
+0.692152
+0.358265
+0.0623699
+0.0593597
+0.0847497
+0.472362
+0.77028
+0.0183972
+0.278786
+0.0661922
+0.0951332
+0.586362
+0.627691
+0.680918
+0.288899
+0.203907
+0.65593
+0.256481
+0.848288
+0.245754
+0.906959
+0.211236
+0.556919
+0.236021
+0.462092
+0.991112
+0.44014
+0.856051
+0.0359142
+0.0372889
+0.0147937
+0.232595
+0.601132
+0.0970305
+0.234534
+0.59317
+0.977234
+0.0492996
+0.837759
+0.233478
+0.0453023
+0.125797
+0.154484
+0.430019
+0.020125
+0.0233663
+0.134965
+0.858371
+0.570209
+0.555925
+0.112219
+0.0179949
+0.0885379
+0.862473
+0.0729776
+0.986202
+0.32474
+0.832726
+0.105283
+0.0394994
+0.992305
+0.992444
+0.868949
+0.693327
+0.838868
+0.253403
+0.0660132
+0.347135
+0.217783
+0.0847328
+0.15682
+0.31687
+0.0681114
+0.0663353
+0.0733602
+0.00893696
+0.0408054
+0.544612
+0.589336
+0.0807493
+0.0295832
+0.773323
+0.0383432
+0.951364
+0.806235
+0.985183
+0.643099
+0.079696
+0.974547
+0.0474249

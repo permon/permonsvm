@@ -1,15 +1,16 @@
+
 ALL: lib
 
 CFLAGS   =
 FFLAGS   =
-SOURCEC  = io.c report.c matutils.c
+SOURCEC  = prob.c
 SOURCEF  =
-SOURCEH  = io.h report.h
+SOURCEH  =
 OBJSC    = ${SOURCEC:.c=.o}
+OBJSF    =
 LIBBASE  = libpermon
-DIRS     =
 MANSEC   = SVM
-LOCDIR   = src/svm/utils/
+LOCDIR   = src/svm/impls/probability/
 
 include ${PERMON_SVM_DIR}/lib/permonsvm/conf/permonsvm_variables
 include ${PERMON_SVM_DIR}/lib/permonsvm/conf/permonsvm_rules

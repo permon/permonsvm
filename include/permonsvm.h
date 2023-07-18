@@ -19,8 +19,9 @@ typedef struct _p_SVM* SVM;
 FLLOP_EXTERN PetscClassId SVM_CLASSID;
 #define SVM_CLASS_NAME  "svm"
 
-#define SVMType       char*
-#define SVM_BINARY    "binary"
+#define SVMType  char*
+#define SVM_BINARY      "binary"
+#define SVM_PROBABILITY "probability"
 
 /*E
   SVMLossType - Determines the loss function for soft-margin SVM (non-separable samples).
@@ -166,8 +167,12 @@ FLLOP_EXTERN PetscErrorCode SVMComputeOperator(SVM,Mat *);
 
 FLLOP_EXTERN PetscErrorCode SVMSetTrainingDataset(SVM,Mat,Vec);
 FLLOP_EXTERN PetscErrorCode SVMGetTrainingDataset(SVM,Mat *,Vec *);
+FLLOP_EXTERN PetscErrorCode SVMSetCalibrationDataset(SVM,Mat,Vec);
+FLLOP_EXTERN PetscErrorCode SVMGetCalibrationDataset(SVM,Mat *,Vec *);
 FLLOP_EXTERN PetscErrorCode SVMSetTestDataset(SVM,Mat,Vec);
 FLLOP_EXTERN PetscErrorCode SVMGetTestDataset(SVM,Mat *,Vec *);
+
+FLLOP_EXTERN PetscErrorCode SVMGetLabels(SVM,const PetscReal *[]);
 
 FLLOP_EXTERN PetscErrorCode SVMSetMod(SVM,PetscInt);
 FLLOP_EXTERN PetscErrorCode SVMGetMod(SVM,PetscInt *);
@@ -188,11 +193,15 @@ FLLOP_EXTERN PetscErrorCode SVMSetSeparatingHyperplane(SVM,Vec,PetscReal);
 FLLOP_EXTERN PetscErrorCode SVMGetSeparatingHyperplane(SVM,Vec *,PetscReal *);
 FLLOP_EXTERN PetscErrorCode SVMSetBias(SVM,PetscReal);
 FLLOP_EXTERN PetscErrorCode SVMGetBias(SVM,PetscReal *);
+FLLOP_EXTERN PetscErrorCode SVMSetUserBias(SVM,PetscReal);
+FLLOP_EXTERN PetscErrorCode SVMGetUserBias(SVM,PetscReal *);
 
 FLLOP_EXTERN PetscErrorCode SVMTrain(SVM);
 FLLOP_EXTERN PetscErrorCode SVMPostTrain(SVM);
 FLLOP_EXTERN PetscErrorCode SVMReconstructHyperplane(SVM);
 FLLOP_EXTERN PetscErrorCode SVMSetAutoPostTrain(SVM,PetscBool);
+FLLOP_EXTERN PetscErrorCode SVMGetAutoPostTrain(SVM,PetscBool *);
+FLLOP_EXTERN PetscErrorCode SVMGetDistancesFromHyperplane(SVM,Mat,Vec *);
 FLLOP_EXTERN PetscErrorCode SVMPredict(SVM,Mat,Vec *);
 FLLOP_EXTERN PetscErrorCode SVMTest(SVM);
 
@@ -241,6 +250,17 @@ FLLOP_EXTERN PetscErrorCode SVMSetOptionsPrefix(SVM svm,const char []);
 FLLOP_EXTERN PetscErrorCode SVMAppendOptionsPrefix(SVM svm,const char []);
 FLLOP_EXTERN PetscErrorCode SVMGetOptionsPrefix(SVM svm,const char *[]);
 
+FLLOP_EXTERN PetscErrorCode SVMGetTao(SVM,Tao *);
+FLLOP_EXTERN PetscErrorCode SVMGetInnerSVM(SVM,SVM *);
+
+/* SVM probability */
+FLLOP_EXTERN PetscErrorCode SVMProbabilitySetConvertLabelsToTargetProbability(SVM,PetscBool);
+FLLOP_EXTERN PetscErrorCode SVMProbabilityGetConvertLabelsToTargetProbability(SVM,PetscBool *);
+FLLOP_EXTERN PetscErrorCode SVMProbabilityGetSigmoidParams(SVM,PetscReal *,PetscReal *);
+FLLOP_EXTERN PetscErrorCode SVMProbabilitySetThreshold(SVM,PetscReal);
+FLLOP_EXTERN PetscErrorCode SVMProbabilityGetThreshold(SVM,PetscReal *);
+FLLOP_EXTERN PetscErrorCode SVMProbabilityConvertProbabilityToLabels(SVM,Vec);
+
 /* Input/Output functions */
 FLLOP_EXTERN PetscErrorCode PetscViewerLoadSVMDataset(Mat,Vec,PetscViewer);
 FLLOP_EXTERN PetscErrorCode SVMViewDataset(SVM,Mat,Vec,PetscViewer);
@@ -253,6 +273,8 @@ FLLOP_EXTERN PetscErrorCode SVMLoadTrainingDataset(SVM,PetscViewer);
 FLLOP_EXTERN PetscErrorCode SVMViewTrainingDataset(SVM,PetscViewer);
 FLLOP_EXTERN PetscErrorCode SVMLoadTestDataset(SVM,PetscViewer);
 FLLOP_EXTERN PetscErrorCode SVMViewTestDataset(SVM,PetscViewer);
+FLLOP_EXTERN PetscErrorCode SVMLoadCalibrationDataset(SVM,PetscViewer);
+FLLOP_EXTERN PetscErrorCode SVMViewCalibrationDataset(SVM,PetscViewer);
 
 FLLOP_EXTERN PetscErrorCode SVMViewTrainingPredictions(SVM,PetscViewer);
 FLLOP_EXTERN PetscErrorCode SVMViewTestPredictions(SVM,PetscViewer);

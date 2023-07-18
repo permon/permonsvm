@@ -66,7 +66,7 @@ int main(int argc,char **argv)
 
   test:
     filter: grep -v MPI
-    args: -qps_view_convergence -svm_view -svm_view_score
+    args: -qps_view_convergence -svm_view -svm_view_report
     args: -f_training $PERMON_SVM_DIR/src/tutorials/data/heart_scale.bin -f_kernel $PERMON_SVM_DIR/src/tutorials/data/heart_scale.kernel.bin
     args: -f_test $PERMON_SVM_DIR/src/tutorials/data/heart_scale.t.bin
     output_file: output/exbinfile_1.out
