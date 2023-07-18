@@ -1,10 +1,10 @@
 
-#if !defined(__REPORT_H)
-#define	__REPORT_H
+#if !defined(__PERMONSVMREPORT_H)
+#define	__PERMONSVMREPORT_H
 
 #include <permonsvm.h>
 
 FLLOP_EXTERN PetscErrorCode SVMGetBinaryClassificationReport(SVM,Vec,Vec,PetscInt *,PetscReal *);
-FLLOP_EXTERN PetscErrorCode SVMPrintBinaryClassificationReport(SVM,PetscInt *,PetscReal *,PetscViewer);
+FLLOP_EXTERN PetscErrorCode SVMViewBinaryClassificationReport(SVM,PetscInt *,PetscReal *,PetscViewer);
 
 #endif //__REPORT_H

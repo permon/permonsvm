@@ -207,7 +207,7 @@ PetscErrorCode SVMViewScore_Binary(SVM svm,PetscViewer v)
       PetscCall(PetscViewerASCIIPrintf(v,"model performance score with training parameters C+=%.3f, C-=%.3f, mod=%" PetscInt_FMT ", loss=%s:\n",(double)Cp,(double)Cn,mod,SVMLossTypes[loss_type]));
     }
     PetscCall(PetscViewerASCIIPushTab(v));
-    PetscCall(SVMPrintBinaryClassificationReport(svm,svm_binary->confusion_matrix,svm_binary->model_scores,v));
+    PetscCall(SVMViewBinaryClassificationReport(svm,svm_binary->confusion_matrix,svm_binary->model_scores,v));
     PetscCall(PetscViewerASCIIPopTab(v));
     PetscCall(PetscViewerASCIIPopTab(v));
   } else {
@@ -1509,7 +1509,7 @@ PetscErrorCode SVMPredict_Binary(SVM svm,Mat Xt_pred,Vec *y_out)
   PetscCall(VecDuplicate(dist,&y));
   PetscCall(VecDuplicate(dist,&o));
 
-  PetscCall(VecSet(o,0));
+  PetscCall(VecSet(o,0.));
 
   PetscCall(VecWhichGreaterThan(dist,o,&is_p));
   PetscCall(ISComplement(is_p,lo,hi,&is_n));

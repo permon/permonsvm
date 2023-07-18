@@ -126,8 +126,6 @@ PetscErrorCode MatMultTranspose_Biased(Mat A,Vec x,Vec y)
 #define __FUNCT__ "MatGetOwnershipIS_Biased"
 PetscErrorCode MatGetOwnershipIS_Biased(Mat mat,IS *rows,IS *cols)
 {
-  MPI_Comm comm;
-
   void     *ptr;
   MatCtx   *ctx;
 
@@ -143,9 +141,8 @@ PetscErrorCode MatGetOwnershipIS_Biased(Mat mat,IS *rows,IS *cols)
   }
 
   if (cols) {
-    PetscCall(PetscObjectGetComm((PetscObject) mat,&comm));
     PetscCall(MatGetSize(ctx->inner,NULL,&ncols));
-    PetscCall(ISCreateStride(comm,ncols,0,1,&cols_inner));
+    PetscCall(ISCreateStride(PetscObjectComm((PetscObject) mat),ncols,0,1,&cols_inner));
     *cols = cols_inner;
   }
   PetscFunctionReturn(PETSC_SUCCESS);

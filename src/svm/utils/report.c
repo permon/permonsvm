@@ -118,11 +118,11 @@ PetscErrorCode SVMGetBinaryClassificationReport(SVM svm,Vec y_pred,Vec y_known,P
   /* Area under curve (trapezoidal rule) */
   specifity = (PetscReal) TN / (PetscReal) (TN + FP);
 
-  FPR = 1 - specifity;
+  FPR = 1. - specifity;
   TPR = sensitivity[0];
 
-  x[0] = 0; x[1] = FPR; x[2] = 1;
-  y[0] = 0; y[1] = TPR; y[2] = 1;
+  x[0] = 0.; x[1] = FPR; x[2] = 1.;
+  y[0] = 0.; y[1] = TPR; y[2] = 1.;
 
   auc_roc = 0.;
   for (i = 0; i < 2; ++i) {
@@ -159,7 +159,7 @@ PetscErrorCode SVMGetBinaryClassificationReport(SVM svm,Vec y_pred,Vec y_known,P
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode SVMPrintBinaryClassificationReport(SVM svm,PetscInt *cmat,PetscReal *scores,PetscViewer v)
+PetscErrorCode SVMViewBinaryClassificationReport(SVM svm,PetscInt *cmat,PetscReal *scores,PetscViewer v)
 {
   const PetscReal *labels;
 

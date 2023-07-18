@@ -1,7 +1,5 @@
 
 #include "probimpl.h"
-#include "../binary/binaryimpl.h"
-
 #include "../../utils/report.h"
 
 
@@ -79,7 +77,7 @@ PetscErrorCode SVMView_Probability(SVM svm,PetscViewer v)
     PetscCall(SVMDestroy(&svm_uncalibrated));
 
     PetscCall(PetscObjectPrintClassNamePrefixType((PetscObject) svm,v));
-    PetscCall(SVMProbGetSigmoidParams(svm,&A,&B));
+    PetscCall(SVMProbabilityGetSigmoidParams(svm,&A,&B));
 
     PetscCall(PetscViewerASCIIPushTab(v));
     PetscCall(PetscViewerASCIIPrintf(v,"model parameters:\n"));
@@ -113,13 +111,13 @@ PetscErrorCode SVMViewScore_Probability(SVM svm,PetscViewer v)
     PetscCall(SVMGetInnerSVM(svm,&svm_uncalibrated));
     PetscCall(SVMViewScore(svm_uncalibrated,v));
 
-    PetscCall(SVMProbGetThreshold(svm,&threshold));
+    PetscCall(SVMProbabilityGetThreshold(svm,&threshold));
 
     PetscCall(PetscObjectPrintClassNamePrefixType((PetscObject) svm,v));
     PetscCall(PetscViewerASCIIPushTab(v));
     PetscCall(PetscViewerASCIIPrintf(v,"model performance scores with threshold=%.2f\n",(double) threshold));
     PetscCall(PetscViewerASCIIPushTab(v));
-    PetscCall(SVMPrintBinaryClassificationReport(svm,svm_prob->confusion_matrix,svm_prob->model_scores,v));
+    PetscCall(SVMViewBinaryClassificationReport(svm,svm_prob->confusion_matrix,svm_prob->model_scores,v));
     PetscCall(PetscViewerASCIIPopTab(v));
     PetscCall(PetscViewerASCIIPopTab(v));
 
@@ -387,7 +385,7 @@ static PetscErrorCode SVMTransformUncalibratedPredictions_Probability_Private(SV
   PetscCall(VecScatterEnd(scatter,dist,svm_prob->vec_dist,INSERT_VALUES,SCATTER_FORWARD));
   PetscCall(VecScatterDestroy(&scatter));
 
-  PetscCall(SVMProbGetConvertLabelsToTargetProbability(svm,&label_to_target_prob));
+  PetscCall(SVMProbabilityGetConvertLabelsToTargetProbability(svm,&label_to_target_prob));
   if (label_to_target_prob) {
     /*
      Transform labels to target probabilities as it proposed in
@@ -801,17 +799,17 @@ PetscErrorCode SVMSetFromOptions_Probability(PetscOptionItems *PetscOptionsObjec
   PetscObjectOptionsBegin((PetscObject)svm);
   PetscCall(PetscOptionsBool("-svm_convert_labels_to_target_probs",
                              "Convert sample labels to target probability as suggested by Platt. Default (true).",
-                             "SVMProbSetConvertLabelsToTargetProbability",
+                             "SVMProbabilitySetConvertLabelsToTargetProbability",
                              svm_prob->labels_to_target_probs,&to_target_probs,&flg));
   if (flg) {
-    PetscCall(SVMProbSetConvertLabelsToTargetProbability(svm,to_target_probs));
+    PetscCall(SVMProbabilitySetConvertLabelsToTargetProbability(svm,to_target_probs));
   }
   PetscCall(PetscOptionsReal("-svm_threshold",
                              "Convert sample labels to target probability as suggested by Platt. Default (true).",
                              "SVMProbSetConvertLabelsToTargetProbability",
                              svm_prob->threshold,&threshold,&flg));
   if (flg) {
-    PetscCall(SVMProbSetThreshold(svm,threshold));
+    PetscCall(SVMProbabilitySetThreshold(svm,threshold));
   }
   PetscOptionsEnd();
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -915,7 +913,7 @@ PetscErrorCode SVMPredict_Probability(SVM svm,Mat Xt,Vec *y_out)
   PetscCall(SVMGetInnerSVM(svm,&svm_uncalibrated));
 
   PetscCall(SVMGetDistancesFromHyperplane(svm_uncalibrated,Xt,&pred));  /* Get distances from hyperplane */
-  PetscCall(SVMProbGetSigmoidParams(svm,&A,&B));
+  PetscCall(SVMProbabilityGetSigmoidParams(svm,&A,&B));
 
   /* Create working vectors */
   PetscCall(VecDuplicateVecs(pred,N_work_vec,&work_vecs));
@@ -994,7 +992,7 @@ PetscErrorCode SVMTest_Probability(SVM svm)
   PetscCall(SVMComputeModelScores(svm_uncalibrated,y_pred_label,y_test));
 
   PetscCall(SVMPredict(svm,Xt_test,&y_pred_prob));
-  PetscCall(SVMProbConvertProbabilityToLabels(svm,y_pred_prob));
+  PetscCall(SVMProbabilityConvertProbabilityToLabels(svm,y_pred_prob));
   PetscCall(SVMComputeModelScores(svm,y_pred_prob,y_test));
 
   /* Clean up */
@@ -1208,7 +1206,7 @@ PetscErrorCode SVMCreate_Probability(SVM svm)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode SVMProbSetConvertLabelsToTargetProbability(SVM svm,PetscBool flg)
+PetscErrorCode SVMProbabilitySetConvertLabelsToTargetProbability(SVM svm,PetscBool flg)
 {
   SVM_Probability *svm_prob = (SVM_Probability *) svm->data;
 
@@ -1222,7 +1220,7 @@ PetscErrorCode SVMProbSetConvertLabelsToTargetProbability(SVM svm,PetscBool flg)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode SVMProbGetConvertLabelsToTargetProbability(SVM svm,PetscBool *flg)
+PetscErrorCode SVMProbabilityGetConvertLabelsToTargetProbability(SVM svm,PetscBool *flg)
 {
   SVM_Probability *svm_prob = (SVM_Probability *) svm->data;
 
@@ -1232,7 +1230,7 @@ PetscErrorCode SVMProbGetConvertLabelsToTargetProbability(SVM svm,PetscBool *flg
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode SVMProbConvertProbabilityToLabels(SVM svm,Vec y)
+PetscErrorCode SVMProbabilityConvertProbabilityToLabels(SVM svm,Vec y)
 {
   Vec            vec_threshold;
   PetscReal      threshold;
@@ -1245,7 +1243,7 @@ PetscErrorCode SVMProbConvertProbabilityToLabels(SVM svm,Vec y)
   const PetscReal *labels = NULL;
 
   PetscFunctionBegin;
-  PetscCall(SVMProbGetThreshold(svm,&threshold));
+  PetscCall(SVMProbabilityGetThreshold(svm,&threshold));
   PetscCall(SVMGetLabels(svm,&labels));
 
   PetscCall(VecDuplicate(y,&vec_threshold));
@@ -1270,7 +1268,7 @@ PetscErrorCode SVMProbConvertProbabilityToLabels(SVM svm,Vec y)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode SVMProbGetSigmoidParams(SVM svm,PetscReal *A,PetscReal *B)
+PetscErrorCode SVMProbabilityGetSigmoidParams(SVM svm,PetscReal *A,PetscReal *B)
 {
   SVM_Probability *svm_prob = (SVM_Probability *) svm->data;
 
@@ -1286,24 +1284,24 @@ PetscErrorCode SVMProbGetSigmoidParams(SVM svm,PetscReal *A,PetscReal *B)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode SVMProbSetThreshold(SVM svm,PetscReal v)
+PetscErrorCode SVMProbabilitySetThreshold(SVM svm,PetscReal threshold)
 {
   SVM_Probability *svm_prob = (SVM_Probability *) svm->data;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveReal(svm,v,2);
-  svm_prob->threshold = v;
+  PetscValidLogicalCollectiveReal(svm,threshold,2);
+  svm_prob->threshold = threshold;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode SVMProbGetThreshold(SVM svm,PetscReal *v)
+PetscErrorCode SVMProbabilityGetThreshold(SVM svm,PetscReal *threshold)
 {
   SVM_Probability *svm_prob = (SVM_Probability *) svm->data;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidRealPointer(v,2);
-  *v = svm_prob->threshold;
+  PetscValidRealPointer(threshold,2);
+  *threshold = svm_prob->threshold;
   PetscFunctionReturn(PETSC_SUCCESS);
 }

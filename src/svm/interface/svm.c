@@ -3081,7 +3081,6 @@ PetscErrorCode SVMViewCalibrationDataset(SVM svm,PetscViewer v)
 @*/
 PetscErrorCode SVMViewDataset(SVM svm,Mat Xt,Vec y,PetscViewer v)
 {
-  /* */
   MPI_Comm   comm;
   const char *type_name = NULL;
 

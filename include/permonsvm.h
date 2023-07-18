@@ -254,12 +254,12 @@ FLLOP_EXTERN PetscErrorCode SVMGetTao(SVM,Tao *);
 FLLOP_EXTERN PetscErrorCode SVMGetInnerSVM(SVM,SVM *);
 
 /* SVM probability */
-FLLOP_EXTERN PetscErrorCode SVMProbSetConvertLabelsToTargetProbability(SVM,PetscBool);
-FLLOP_EXTERN PetscErrorCode SVMProbGetConvertLabelsToTargetProbability(SVM,PetscBool *);
-FLLOP_EXTERN PetscErrorCode SVMProbGetSigmoidParams(SVM,PetscReal *,PetscReal *);
-FLLOP_EXTERN PetscErrorCode SVMProbSetThreshold(SVM,PetscReal);
-FLLOP_EXTERN PetscErrorCode SVMProbGetThreshold(SVM,PetscReal *);
-FLLOP_EXTERN PetscErrorCode SVMProbConvertProbabilityToLabels(SVM,Vec);
+FLLOP_EXTERN PetscErrorCode SVMProbabilitySetConvertLabelsToTargetProbability(SVM,PetscBool);
+FLLOP_EXTERN PetscErrorCode SVMProbabilityGetConvertLabelsToTargetProbability(SVM,PetscBool *);
+FLLOP_EXTERN PetscErrorCode SVMProbabilityGetSigmoidParams(SVM,PetscReal *,PetscReal *);
+FLLOP_EXTERN PetscErrorCode SVMProbabilitySetThreshold(SVM,PetscReal);
+FLLOP_EXTERN PetscErrorCode SVMProbabilityGetThreshold(SVM,PetscReal *);
+FLLOP_EXTERN PetscErrorCode SVMProbabilityConvertProbabilityToLabels(SVM,Vec);
 
 /* Input/Output functions */
 FLLOP_EXTERN PetscErrorCode PetscViewerLoadSVMDataset(Mat,Vec,PetscViewer);

@@ -14,7 +14,7 @@ typedef struct {
   PetscInt  Np_calib;
   PetscInt  Nn_calib;
 
-  SVM       inner;  // TODO change name to uncalibrated
+  SVM       inner;
 
   Vec       vec_dist;
   Vec       vec_targets;
