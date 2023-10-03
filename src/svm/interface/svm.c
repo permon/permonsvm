@@ -30,7 +30,7 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
   SVM svm;
 
   PetscFunctionBegin;
-  PetscValidPointer(svm_out,2);
+  PetscAssertPointer(svm_out,2);
 
 #if !defined(PETSC_USE_DYNAMIC_LIBRARIES)
   PetscCall(SVMInitializePackage());
@@ -360,7 +360,7 @@ PetscErrorCode SVMSetType(SVM svm,const SVMType type)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidCharPointer(type,2);
+  PetscAssertPointer(type,2);
 
   PetscCall(PetscObjectTypeCompare((PetscObject) svm,type,&issame));
   if (issame) PetscFunctionReturn(PETSC_SUCCESS);
@@ -426,7 +426,7 @@ PetscErrorCode SVMGetQPS(SVM svm,QPS *qps)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidPointer(qps,2);
+  PetscAssertPointer(qps,2);
 
   PetscUseMethod(svm,"SVMGetQPS_C",(SVM,QPS *),(svm,qps));
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -454,7 +454,7 @@ PetscErrorCode SVMGetQP(SVM svm,QP *qp)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidPointer(qp,2);
+  PetscAssertPointer(qp,2);
 
   PetscUseMethod(svm,"SVMGetQP_C",(SVM,QP *),(svm,qp));
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -510,7 +510,7 @@ PetscErrorCode SVMGetNfolds(SVM svm,PetscInt *nfolds)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidRealPointer(nfolds,2);
+  PetscAssertPointer(nfolds,2);
   *nfolds = svm->nfolds;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -563,7 +563,7 @@ PetscErrorCode SVMGetPenaltyType(SVM svm,PetscInt *type)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidRealPointer(type,2);
+  PetscAssertPointer(type,2);
   *type = svm->penalty_type;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -627,7 +627,7 @@ PetscErrorCode SVMGetC(SVM svm,PetscReal *C)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidRealPointer(C,2);
+  PetscAssertPointer(C,2);
   *C = svm->C;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -691,7 +691,7 @@ PetscErrorCode SVMGetCp(SVM svm,PetscReal *Cp)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidRealPointer(Cp,2);
+  PetscAssertPointer(Cp,2);
   *Cp = svm->Cp;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -755,7 +755,7 @@ PetscErrorCode SVMGetCn(SVM svm,PetscReal *Cn)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidRealPointer(Cn,2);
+  PetscAssertPointer(Cn,2);
   *Cn = svm->Cn;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -858,7 +858,7 @@ PetscErrorCode SVMGridSearchGetBaseLogC(SVM svm,PetscReal *logC_base)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidRealPointer(logC_base,2);
+  PetscAssertPointer(logC_base,2);
 
   *logC_base = svm->logC_base;
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -926,9 +926,9 @@ PetscErrorCode SVMGridSearchGetStrideLogC(SVM svm,PetscReal *logC_start,PetscRea
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidRealPointer(logC_start,2);
-  PetscValidRealPointer(logC_end,3);
-  PetscValidRealPointer(logC_step,4);
+  PetscAssertPointer(logC_start,2);
+  PetscAssertPointer(logC_end,3);
+  PetscAssertPointer(logC_step,4);
 
   if (logC_start) {
     *logC_start = svm->logC_start;
@@ -993,7 +993,7 @@ PetscErrorCode SVMGridSearchGetPositiveBaseLogC(SVM svm,PetscReal *logCp_base)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidRealPointer(logCp_base,2);
+  PetscAssertPointer(logCp_base,2);
 
   *logCp_base = svm->logCp_base;
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -1061,9 +1061,9 @@ PetscErrorCode SVMGridSearchGetPositiveStrideLogC(SVM svm,PetscReal *logC_start,
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidRealPointer(logC_start,2);
-  PetscValidRealPointer(logC_end,3);
-  PetscValidRealPointer(logC_step,4);
+  PetscAssertPointer(logC_start,2);
+  PetscAssertPointer(logC_end,3);
+  PetscAssertPointer(logC_step,4);
 
   if (logC_start) {
     *logC_start = svm->logCp_start;
@@ -1128,7 +1128,7 @@ PetscErrorCode SVMGridSearchGetNegativeBaseLogC(SVM svm,PetscReal *logCn_base)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidRealPointer(logCn_base,2);
+  PetscAssertPointer(logCn_base,2);
 
   *logCn_base = svm->logCn_base;
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -1196,9 +1196,9 @@ PetscErrorCode SVMGridSearchGetNegativeStrideLogC(SVM svm,PetscReal *logC_start,
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidRealPointer(logC_start,2);
-  PetscValidRealPointer(logC_end,3);
-  PetscValidRealPointer(logC_step,4);
+  PetscAssertPointer(logC_start,2);
+  PetscAssertPointer(logC_end,3);
+  PetscAssertPointer(logC_step,4);
 
   if (logC_start) {
     *logC_start = svm->logCn_start;
@@ -1262,7 +1262,7 @@ PetscErrorCode SVMGetLossType(SVM svm,SVMLossType *type)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidPointer(type,2);
+  PetscAssertPointer(type,2);
   *type = svm->loss_type;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -1617,7 +1617,7 @@ PetscErrorCode SVMGetGramian(SVM svm,Mat *G)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidPointer(G,2);
+  PetscAssertPointer(G,2);
 
   PetscUseMethod(svm,"SVMGetGramian_C",(SVM,Mat *),(svm,G));
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -1671,7 +1671,7 @@ PetscErrorCode SVMGetOperator(SVM svm,Mat *A)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidPointer(A,2);
+  PetscAssertPointer(A,2);
 
   PetscUseMethod(svm,"SVMGetOperator_C",(SVM,Mat *),(svm,A));
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -1873,12 +1873,12 @@ PetscErrorCode SVMGetTestDataset(SVM svm,Mat *Xt_test,Vec *y_test)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
 
   if (Xt_test) {
-    PetscValidPointer(Xt_test,2);
+    PetscAssertPointer(Xt_test,2);
     *Xt_test = svm->Xt_test;
   }
 
   if (y_test) {
-    PetscValidPointer(y_test,2);
+    PetscAssertPointer(y_test,2);
     *y_test = svm->y_test;
   }
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -1951,7 +1951,7 @@ PetscErrorCode SVMGetAutoPostTrain(SVM svm,PetscBool *flg)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidPointer(flg,2);
+  PetscAssertPointer(flg,2);
   *flg = svm->autoposttrain;
   PetscFunctionReturn(0);
 }
@@ -2431,7 +2431,7 @@ PetscErrorCode SVMGetHyperOptNScoreTypes(SVM svm,PetscInt *n)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidPointer(n,2);
+  PetscAssertPointer(n,2);
   *n = svm->hopt_nscore_types;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -2456,7 +2456,7 @@ PetscErrorCode SVMGetHyperOptScoreTypes(SVM svm,const ModelScore *types[])
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidPointer(types,2);
+  PetscAssertPointer(types,2);
   *types = svm->hopt_score_types;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -2504,7 +2504,7 @@ PetscErrorCode SVMGetCrossValidationType(SVM svm,CrossValidationType *type)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidPointer(type,2);
+  PetscAssertPointer(type,2);
   *type = svm->cv_type;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -2680,11 +2680,11 @@ PetscErrorCode SVMLoadGramian(SVM svm,PetscViewer v)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
 
-  PetscLogEventBegin(SVM_LoadGramian,svm,0,0,0);
+  PetscCall(PetscLogEventBegin(SVM_LoadGramian,svm,0,0,0));
   if (svm->ops->loadgramian) {
     PetscCall(svm->ops->loadgramian(svm,v));
   }
-  PetscLogEventEnd(SVM_LoadGramian,svm,0,0,0);
+  PetscCall(PetscLogEventEnd(SVM_LoadGramian,svm,0,0,0));
 
   PetscCall(PetscOptionsHasName(NULL,NULL,"-svm_view_io",&view_io));
   PetscCall(PetscOptionsHasName(NULL,NULL,"-svm_view_gramian",&view_dataset));
@@ -2757,7 +2757,7 @@ PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat Xt,Vec y)
   PetscCall(PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERHDF5,&ishdf5));
   PetscCall(PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERBINARY,&isbinary));
 
-  PetscLogEventBegin(SVM_LoadDataset,svm,0,0,0);
+  PetscCall(PetscLogEventBegin(SVM_LoadDataset,svm,0,0,0));
   if (isascii) {
     PetscCall(DatasetLoad_SVMLight(Xt,y,v));
   } else if (ishdf5 || isbinary) {
@@ -2768,7 +2768,7 @@ PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat Xt,Vec y)
 
     SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMLoadDataset",type_name);
   }
-  PetscLogEventEnd(SVM_LoadDataset,svm,0,0,0);
+  PetscCall(PetscLogEventEnd(SVM_LoadDataset,svm,0,0,0));
 
   PetscFunctionReturn(PETSC_SUCCESS);
 }

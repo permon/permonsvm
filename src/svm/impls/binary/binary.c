@@ -364,11 +364,11 @@ PetscErrorCode SVMGetTrainingDataset_Binary(SVM svm,Mat *Xt_training,Vec *y_trai
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   if (Xt_training) {
-    PetscValidPointer(Xt_training,2);
+    PetscAssertPointer(Xt_training,2);
     *Xt_training = svm_binary->Xt_training;
   }
   if (y_training) {
-    PetscValidPointer(y_training,3);
+    PetscAssertPointer(y_training,3);
     *y_training = svm_binary->y_training;
   }
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -1087,11 +1087,11 @@ PetscErrorCode SVMGetSeparatingHyperplane_Binary(SVM svm,Vec *w,PetscReal *b)
 
   PetscFunctionBegin;
   if (w) {
-    PetscValidPointer(w,2);
+    PetscAssertPointer(w,2);
     *w = svm_binary->w;
   }
   if (b) {
-    PetscValidRealPointer(b,3);
+    PetscAssertPointer(b,3);
     *b = svm_binary->b;
   }
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -1155,7 +1155,7 @@ PetscErrorCode SVMComputeModelParams_Binary(SVM svm)
   PetscCall(QPGetBox(qp,NULL,&lb,&ub));
 
   PetscCall(VecMax(x,NULL,&max));
-  PetscCall(VecChop(x,svm_binary->chop_tol*max));
+  PetscCall(VecFilter(x,svm_binary->chop_tol*max));
 
   if (svm_mod == 2) {
     PetscCall(ISDestroy(&svm_binary->is_sv));
@@ -1776,7 +1776,7 @@ PetscErrorCode SVMGetModelScore_Binary(SVM svm,ModelScore score_type,PetscReal *
   SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
 
   PetscFunctionBegin;
-  PetscValidRealPointer(s,3);
+  PetscAssertPointer(s,3);
 
   *s = svm_binary->model_scores[3 * score_type];
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -2116,7 +2116,7 @@ PetscErrorCode SVMMonitorCreateCtx_Binary(void **mctx,SVM svm)
   SVM_Binary_mctx *mctx_inner;
 
   PetscFunctionBegin;
-  PetscValidPointer(mctx,1);
+  PetscAssertPointer(mctx,1);
   PetscValidHeaderSpecific(svm,SVM_CLASSID,2);
 
   PetscCall(PetscNew(&mctx_inner));
