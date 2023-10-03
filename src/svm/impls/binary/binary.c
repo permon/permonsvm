@@ -1155,7 +1155,7 @@ PetscErrorCode SVMComputeModelParams_Binary(SVM svm)
   PetscCall(QPGetBox(qp,NULL,&lb,&ub));
 
   PetscCall(VecMax(x,NULL,&max));
-  PetscCall(VecChop(x,svm_binary->chop_tol*max));
+  PetscCall(VecFilter(x,svm_binary->chop_tol*max));
 
   if (svm_mod == 2) {
     PetscCall(ISDestroy(&svm_binary->is_sv));
