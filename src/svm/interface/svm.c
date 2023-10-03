@@ -2680,11 +2680,11 @@ PetscErrorCode SVMLoadGramian(SVM svm,PetscViewer v)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
 
-  PetscLogEventBegin(SVM_LoadGramian,svm,0,0,0);
+  PetscCall(PetscLogEventBegin(SVM_LoadGramian,svm,0,0,0));
   if (svm->ops->loadgramian) {
     PetscCall(svm->ops->loadgramian(svm,v));
   }
-  PetscLogEventEnd(SVM_LoadGramian,svm,0,0,0);
+  PetscCall(PetscLogEventEnd(SVM_LoadGramian,svm,0,0,0));
 
   PetscCall(PetscOptionsHasName(NULL,NULL,"-svm_view_io",&view_io));
   PetscCall(PetscOptionsHasName(NULL,NULL,"-svm_view_gramian",&view_dataset));
@@ -2757,7 +2757,7 @@ PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat Xt,Vec y)
   PetscCall(PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERHDF5,&ishdf5));
   PetscCall(PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERBINARY,&isbinary));
 
-  PetscLogEventBegin(SVM_LoadDataset,svm,0,0,0);
+  PetscCall(PetscLogEventBegin(SVM_LoadDataset,svm,0,0,0));
   if (isascii) {
     PetscCall(DatasetLoad_SVMLight(Xt,y,v));
   } else if (ishdf5 || isbinary) {
@@ -2768,7 +2768,7 @@ PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat Xt,Vec y)
 
     SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMLoadDataset",type_name);
   }
-  PetscLogEventEnd(SVM_LoadDataset,svm,0,0,0);
+  PetscCall(PetscLogEventEnd(SVM_LoadDataset,svm,0,0,0));
 
   PetscFunctionReturn(PETSC_SUCCESS);
 }
