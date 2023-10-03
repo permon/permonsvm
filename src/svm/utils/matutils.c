@@ -231,7 +231,7 @@ PetscErrorCode MatBiasedGetInnerMat(Mat A,Mat *inner)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(A,MAT_CLASSID,1);
-  PetscValidPointer(inner,2);
+  PetscAssertPointer(inner,2);
 
   PetscCall(MatShellGetContext(A,&ptr));
   ctx = (MatCtx *) ptr;
@@ -264,7 +264,7 @@ PetscErrorCode MatBiasedGetBias(Mat A,PetscReal *bias)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(A,MAT_CLASSID,1);
-  PetscValidPointer(bias,2);
+  PetscAssertPointer(bias,2);
 
   PetscCall(MatShellGetContext(A,&ptr));
   ctx = (MatCtx *) ptr;
@@ -310,7 +310,7 @@ PetscErrorCode MatBiasedCreate(Mat A,PetscReal bias,Mat *A_biased)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(A,MAT_CLASSID,1);
   PetscValidLogicalCollectiveReal(A,bias,2);
-  PetscValidPointer(A_biased,3);
+  PetscAssertPointer(A_biased,3);
 
   PetscCall(PetscObjectGetComm((PetscObject) A,&comm));
   PetscCallMPI(MPI_Comm_size(comm,&comm_size));

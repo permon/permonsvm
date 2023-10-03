@@ -179,11 +179,11 @@ PetscErrorCode SVMGetTrainingDataset_Probability(SVM svm,Mat *Xt_training,Vec *y
 
   PetscFunctionBegin;
   if (Xt_training) {
-    PetscValidPointer(Xt_training,2);
+    PetscAssertPointer(Xt_training,2);
     *Xt_training = svm_prob->Xt_training;
   }
   if (y_training) {
-    PetscValidPointer(y_training,3);
+    PetscAssertPointer(y_training,3);
     *y_training = svm_prob->y_training;
   }
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -279,12 +279,12 @@ PetscErrorCode SVMGetCalibrationDataset_Probability(SVM svm,Mat *Xt_calib,Vec *y
 
   PetscFunctionBegin;
   if (Xt_calib) {
-    PetscValidPointer(Xt_calib,2);
+    PetscAssertPointer(Xt_calib,2);
     *Xt_calib = svm_prob->Xt_calib;
   }
 
   if (y_calib) {
-    PetscValidPointer(y_calib,3);
+    PetscAssertPointer(y_calib,3);
     *y_calib = svm_prob->y_calib;
   }
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -1274,11 +1274,11 @@ PetscErrorCode SVMProbabilityGetSigmoidParams(SVM svm,PetscReal *A,PetscReal *B)
 
   PetscFunctionBegin;
   if (A) {
-    PetscValidPointer(A,1);
+    PetscAssertPointer(A,1);
     *A = svm_prob->sigmoid_params[0];
   }
   if (B) {
-    PetscValidPointer(B,2);
+    PetscAssertPointer(B,2);
     *B = svm_prob->sigmoid_params[1];
   }
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -1301,7 +1301,7 @@ PetscErrorCode SVMProbabilityGetThreshold(SVM svm,PetscReal *threshold)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidRealPointer(threshold,2);
+  PetscAssertPointer(threshold,2);
   *threshold = svm_prob->threshold;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
