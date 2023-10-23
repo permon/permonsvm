@@ -390,8 +390,11 @@ PetscErrorCode DatasetLoad_Binary(Mat Xt,Vec y,PetscViewer v)
 
   PetscCall(PetscObjectSetName((PetscObject) Xt,"X"));
   PetscCall(MatLoad(Xt,v));
+  PetscCall(MatSetFromOptions(Xt));
+
   PetscCall(PetscObjectSetName((PetscObject) y,"y"));
   PetscCall(VecLoad(y,v));
+  PetscCall(VecSetFromOptions(y));
 
   PetscCall(PetscObjectSetName((PetscObject) Xt,Xt_name));
   PetscCall(PetscObjectSetName((PetscObject) y,y_name));
