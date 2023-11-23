@@ -30,7 +30,7 @@ typedef struct {
   PetscReal threshold;
 
   PetscInt  confusion_matrix[4];
-  PetscReal model_scores[15];
+  PetscReal model_scores[16];
 
 } SVM_Probability;
 
