@@ -17,7 +17,7 @@ PetscErrorCode GetFilenameExtension(const char *filename,char **extension)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode ViewerOpen(const char *filename,PetscFileMode mode,PetscViewer *viewer)
+PetscErrorCode ViewerOpen(const char *filename,PetscFileMode file_mode,PetscViewer *viewer)
 {
   PetscViewer  inner_viewer;
 
@@ -32,12 +32,12 @@ PetscErrorCode ViewerOpen(const char *filename,PetscFileMode mode,PetscViewer *v
 
   if (ishdf5) {
 #if defined(PETSC_HAVE_HDF5)
-    PetscCall(PetscViewerHDF5Open(PETSC_COMM_WORLD,filename,FILE_MODE_READ,&inner_viewer));
+    PetscCall(PetscViewerHDF5Open(PETSC_COMM_WORLD,filename,file_mode,&inner_viewer));
 #else
     SETERRQ(PETSC_COMM_WORLD,PETSC_ERR_SUP,"PETSc is not configured with HDF5");
 #endif
   } else if (isbinary) {
-    PetscCall(PetscViewerBinaryOpen(PETSC_COMM_WORLD,filename,FILE_MODE_READ,&inner_viewer));
+    PetscCall(PetscViewerBinaryOpen(PETSC_COMM_WORLD,filename,file_mode,&inner_viewer));
   } else if (issvmlight) {
     PetscCall(PetscViewerSVMLightOpen(PETSC_COMM_WORLD,filename,&inner_viewer));
   } else {
