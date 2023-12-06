@@ -653,6 +653,7 @@ PetscErrorCode SVMComputeOperator_Binary(SVM svm,Mat *A)
 
   Vec         y;
   Vec         diag,diag_p,diag_n;
+  VecType     vtype;
 
   PetscInt    p;         /* penalty type */
   SVMLossType loss_type;
@@ -723,6 +724,11 @@ PetscErrorCode SVMComputeOperator_Binary(SVM svm,Mat *A)
 
       PetscCall(MatCreateDiag(diag,&svm_binary->J));
     }
+
+    /* Set the default vector type for svm_binary->J to match that of H.
+       This is needed for consistency if we want to use GPU back-ends! */
+    PetscCall(MatGetVecType(H,&vtype));
+    PetscCall(MatSetVecType(svm_binary->J,vtype));
 
     mats[0] = svm_binary->J;
     mats[1] = H;
