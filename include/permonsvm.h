@@ -277,6 +277,7 @@ FLLOP_EXTERN PetscErrorCode SVMLoadCalibrationDataset(SVM,PetscViewer);
 FLLOP_EXTERN PetscErrorCode SVMViewCalibrationDataset(SVM,PetscViewer);
 
 FLLOP_EXTERN PetscErrorCode SVMViewTrainingPredictions(SVM,PetscViewer);
+FLLOP_EXTERN PetscErrorCode SVMViewCalibrationPredictions(SVM,PetscViewer);
 FLLOP_EXTERN PetscErrorCode SVMViewTestPredictions(SVM,PetscViewer);
 
 FLLOP_EXTERN PetscErrorCode PetscViewerSVMLightOpen(MPI_Comm,const char [],PetscViewer *);

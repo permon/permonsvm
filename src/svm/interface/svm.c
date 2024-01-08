@@ -1509,7 +1509,7 @@ PetscErrorCode SVMView(SVM svm,PetscViewer v)
 
   Level: beginner
 
-.seealso SVMLoadTrainingDataset, SVMPredict, PetscViewer
+.seealso SVMLoadTrainingDataset, SVMViewCalibrationPredictions, SVMPredict, PetscViewer
 @*/
 PetscErrorCode SVMViewTrainingPredictions(SVM svm,PetscViewer v)
 {
@@ -1524,6 +1524,29 @@ PetscErrorCode SVMViewTrainingPredictions(SVM svm,PetscViewer v)
 }
 
 /*@
+  SVMViewCalibrationPredictions - Views predictions on calibration samples using trained model.
+
+  Input Parameters:
++ svm - SVM context
+- v - visualization context
+
+  Level: beginner
+
+.seealso SVMLoadTrainingDataset, SVMViewTestPredictions, SVMPredict, PetscViewer
+@*/
+PetscErrorCode SVMViewCalibrationPredictions(SVM svm,PetscViewer v)
+{
+
+  PetscFunctionBeginI;
+  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  if (v) PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
+  if (svm->ops->viewcalibpredictions) {
+    PetscCall(svm->ops->viewcalibpredictions(svm,v));
+  }
+  PetscFunctionReturnI(PETSC_SUCCESS);
+}
+
+/*@
   SVMViewTestPredictions - Views predictions on test samples using trained model.
 
   Input Parameters:
@@ -1532,7 +1555,7 @@ PetscErrorCode SVMViewTrainingPredictions(SVM svm,PetscViewer v)
 
   Level: beginner
 
-.seealso SVMLoadTestDataset, SVMPredict, PetscViewer
+.seealso SVMLoadTrainingDataset, SVMViewCalibrationPredictions, SVMPredict, PetscViewer
 @*/
 PetscErrorCode SVMViewTestPredictions(SVM svm,PetscViewer v)
 {
