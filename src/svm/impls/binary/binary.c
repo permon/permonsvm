@@ -732,7 +732,7 @@ PetscErrorCode SVMComputeOperator_Binary(SVM svm,Mat *A)
 
     mats[0] = svm_binary->J;
     mats[1] = H;
-    PetscCall(MatCreateSum(comm,2,mats,&HpJ)); /* H = H + J */
+    PetscCall(MatCreateComposite(comm,2,mats,&HpJ)); /* H = H + J */
     PetscCall(MatDestroy(&H));
 
     H  = HpJ;
