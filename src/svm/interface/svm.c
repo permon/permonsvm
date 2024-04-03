@@ -2008,16 +2008,16 @@ PetscErrorCode SVMPostTrain(SVM svm)
     PetscCall(PetscViewerPushFormat(v,format));
     PetscCall(SVMView(svm,v));
     PetscCall(PetscViewerPopFormat(v));
-    PetscCall(PetscViewerDestroy(&v));
   }
+  PetscCall(PetscOptionsRestoreViewer(&v));
 
   PetscCall(PetscOptionsGetViewer(((PetscObject) svm)->comm,NULL,((PetscObject) svm)->prefix,"-svm_view_training_predictions",&v,&format,&view));
   if (view) {
     PetscCall(PetscViewerPushFormat(v,format));
     PetscCall(SVMViewTrainingPredictions(svm,v));
     PetscCall(PetscViewerPopFormat(v));
-    PetscCall(PetscViewerDestroy(&v));
   }
+  PetscCall(PetscOptionsRestoreViewer(&v));
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
@@ -2260,16 +2260,16 @@ PetscErrorCode SVMTest(SVM svm)
     PetscCall(PetscViewerPushFormat(v,format));
     PetscCall(SVMViewScore(svm,v));
     PetscCall(PetscViewerPopFormat(v));
-    PetscCall(PetscViewerDestroy(&v));
   }
+  PetscCall(PetscOptionsRestoreViewer(&v));
 
   PetscCall(PetscOptionsGetViewer(((PetscObject)svm)->comm,NULL,((PetscObject)svm)->prefix,"-svm_view_test_predictions",&v,&format,&view));
   if (view) {
     PetscCall(PetscViewerPushFormat(v,format));
     PetscCall(SVMViewTestPredictions(svm,v));
     PetscCall(PetscViewerPopFormat(v));
-    PetscCall(PetscViewerDestroy(&v));
   }
+  PetscCall(PetscOptionsRestoreViewer(&v));
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
