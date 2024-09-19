@@ -51,17 +51,15 @@ struct ArrReal DynamicArray_(PetscReal);
 #define __FUNCT__ "IOReadBuffer_SVMLight_Private"
 static PetscErrorCode IOReadBuffer_SVMLight_Private(MPI_Comm comm,const char *filename,char **chunk_buff)
 {
-  PetscMPIInt comm_size,comm_rank;
-
+  PetscMPIInt comm_size,comm_rank,chunk_size_reduced;
   MPI_File    fh;
   char        *chunk_buff_inner;
-
-  PetscInt    chunk_size,chunk_size_overlaped,chunk_size_shrink,chunk_size_tmp,overlap;
-  MPI_Offset  file_size,offset;
+  PetscInt    chunk_size_shrink,overlap,nreads;
+  MPI_Offset  chunk_size,chunk_size_overlaped,chunk_size_tmp;
+  MPI_Offset  file_size,offset,offset_reduced;
   PetscInt    eol_pos,eol_start;
   PetscBool   eol_found;
-
-  PetscInt    p;
+  PetscInt    i,p;
 
   PetscFunctionBegin;
   PetscCallMPI(MPI_Comm_size(comm,&comm_size));
@@ -100,7 +98,18 @@ static PetscErrorCode IOReadBuffer_SVMLight_Private(MPI_Comm comm,const char *fi
   /* Allocation of chunk buffers and reading appropriate part of file */
   PetscCall(PetscMalloc(chunk_size_overlaped * sizeof(char),&chunk_buff_inner));
 
-  PetscCallMPI(MPI_File_read_at_all(fh,offset,chunk_buff_inner,(PetscMPIInt)chunk_size_overlaped,MPI_CHAR,MPI_STATUS_IGNORE));
+  /* Loop reading at most 32 bit Int bytes */
+  nreads = 1 + ((chunk_size_overlaped-1)/PETSC_INT32_MAX); /* ceil number of reads */
+  chunk_size_reduced = chunk_size_overlaped/nreads;
+  for (i=0; i<nreads -1; i++) {
+    PetscCallMPI(MPI_File_read_at_all(fh,offset+i*chunk_size_reduced,&chunk_buff_inner[i*chunk_size_reduced],chunk_size_reduced,MPI_CHAR,MPI_STATUS_IGNORE));
+  }
+  /* Read the last chunk */
+  offset_reduced = (nreads-1)*chunk_size_reduced;
+  chunk_size_reduced = chunk_size_overlaped - (nreads-1)*chunk_size_reduced;
+  if (chunk_size_reduced) {
+    PetscCallMPI(MPI_File_read_at_all(fh,offset+offset_reduced,&chunk_buff_inner[offset_reduced],chunk_size_reduced,MPI_CHAR,MPI_STATUS_IGNORE));
+  }
 
   /* Check EOL in end of buffers without overlaps */
   if (chunk_buff_inner[chunk_size-1] == '\n') eol_found = PETSC_TRUE;
