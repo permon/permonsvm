@@ -1173,7 +1173,7 @@ PetscErrorCode SVMCreate_Probability(SVM svm)
 
   svm_prob->Np_calib    = -1;
   svm_prob->Nn_calib    = -1;
-  svm_prob->labels_to_target_probs = true;
+  svm_prob->labels_to_target_probs = PETSC_TRUE;
 
   svm_prob->threshold   = .5;
 
