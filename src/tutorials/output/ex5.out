@@ -42,7 +42,7 @@
     Termination reason: 1
     type: stcg
     maximum iterations=10000, initial guess is zero
-    tolerances:  relative=1e-05, absolute=1e-50, divergence=10000.
+    tolerances: relative=1e-05, absolute=1e-50, divergence=10000.
     left preconditioning
     using UNPRECONDITIONED norm type for convergence test
     type: none
@@ -52,11 +52,11 @@
       total: nonzeros=4, allocated nonzeros=4
       total number of mallocs used during MatSetValues calls=0
   total KSP iterations: 8
-  convergence tolerances: gatol=1e-05,   steptol=0.,   gttol=1e-05
+  convergence tolerances: gatol=1e-05,   grtol=1e-05,   steptol=0.,   gttol=1e-05
   Residual in Function/Gradient:=4.68591e-05
   Objective value=65.4017
   total number of iterations=4,                          (max: 50)
-  total number of function/gradient evaluations=11,      (max: -1)
+  total number of function/gradient evaluations=11,      (max: unlimited)
   total number of Hessian evaluations=5
   Solution converged:    ||g(X)||/|f(X)| <= grtol
   type: binary
