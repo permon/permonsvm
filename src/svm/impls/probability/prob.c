@@ -1,7 +1,5 @@
-
 #include "probimpl.h"
 #include "../../utils/report.h"
-
 
 PetscErrorCode SVMReset_Probability(SVM svm)
 {

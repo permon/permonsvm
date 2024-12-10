@@ -69,7 +69,6 @@ PetscErrorCode SVMReset_Binary(SVM svm)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-
 #undef __FUNCT__
 #define __FUNCT__ "SVMDestroy_Binary"
 PetscErrorCode SVMDestroy_Binary(SVM svm)
@@ -1566,7 +1565,6 @@ PetscErrorCode SVMTest_Binary(SVM svm)
   PetscCall(VecDestroy(&y_pred));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
-
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMComputePGmaxPGmin_Binary_Private"

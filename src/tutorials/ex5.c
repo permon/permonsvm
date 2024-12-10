@@ -63,7 +63,6 @@ int main(int argc,char **argv)
   PetscBool training_result_file_set = PETSC_FALSE;
   PetscBool test_result_file_set = PETSC_FALSE;
 
-
   PetscCall(PermonInitialize(&argc,&argv,(char *)0,help));
 
   PetscCall(PetscOptionsGetString(NULL,NULL,"-f_training",training_file,sizeof(training_file),NULL));

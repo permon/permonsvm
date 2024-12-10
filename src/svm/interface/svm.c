@@ -1906,7 +1906,6 @@ PetscErrorCode SVMGetLabels(SVM svm,const PetscReal *labels[])
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-
 #undef __FUNCT__
 #define __FUNCT__ "SVMSetAutoPostTrain"
 /*@
