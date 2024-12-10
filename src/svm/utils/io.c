@@ -21,7 +21,7 @@
   }
 
 #define DynamicArrayInit(a,_capacity_,_grow_factor_)      \
-  PetscCall(PetscMalloc(_capacity_ * sizeof(*(a.data)),&(a.data))); \
+  PetscCall(PetscMalloc(_capacity_ * sizeof(*a.data),&a.data)); \
   a.size = 0;                                                   \
   a.capacity = _capacity_;                                      \
   a.grow_factor = _grow_factor_;
@@ -38,7 +38,7 @@
 
 #define DynamicArrayResize(a) \
   a.capacity = a.grow_factor * a.capacity; \
-  PetscCall(PetscRealloc(a.capacity * sizeof(*(a.data)),&a.data)); \
+  PetscCall(PetscRealloc(a.capacity * sizeof(*a.data),&a.data)); \
 
 #define DynamicArrayAddValue(a,v) \
   PetscInt i; \

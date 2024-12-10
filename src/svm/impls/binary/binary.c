@@ -2240,7 +2240,7 @@ PetscErrorCode SVMMonitorScores_Binary(QPS qps,PetscInt it,PetscReal rnorm,void 
   comm = PetscObjectComm((PetscObject) svm_inner);
   v = PETSC_VIEWER_STDOUT_(comm);
 
-  PetscCall(PetscViewerASCIIPrintf(v,"%3" PetscInt_FMT " SVM accuracy_test=%.2f",it,(double)(svm_binary->model_scores[0])));
+  PetscCall(PetscViewerASCIIPrintf(v,"%3" PetscInt_FMT " SVM accuracy_test=%.2f",it,(double)svm_binary->model_scores[0]));
   PetscCall(PetscViewerASCIIPushTab(v));
   PetscCall(PetscViewerASCIIPrintf(v,"mean_precision_test=%.2f",(double)svm_binary->model_scores[3]));
   PetscCall(PetscViewerASCIIPrintf(v,"mean_recall_test=%.2f"   ,(double)svm_binary->model_scores[6]));
@@ -2285,7 +2285,7 @@ PetscErrorCode SVMMonitorTrainingScores_Binary(QPS qps,PetscInt it,PetscReal rno
   comm = PetscObjectComm((PetscObject) svm_inner);
   v = PETSC_VIEWER_STDOUT_(comm);
 
-  PetscCall(PetscViewerASCIIPrintf(v,"%3" PetscInt_FMT " SVM accuracy_training=%.2f",it,(double)(svm_binary->model_scores[0])));
+  PetscCall(PetscViewerASCIIPrintf(v,"%3" PetscInt_FMT " SVM accuracy_training=%.2f",it,(double)svm_binary->model_scores[0]));
   PetscCall(PetscViewerASCIIPushTab(v));
   PetscCall(PetscViewerASCIIPrintf(v,"mean_precision_training=%.2f",(double)svm_binary->model_scores[3]));
   PetscCall(PetscViewerASCIIPrintf(v,"mean_recall_training=%.2f"   ,(double)svm_binary->model_scores[6]));
