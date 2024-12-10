@@ -3,8 +3,8 @@ ALL: lib
 CFLAGS   =
 FFLAGS   =
 SOURCEC  = dlregissvm.c svmregis.c svm.c
-SOURCEF  = 
-SOURCEH  = 
+SOURCEF  =
+SOURCEH  =
 OBJSC    = ${SOURCEC:.c=.o}
 LIBBASE  = libpermon
 DIRS     =
