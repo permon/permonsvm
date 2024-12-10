@@ -1,4 +1,3 @@
-
 #include <permon/private/svmimpl.h>
 #include "../utils/io.h"
 
@@ -2768,7 +2767,6 @@ PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat Xt,Vec y)
     SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMLoadDataset",type_name);
   }
   PetscCall(PetscLogEventEnd(SVM_LoadDataset,svm,0,0,0));
-
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -2834,7 +2832,6 @@ PetscErrorCode SVMLoadTrainingDataset(SVM svm,PetscViewer v)
   /* Free memory */
   PetscCall(MatDestroy(&Xt_training));
   PetscCall(VecDestroy(&y_training));
-
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
@@ -3156,6 +3153,5 @@ PetscErrorCode SVMViewDataset(SVM svm,Mat Xt,Vec y,PetscViewer v)
 
     SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewDataset",type_name);
   }
-
   PetscFunctionReturn(PETSC_SUCCESS);
 }

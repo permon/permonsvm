@@ -1,4 +1,3 @@
-
 #include <permon/private/svmimpl.h>
 
 FLLOP_EXTERN PetscErrorCode SVMCreate_Binary(SVM);

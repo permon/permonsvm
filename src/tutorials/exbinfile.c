@@ -1,4 +1,3 @@
-
 static char help[] = "Computes binary SVM classification model.\n\
 Input parameters include:\n\
   -f      : training dataset file\n\

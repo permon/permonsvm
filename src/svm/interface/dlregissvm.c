@@ -1,4 +1,3 @@
-
 #include <permon/private/svmimpl.h>
 
 static PetscBool SVMPackageInitialized = PETSC_FALSE;

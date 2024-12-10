@@ -1,4 +1,3 @@
-
 #include "binaryimpl.h"
 
 #undef __FUNCT__

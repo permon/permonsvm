@@ -64,7 +64,6 @@ PetscErrorCode SVMView_Probability(SVM svm,PetscViewer v)
   PetscBool isascii;
 
   PetscFunctionBegin;
-
   comm = PetscObjectComm((PetscObject) svm);
   if (!v) v = PETSC_VIEWER_STDOUT_(comm);
   PetscCall(PetscObjectTypeCompare((PetscObject)v,PETSCVIEWERASCII,&isascii));

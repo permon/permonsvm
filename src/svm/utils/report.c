@@ -1,4 +1,3 @@
-
 #include "report.h"
 
 PetscErrorCode BinaryConfusionMatrix(SVM svm,Vec y_pred,Vec y_known,PetscInt confusion_mat[])
@@ -17,7 +16,6 @@ PetscErrorCode BinaryConfusionMatrix(SVM svm,Vec y_pred,Vec y_known,PetscInt con
   const PetscReal *labels = NULL;
 
   PetscFunctionBegin;
-
   PetscCall(SVMGetLabels(svm,&labels));
   PetscCall(VecDuplicate(y_pred,&vec_label));
 
@@ -155,7 +153,6 @@ PetscErrorCode SVMGetBinaryClassificationReport(SVM svm,Vec y_pred,Vec y_known,P
   scores[13] = -1.;
   scores[14] = -1.;
   scores[15] = auc_roc;
-
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 

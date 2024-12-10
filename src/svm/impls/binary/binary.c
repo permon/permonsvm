@@ -1,4 +1,3 @@
-
 #include "binaryimpl.h"
 #include "../../utils/report.h"
 
@@ -22,8 +21,8 @@ static PetscErrorCode SVMMonitorTrainingScores_Binary(QPS,PetscInt,PetscReal,voi
 PetscErrorCode SVMReset_Binary(SVM svm)
 {
   SVM_Binary *svm_binary;
-
   PetscInt i;
+
   PetscFunctionBegin;
   svm_binary = (SVM_Binary *) svm->data;
 
@@ -1680,7 +1679,6 @@ PetscErrorCode SVMConvergedMaximalDualViolation_Binary(QPS qps,KSPConvergedReaso
     *reason = KSP_CONVERGED_ATOL;
     PetscCall(PetscInfo(qps,"QP solver has converged. Dual violation %14.12e at iteration %" PetscInt_FMT "\n",(double) v,it));
   }
-
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -1730,7 +1728,6 @@ PetscErrorCode SVMConvergedDualityGap_Binary(QPS qps,KSPConvergedReason *reason)
     *reason = KSP_CONVERGED_RTOL;
     PetscCall(PetscInfo(qps,"QP solver has converged. Duality gap %14.12e at iteration %" PetscInt_FMT "\n",(double) gap,it));
   }
-
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -1769,7 +1766,6 @@ PetscErrorCode SVMConvergedSetUp_Binary(SVM svm)
     default:
       break;
   }
-
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 

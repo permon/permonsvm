@@ -342,7 +342,6 @@ static PetscErrorCode DatasetAssembly_SVMLight_Private(Mat Xt,Vec labels,char *b
   DynamicArrayClear(i);
   if (j.data) DynamicArrayClear(j);
   if (a.data) DynamicArrayClear(a);
-
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -452,6 +451,5 @@ PetscErrorCode PetscViewerLoadSVMDataset(Mat Xt,Vec y,PetscViewer v)
 
     SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for PetscViewerLoadDataset",type_name);
   }
-
   PetscFunctionReturn(PETSC_SUCCESS);
 }

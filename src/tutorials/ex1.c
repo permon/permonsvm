@@ -1,4 +1,3 @@
-
 static char help[] = "Trains binary SVM classification model using precomputed Gramian matrix.\n\
 Input parameters:\n\
   -f       : training dataset file\n\

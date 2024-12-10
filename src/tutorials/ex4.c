@@ -1,4 +1,3 @@
-
 static char help[] = "Trains binary L2-loss SVM classification model that training process was stopped using terminating condition\
 based on duality gap.\n\
 Input parameters:\n\

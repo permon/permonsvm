@@ -1,4 +1,3 @@
-
 static char help[] = "";
 
 #include <permonsvm.h>
@@ -45,7 +44,6 @@ PetscErrorCode ViewerOpen(const char *filename,PetscFileMode file_mode,PetscView
   }
 
   *viewer = inner_viewer;
-
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
