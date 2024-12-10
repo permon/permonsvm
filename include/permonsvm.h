@@ -1,6 +1,4 @@
-
-#if !defined(__PERMONSVM_H)
-#define __PERMONSVM_H
+#pragma once
 
 #include <permonqps.h>
 #include <petscviewerhdf5.h>
@@ -285,4 +283,3 @@ FLLOP_EXTERN PetscErrorCode PetscViewerSVMLightOpen(MPI_Comm,const char [],Petsc
 FLLOP_EXTERN PetscErrorCode MatBiasedCreate(Mat,PetscReal,Mat *);
 FLLOP_EXTERN PetscErrorCode MatBiasedGetInnerMat(Mat,Mat *);
 FLLOP_EXTERN PetscErrorCode MatBiasedGetBias(Mat,PetscReal *);
-#endif

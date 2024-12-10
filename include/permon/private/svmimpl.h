@@ -1,6 +1,4 @@
-
-#if !defined(__SVMIMPL_H)
-#define	__SVMIMPL_H
+#pragma once
 
 #include <permon/private/qpsimpl.h>
 #include <permonsvm.h>
@@ -68,6 +66,3 @@ struct _p_SVM {
 
 FLLOP_EXTERN PetscLogEvent SVM_LoadDataset;
 FLLOP_EXTERN PetscLogEvent SVM_LoadGramian;
-
-#endif
-

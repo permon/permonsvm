@@ -1,6 +1,4 @@
-
-#if !defined(__PROBIMPL_H)
-#define	__PROBIMPL_H
+#pragma once
 
 #include <permon/private/svmimpl.h>
 
@@ -33,5 +31,3 @@ typedef struct {
   PetscReal model_scores[16];
 
 } SVM_Probability;
-
-#endif

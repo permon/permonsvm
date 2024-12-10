@@ -1,6 +1,4 @@
-
-#if !defined(__BINARYIMPL_H)
-#define	__BINARYIMPL_H
+#pragma once
 
 #include <permon/private/svmimpl.h>
 
@@ -46,4 +44,3 @@ FLLOP_EXTERN const char *const SVMConvergedTypes[];
 FLLOP_EXTERN PetscErrorCode SVMCrossValidation_Binary(SVM,PetscReal [],PetscInt,PetscReal []);
 FLLOP_EXTERN PetscErrorCode SVMKFoldCrossValidation_Binary(SVM,PetscReal [],PetscInt,PetscReal []);
 FLLOP_EXTERN PetscErrorCode SVMStratifiedKFoldCrossValidation_Binary(SVM,PetscReal [],PetscInt,PetscReal []);
-#endif
