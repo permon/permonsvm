@@ -365,7 +365,7 @@ PetscErrorCode SVMSetType(SVM svm,const SVMType type)
   if (issame) PetscFunctionReturn(PETSC_SUCCESS);
 
   PetscCall(PetscFunctionListFind(SVMList,type,(void(**)(void))&create_svm));
-  if (!create_svm) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_UNKNOWN_TYPE,"Unable to find requested SVM type %s",type);
+  PetscCheck(create_svm,PETSC_COMM_SELF,PETSC_ERR_ARG_UNKNOWN_TYPE,"Unable to find requested SVM type %s",type);
 
   /* Destroy the pre-existing private SVM context */
   if (svm->ops->destroy) PetscCall(svm->ops->destroy(svm));
@@ -481,7 +481,7 @@ PetscErrorCode SVMSetNfolds(SVM svm,PetscInt nfolds)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidLogicalCollectiveInt(svm,nfolds,2);
 
-  if (nfolds < 2) SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be greater than 1.");
+  PetscCheck(nfolds > 1,((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be greater than 1.");
   svm->nfolds = nfolds;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -535,7 +535,7 @@ PetscErrorCode SVMSetPenaltyType(SVM svm,PetscInt type)
   PetscValidLogicalCollectiveInt(svm,type,2);
   if (svm->penalty_type == type) PetscFunctionReturn(PETSC_SUCCESS);
 
-  if (type != 1 && type != 2) SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_SUP,"Type of penalty (%" PetscInt_FMT ") is not supported. It must be 1 or 2",type);
+  PetscCheck(type == 1 || type == 2,((PetscObject) svm)->comm,PETSC_ERR_SUP,"Type of penalty (%" PetscInt_FMT ") is not supported. It must be 1 or 2",type);
 
   svm->penalty_type = type;
   svm->setupcalled = PETSC_FALSE;
@@ -594,9 +594,7 @@ PetscErrorCode SVMSetC(SVM svm,PetscReal C)
     PetscFunctionReturn(PETSC_SUCCESS);
   }
 
-  if (C <= 0) {
-    SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
-  }
+  PetscCheck(C > 0,PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
 
   svm->C_old = svm->C;
   svm->C     = C;
@@ -658,9 +656,7 @@ PetscErrorCode SVMSetCp(SVM svm,PetscReal Cp)
     PetscFunctionReturn(PETSC_SUCCESS);
   }
 
-  if (Cp <= 0) {
-    SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
-  }
+  PetscCheck(Cp > 0,PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
 
   svm->Cp_old = svm->Cp;
   svm->Cp     = Cp;
@@ -722,9 +718,7 @@ PetscErrorCode SVMSetCn(SVM svm,PetscReal Cn)
     PetscFunctionReturn(PETSC_SUCCESS);
   }
 
-  if (Cn <= 0) {
-    SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
-  }
+  PetscCheck(Cn > 0,PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
 
   svm->Cn_old = svm->Cn;
   svm->Cn     = Cn;
@@ -785,7 +779,7 @@ PetscErrorCode SVMSetPenalty(SVM svm,PetscInt m,PetscReal p[])
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  if (m > 2) SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be 1 or 2");
+  PetscCheck(m <= 2,((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be 1 or 2");
   PetscValidLogicalCollectiveInt(svm,m,2);
   PetscValidLogicalCollectiveReal(svm,p[0],3);
   if (m == 2) PetscValidLogicalCollectiveReal(svm,p[1],3);
@@ -828,7 +822,7 @@ PetscErrorCode SVMGridSearchSetBaseLogC(SVM svm,PetscReal logC_base)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidLogicalCollectiveReal(svm,logC_base,2);
 
-  if (logC_base <= 0) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
+  PetscCheck(logC_base > 0,PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
 
   svm->logC_base = logC_base;
   svm->setupcalled = PETSC_FALSE;
@@ -890,10 +884,10 @@ PetscErrorCode SVMGridSearchSetStrideLogC(SVM svm,PetscReal logC_start,PetscReal
   PetscValidLogicalCollectiveReal(svm,logC_step,4);
 
   /* Validating values of input parameters */
-  if (logC_step == 0) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be 0");
-  if (logC_start == logC_end) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Start (logC_start) and end (logC_end) cannot be same");
-  if (logC_start > logC_end && logC_step > 0) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be greater than 0 if start (logC_start) is greater than end (logC_end)");
-  if (logC_start < logC_end && logC_step < 0) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be less than 0 if start (logC_start) is less than end (logC_end)");
+  PetscCheck(logC_step != 0,PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be 0");
+  PetscCheck(logC_start != logC_end,PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Start (logC_start) and end (logC_end) cannot be same");
+  PetscCheck(logC_start <= logC_end || logC_step <= 0,PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be greater than 0 if start (logC_start) is greater than end (logC_end)");
+  PetscCheck(logC_start >= logC_end || logC_step >= 0,PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be less than 0 if start (logC_start) is less than end (logC_end)");
 
   svm->logC_start = logC_start;
   svm->logC_end  = logC_end;
@@ -963,7 +957,7 @@ PetscErrorCode SVMGridSearchSetPositiveBaseLogC(SVM svm,PetscReal logCp_base)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidLogicalCollectiveReal(svm,logCp_base,2);
 
-  if (logCp_base <= 0) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
+  PetscCheck(logCp_base > 0,PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
 
   svm->logCp_base = logCp_base;
   svm->setupcalled = PETSC_FALSE;
@@ -1025,10 +1019,10 @@ PetscErrorCode SVMGridSearchSetPositiveStrideLogC(SVM svm,PetscReal logC_start,P
   PetscValidLogicalCollectiveReal(svm,logC_step,4);
 
   /* Validating values of input parameters */
-  if (logC_step == 0) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be 0");
-  if (logC_start == logC_end) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Start (logC_start) and end (logC_end) cannot be same");
-  if (logC_start > logC_end && logC_step > 0) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be greater than 0 if start (logC_start) is greater than end (logC_end)");
-  if (logC_start < logC_end && logC_step < 0) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be less than 0 if start (logC_start) is less than end (logC_end)");
+  PetscCheck(logC_step != 0,PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be 0");
+  PetscCheck(logC_start != logC_end,PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Start (logC_start) and end (logC_end) cannot be same");
+  PetscCheck(logC_start <= logC_end || logC_step <= 0,PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be greater than 0 if start (logC_start) is greater than end (logC_end)");
+  PetscCheck(logC_start >= logC_end || logC_step >= 0,PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be less than 0 if start (logC_start) is less than end (logC_end)");
 
   svm->logCp_start = logC_start;
   svm->logCp_end   = logC_end;
@@ -1098,7 +1092,7 @@ PetscErrorCode SVMGridSearchSetNegativeBaseLogC(SVM svm,PetscReal logCn_base)
   PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
   PetscValidLogicalCollectiveReal(svm,logCn_base,2);
 
-  if (logCn_base <= 0) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
+  PetscCheck(logCn_base > 0,PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
 
   svm->logCn_base = logCn_base;
   svm->setupcalled = PETSC_FALSE;
@@ -1160,10 +1154,10 @@ PetscErrorCode SVMGridSearchSetNegativeStrideLogC(SVM svm,PetscReal logC_start,P
   PetscValidLogicalCollectiveReal(svm,logC_step,4);
 
   /* Validating values of input parameters */
-  if (logC_step == 0) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be 0");
-  if (logC_start == logC_end) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Start (logC_start) and end (logC_end) cannot be same");
-  if (logC_start > logC_end && logC_step > 0) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be greater than 0 if start (logC_start) is greater than end (logC_end)");
-  if (logC_start < logC_end && logC_step < 0) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be less than 0 if start (logC_start) is less than end (logC_end)");
+  PetscCheck(logC_step != 0,PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be 0");
+  PetscCheck(logC_start != logC_end,PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Start (logC_start) and end (logC_end) cannot be same");
+  PetscCheck(logC_start <= logC_end || logC_step <= 0,PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be greater than 0 if start (logC_start) is greater than end (logC_end)");
+  PetscCheck(logC_start >= logC_end || logC_step >= 0,PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be less than 0 if start (logC_start) is less than end (logC_end)");
 
   svm->logCn_start = logC_start;
   svm->logCn_end   = logC_end;
@@ -2738,9 +2732,7 @@ PetscErrorCode SVMViewGramian(SVM svm,PetscViewer v)
 @*/
 PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat Xt,Vec y)
 {
-  MPI_Comm   comm;
   const char *type_name = NULL;
-
   PetscBool  isascii,ishdf5,isbinary;
 
   PetscFunctionBegin;
@@ -2761,10 +2753,8 @@ PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat Xt,Vec y)
   } else if (ishdf5 || isbinary) {
     PetscCall(DatasetLoad_Binary(Xt,y,v));
   } else {
-    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
     PetscCall(PetscObjectGetType((PetscObject) v,&type_name));
-
-    SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMLoadDataset",type_name);
+    SETERRQ(PetscObjectComm((PetscObject) v),PETSC_ERR_SUP,"Viewer type %s not supported for SVMLoadDataset",type_name);
   }
   PetscCall(PetscLogEventEnd(SVM_LoadDataset,svm,0,0,0));
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -2854,8 +2844,6 @@ PetscErrorCode SVMLoadTrainingDataset(SVM svm,PetscViewer v)
 @*/
 PetscErrorCode SVMViewTrainingDataset(SVM svm,PetscViewer v)
 {
-  MPI_Comm   comm;
-
   Mat        Xt;
   Vec        y;
 
@@ -2864,10 +2852,7 @@ PetscErrorCode SVMViewTrainingDataset(SVM svm,PetscViewer v)
 
   PetscFunctionBegin;
   PetscCall(SVMGetTrainingDataset(svm,&Xt,&y));
-  if (!Xt || !y) {
-    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
-    SETERRQ(comm,PETSC_ERR_ARG_NULL,"Training dataset is not set");
-  }
+  PetscCheck(Xt && y,PetscObjectComm((PetscObject) v),PETSC_ERR_ARG_NULL,"Training dataset is not set");
 
   PetscCall(PetscObjectTypeCompare((PetscObject)v,PETSCVIEWERASCII,&isascii));
   if (isascii) {
@@ -2878,10 +2863,8 @@ PetscErrorCode SVMViewTrainingDataset(SVM svm,PetscViewer v)
     PetscCall(SVMViewDataset(svm,Xt,y,v));
     PetscCall(PetscViewerASCIIPopTab(v));
   } else {
-    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
     PetscCall(PetscObjectGetType((PetscObject) v,&type_name));
-
-    SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewTrainingDataset",type_name);
+    SETERRQ(PetscObjectComm((PetscObject) v),PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewTrainingDataset",type_name);
   }
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -2971,8 +2954,6 @@ PetscErrorCode SVMLoadTestDataset(SVM svm,PetscViewer v)
 @*/
 PetscErrorCode SVMViewTestDataset(SVM svm,PetscViewer v)
 {
-  MPI_Comm   comm;
-
   Mat        Xt;
   Vec        y;
 
@@ -2984,10 +2965,7 @@ PetscErrorCode SVMViewTestDataset(SVM svm,PetscViewer v)
   PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
 
   PetscCall(SVMGetTestDataset(svm,&Xt,&y));
-  if (!Xt || !y) {
-    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
-    SETERRQ(comm,PETSC_ERR_ARG_NULL,"Test dataset is not set");
-  }
+  PetscCheck(Xt && y,PetscObjectComm((PetscObject) v),PETSC_ERR_ARG_NULL,"Test dataset is not set");
 
   PetscCall(PetscObjectTypeCompare((PetscObject)v,PETSCVIEWERASCII,&isascii));
   if (isascii) {
@@ -2998,10 +2976,8 @@ PetscErrorCode SVMViewTestDataset(SVM svm,PetscViewer v)
     PetscCall(SVMViewDataset(svm,Xt,y,v));
     PetscCall(PetscViewerASCIIPopTab(v));
   } else {
-    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
     PetscCall(PetscObjectGetType((PetscObject) v,&type_name));
-
-    SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewTestDataset",type_name);
+    SETERRQ(PetscObjectComm((PetscObject) v),PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewTestDataset",type_name);
   }
   PetscFunctionReturn(0);
 }

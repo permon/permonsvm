@@ -72,7 +72,7 @@ static PetscErrorCode IOReadBuffer_SVMLight_Private(MPI_Comm comm,const char *fi
   eol_found = PETSC_FALSE;
 
   PetscCall(PetscOptionsGetInt(NULL,NULL,"-svm_io_overlap",&overlap,NULL));
-  if (overlap < 0 && overlap != PETSC_DECIDE) SETERRQ(comm, PETSC_ERR_ARG_OUTOFRANGE, "Overlap must be greater or equal to zero");
+  PetscCheck(overlap >= 0 || overlap == PETSC_DECIDE,comm, PETSC_ERR_ARG_OUTOFRANGE, "Overlap must be greater or equal to zero");
 
   PetscCallMPI(MPI_File_open(comm,filename,MPI_MODE_RDONLY,MPI_INFO_NULL,&fh));
   PetscCallMPI(MPI_File_get_size(fh,&file_size));
@@ -196,10 +196,10 @@ static PetscErrorCode IOParseBuffer_SVMLight_Private(MPI_Comm comm,char *buff,st
   array_grow_factor = DARRAY_GROW_FACTOR;
 
   PetscCall(PetscOptionsGetInt(NULL,NULL,"-svm_io_darray_init_size",&array_init_capacity,NULL));
-  if (array_init_capacity <= 0) SETERRQ(comm,PETSC_ERR_ARG_OUTOFRANGE,"Initial size of dynamic array must be greater than zero");
+  PetscCheck(array_init_capacity > 0,comm,PETSC_ERR_ARG_OUTOFRANGE,"Initial size of dynamic array must be greater than zero");
 
   PetscCall(PetscOptionsGetReal(NULL,NULL,"-svm_io_darray_grow_factor",&array_grow_factor,NULL));
-  if (array_grow_factor <= 1.) SETERRQ(comm,PETSC_ERR_ARG_OUTOFRANGE,"Grow factor of dynamic array must be greater than one");
+  PetscCheck(array_grow_factor > 1.,comm,PETSC_ERR_ARG_OUTOFRANGE,"Grow factor of dynamic array must be greater than one");
 
   DynamicArrayInit(i_in,array_init_capacity,array_grow_factor);
   DynamicArrayPushBack(i_in,0);
@@ -425,9 +425,7 @@ PetscErrorCode DatasetLoad_Binary(Mat Xt,Vec y,PetscViewer v)
 @*/
 PetscErrorCode PetscViewerLoadSVMDataset(Mat Xt,Vec y,PetscViewer v)
 {
-  MPI_Comm   comm;
   const char *type_name = NULL;
-
   PetscBool  isascii,ishdf5,isbinary;
 
   PetscFunctionBegin;
@@ -446,10 +444,8 @@ PetscErrorCode PetscViewerLoadSVMDataset(Mat Xt,Vec y,PetscViewer v)
   } else if (ishdf5 || isbinary) {
     PetscCall(DatasetLoad_Binary(Xt,y,v));
   } else {
-    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
     PetscCall(PetscObjectGetType((PetscObject) v,&type_name));
-
-    SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for PetscViewerLoadDataset",type_name);
+    SETERRQ(PetscObjectComm((PetscObject) v),PETSC_ERR_SUP,"Viewer type %s not supported for PetscViewerLoadDataset",type_name);
   }
   PetscFunctionReturn(PETSC_SUCCESS);
 }

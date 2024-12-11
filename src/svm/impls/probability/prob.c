@@ -142,22 +142,15 @@ PetscErrorCode SVMSetTrainingDataset_Probability(SVM svm,Mat Xt_training,Vec y_t
 
   PetscCall(MatGetSize(Xt_training,&k,NULL));
   PetscCall(VecGetSize(y_training,&l));
-  if (k != l) {
-    SETERRQ(PetscObjectComm((PetscObject) Xt_training),PETSC_ERR_ARG_SIZ,"Dimensions are incompatible, "
-                                                                         "X_training(%" PetscInt_FMT ",) !="
-                                                                         "y_training(%" PetscInt_FMT ")",k,l);
-  }
+  PetscCheck(k == l,PetscObjectComm((PetscObject) Xt_training),PETSC_ERR_ARG_SIZ,
+             "Dimensions are incompatible, X_training(%" PetscInt_FMT ",) != y_training(%" PetscInt_FMT ")",k,l);
 
   PetscCall(SVMGetCalibrationDataset(svm,&Xt_calib,NULL));
   if (Xt_calib != NULL) {
     PetscCall(MatGetSize(Xt_training,NULL,&l));
     PetscCall(MatGetSize(Xt_calib,NULL,&n));
-
-    if (l != n) {
-      SETERRQ(PetscObjectComm((PetscObject) Xt_calib),PETSC_ERR_ARG_SIZ,"Dimensions are incompatible, "
-                                                                        "X_training(,%" PetscInt_FMT ") !="
-                                                                        "X_calib(,%" PetscInt_FMT ")",l,n);
-    }
+    PetscCheck(l == n,PetscObjectComm((PetscObject) Xt_calib),PETSC_ERR_ARG_SIZ,
+               "Dimensions are incompatible, X_training(,%" PetscInt_FMT ") != X_calib(,%" PetscInt_FMT ")",l,n);
   }
 
   PetscCall(MatDestroy(&svm_prob->Xt_training));
@@ -237,22 +230,15 @@ PetscErrorCode SVMSetCalibrationDataset_Probability(SVM svm,Mat Xt_calib,Vec y_c
 
   PetscCall(MatGetSize(Xt_calib,&k,NULL));
   PetscCall(VecGetSize(y_calib,&l));
-  if (k != l) {
-    SETERRQ(PetscObjectComm((PetscObject) Xt_calib),PETSC_ERR_ARG_SIZ,"Dimensions are incompatible, "
-                                                                      "X_calib(%" PetscInt_FMT ",) != "
-                                                                      "y_calib(%" PetscInt_FMT ")",k,l);
-  }
+  PetscCheck(k == l,PetscObjectComm((PetscObject) Xt_calib),PETSC_ERR_ARG_SIZ,
+             "Dimensions are incompatible, X_calib(%" PetscInt_FMT ",) != y_calib(%" PetscInt_FMT ")",k,l);
 
   PetscCall(SVMGetTrainingDataset(svm,&Xt_training,NULL));
   if (Xt_training != NULL) {
     PetscCall(MatGetSize(Xt_calib,NULL,&l));
     PetscCall(MatGetSize(Xt_training,NULL,&n));
-
-    if (l != n) {
-      SETERRQ(PetscObjectComm((PetscObject) Xt_calib),PETSC_ERR_ARG_SIZ,"Dimensions are incompatible, "
-                                                                        "X_calib(,%" PetscInt_FMT ") !="
-                                                                        "X_training(,%" PetscInt_FMT ")",l,n);
-    }
+    PetscCheck(l == n,PetscObjectComm((PetscObject) Xt_calib),PETSC_ERR_ARG_SIZ,
+              "Dimensions are incompatible, X_calib(,%" PetscInt_FMT ") != X_training(,%" PetscInt_FMT ")",l,n);
   }
 
   PetscCall(MatDestroy(&svm_prob->Xt_calib));
@@ -1068,8 +1054,6 @@ PetscErrorCode SVMLoadCalibrationDataset_Probability(SVM svm,PetscViewer v)
 
 PetscErrorCode SVMViewCalibrationDataset_Probability(SVM svm,PetscViewer v)
 {
-  MPI_Comm   comm;
-
   Mat        Xt;
   Vec        y;
 
@@ -1078,10 +1062,7 @@ PetscErrorCode SVMViewCalibrationDataset_Probability(SVM svm,PetscViewer v)
 
   PetscFunctionBegin;
   PetscCall(SVMGetCalibrationDataset(svm,&Xt,&y));
-  if (!Xt || !y) {
-    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
-    SETERRQ(comm,PETSC_ERR_ARG_NULL,"Calibration dataset is not set");
-  }
+  PetscCheck(Xt && y,PetscObjectComm((PetscObject) v),PETSC_ERR_ARG_NULL,"Calibration dataset is not set");
 
   PetscCall(PetscObjectTypeCompare((PetscObject)v,PETSCVIEWERASCII,&isascii));
   if (isascii) {
@@ -1092,27 +1073,20 @@ PetscErrorCode SVMViewCalibrationDataset_Probability(SVM svm,PetscViewer v)
     PetscCall(SVMViewDataset(svm,Xt,y,v));
     PetscCall(PetscViewerASCIIPopTab(v));
   } else {
-    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
     PetscCall(PetscObjectGetType((PetscObject) v,&type_name));
-
-    SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewCalibrationDataset",type_name);
+    SETERRQ(PetscObjectComm((PetscObject) v),PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewCalibrationDataset",type_name);
   }
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMViewTrainingPredictions_Probability(SVM svm,PetscViewer v)
 {
-  MPI_Comm   comm;
-
   Mat        Xt_training;
   Vec        y_pred;
 
   PetscFunctionBegin;
   PetscCall(SVMGetTrainingDataset(svm,&Xt_training,NULL));
-  if (!Xt_training) {
-    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
-    SETERRQ(comm,PETSC_ERR_ARG_NULL,"Training dataset is not set");
-  }
+  PetscCheck(Xt_training,PetscObjectComm((PetscObject) v),PETSC_ERR_ARG_NULL,"Training dataset is not set");
 
   /* View predictions on training samples */
   PetscCall(SVMPredict(svm,Xt_training,&y_pred));
@@ -1126,17 +1100,12 @@ PetscErrorCode SVMViewTrainingPredictions_Probability(SVM svm,PetscViewer v)
 
 PetscErrorCode SVMViewTestPredictions_Probability(SVM svm,PetscViewer v)
 {
-  MPI_Comm   comm;
-
   Mat        Xt_test;
   Vec        y_pred;
 
   PetscFunctionBegin;
   PetscCall(SVMGetTestDataset(svm,&Xt_test,NULL));
-  if (!Xt_test) {
-    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
-    SETERRQ(comm,PETSC_ERR_ARG_NULL,"Test dataset is not set");
-  }
+  PetscCheck(Xt_test,PetscObjectComm((PetscObject) v),PETSC_ERR_ARG_NULL,"Test dataset is not set");
 
   /* View predictions on test samples */
   PetscCall(SVMPredict(svm,Xt_test,&y_pred));

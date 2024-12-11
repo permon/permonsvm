@@ -224,18 +224,12 @@ PetscErrorCode SVMSetGramian_Binary(SVM svm,Mat G)
   PetscInt   m,n;
 
   PetscFunctionBegin;
-  /* Checking that Gramian is square */
   PetscCall(MatGetSize(G,&m,&n));
-  if (m != n) {
-    SETERRQ(PetscObjectComm((PetscObject) G),PETSC_ERR_ARG_SIZ,"Gramian (kernel) matrix must be square, G(%" PetscInt_FMT ",%" PetscInt_FMT ")",m,n);
-  }
-  /* Checking dimension compatibility between training data matrix and Gramian */
+  PetscCheck(m == n,PetscObjectComm((PetscObject) G),PETSC_ERR_ARG_SIZ,"Gramian (kernel) matrix must be square, G(%" PetscInt_FMT ",%" PetscInt_FMT ")",m,n);
   PetscCall(SVMGetTrainingDataset(svm,&Xt,NULL));
   if (Xt) {
     PetscCall(MatGetSize(Xt,&n,NULL));
-    if (m != n) {
-      SETERRQ(PetscObjectComm((PetscObject) G),PETSC_ERR_ARG_SIZ,"Matrix dimensions are incompatible, G(%" PetscInt_FMT ",) != X_training(%" PetscInt_FMT ",)",m,n);
-    }
+    PetscCheck(m == n,PetscObjectComm((PetscObject) G),PETSC_ERR_ARG_SIZ,"Matrix dimensions are incompatible, G(%" PetscInt_FMT ",) != X_training(%" PetscInt_FMT ",)",m,n);
   }
   PetscCall(MatDestroy(&svm_binary->G));
   PetscCall(PetscObjectReference((PetscObject) G));
@@ -264,18 +258,12 @@ PetscErrorCode SVMSetOperator_Binary(SVM svm,Mat A)
   PetscInt m,n;
 
   PetscFunctionBegin;
-  /* Checking that operator (Hessian) is square */
   PetscCall(MatGetSize(A,&m,&n));
-  if (m != n) {
-    SETERRQ(PetscObjectComm((PetscObject) A),PETSC_ERR_ARG_SIZ,"Hessian matrix must be square, G(%" PetscInt_FMT ",%" PetscInt_FMT ")",m,n);
-  }
-  /* Checking dimension compatibility between Hessian (operator) and training data matrices */
+  PetscCheck(m == n,PetscObjectComm((PetscObject) A),PETSC_ERR_ARG_SIZ,"Hessian matrix must be square, G(%" PetscInt_FMT ",%" PetscInt_FMT ")",m,n);
   PetscCall(SVMGetTrainingDataset(svm,&Xt,NULL));
   if (Xt) {
     PetscCall(MatGetSize(Xt,&n,NULL));
-    if (m != n) {
-      SETERRQ(PetscObjectComm((PetscObject) A),PETSC_ERR_ARG_SIZ,"Matrix dimensions are incompatible, A(%" PetscInt_FMT ",) != X_training(%" PetscInt_FMT ",)",m,n);
-    }
+    PetscCheck(m == n,PetscObjectComm((PetscObject) A),PETSC_ERR_ARG_SIZ,"Matrix dimensions are incompatible, A(%" PetscInt_FMT ",) != X_training(%" PetscInt_FMT ",)",m,n);
   }
 
   PetscCall(SVMGetQP(svm,&qp));
@@ -313,16 +301,12 @@ PetscErrorCode SVMSetTrainingDataset_Binary(SVM svm,Mat Xt_training,Vec y_traini
   PetscFunctionBegin;
   PetscCall(MatGetSize(Xt_training,&m,NULL));
   PetscCall(VecGetSize(y_training,&n));
-  if (m != n) {
-    SETERRQ(PetscObjectComm((PetscObject) Xt_training),PETSC_ERR_ARG_SIZ,"Dimensions are incompatible, X_training(%" PetscInt_FMT ",) != y_training(%" PetscInt_FMT ")",m,n);
-  }
+  PetscCheck(m == n,PetscObjectComm((PetscObject) Xt_training),PETSC_ERR_ARG_SIZ,"Dimensions are incompatible, X_training(%" PetscInt_FMT ",) != y_training(%" PetscInt_FMT ")",m,n);
 
   PetscCall(SVMGetGramian(svm,&G));
   if (G) {
     PetscCall(MatGetSize(G,&n,NULL));
-    if (m != n) {
-      SETERRQ(PetscObjectComm((PetscObject) G),PETSC_ERR_ARG_SIZ,"Matrix dimensions are incompatible, X_training(%" PetscInt_FMT ",) != G(%" PetscInt_FMT ",)",m,n);
-    }
+    PetscCheck(m == n,PetscObjectComm((PetscObject) G),PETSC_ERR_ARG_SIZ,"Matrix dimensions are incompatible, X_training(%" PetscInt_FMT ",) != G(%" PetscInt_FMT ",)",m,n);
   }
 
   PetscCall(MatDestroy(&svm_binary->Xt_training));
@@ -901,9 +885,7 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
     Vec y_test;
 
     PetscCall(SVMGetTestDataset(svm,&Xt_test,&y_test));
-    if (!Xt_test && !y_test) {
-      SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_NULL,"Test dataset must be set for using -svm_monitor_scores.");
-    }
+    PetscCheck(Xt_test || y_test,PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_NULL,"Test dataset must be set for using -svm_monitor_scores.");
     PetscCall(SVMMonitorCreateCtx_Binary(&mctx,svm));
     if (svm_mod == 1) {
       QPS qps_inner;
@@ -1910,9 +1892,7 @@ PetscErrorCode SVMViewGramian_Binary(SVM svm,PetscViewer v)
 
   PetscFunctionBegin;
   PetscCall(SVMGetGramian(svm,&G));
-  if (!G) {
-    SETERRQ(PetscObjectComm((PetscObject) v),PETSC_ERR_ARG_NULL,"Gramian (kernel) matrix is not set");
-  }
+  PetscCheck(G,PetscObjectComm((PetscObject) v),PETSC_ERR_ARG_NULL,"Gramian (kernel) matrix is not set");
 
   PetscCall(PetscObjectTypeCompare((PetscObject)v,PETSCVIEWERASCII,&isascii));
   if (isascii) {
@@ -1939,8 +1919,6 @@ PetscErrorCode SVMViewGramian_Binary(SVM svm,PetscViewer v)
 #define __FUNCT__ "SVMViewTrainingDataset_Binary"
 PetscErrorCode SVMViewTrainingDataset_Binary(SVM svm,PetscViewer v)
 {
-  MPI_Comm   comm;
-
   Mat        Xt;
   Vec        y;
 
@@ -1949,10 +1927,7 @@ PetscErrorCode SVMViewTrainingDataset_Binary(SVM svm,PetscViewer v)
 
   PetscFunctionBegin;
   PetscCall(SVMGetTrainingDataset(svm,&Xt,&y));
-  if (!Xt || !y) {
-    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
-    SETERRQ(comm,PETSC_ERR_ARG_NULL,"Training dataset is not set");
-  }
+  PetscCheck(Xt && y,PetscObjectComm((PetscObject) v),PETSC_ERR_ARG_NULL,"Training dataset is not set");
 
   PetscCall(PetscObjectTypeCompare((PetscObject)v,PETSCVIEWERASCII,&isascii));
   if (isascii) {
@@ -1963,27 +1938,20 @@ PetscErrorCode SVMViewTrainingDataset_Binary(SVM svm,PetscViewer v)
     PetscCall(SVMViewDataset(svm,Xt,y,v));
     PetscCall(PetscViewerASCIIPopTab(v));
   } else {
-    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
     PetscCall(PetscObjectGetType((PetscObject) v,&type_name));
-
-    SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewTrainingDataset",type_name);
+    SETERRQ(PetscObjectComm((PetscObject) v),PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewTrainingDataset",type_name);
   }
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SVMViewTrainingPredictions_Binary(SVM svm,PetscViewer v)
 {
-  MPI_Comm   comm;
-
   Mat        Xt_training;
   Vec        y_pred;
 
   PetscFunctionBegin;
   PetscCall(SVMGetTrainingDataset(svm,&Xt_training,NULL));
-  if (!Xt_training) {
-    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
-    SETERRQ(comm,PETSC_ERR_ARG_NULL,"Training dataset is not set");
-  }
+  PetscCheck(Xt_training,PetscObjectComm((PetscObject) v),PETSC_ERR_ARG_NULL,"Training dataset is not set");
 
   /* View predictions on training samples */
   PetscCall(SVMPredict(svm,Xt_training,&y_pred));
@@ -1997,17 +1965,12 @@ PetscErrorCode SVMViewTrainingPredictions_Binary(SVM svm,PetscViewer v)
 
 PetscErrorCode SVMViewTestPredictions_Binary(SVM svm,PetscViewer v)
 {
-  MPI_Comm   comm;
-
   Mat        Xt_test;
   Vec        y_pred;
 
   PetscFunctionBegin;
   PetscCall(SVMGetTestDataset(svm,&Xt_test,NULL));
-  if (!Xt_test) {
-    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
-    SETERRQ(comm,PETSC_ERR_ARG_NULL,"Test dataset is not set");
-  }
+  PetscCheck(Xt_test,PetscObjectComm((PetscObject) v),PETSC_ERR_ARG_NULL,"Test dataset is not set");
 
   /* View predictions on test samples */
   PetscCall(SVMPredict(svm,Xt_test,&y_pred));
