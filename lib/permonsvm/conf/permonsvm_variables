@@ -22,3 +22,7 @@ PERMON_SVM_LIB = ${PERMON_SVM_C_SH_LIB_PATH} -L${PERMON_SVM_LIB_DIR} ${PERMON_SV
 
 PERMON_SVM_LOG          ?= ${PERMON_PKG_LIB_DIR}/permonsvm/conf/make.log
 PERMON_SVM_ERRLOG       ?= ${PERMON_PKG_LIB_DIR}/permonsvm/conf/error.log
+
+#  Escape codes to change the text color on xterms and terminals
+PETSC_TEXT_HILIGHT ?= "\033[1;31m"
+PETSC_TEXT_NORMAL ?= "\033[0;39m\033[0;49m"

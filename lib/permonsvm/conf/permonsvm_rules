@@ -63,6 +63,11 @@ permonsvm_info:
 	-@echo "Using MAKEFLAGS: -j$(MAKE_NP) -l$(MAKE_LOAD) $(MAKEFLAGS)"
 	-@echo "=========================================="
 
+# Check that source code does not violate basic PETSc coding standards
+checkbadsource: checkbadSource
+
+checkbadSource: chk_permon_dir_private
+
 # include PERMON rules at the end only if rules and petscrules files exist
 # - this is checked by the chk_permon_petsc_dir rule
 ifneq ("$(wildcard ${PERMON_DIR}/lib/permon/conf/permon_rules)","")
