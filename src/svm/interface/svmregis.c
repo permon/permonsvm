@@ -1,7 +1,7 @@
 #include <permon/private/svmimpl.h>
 
-FLLOP_EXTERN PetscErrorCode SVMCreate_Binary(SVM);
-FLLOP_EXTERN PetscErrorCode SVMCreate_Probability(SVM);
+PERMON_EXTERN PetscErrorCode SVMCreate_Binary(SVM);
+PERMON_EXTERN PetscErrorCode SVMCreate_Probability(SVM);
 
 /*
    Contains the list of registered Create routines of all SVM types

@@ -64,5 +64,5 @@ struct _p_SVM {
   void *data;
 };
 
-FLLOP_EXTERN PetscLogEvent SVM_LoadDataset;
-FLLOP_EXTERN PetscLogEvent SVM_LoadGramian;
+PERMON_EXTERN PetscLogEvent SVM_LoadDataset;
+PERMON_EXTERN PetscLogEvent SVM_LoadGramian;
