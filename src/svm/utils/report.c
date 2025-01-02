@@ -166,9 +166,9 @@ PetscErrorCode SVMViewBinaryClassificationReport(SVM svm, PetscInt *cmat, PetscR
   /* Print confusion matrix */
   PetscCall(PetscViewerASCIIPrintf(v, "Confusion matrix:\n"));
   PetscCall(PetscViewerASCIIPushTab(v));
-  PetscCall(PetscViewerASCIIPrintf(v, "TP = %4" PetscInt_FMT "", cmat[0]));
+  PetscCall(PetscViewerASCIIPrintf(v, "TP = %4" PetscInt_FMT, cmat[0]));
   PetscCall(PetscViewerASCIIPrintf(v, "FP = %4" PetscInt_FMT "\n", cmat[1]));
-  PetscCall(PetscViewerASCIIPrintf(v, "FN = %4" PetscInt_FMT "", cmat[2]));
+  PetscCall(PetscViewerASCIIPrintf(v, "FN = %4" PetscInt_FMT, cmat[2]));
   PetscCall(PetscViewerASCIIPrintf(v, "TN = %4" PetscInt_FMT "\n", cmat[3]));
   PetscCall(PetscViewerASCIIPopTab(v));
 
