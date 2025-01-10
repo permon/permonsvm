@@ -1,4 +1,3 @@
-
 static char help[] = "Trains binary L2-loss SVM classification model that training process was stopped using terminating condition\
 based on duality gap.\n\
 Input parameters:\n\
@@ -9,33 +8,33 @@ Input parameters:\n\
 
 #include <permonsvm.h>
 
-int main(int argc,char **argv)
+int main(int argc, char **argv)
 {
-  SVM         svm;
+  SVM svm;
 
-  char        training_file[PETSC_MAX_PATH_LEN] = "data/heart_scale.bin";
-  char        test_file[PETSC_MAX_PATH_LEN]     = "data/heart_scale.t.bin";
+  char training_file[PETSC_MAX_PATH_LEN] = "data/heart_scale.bin";
+  char test_file[PETSC_MAX_PATH_LEN]     = "data/heart_scale.t.bin";
 
   PetscViewer viewer;
 
-  PetscCall(PermonInitialize(&argc,&argv,(char *)0,help));
+  PetscCall(PermonInitialize(&argc, &argv, (char *)0, help));
 
-  PetscCall(PetscOptionsGetString(NULL,NULL,"-f_training",training_file,sizeof(training_file),NULL));
-  PetscCall(PetscOptionsGetString(NULL,NULL,"-f_test",test_file,sizeof(test_file),NULL));
+  PetscCall(PetscOptionsGetString(NULL, NULL, "-f_training", training_file, sizeof(training_file), NULL));
+  PetscCall(PetscOptionsGetString(NULL, NULL, "-f_test", test_file, sizeof(test_file), NULL));
 
   /* Create SVM object */
-  PetscCall(SVMCreate(PETSC_COMM_WORLD,&svm));
-  PetscCall(SVMSetType(svm,SVM_BINARY));
+  PetscCall(SVMCreate(PETSC_COMM_WORLD, &svm));
+  PetscCall(SVMSetType(svm, SVM_BINARY));
   PetscCall(SVMSetFromOptions(svm));
 
   /* Load training dataset */
-  PetscCall(PetscViewerBinaryOpen(PETSC_COMM_WORLD,training_file,FILE_MODE_READ,&viewer));
-  PetscCall(SVMLoadTrainingDataset(svm,viewer));
+  PetscCall(PetscViewerBinaryOpen(PETSC_COMM_WORLD, training_file, FILE_MODE_READ, &viewer));
+  PetscCall(SVMLoadTrainingDataset(svm, viewer));
   PetscCall(PetscViewerDestroy(&viewer));
 
   /* Load test dataset */
-  PetscCall(PetscViewerBinaryOpen(PETSC_COMM_WORLD,test_file,FILE_MODE_READ,&viewer));
-  PetscCall(SVMLoadTestDataset(svm,viewer));
+  PetscCall(PetscViewerBinaryOpen(PETSC_COMM_WORLD, test_file, FILE_MODE_READ, &viewer));
+  PetscCall(SVMLoadTestDataset(svm, viewer));
   PetscCall(PetscViewerDestroy(&viewer));
 
   /* Train classification model */

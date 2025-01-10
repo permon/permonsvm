@@ -1,57 +1,55 @@
-
 #include "report.h"
 
-PetscErrorCode BinaryConfusionMatrix(SVM svm,Vec y_pred,Vec y_known,PetscInt confusion_mat[])
+PetscErrorCode BinaryConfusionMatrix(SVM svm, Vec y_pred, Vec y_known, PetscInt confusion_mat[])
 {
-  PetscInt TP,FP,TN,FN; // confusion matrix values
+  PetscInt TP, FP, TN, FN; // confusion matrix values
   PetscInt N;
 
-  Vec      y_known_sub;
-  Vec      y_pred_sub;
+  Vec y_known_sub;
+  Vec y_pred_sub;
 
-  Vec      vec_label;
-  IS       is_label;
+  Vec vec_label;
+  IS  is_label;
 
-  IS       is_eq;
+  IS is_eq;
 
   const PetscReal *labels = NULL;
 
   PetscFunctionBegin;
-
-  PetscCall(SVMGetLabels(svm,&labels));
-  PetscCall(VecDuplicate(y_pred,&vec_label));
+  PetscCall(SVMGetLabels(svm, &labels));
+  PetscCall(VecDuplicate(y_pred, &vec_label));
 
   /* TN and FN samples */
-  PetscCall(VecSet(vec_label,labels[0]));
+  PetscCall(VecSet(vec_label, labels[0]));
 
-  PetscCall(VecWhichEqual(y_known,vec_label,&is_label));
-  PetscCall(VecGetSubVector(y_known,is_label,&y_known_sub));
-  PetscCall(VecGetSubVector(y_pred,is_label,&y_pred_sub));
-  PetscCall(VecWhichEqual(y_known_sub,y_pred_sub,&is_eq));
+  PetscCall(VecWhichEqual(y_known, vec_label, &is_label));
+  PetscCall(VecGetSubVector(y_known, is_label, &y_known_sub));
+  PetscCall(VecGetSubVector(y_pred, is_label, &y_pred_sub));
+  PetscCall(VecWhichEqual(y_known_sub, y_pred_sub, &is_eq));
 
-  PetscCall(ISGetSize(is_eq,&TN));
-  PetscCall(VecGetSize(y_known_sub,&N));
+  PetscCall(ISGetSize(is_eq, &TN));
+  PetscCall(VecGetSize(y_known_sub, &N));
   FN = N - TN;
 
-  PetscCall(VecRestoreSubVector(y_known,is_label,&y_known_sub));
-  PetscCall(VecRestoreSubVector(y_pred,is_label,&y_pred_sub));
+  PetscCall(VecRestoreSubVector(y_known, is_label, &y_known_sub));
+  PetscCall(VecRestoreSubVector(y_pred, is_label, &y_pred_sub));
   PetscCall(ISDestroy(&is_label));
   PetscCall(ISDestroy(&is_eq));
 
   /* TP and FP samples */
-  PetscCall(VecSet(vec_label,labels[1]));
+  PetscCall(VecSet(vec_label, labels[1]));
 
-  PetscCall(VecWhichEqual(y_known,vec_label,&is_label));
-  PetscCall(VecGetSubVector(y_known,is_label,&y_known_sub));
-  PetscCall(VecGetSubVector(y_pred,is_label,&y_pred_sub));
-  PetscCall(VecWhichEqual(y_known_sub,y_pred_sub,&is_eq));
+  PetscCall(VecWhichEqual(y_known, vec_label, &is_label));
+  PetscCall(VecGetSubVector(y_known, is_label, &y_known_sub));
+  PetscCall(VecGetSubVector(y_pred, is_label, &y_pred_sub));
+  PetscCall(VecWhichEqual(y_known_sub, y_pred_sub, &is_eq));
 
-  PetscCall(ISGetSize(is_eq,&TP));
-  PetscCall(VecGetSize(y_known_sub,&N));
+  PetscCall(ISGetSize(is_eq, &TP));
+  PetscCall(VecGetSize(y_known_sub, &N));
   FP = N - TP;
 
-  PetscCall(VecRestoreSubVector(y_known,is_label,&y_known_sub));
-  PetscCall(VecRestoreSubVector(y_pred,is_label,&y_pred_sub));
+  PetscCall(VecRestoreSubVector(y_known, is_label, &y_known_sub));
+  PetscCall(VecRestoreSubVector(y_pred, is_label, &y_pred_sub));
   PetscCall(ISDestroy(&is_label));
   PetscCall(ISDestroy(&is_eq));
 
@@ -65,10 +63,10 @@ PetscErrorCode BinaryConfusionMatrix(SVM svm,Vec y_pred,Vec y_known,PetscInt con
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode SVMGetBinaryClassificationReport(SVM svm,Vec y_pred,Vec y_known,PetscInt *cmat, PetscReal *scores)
+PetscErrorCode SVMGetBinaryClassificationReport(SVM svm, Vec y_pred, Vec y_known, PetscInt *cmat, PetscReal *scores)
 {
-  PetscInt  confusion_mat[4];
-  PetscInt  TP,FP,TN,FN;
+  PetscInt confusion_mat[4];
+  PetscInt TP, FP, TN, FN;
 
   PetscReal accuracy[2];
   PetscReal auc_roc;
@@ -78,60 +76,60 @@ PetscErrorCode SVMGetBinaryClassificationReport(SVM svm,Vec y_pred,Vec y_known,P
   PetscReal jaccard_index[3];
 
   PetscReal specifity;
-  PetscReal TPR,FPR;
-  PetscReal x[3],y[3],dx;
+  PetscReal TPR, FPR;
+  PetscReal x[3], y[3], dx;
 
-  PetscInt  i;
+  PetscInt i;
 
   PetscFunctionBegin;
-  PetscCall(BinaryConfusionMatrix(svm,y_pred,y_known,confusion_mat));
+  PetscCall(BinaryConfusionMatrix(svm, y_pred, y_known, confusion_mat));
 
   TP = confusion_mat[0];
   FP = confusion_mat[1];
   FN = confusion_mat[2];
   TN = confusion_mat[3];
 
-  if (cmat != NULL) {
-    PetscCall(PetscMemcpy(cmat,confusion_mat,4 * sizeof(PetscInt)));
-  }
+  if (cmat != NULL) { PetscCall(PetscMemcpy(cmat, confusion_mat, 4 * sizeof(PetscInt))); }
 
-  if (scores == NULL) {
-    PetscFunctionReturn(PETSC_SUCCESS);
-  }
+  if (scores == NULL) { PetscFunctionReturn(PETSC_SUCCESS); }
 
-  precision[0] = (PetscReal) TN / (PetscReal) (TN + FP); /* precision (negative class) */
-  precision[1] = (PetscReal) TP / (PetscReal) (TP + FN); /* precision (positive class) */
-  precision[2] = (precision[0] + precision[1]) / 2.;     /* precision (average)        */
+  precision[0] = (PetscReal)TN / (PetscReal)(TN + FP); /* precision (negative class) */
+  precision[1] = (PetscReal)TP / (PetscReal)(TP + FN); /* precision (positive class) */
+  precision[2] = (precision[0] + precision[1]) / 2.;   /* precision (average)        */
 
-  sensitivity[0] = (PetscReal) TN / (PetscReal) (TN + FN); /* sensitivity (negative class) */
-  sensitivity[1] = (PetscReal) TP / (PetscReal) (TP + FP); /* sensitivity (positive class) */
+  sensitivity[0] = (PetscReal)TN / (PetscReal)(TN + FN);   /* sensitivity (negative class) */
+  sensitivity[1] = (PetscReal)TP / (PetscReal)(TP + FP);   /* sensitivity (positive class) */
   sensitivity[2] = (sensitivity[0] + sensitivity[1]) / 2.; /* sensitivity (average)        */
 
   F1[0] = 2. * (precision[0] * sensitivity[0]) / (precision[0] + sensitivity[0]); /* F1 (negative class) */
   F1[1] = 2. * (precision[1] * sensitivity[1]) / (precision[1] + sensitivity[1]); /* F1 (positive class) */
   F1[2] = (F1[0] + F1[1]) / 2.;                                                   /* F1 (average) */
 
-  jaccard_index[0] = (PetscReal) TN / (PetscReal) (TN + FN + FP); /* Jaccard index (negative class) */
-  jaccard_index[1] = (PetscReal) TP / (PetscReal) (TP + FP + FN); /* Jaccard index (positive class) */
-  jaccard_index[2] = (jaccard_index[0] + jaccard_index[1]) / 2.;  /* Jaccard index (average) */
+  jaccard_index[0] = (PetscReal)TN / (PetscReal)(TN + FN + FP);  /* Jaccard index (negative class) */
+  jaccard_index[1] = (PetscReal)TP / (PetscReal)(TP + FP + FN);  /* Jaccard index (positive class) */
+  jaccard_index[2] = (jaccard_index[0] + jaccard_index[1]) / 2.; /* Jaccard index (average) */
 
   /* Area under curve (trapezoidal rule) */
-  specifity = (PetscReal) TN / (PetscReal) (TN + FP);
+  specifity = (PetscReal)TN / (PetscReal)(TN + FP);
 
   FPR = 1. - specifity;
   TPR = sensitivity[0];
 
-  x[0] = 0.; x[1] = FPR; x[2] = 1.;
-  y[0] = 0.; y[1] = TPR; y[2] = 1.;
+  x[0] = 0.;
+  x[1] = FPR;
+  x[2] = 1.;
+  y[0] = 0.;
+  y[1] = TPR;
+  y[2] = 1.;
 
   auc_roc = 0.;
   for (i = 0; i < 2; ++i) {
-    dx = x[i+1] - x[i];
-    auc_roc += ((y[i] + y[i+1]) / 2.) * dx;
+    dx = x[i + 1] - x[i];
+    auc_roc += ((y[i] + y[i + 1]) / 2.) * dx;
   }
 
   /* Accuracy */
-  accuracy[0] = (PetscReal) (TP + TN) / (PetscReal) (TP + TN + FP + FN);
+  accuracy[0] = (PetscReal)(TP + TN) / (PetscReal)(TP + TN + FP + FN);
 
   /* Set scores */
   scores[0] = accuracy[0];
@@ -155,36 +153,35 @@ PetscErrorCode SVMGetBinaryClassificationReport(SVM svm,Vec y_pred,Vec y_known,P
   scores[13] = -1.;
   scores[14] = -1.;
   scores[15] = auc_roc;
-
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode SVMViewBinaryClassificationReport(SVM svm,PetscInt *cmat,PetscReal *scores,PetscViewer v)
+PetscErrorCode SVMViewBinaryClassificationReport(SVM svm, PetscInt *cmat, PetscReal *scores, PetscViewer v)
 {
   const PetscReal *labels;
 
   PetscFunctionBegin;
-  PetscCall(SVMGetLabels(svm,&labels));
+  PetscCall(SVMGetLabels(svm, &labels));
 
   /* Print confusion matrix */
-  PetscCall(PetscViewerASCIIPrintf(v,"Confusion matrix:\n"));
+  PetscCall(PetscViewerASCIIPrintf(v, "Confusion matrix:\n"));
   PetscCall(PetscViewerASCIIPushTab(v));
-  PetscCall(PetscViewerASCIIPrintf(v,"TP = %4" PetscInt_FMT ""  ,cmat[0]));
-  PetscCall(PetscViewerASCIIPrintf(v,"FP = %4" PetscInt_FMT "\n",cmat[1]));
-  PetscCall(PetscViewerASCIIPrintf(v,"FN = %4" PetscInt_FMT ""  ,cmat[2]));
-  PetscCall(PetscViewerASCIIPrintf(v,"TN = %4" PetscInt_FMT "\n",cmat[3]));
+  PetscCall(PetscViewerASCIIPrintf(v, "TP = %4" PetscInt_FMT, cmat[0]));
+  PetscCall(PetscViewerASCIIPrintf(v, "FP = %4" PetscInt_FMT "\n", cmat[1]));
+  PetscCall(PetscViewerASCIIPrintf(v, "FN = %4" PetscInt_FMT, cmat[2]));
+  PetscCall(PetscViewerASCIIPrintf(v, "TN = %4" PetscInt_FMT "\n", cmat[3]));
   PetscCall(PetscViewerASCIIPopTab(v));
 
   /* Print classification report */
-  PetscCall(PetscViewerASCIIPrintf(v,"Classification report:\n"));
+  PetscCall(PetscViewerASCIIPrintf(v, "Classification report:\n"));
   /* Header */
   PetscCall(PetscViewerASCIIPushTab(v));
-  PetscCall(PetscViewerASCIIPrintf(v,"label\tprecision\trecall\tF1\tJaccard index\n"));
-  PetscCall(PetscViewerASCIIPrintf(v,"%.1f  \t%.4f\t\t%.4f\t%.4f\t%.4f\n",labels[0],scores[1],scores[4],scores[7],scores[10]));
-  PetscCall(PetscViewerASCIIPrintf(v,"%.1f  \t%.4f\t\t%.4f\t%.4f\t%.4f\n",labels[1],scores[2],scores[5],scores[8],scores[11]));
-  PetscCall(PetscViewerASCIIPrintf(v,"mean  \t%.4f\t\t%.4f\t%.4f\t%.4f\n"          ,scores[3],scores[6],scores[9],scores[12]));
-  PetscCall(PetscViewerASCIIPrintf(v,"accuracy = %.4f\n",(double) scores[0]));
-  PetscCall(PetscViewerASCIIPrintf(v,"auc_roc  = %.4f\n",(double) scores[15]));
+  PetscCall(PetscViewerASCIIPrintf(v, "label\tprecision\trecall\tF1\tJaccard index\n"));
+  PetscCall(PetscViewerASCIIPrintf(v, "%.1f  \t%.4f\t\t%.4f\t%.4f\t%.4f\n", labels[0], scores[1], scores[4], scores[7], scores[10]));
+  PetscCall(PetscViewerASCIIPrintf(v, "%.1f  \t%.4f\t\t%.4f\t%.4f\t%.4f\n", labels[1], scores[2], scores[5], scores[8], scores[11]));
+  PetscCall(PetscViewerASCIIPrintf(v, "mean  \t%.4f\t\t%.4f\t%.4f\t%.4f\n", scores[3], scores[6], scores[9], scores[12]));
+  PetscCall(PetscViewerASCIIPrintf(v, "accuracy = %.4f\n", (double)scores[0]));
+  PetscCall(PetscViewerASCIIPrintf(v, "auc_roc  = %.4f\n", (double)scores[15]));
   PetscCall(PetscViewerASCIIPopTab(v));
   PetscFunctionReturn(PETSC_SUCCESS);
 }

@@ -1,7 +1,7 @@
 PermonSVM - the PERMON SVM classifier
 ====================================
 
-PERMON project homepage: <http://permon.vsb.cz>  
+PERMON project homepage: <http://permon.vsb.cz>
 PermonSVM homepage: <http://permon.vsb.cz/permonsvm.htm>
 
 Please use [GitHub](https://github.com/permon/permonsvm) for issues and pull requests.
@@ -9,30 +9,30 @@ Please use [GitHub](https://github.com/permon/permonsvm) for issues and pull req
 Feature overview
 -----------------
 
-- Scalable (parallel) solution for the linear C-SVM 
+- Scalable (parallel) solution for the linear C-SVM
 - Supported binary classifications:	
 	- standard classification (linear and bound constraints)
 	- relaxed-bias classification (bound constraints)
 - Misclassification error quantification:
 	- _l1_ hinge-loss function
 	- _l2_ hinge-loss function
-- Standard classification solvers: 
-	-  SMALXE + MPRGP (active-set method for bound constrained problems) 
+- Standard classification solvers:
+	-  SMALXE + MPRGP (active-set method for bound constrained problems)
 	-  SMALXE + [The Toolkit for Advance Optimization](https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/Tao/index.html) (TAO) solvers for minimization with bound constraints
 - Relaxed-bias classification solvers:
 	- MPRGP
-	- TAO solvers for minimization with bound constraints 
-- Warm start  
+	- TAO solvers for minimization with bound constraints
+- Warm start
 - Grid search
 - Cross validation types:
-	- k-fold 
+	- k-fold
 	- stratified k-fold
 - Model perfomance scores:
 	- accuracy
 	- sensitivity
 	- specifity
 	- F1
-	- Matthews correlation coefficient 
+	- Matthews correlation coefficient
 	- Area Under Curve (AUC) Receiver Operating Characteristics (ROC)
 	- Gini coefficient
 - Parallel data loaders:
@@ -62,25 +62,25 @@ Tutorials
 ### Using different classification methods
 
 1. running PermonSVM on 2 MPI processes with default settings (relaxed-bias classification, _l1_ hinge loss, C = 1, B = 1)
-   
- 	```bash 
+
+ 	```bash
  	./runsvmmpi 2 -f_training $DATA_DIR/heart_scale.bin -f_test $DATA_DIR/heart_scale.t.bin
  	```
-  
-2. running PermonSVM on 2 MPI processes with penalty parameter C = 100 
+
+2. running PermonSVM on 2 MPI processes with penalty parameter C = 100
 	
 	```bash
 	./runsvmmpi 2 -f_training $DATA_DIR/heart_scale.bin -f_test $DATA_DIR/heart_scale.t.bin \
 	  -svm_C 100
 	```
-   
+
 3. running PermonSVM on 2 MPI processes with C = 0.01 and _l2_ hinge loss
 
 	```bash
 	./runsvmmpi 2 -f_training $DATA_DIR/heart_scale.bin -f_test $DATA_DIR/heart_scale.t.bin \
 	  -svm_loss_type L2 -svm_C 1e-2
 	```
-  
+
 4. running PermonSVM on 2 MPI processes solving standard classification problem (binary mod 1), missclassification error quantification by _l2_ hinge loss, and C = 0.01
 	
 	```bash
@@ -96,14 +96,14 @@ Tutorials
 	./runsvmmpi 2 -f_training $DATA_DIR/heart_scale.bin -f_test $DATA_DIR/heart_scale.t.bin \
 	  -svm_hyperopt 1
 	```
-   
+
 2. running PermonSVM on 2 MPI processes with grid-search on C = {0.1, 1, 10, 100} combined with cross validation on 3 folds that reuses a previous solution (warm start)
 
 	```bash
 	./runsvmmpi 2 -f_training $DATA_DIR/heart_scale.bin -f_test $DATA_DIR/heart_scale.t.bin \
 	  -svm_hyperopt 1 -svm_gs_logC_base 10 -svm_gs_logC_stride 1,2,1 -svm_nfolds 3 -cross_svm_warm_start 1
 	```
-  
+
 3. running PermonSVM on 2 MPI processes with grid search on C = {0.1, 1, 10, 100} and stratified k-fold cross validation on 3 folds with warm start
 
 	```bash
@@ -111,7 +111,7 @@ Tutorials
 	  -svm_hyperopt 1 -svm_gs_logC_base 10 -svm_gs_logC_stride 1,2,1 -svm_nfolds 3 -cross_svm_warm_start 1 \
 	  -svm_cv_type stratified_kfold
 	```
-   
+
 ### Using precomputed Gramian matrix
 
 PermonSVM uses an implicit representation of the Gramian matrix by default.

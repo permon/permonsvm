@@ -1,12 +1,11 @@
-
 #include <permon/private/svmimpl.h>
 #include "../utils/io.h"
 
 PetscClassId  SVM_CLASSID;
-PetscLogEvent SVM_LoadDataset,SVM_LoadGramian;
+PetscLogEvent SVM_LoadDataset, SVM_LoadGramian;
 
-const char *const ModelScores[]={"accuracy","precision","recall","F1","jaccard","aucroc","ModelScore","model_",0};
-const char *const CrossValidationTypes[]={"kfold","stratified_kfold","CrossValidationType","cv_",0};
+const char *const ModelScores[]          = {"accuracy", "precision", "recall", "F1", "jaccard", "aucroc", "ModelScore", "model_", 0};
+const char *const CrossValidationTypes[] = {"kfold", "stratified_kfold", "CrossValidationType", "cv_", 0};
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMCreate"
@@ -25,17 +24,17 @@ const char *const CrossValidationTypes[]={"kfold","stratified_kfold","CrossValid
 
 .seealso SVMDestroy(), SVMReset(), SVMSetup(), SVMSetFromOptions()
 @*/
-PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
+PetscErrorCode SVMCreate(MPI_Comm comm, SVM *svm_out)
 {
   SVM svm;
 
   PetscFunctionBegin;
-  PetscAssertPointer(svm_out,2);
+  PetscAssertPointer(svm_out, 2);
 
 #if !defined(PETSC_USE_DYNAMIC_LIBRARIES)
   PetscCall(SVMInitializePackage());
 #endif
-  PetscCall(PetscHeaderCreate(svm,SVM_CLASSID,"SVM","SVM Classifier","SVM",comm,SVMDestroy,SVMView));
+  PetscCall(PetscHeaderCreate(svm, SVM_CLASSID, "SVM", "SVM Classifier", "SVM", comm, SVMDestroy, SVMView));
 
   svm->C      = 1.;
   svm->C_old  = 1.;
@@ -44,24 +43,24 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
   svm->Cn     = 1.;
   svm->Cn_old = 1.;
 
-  svm->logC_base   =  2.;
+  svm->logC_base   = 2.;
   svm->logC_start  = -2.;
-  svm->logC_step   =  1.;
-  svm->logC_end    =  2.;
-  svm->logCp_base  =  2.;
+  svm->logC_step   = 1.;
+  svm->logC_end    = 2.;
+  svm->logCp_base  = 2.;
   svm->logCp_start = -2.;
-  svm->logCp_end   =  2.;
-  svm->logCp_step  =  1.;
-  svm->logCn_base  =  2.;
+  svm->logCp_end   = 2.;
+  svm->logCp_step  = 1.;
+  svm->logCn_base  = 2.;
   svm->logCn_start = -2.;
-  svm->logCn_end   =  2.;
-  svm->logCn_step  =  1.;
+  svm->logCn_end   = 2.;
+  svm->logCn_step  = 1.;
 
-  svm->loss_type  = SVM_L1;
-  svm->user_bias  = 1.;
-  svm->svm_mod    = 2;
+  svm->loss_type = SVM_L1;
+  svm->user_bias = 1.;
+  svm->svm_mod   = 2;
 
-  PetscCall(PetscMemzero(svm->hopt_score_types,6* sizeof(ModelScore)));
+  PetscCall(PetscMemzero(svm->hopt_score_types, 6 * sizeof(ModelScore)));
 
   svm->penalty_type        = 1;
   svm->hyperoptset         = PETSC_FALSE;
@@ -99,19 +98,18 @@ PetscErrorCode SVMCreate(MPI_Comm comm,SVM *svm_out)
 @*/
 PetscErrorCode SVMReset(SVM svm)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
 
   PetscCall(MatDestroy(&svm->Xt_test));
   svm->Xt_test = NULL;
   PetscCall(VecDestroy(&svm->y_test));
-  svm->y_test  = NULL;
+  svm->y_test = NULL;
 
   PetscCall((*svm->ops->reset)(svm));
 
-  svm->setupcalled          = PETSC_FALSE;
-  svm->posttraincalled      = PETSC_FALSE;
+  svm->setupcalled     = PETSC_FALSE;
+  svm->posttraincalled = PETSC_FALSE;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -131,9 +129,8 @@ PetscErrorCode SVMReset(SVM svm)
 @*/
 PetscErrorCode SVMDestroyDefault(SVM svm)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscCall(PetscFree(svm->data));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -154,17 +151,17 @@ PetscErrorCode SVMDestroyDefault(SVM svm)
 @*/
 PetscErrorCode SVMDestroy(SVM *svm)
 {
-  QPS  qps;
+  QPS   qps;
   void *cctx;
 
   PetscFunctionBegin;
   if (!*svm) PetscFunctionReturn(PETSC_SUCCESS);
 
-  PetscValidHeaderSpecific(*svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(*svm, SVM_CLASSID, 1);
   --((PetscObject)(*svm))->refct;
   if (((PetscObject)(*svm))->refct == 1) {
-    PetscCall(SVMGetQPS(*svm,&qps));
-    PetscCall(QPSGetConvergenceContext(qps,&cctx));
+    PetscCall(SVMGetQPS(*svm, &qps));
+    PetscCall(QPSGetConvergenceContext(qps, &cctx));
     if (*svm != cctx) {
       *svm = 0;
       PetscFunctionReturn(PETSC_SUCCESS);
@@ -177,9 +174,7 @@ PetscErrorCode SVMDestroy(SVM *svm)
   ((PetscObject)(*svm))->refct = 0;
 
   PetscCall(SVMReset(*svm));
-  if ((*svm)->ops->destroy) {
-    PetscCall((*(*svm)->ops->destroy)(*svm));
-  }
+  if ((*svm)->ops->destroy) { PetscCall((*(*svm)->ops->destroy)(*svm)); }
 
   PetscCall(PetscHeaderDestroy(svm));
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -201,137 +196,99 @@ PetscErrorCode SVMDestroy(SVM *svm)
 @*/
 PetscErrorCode SVMSetFromOptions(SVM svm)
 {
-  PetscInt            svm_mod;
-  SVMLossType         loss_type;
-  PetscInt            penalty_type;
-  PetscReal           bias;
-  PetscReal           C;
+  PetscInt    svm_mod;
+  SVMLossType loss_type;
+  PetscInt    penalty_type;
+  PetscReal   bias;
+  PetscReal   C;
 
-  PetscBool           hyperoptset;
-  ModelScore          hyperopt_score_types[7];
-  PetscReal           logC_base,logC_stride[3];
+  PetscBool  hyperoptset;
+  ModelScore hyperopt_score_types[7];
+  PetscReal  logC_base, logC_stride[3];
 
   CrossValidationType cv_type;
   PetscInt            nfolds;
 
-  PetscBool           warm_start;
+  PetscBool warm_start;
 
-  PetscInt            n;
-  PetscBool           flg;
+  PetscInt  n;
+  PetscBool flg;
 
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
 
   PetscObjectOptionsBegin((PetscObject)svm);
   // TODO move to SetFromOptions_Binary
-  PetscCall(PetscOptionsInt("-svm_binary_mod","","SVMSetMod",svm->svm_mod,&svm_mod,&flg));
-  if (flg) {
-    PetscCall(SVMSetMod(svm,svm_mod));
-  }
+  PetscCall(PetscOptionsInt("-svm_binary_mod", "", "SVMSetMod", svm->svm_mod, &svm_mod, &flg));
+  if (flg) { PetscCall(SVMSetMod(svm, svm_mod)); }
 
-  PetscCall(PetscOptionsEnum("-svm_loss_type","Specify the loss function for soft-margin SVM (non-separable samples).","SVMSetLossType",SVMLossTypes,(PetscEnum)svm->loss_type,(PetscEnum*)&loss_type,&flg));
-  if (flg) {
-    PetscCall(SVMSetLossType(svm,loss_type));
-  }
+  PetscCall(PetscOptionsEnum("-svm_loss_type", "Specify the loss function for soft-margin SVM (non-separable samples).", "SVMSetLossType", SVMLossTypes, (PetscEnum)svm->loss_type, (PetscEnum *)&loss_type, &flg));
+  if (flg) { PetscCall(SVMSetLossType(svm, loss_type)); }
 
-  PetscCall(PetscOptionsInt("-svm_penalty_type","Set type of misclasification error penalty.","SVMSetPenaltyType",svm->penalty_type,&penalty_type,&flg));
-  if (flg) {
-    PetscCall(SVMSetPenaltyType(svm,penalty_type));
-  }
+  PetscCall(PetscOptionsInt("-svm_penalty_type", "Set type of misclasification error penalty.", "SVMSetPenaltyType", svm->penalty_type, &penalty_type, &flg));
+  if (flg) { PetscCall(SVMSetPenaltyType(svm, penalty_type)); }
 
-  PetscCall(PetscOptionsReal("-svm_user_bias","Set a user defined bias for a relaxed bias formulation.","SVMSetUserBias",svm->user_bias,&bias,&flg));
-  if (flg) {
-    PetscCall(SVMSetUserBias(svm,bias));
-  }
+  PetscCall(PetscOptionsReal("-svm_user_bias", "Set a user defined bias for a relaxed bias formulation.", "SVMSetUserBias", svm->user_bias, &bias, &flg));
+  if (flg) { PetscCall(SVMSetUserBias(svm, bias)); }
 
-  PetscCall(PetscOptionsReal("-svm_C","Set SVM C (C).","SVMSetC",svm->C,&C,&flg));
-  if (flg) {
-    PetscCall(SVMSetC(svm,C));
-  }
+  PetscCall(PetscOptionsReal("-svm_C", "Set SVM C (C).", "SVMSetC", svm->C, &C, &flg));
+  if (flg) { PetscCall(SVMSetC(svm, C)); }
 
-  PetscCall(PetscOptionsReal("-svm_Cp","Set SVM Cp (Cp).","SVMSetCp",svm->Cp,&C,&flg));
-  if (flg) {
-    PetscCall(SVMSetCp(svm,C));
-  }
+  PetscCall(PetscOptionsReal("-svm_Cp", "Set SVM Cp (Cp).", "SVMSetCp", svm->Cp, &C, &flg));
+  if (flg) { PetscCall(SVMSetCp(svm, C)); }
 
-  PetscCall(PetscOptionsReal("-svm_Cn","Set SVM Cn (Cn).","SVMSetCn",svm->Cn,&C,&flg));
-  if (flg) {
-    PetscCall(SVMSetCn(svm,C));
-  }
+  PetscCall(PetscOptionsReal("-svm_Cn", "Set SVM Cn (Cn).", "SVMSetCn", svm->Cn, &C, &flg));
+  if (flg) { PetscCall(SVMSetCn(svm, C)); }
 
   /* Hyperparameter optimization options */
-  PetscCall(PetscOptionsBool("-svm_hyperopt","Specify whether hyperparameter optimization will be performed.","SVMSetHyperOpt",svm->hyperoptset,&hyperoptset,&flg));
-  if (flg) {
-    PetscCall(SVMSetHyperOpt(svm,hyperoptset));
-  }
+  PetscCall(PetscOptionsBool("-svm_hyperopt", "Specify whether hyperparameter optimization will be performed.", "SVMSetHyperOpt", svm->hyperoptset, &hyperoptset, &flg));
+  if (flg) { PetscCall(SVMSetHyperOpt(svm, hyperoptset)); }
 
   n = 7;
-  PetscCall(PetscOptionsEnumArray("-svm_hyperopt_score_types","Specify the score types for evaluating performance of model during hyperparameter optimization.","SVMSetHyperOptScoreTypes",ModelScores,(PetscEnum *) hyperopt_score_types,&n,&flg));
-  if (flg) {
-    PetscCall(SVMSetHyperOptScoreTypes(svm,n,hyperopt_score_types));
-  }
+  PetscCall(PetscOptionsEnumArray("-svm_hyperopt_score_types", "Specify the score types for evaluating performance of model during hyperparameter optimization.", "SVMSetHyperOptScoreTypes", ModelScores, (PetscEnum *)hyperopt_score_types, &n, &flg));
+  if (flg) { PetscCall(SVMSetHyperOptScoreTypes(svm, n, hyperopt_score_types)); }
 
   /* Grid search options (penalty type 1) */
-  PetscCall(PetscOptionsReal("-svm_gs_logC_base","Base of log of C values that specify grid (penalty type 1).","SVMGridSearchSetBaseLogC",svm->logC_base,&logC_base,&flg));
-  if (flg) {
-    PetscCall(SVMGridSearchSetBaseLogC(svm,logC_base));
-  }
+  PetscCall(PetscOptionsReal("-svm_gs_logC_base", "Base of log of C values that specify grid (penalty type 1).", "SVMGridSearchSetBaseLogC", svm->logC_base, &logC_base, &flg));
+  if (flg) { PetscCall(SVMGridSearchSetBaseLogC(svm, logC_base)); }
 
-  n = 3;
-  logC_stride[1] =  2.;
-  logC_stride[2] =  1.;
-  PetscCall(PetscOptionsRealArray("-svm_gs_logC_stride","Stride log C values that specify grid (penalty type 1)","SVMGridSearchSetStrideLogC",logC_stride,&n,&flg));
-  if (flg) {
-    PetscCall(SVMGridSearchSetStrideLogC(svm,logC_stride[0],logC_stride[1],logC_stride[2]));
-  }
+  n              = 3;
+  logC_stride[1] = 2.;
+  logC_stride[2] = 1.;
+  PetscCall(PetscOptionsRealArray("-svm_gs_logC_stride", "Stride log C values that specify grid (penalty type 1)", "SVMGridSearchSetStrideLogC", logC_stride, &n, &flg));
+  if (flg) { PetscCall(SVMGridSearchSetStrideLogC(svm, logC_stride[0], logC_stride[1], logC_stride[2])); }
 
   /* Grid search options (penalty type 2) */
-  PetscCall(PetscOptionsReal("-svm_gs_logCp_base","Base of log of C+ values that specify grid (penalty type 2).","SVMGridSearchSetPositiveBaseLogC",svm->logCp_base,&logC_base,&flg));
-  if (flg) {
-    PetscCall(SVMGridSearchSetPositiveBaseLogC(svm,logC_base));
-  }
+  PetscCall(PetscOptionsReal("-svm_gs_logCp_base", "Base of log of C+ values that specify grid (penalty type 2).", "SVMGridSearchSetPositiveBaseLogC", svm->logCp_base, &logC_base, &flg));
+  if (flg) { PetscCall(SVMGridSearchSetPositiveBaseLogC(svm, logC_base)); }
 
-  n = 3;
+  n              = 3;
   logC_stride[1] = 2.;
   logC_stride[2] = 1.;
-  PetscCall(PetscOptionsRealArray("-svm_gs_logCp_stride","Stride log C+ values that specify grid (penalty type 2).","SVMGridSearchSetPositiveStrideLogC",logC_stride,&n,&flg));
-  if (flg) {
-    PetscCall(SVMGridSearchSetPositiveStrideLogC(svm,logC_stride[0],logC_stride[1],logC_stride[2]));
-  }
+  PetscCall(PetscOptionsRealArray("-svm_gs_logCp_stride", "Stride log C+ values that specify grid (penalty type 2).", "SVMGridSearchSetPositiveStrideLogC", logC_stride, &n, &flg));
+  if (flg) { PetscCall(SVMGridSearchSetPositiveStrideLogC(svm, logC_stride[0], logC_stride[1], logC_stride[2])); }
 
-  PetscCall(PetscOptionsReal("-svm_gs_logCn_base","Base of log of C- values that specify grid (penalty type 2).","SVMGridSearchSetNegativeBaseLogC",svm->logCn_base,&logC_base,&flg));
-  if (flg) {
-    PetscCall(SVMGridSearchSetNegativeBaseLogC(svm,logC_base));
-  }
+  PetscCall(PetscOptionsReal("-svm_gs_logCn_base", "Base of log of C- values that specify grid (penalty type 2).", "SVMGridSearchSetNegativeBaseLogC", svm->logCn_base, &logC_base, &flg));
+  if (flg) { PetscCall(SVMGridSearchSetNegativeBaseLogC(svm, logC_base)); }
 
-  n = 3;
+  n              = 3;
   logC_stride[1] = 2.;
   logC_stride[2] = 1.;
-  PetscCall(PetscOptionsRealArray("-svm_gs_logCn_stride","Stride log C- values that specify grid (penalty type 2).","SVMGridSearchSetNegativeStrideLogC",logC_stride,&n,&flg));
-  if (flg) {
-    PetscCall(SVMGridSearchSetNegativeStrideLogC(svm,logC_stride[0],logC_stride[1],logC_stride[2]));
-  }
+  PetscCall(PetscOptionsRealArray("-svm_gs_logCn_stride", "Stride log C- values that specify grid (penalty type 2).", "SVMGridSearchSetNegativeStrideLogC", logC_stride, &n, &flg));
+  if (flg) { PetscCall(SVMGridSearchSetNegativeStrideLogC(svm, logC_stride[0], logC_stride[1], logC_stride[2])); }
 
   /* Cross validation options */
-  PetscCall(PetscOptionsEnum("-svm_cv_type","Specify the type of cross validation.","SVMSetCrossValidationType",CrossValidationTypes,(PetscEnum)svm->cv_type,(PetscEnum*)&cv_type,&flg));
-  if (flg) {
-    PetscCall(SVMSetCrossValidationType(svm,cv_type));
-  }
+  PetscCall(PetscOptionsEnum("-svm_cv_type", "Specify the type of cross validation.", "SVMSetCrossValidationType", CrossValidationTypes, (PetscEnum)svm->cv_type, (PetscEnum *)&cv_type, &flg));
+  if (flg) { PetscCall(SVMSetCrossValidationType(svm, cv_type)); }
 
-  PetscCall(PetscOptionsInt("-svm_nfolds","Set number of folds (nfolds).","SVMSetNfolds",svm->nfolds,&nfolds,&flg));
-  if (flg) {
-    PetscCall(SVMSetNfolds(svm,nfolds));
-  }
+  PetscCall(PetscOptionsInt("-svm_nfolds", "Set number of folds (nfolds).", "SVMSetNfolds", svm->nfolds, &nfolds, &flg));
+  if (flg) { PetscCall(SVMSetNfolds(svm, nfolds)); }
 
   /* Warm start */
-  PetscCall(PetscOptionsBool("-svm_warm_start","Specify whether warm start is used in cross-validation.","SVMSetWarmStart",svm->warm_start,&warm_start,&flg));
-  if (flg) {
-    PetscCall(SVMSetWarmStart(svm,warm_start));
-  }
+  PetscCall(PetscOptionsBool("-svm_warm_start", "Specify whether warm start is used in cross-validation.", "SVMSetWarmStart", svm->warm_start, &warm_start, &flg));
+  if (flg) { PetscCall(SVMSetWarmStart(svm, warm_start)); }
 
-  if (svm->ops->setfromoptions) {
-    PetscCall(svm->ops->setfromoptions(PetscOptionsObject,svm));
-  }
+  if (svm->ops->setfromoptions) { PetscCall(svm->ops->setfromoptions(PetscOptionsObject, svm)); }
   PetscOptionsEnd();
 
   svm->setfromoptionscalled = PETSC_TRUE;
@@ -353,28 +310,28 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
 
 .seealso SVMCreate(), SVMType
 @*/
-PetscErrorCode SVMSetType(SVM svm,const SVMType type)
+PetscErrorCode SVMSetType(SVM svm, const SVMType type)
 {
   PetscErrorCode (*create_svm)(SVM);
   PetscBool issame = PETSC_FALSE;
 
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscAssertPointer(type,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscAssertPointer(type, 2);
 
-  PetscCall(PetscObjectTypeCompare((PetscObject) svm,type,&issame));
+  PetscCall(PetscObjectTypeCompare((PetscObject)svm, type, &issame));
   if (issame) PetscFunctionReturn(PETSC_SUCCESS);
 
-  PetscCall(PetscFunctionListFind(SVMList,type,(void(**)(void))&create_svm));
-  if (!create_svm) SETERRQ(PETSC_COMM_SELF,PETSC_ERR_ARG_UNKNOWN_TYPE,"Unable to find requested SVM type %s",type);
+  PetscCall(PetscFunctionListFind(SVMList, type, (void (**)(void))&create_svm));
+  PetscCheck(create_svm, PETSC_COMM_SELF, PETSC_ERR_ARG_UNKNOWN_TYPE, "Unable to find requested SVM type %s", type);
 
   /* Destroy the pre-existing private SVM context */
   if (svm->ops->destroy) PetscCall(svm->ops->destroy(svm));
   /* Reinitialize function pointers in SVMOps structure */
-  PetscCall(PetscMemzero(svm->ops,sizeof(struct _SVMOps)));
+  PetscCall(PetscMemzero(svm->ops, sizeof(struct _SVMOps)));
 
   PetscCall((*create_svm)(svm));
-  PetscCall(PetscObjectChangeTypeName((PetscObject)svm,type));
+  PetscCall(PetscObjectChangeTypeName((PetscObject)svm, type));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -393,14 +350,13 @@ PetscErrorCode SVMSetType(SVM svm,const SVMType type)
 
 .seealso SVMGetQPS(), SVMGetQP()
 @*/
-PetscErrorCode SVMSetQPS(SVM svm,QPS qps)
+PetscErrorCode SVMSetQPS(SVM svm, QPS qps)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidHeaderSpecific(qps,QPS_CLASSID,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidHeaderSpecific(qps, QPS_CLASSID, 2);
 
-  PetscTryMethod(svm,"SVMSetQPS_C",(SVM,QPS),(svm,qps));
+  PetscTryMethod(svm, "SVMSetQPS_C", (SVM, QPS), (svm, qps));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -421,14 +377,13 @@ PetscErrorCode SVMSetQPS(SVM svm,QPS qps)
 
 .seealso SVMSetQPS(), SVMGetQP()
 @*/
-PetscErrorCode SVMGetQPS(SVM svm,QPS *qps)
+PetscErrorCode SVMGetQPS(SVM svm, QPS *qps)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscAssertPointer(qps,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscAssertPointer(qps, 2);
 
-  PetscUseMethod(svm,"SVMGetQPS_C",(SVM,QPS *),(svm,qps));
+  PetscUseMethod(svm, "SVMGetQPS_C", (SVM, QPS *), (svm, qps));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -449,14 +404,13 @@ PetscErrorCode SVMGetQPS(SVM svm,QPS *qps)
 
 .seealso SVMSetQPS(), SVMGetQPS()
 @*/
-PetscErrorCode SVMGetQP(SVM svm,QP *qp)
+PetscErrorCode SVMGetQP(SVM svm, QP *qp)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscAssertPointer(qp,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscAssertPointer(qp, 2);
 
-  PetscUseMethod(svm,"SVMGetQP_C",(SVM,QP *),(svm,qp));
+  PetscUseMethod(svm, "SVMGetQP_C", (SVM, QP *), (svm, qp));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -475,15 +429,14 @@ PetscErrorCode SVMGetQP(SVM svm,QP *qp)
 
 .seealso SVMSetNfolds(), SVMCrossValidation()
 @*/
-PetscErrorCode SVMSetNfolds(SVM svm,PetscInt nfolds)
+PetscErrorCode SVMSetNfolds(SVM svm, PetscInt nfolds)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveInt(svm,nfolds,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidLogicalCollectiveInt(svm, nfolds, 2);
 
-  if (nfolds < 2) SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be greater than 1.");
-  svm->nfolds = nfolds;
+  PetscCheck(nfolds > 1, ((PetscObject)svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be greater than 1.");
+  svm->nfolds      = nfolds;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -505,12 +458,11 @@ PetscErrorCode SVMSetNfolds(SVM svm,PetscInt nfolds)
 
 .seealso SVMSetNfolds(), SVMCrossValidation()
 @*/
-PetscErrorCode SVMGetNfolds(SVM svm,PetscInt *nfolds)
+PetscErrorCode SVMGetNfolds(SVM svm, PetscInt *nfolds)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscAssertPointer(nfolds,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscAssertPointer(nfolds, 2);
   *nfolds = svm->nfolds;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -528,18 +480,17 @@ PetscErrorCode SVMGetNfolds(SVM svm,PetscInt *nfolds)
 
 .seealso SVMSetC(), SVMSetCp(), SVMSetCn(), SVM
 @*/
-PetscErrorCode SVMSetPenaltyType(SVM svm,PetscInt type)
+PetscErrorCode SVMSetPenaltyType(SVM svm, PetscInt type)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveInt(svm,type,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidLogicalCollectiveInt(svm, type, 2);
   if (svm->penalty_type == type) PetscFunctionReturn(PETSC_SUCCESS);
 
-  if (type != 1 && type != 2) SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_SUP,"Type of penalty (%" PetscInt_FMT ") is not supported. It must be 1 or 2",type);
+  PetscCheck(type == 1 || type == 2, ((PetscObject)svm)->comm, PETSC_ERR_SUP, "Type of penalty (%" PetscInt_FMT ") is not supported. It must be 1 or 2", type);
 
   svm->penalty_type = type;
-  svm->setupcalled = PETSC_FALSE;
+  svm->setupcalled  = PETSC_FALSE;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -558,12 +509,11 @@ PetscErrorCode SVMSetPenaltyType(SVM svm,PetscInt type)
 
 .seealso SVMSetC(), SVMSetCp(), SVMSetCn(), SVM
 @*/
-PetscErrorCode SVMGetPenaltyType(SVM svm,PetscInt *type)
+PetscErrorCode SVMGetPenaltyType(SVM svm, PetscInt *type)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscAssertPointer(type,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscAssertPointer(type, 2);
   *type = svm->penalty_type;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -583,24 +533,21 @@ PetscErrorCode SVMGetPenaltyType(SVM svm,PetscInt *type)
 
 .seealso SVMGetC(), SVMGridSearch()
 @*/
-PetscErrorCode SVMSetC(SVM svm,PetscReal C)
+PetscErrorCode SVMSetC(SVM svm, PetscReal C)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveReal(svm,C,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidLogicalCollectiveReal(svm, C, 2);
 
   if (svm->C == C) {
     svm->C_old = C;
     PetscFunctionReturn(PETSC_SUCCESS);
   }
 
-  if (C <= 0) {
-    SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
-  }
+  PetscCheck(C > 0, PetscObjectComm((PetscObject)svm), PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
 
-  svm->C_old = svm->C;
-  svm->C     = C;
+  svm->C_old       = svm->C;
+  svm->C           = C;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -622,12 +569,11 @@ PetscErrorCode SVMSetC(SVM svm,PetscReal C)
 
 .seealso SVMSetC(), SVMGridSearch()
 @*/
-PetscErrorCode SVMGetC(SVM svm,PetscReal *C)
+PetscErrorCode SVMGetC(SVM svm, PetscReal *C)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscAssertPointer(C,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscAssertPointer(C, 2);
   *C = svm->C;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -647,24 +593,21 @@ PetscErrorCode SVMGetC(SVM svm,PetscReal *C)
 
 .seealso SVMGetCp(), SVMSetCn(), SVMGetCn(), SVMGridSearch()
 @*/
-PetscErrorCode SVMSetCp(SVM svm,PetscReal Cp)
+PetscErrorCode SVMSetCp(SVM svm, PetscReal Cp)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveReal(svm,Cp,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidLogicalCollectiveReal(svm, Cp, 2);
 
   if (svm->Cp == Cp) {
     svm->Cp_old = Cp;
     PetscFunctionReturn(PETSC_SUCCESS);
   }
 
-  if (Cp <= 0) {
-    SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
-  }
+  PetscCheck(Cp > 0, PetscObjectComm((PetscObject)svm), PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
 
-  svm->Cp_old = svm->Cp;
-  svm->Cp     = Cp;
+  svm->Cp_old      = svm->Cp;
+  svm->Cp          = Cp;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -686,12 +629,11 @@ PetscErrorCode SVMSetCp(SVM svm,PetscReal Cp)
 
 .seealso SVMSetCp(), SVMSetCn(), SVMGetCn(), SVMGridSearch()
 @*/
-PetscErrorCode SVMGetCp(SVM svm,PetscReal *Cp)
+PetscErrorCode SVMGetCp(SVM svm, PetscReal *Cp)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscAssertPointer(Cp,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscAssertPointer(Cp, 2);
   *Cp = svm->Cp;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -711,24 +653,21 @@ PetscErrorCode SVMGetCp(SVM svm,PetscReal *Cp)
 
 .seealso SVMSetCp(), SVMGetCp(), SVMGetCn(), SVMGridSearch()
 @*/
-PetscErrorCode SVMSetCn(SVM svm,PetscReal Cn)
+PetscErrorCode SVMSetCn(SVM svm, PetscReal Cn)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveReal(svm,Cn,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidLogicalCollectiveReal(svm, Cn, 2);
 
   if (svm->Cn == Cn) {
     svm->Cn_old = Cn;
     PetscFunctionReturn(PETSC_SUCCESS);
   }
 
-  if (Cn <= 0) {
-    SETERRQ(((PetscObject) svm)->comm,PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
-  }
+  PetscCheck(Cn > 0, PetscObjectComm((PetscObject)svm), PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
 
-  svm->Cn_old = svm->Cn;
-  svm->Cn     = Cn;
+  svm->Cn_old      = svm->Cn;
+  svm->Cn          = Cn;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -750,12 +689,11 @@ PetscErrorCode SVMSetCn(SVM svm,PetscReal Cn)
 
 .seealso SVMSetCp(), SVMSetCn(), SVMSetCn(), SVMGridSearch()
 @*/
-PetscErrorCode SVMGetCn(SVM svm,PetscReal *Cn)
+PetscErrorCode SVMGetCn(SVM svm, PetscReal *Cn)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscAssertPointer(Cn,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscAssertPointer(Cn, 2);
   *Cn = svm->Cn;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -780,28 +718,28 @@ PetscErrorCode SVMGetCn(SVM svm,PetscReal *Cn)
 
 .seealso SVMSetC(), SVMSetCp(), SVMSetCn(), SVM
 @*/
-PetscErrorCode SVMSetPenalty(SVM svm,PetscInt m,PetscReal p[])
+PetscErrorCode SVMSetPenalty(SVM svm, PetscInt m, PetscReal p[])
 {
   PetscInt penalty_type;
 
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  if (m > 2) SETERRQ(((PetscObject) svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be 1 or 2");
-  PetscValidLogicalCollectiveInt(svm,m,2);
-  PetscValidLogicalCollectiveReal(svm,p[0],3);
-  if (m == 2) PetscValidLogicalCollectiveReal(svm,p[1],3);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscCheck(m <= 2, ((PetscObject)svm)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Argument must be 1 or 2");
+  PetscValidLogicalCollectiveInt(svm, m, 2);
+  PetscValidLogicalCollectiveReal(svm, p[0], 3);
+  if (m == 2) PetscValidLogicalCollectiveReal(svm, p[1], 3);
 
-  PetscCall(SVMGetPenaltyType(svm,&penalty_type));
+  PetscCall(SVMGetPenaltyType(svm, &penalty_type));
 
   if (penalty_type == 1) {
-    PetscCall(SVMSetC(svm,p[0]));
+    PetscCall(SVMSetC(svm, p[0]));
   } else {
     if (m == 1) {
-      PetscCall(SVMSetCp(svm,p[0]));
-      PetscCall(SVMSetCn(svm,p[0]));
+      PetscCall(SVMSetCp(svm, p[0]));
+      PetscCall(SVMSetCn(svm, p[0]));
     } else {
-      PetscCall(SVMSetCp(svm,p[0]));
-      PetscCall(SVMSetCn(svm,p[1]));
+      PetscCall(SVMSetCp(svm, p[0]));
+      PetscCall(SVMSetCn(svm, p[1]));
     }
   }
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -822,16 +760,15 @@ PetscErrorCode SVMSetPenalty(SVM svm,PetscInt m,PetscReal p[])
 
 .seealso SVMGridSearch(), SVMGridSearchGetBaseLogC(), SVMGridSearchSetStrideLogC(), SVMSetPenaltyType()
 @*/
-PetscErrorCode SVMGridSearchSetBaseLogC(SVM svm,PetscReal logC_base)
+PetscErrorCode SVMGridSearchSetBaseLogC(SVM svm, PetscReal logC_base)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveReal(svm,logC_base,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidLogicalCollectiveReal(svm, logC_base, 2);
 
-  if (logC_base <= 0) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
+  PetscCheck(logC_base > 0, PetscObjectComm((PetscObject)svm), PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
 
-  svm->logC_base = logC_base;
+  svm->logC_base   = logC_base;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -853,12 +790,11 @@ PetscErrorCode SVMGridSearchSetBaseLogC(SVM svm,PetscReal logC_base)
 
 .seealso SVMGridSearch(), SVMGridSearchSetBaseLogC(), SVMGridSearchSetStrideLogC(), SVMSetPenaltyType()
 @*/
-PetscErrorCode SVMGridSearchGetBaseLogC(SVM svm,PetscReal *logC_base)
+PetscErrorCode SVMGridSearchGetBaseLogC(SVM svm, PetscReal *logC_base)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscAssertPointer(logC_base,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscAssertPointer(logC_base, 2);
 
   *logC_base = svm->logC_base;
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -881,23 +817,22 @@ PetscErrorCode SVMGridSearchGetBaseLogC(SVM svm,PetscReal *logC_base)
 
 .seealso SVMGridSearch(), SVMGridSearchSetBaseLogC(), SVMGridSearchGetStrideLogC(), SVMSetPenaltyType()
 @*/
-PetscErrorCode SVMGridSearchSetStrideLogC(SVM svm,PetscReal logC_start,PetscReal logC_end,PetscReal logC_step)
+PetscErrorCode SVMGridSearchSetStrideLogC(SVM svm, PetscReal logC_start, PetscReal logC_end, PetscReal logC_step)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveReal(svm,logC_start,2);
-  PetscValidLogicalCollectiveReal(svm,logC_end,3);
-  PetscValidLogicalCollectiveReal(svm,logC_step,4);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidLogicalCollectiveReal(svm, logC_start, 2);
+  PetscValidLogicalCollectiveReal(svm, logC_end, 3);
+  PetscValidLogicalCollectiveReal(svm, logC_step, 4);
 
   /* Validating values of input parameters */
-  if (logC_step == 0) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be 0");
-  if (logC_start == logC_end) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Start (logC_start) and end (logC_end) cannot be same");
-  if (logC_start > logC_end && logC_step > 0) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be greater than 0 if start (logC_start) is greater than end (logC_end)");
-  if (logC_start < logC_end && logC_step < 0) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be less than 0 if start (logC_start) is less than end (logC_end)");
+  PetscCheck(logC_step != 0, PetscObjectComm((PetscObject)svm), PETSC_ERR_ARG_OUTOFRANGE, "Step (logC_step) cannot be 0");
+  PetscCheck(logC_start != logC_end, PetscObjectComm((PetscObject)svm), PETSC_ERR_ARG_OUTOFRANGE, "Start (logC_start) and end (logC_end) cannot be same");
+  PetscCheck(logC_start <= logC_end || logC_step <= 0, PetscObjectComm((PetscObject)svm), PETSC_ERR_ARG_OUTOFRANGE, "Step (logC_step) cannot be greater than 0 if start (logC_start) is greater than end (logC_end)");
+  PetscCheck(logC_start >= logC_end || logC_step >= 0, PetscObjectComm((PetscObject)svm), PETSC_ERR_ARG_OUTOFRANGE, "Step (logC_step) cannot be less than 0 if start (logC_start) is less than end (logC_end)");
 
   svm->logC_start = logC_start;
-  svm->logC_end  = logC_end;
+  svm->logC_end   = logC_end;
   svm->logC_step  = logC_step;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -921,24 +856,17 @@ PetscErrorCode SVMGridSearchSetStrideLogC(SVM svm,PetscReal logC_start,PetscReal
 
 .seealso SVMGridSearch(), SVMGridSearchSetBaseLogC(), SVMGridSearchSetStrideLogC(), SVMSetPenaltyType()
 @*/
-PetscErrorCode SVMGridSearchGetStrideLogC(SVM svm,PetscReal *logC_start,PetscReal *logC_end,PetscReal *logC_step)
+PetscErrorCode SVMGridSearchGetStrideLogC(SVM svm, PetscReal *logC_start, PetscReal *logC_end, PetscReal *logC_step)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscAssertPointer(logC_start,2);
-  PetscAssertPointer(logC_end,3);
-  PetscAssertPointer(logC_step,4);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscAssertPointer(logC_start, 2);
+  PetscAssertPointer(logC_end, 3);
+  PetscAssertPointer(logC_step, 4);
 
-  if (logC_start) {
-    *logC_start = svm->logC_start;
-  }
-  if (logC_end) {
-    *logC_end = svm->logC_end;
-  }
-  if (logC_step) {
-    *logC_step = svm->logC_step;
-  }
+  if (logC_start) { *logC_start = svm->logC_start; }
+  if (logC_end) { *logC_end = svm->logC_end; }
+  if (logC_step) { *logC_step = svm->logC_step; }
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -957,16 +885,15 @@ PetscErrorCode SVMGridSearchGetStrideLogC(SVM svm,PetscReal *logC_start,PetscRea
 
 .seealso SVMGridSearch(), SVMGridSearchGetPositiveBaseLogC(), SVMGridSearchSetPositiveStrideLogC(), SVMGridSearchSetNegativeBaseLogC(), SVMGridSearchSetNegativeStrideLogC(), SVMSetPenaltyType()
 @*/
-PetscErrorCode SVMGridSearchSetPositiveBaseLogC(SVM svm,PetscReal logCp_base)
+PetscErrorCode SVMGridSearchSetPositiveBaseLogC(SVM svm, PetscReal logCp_base)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveReal(svm,logCp_base,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidLogicalCollectiveReal(svm, logCp_base, 2);
 
-  if (logCp_base <= 0) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
+  PetscCheck(logCp_base > 0, PetscObjectComm((PetscObject)svm), PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
 
-  svm->logCp_base = logCp_base;
+  svm->logCp_base  = logCp_base;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -988,12 +915,11 @@ PetscErrorCode SVMGridSearchSetPositiveBaseLogC(SVM svm,PetscReal logCp_base)
 
 .seealso SVMGridSearch(), SVMGridSearchSetPositiveBaseLogC(), SVMGridSearchSetPositiveStrideLogC(), SVMGridSearchSetNegativeBaseLogC(), SVMGridSearchSetNegativeStrideLogC(), SVMSetPenaltyType()
 @*/
-PetscErrorCode SVMGridSearchGetPositiveBaseLogC(SVM svm,PetscReal *logCp_base)
+PetscErrorCode SVMGridSearchGetPositiveBaseLogC(SVM svm, PetscReal *logCp_base)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscAssertPointer(logCp_base,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscAssertPointer(logCp_base, 2);
 
   *logCp_base = svm->logCp_base;
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -1016,20 +942,19 @@ PetscErrorCode SVMGridSearchGetPositiveBaseLogC(SVM svm,PetscReal *logCp_base)
 
 .seealso SVMGridSearch(), SVMGridSearchSetPositiveBaseLogC(), SVMGridSearchGetPositiveStrideLogC(), SVMGridSearchSetNegativeBaseLogC(), SVMGridSearchSetNegativeStrideLogC(), SVMSetPenaltyType()
 @*/
-PetscErrorCode SVMGridSearchSetPositiveStrideLogC(SVM svm,PetscReal logC_start,PetscReal logC_end,PetscReal logC_step)
+PetscErrorCode SVMGridSearchSetPositiveStrideLogC(SVM svm, PetscReal logC_start, PetscReal logC_end, PetscReal logC_step)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveReal(svm,logC_start,2);
-  PetscValidLogicalCollectiveReal(svm,logC_end,3);
-  PetscValidLogicalCollectiveReal(svm,logC_step,4);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidLogicalCollectiveReal(svm, logC_start, 2);
+  PetscValidLogicalCollectiveReal(svm, logC_end, 3);
+  PetscValidLogicalCollectiveReal(svm, logC_step, 4);
 
   /* Validating values of input parameters */
-  if (logC_step == 0) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be 0");
-  if (logC_start == logC_end) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Start (logC_start) and end (logC_end) cannot be same");
-  if (logC_start > logC_end && logC_step > 0) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be greater than 0 if start (logC_start) is greater than end (logC_end)");
-  if (logC_start < logC_end && logC_step < 0) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be less than 0 if start (logC_start) is less than end (logC_end)");
+  PetscCheck(logC_step != 0, PetscObjectComm((PetscObject)svm), PETSC_ERR_ARG_OUTOFRANGE, "Step (logC_step) cannot be 0");
+  PetscCheck(logC_start != logC_end, PetscObjectComm((PetscObject)svm), PETSC_ERR_ARG_OUTOFRANGE, "Start (logC_start) and end (logC_end) cannot be same");
+  PetscCheck(logC_start <= logC_end || logC_step <= 0, PetscObjectComm((PetscObject)svm), PETSC_ERR_ARG_OUTOFRANGE, "Step (logC_step) cannot be greater than 0 if start (logC_start) is greater than end (logC_end)");
+  PetscCheck(logC_start >= logC_end || logC_step >= 0, PetscObjectComm((PetscObject)svm), PETSC_ERR_ARG_OUTOFRANGE, "Step (logC_step) cannot be less than 0 if start (logC_start) is less than end (logC_end)");
 
   svm->logCp_start = logC_start;
   svm->logCp_end   = logC_end;
@@ -1056,24 +981,17 @@ PetscErrorCode SVMGridSearchSetPositiveStrideLogC(SVM svm,PetscReal logC_start,P
 
 .seealso SVMGridSearch(), SVMGridSearchSetPositiveBaseLogC(), SVMGridSearchSetPositiveStrideLogC(), SVMGridSearchSetNegativeBaseLogC(), SVMGridSearchSetNegativeStrideLogC(), SVMSetPenaltyType()
 @*/
-PetscErrorCode SVMGridSearchGetPositiveStrideLogC(SVM svm,PetscReal *logC_start,PetscReal *logC_end,PetscReal *logC_step)
+PetscErrorCode SVMGridSearchGetPositiveStrideLogC(SVM svm, PetscReal *logC_start, PetscReal *logC_end, PetscReal *logC_step)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscAssertPointer(logC_start,2);
-  PetscAssertPointer(logC_end,3);
-  PetscAssertPointer(logC_step,4);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscAssertPointer(logC_start, 2);
+  PetscAssertPointer(logC_end, 3);
+  PetscAssertPointer(logC_step, 4);
 
-  if (logC_start) {
-    *logC_start = svm->logCp_start;
-  }
-  if (logC_end) {
-    *logC_end = svm->logCp_end;
-  }
-  if (logC_step) {
-    *logC_step = svm->logCp_step;
-  }
+  if (logC_start) { *logC_start = svm->logCp_start; }
+  if (logC_end) { *logC_end = svm->logCp_end; }
+  if (logC_step) { *logC_step = svm->logCp_step; }
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -1092,16 +1010,15 @@ PetscErrorCode SVMGridSearchGetPositiveStrideLogC(SVM svm,PetscReal *logC_start,
 
 .seealso SVMGridSearch(), SVMGridSearchGetNegativeBaseLogC(), SVMGridSearchSetNegativeStrideLogC(), SVMGridSearchSetPositiveBaseLogC(), SVMGridSearchSetPositiveStrideLogC(), SVMSetPenaltyType()
 @*/
-PetscErrorCode SVMGridSearchSetNegativeBaseLogC(SVM svm,PetscReal logCn_base)
+PetscErrorCode SVMGridSearchSetNegativeBaseLogC(SVM svm, PetscReal logCn_base)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveReal(svm,logCn_base,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidLogicalCollectiveReal(svm, logCn_base, 2);
 
-  if (logCn_base <= 0) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Argument must be positive");
+  PetscCheck(logCn_base > 0, PetscObjectComm((PetscObject)svm), PETSC_ERR_ARG_OUTOFRANGE, "Argument must be positive");
 
-  svm->logCn_base = logCn_base;
+  svm->logCn_base  = logCn_base;
   svm->setupcalled = PETSC_FALSE;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -1123,12 +1040,11 @@ PetscErrorCode SVMGridSearchSetNegativeBaseLogC(SVM svm,PetscReal logCn_base)
 
 .seealso SVMGridSearch(), SVMGridSearchSetNegativeBaseLogC(), SVMGridSearchSetNegativeStrideLogC(), SVMGridSearchSetPositiveBaseLogC(), SVMGridSearchSetPositiveStrideLogC(), SVMSetPenaltyType()
 @*/
-PetscErrorCode SVMGridSearchGetNegativeBaseLogC(SVM svm,PetscReal *logCn_base)
+PetscErrorCode SVMGridSearchGetNegativeBaseLogC(SVM svm, PetscReal *logCn_base)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscAssertPointer(logCn_base,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscAssertPointer(logCn_base, 2);
 
   *logCn_base = svm->logCn_base;
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -1151,20 +1067,19 @@ PetscErrorCode SVMGridSearchGetNegativeBaseLogC(SVM svm,PetscReal *logCn_base)
 
 .seealso SVMGridSearch(), SVMGridSearchSetNegativeBaseLogC(), SVMGridSearchGetNegativeStrideLogC(), SVMGridSearchSetPositiveBaseLogC(), SVMGridSearchSetPositiveStrideLogC(), SVMSetPenaltyType()
 @*/
-PetscErrorCode SVMGridSearchSetNegativeStrideLogC(SVM svm,PetscReal logC_start,PetscReal logC_end,PetscReal logC_step)
+PetscErrorCode SVMGridSearchSetNegativeStrideLogC(SVM svm, PetscReal logC_start, PetscReal logC_end, PetscReal logC_step)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveReal(svm,logC_start,2);
-  PetscValidLogicalCollectiveReal(svm,logC_end,3);
-  PetscValidLogicalCollectiveReal(svm,logC_step,4);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidLogicalCollectiveReal(svm, logC_start, 2);
+  PetscValidLogicalCollectiveReal(svm, logC_end, 3);
+  PetscValidLogicalCollectiveReal(svm, logC_step, 4);
 
   /* Validating values of input parameters */
-  if (logC_step == 0) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be 0");
-  if (logC_start == logC_end) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Start (logC_start) and end (logC_end) cannot be same");
-  if (logC_start > logC_end && logC_step > 0) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be greater than 0 if start (logC_start) is greater than end (logC_end)");
-  if (logC_start < logC_end && logC_step < 0) SETERRQ(PetscObjectComm((PetscObject) svm),PETSC_ERR_ARG_OUTOFRANGE,"Step (logC_step) cannot be less than 0 if start (logC_start) is less than end (logC_end)");
+  PetscCheck(logC_step != 0, PetscObjectComm((PetscObject)svm), PETSC_ERR_ARG_OUTOFRANGE, "Step (logC_step) cannot be 0");
+  PetscCheck(logC_start != logC_end, PetscObjectComm((PetscObject)svm), PETSC_ERR_ARG_OUTOFRANGE, "Start (logC_start) and end (logC_end) cannot be same");
+  PetscCheck(logC_start <= logC_end || logC_step <= 0, PetscObjectComm((PetscObject)svm), PETSC_ERR_ARG_OUTOFRANGE, "Step (logC_step) cannot be greater than 0 if start (logC_start) is greater than end (logC_end)");
+  PetscCheck(logC_start >= logC_end || logC_step >= 0, PetscObjectComm((PetscObject)svm), PETSC_ERR_ARG_OUTOFRANGE, "Step (logC_step) cannot be less than 0 if start (logC_start) is less than end (logC_end)");
 
   svm->logCn_start = logC_start;
   svm->logCn_end   = logC_end;
@@ -1191,24 +1106,17 @@ PetscErrorCode SVMGridSearchSetNegativeStrideLogC(SVM svm,PetscReal logC_start,P
 
 .seealso SVMGridSearch(), SVMGridSearchSetNegativeBaseLogC(), SVMGridSearchSetNegativeStrideLogC(), SVMGridSearchSetPositiveBaseLogC(), SVMGridSearchSetPositiveStrideLogC(), SVMSetPenaltyType()
 @*/
-PetscErrorCode SVMGridSearchGetNegativeStrideLogC(SVM svm,PetscReal *logC_start,PetscReal *logC_end,PetscReal *logC_step)
+PetscErrorCode SVMGridSearchGetNegativeStrideLogC(SVM svm, PetscReal *logC_start, PetscReal *logC_end, PetscReal *logC_step)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscAssertPointer(logC_start,2);
-  PetscAssertPointer(logC_end,3);
-  PetscAssertPointer(logC_step,4);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscAssertPointer(logC_start, 2);
+  PetscAssertPointer(logC_end, 3);
+  PetscAssertPointer(logC_step, 4);
 
-  if (logC_start) {
-    *logC_start = svm->logCn_start;
-  }
-  if (logC_end) {
-    *logC_end = svm->logCn_end;
-  }
-  if (logC_step) {
-    *logC_step = svm->logCn_step;
-  }
+  if (logC_start) { *logC_start = svm->logCn_start; }
+  if (logC_end) { *logC_end = svm->logCn_end; }
+  if (logC_step) { *logC_step = svm->logCn_step; }
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -1227,14 +1135,13 @@ PetscErrorCode SVMGridSearchGetNegativeStrideLogC(SVM svm,PetscReal *logC_start,
 
 .seealso SVMLossType, SVMGetLossType()
 @*/
-PetscErrorCode SVMSetLossType(SVM svm,SVMLossType type)
+PetscErrorCode SVMSetLossType(SVM svm, SVMLossType type)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveEnum(svm,type,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidLogicalCollectiveEnum(svm, type, 2);
   if (type != svm->loss_type) {
-    svm->loss_type = type;
+    svm->loss_type   = type;
     svm->setupcalled = PETSC_FALSE;
   }
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -1257,12 +1164,11 @@ PetscErrorCode SVMSetLossType(SVM svm,SVMLossType type)
 
 .seealso PermonSVMType, SVMSetLossType()
 @*/
-PetscErrorCode SVMGetLossType(SVM svm,SVMLossType *type)
+PetscErrorCode SVMGetLossType(SVM svm, SVMLossType *type)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscAssertPointer(type,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscAssertPointer(type, 2);
   *type = svm->loss_type;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -1282,14 +1188,13 @@ PetscErrorCode SVMGetLossType(SVM svm,SVMLossType *type)
 
 .seealso SVMGetMod()
 @*/
-PetscErrorCode SVMSetMod(SVM svm,PetscInt mod)
+PetscErrorCode SVMSetMod(SVM svm, PetscInt mod)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveInt(svm,mod,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidLogicalCollectiveInt(svm, mod, 2);
   if (svm->svm_mod != mod) {
-    svm->svm_mod = mod;
+    svm->svm_mod     = mod;
     svm->setupcalled = PETSC_FALSE;
   }
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -1312,11 +1217,10 @@ PetscErrorCode SVMSetMod(SVM svm,PetscInt mod)
 
 .seealso SVMSetMod()
 @*/
-PetscErrorCode SVMGetMod(SVM svm,PetscInt *mod)
+PetscErrorCode SVMGetMod(SVM svm, PetscInt *mod)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   *mod = svm->svm_mod;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -1336,12 +1240,11 @@ PetscErrorCode SVMGetMod(SVM svm,PetscInt *mod)
 
 .seealso SVMAppendOptionsPrefix(), SVMGetOptionsPrefix(), SVM, QPS
 @*/
-PetscErrorCode SVMSetOptionsPrefix(SVM svm,const char prefix[])
+PetscErrorCode SVMSetOptionsPrefix(SVM svm, const char prefix[])
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscTryMethod(svm,"SVMSetOptionsPrefix_C",(SVM,const char []),(svm,prefix));
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscTryMethod(svm, "SVMSetOptionsPrefix_C", (SVM, const char[]), (svm, prefix));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -1360,12 +1263,11 @@ PetscErrorCode SVMSetOptionsPrefix(SVM svm,const char prefix[])
 
 .seealso SVMSetOptionsPrefix(), SVMGetOptionsPrefix(), SVM, QPS
 */
-PetscErrorCode SVMAppendOptionsPrefix(SVM svm,const char prefix[])
+PetscErrorCode SVMAppendOptionsPrefix(SVM svm, const char prefix[])
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscTryMethod(svm,"SVMAppendOptionsPrefix_C",(SVM,const char []),(svm,prefix));
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscTryMethod(svm, "SVMAppendOptionsPrefix_C", (SVM, const char[]), (svm, prefix));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -1386,12 +1288,11 @@ PetscErrorCode SVMAppendOptionsPrefix(SVM svm,const char prefix[])
 
 .seealso SVMSetOptionsPrefix(), SVM, QPS
 @*/
-PetscErrorCode SVMGetOptionsPrefix(SVM svm,const char *prefix[])
+PetscErrorCode SVMGetOptionsPrefix(SVM svm, const char *prefix[])
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscUseMethod(svm,"SVMGetOptionsPrefix_C",(SVM,const char *[]),(svm,prefix));
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscUseMethod(svm, "SVMGetOptionsPrefix_C", (SVM, const char *[]), (svm, prefix));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -1414,11 +1315,11 @@ PetscErrorCode SVMGetOptionsPrefix(SVM svm,const char *prefix[])
 
 .seealso PermonSVMType, SVMGetLossType()
 @*/
-PetscErrorCode SVMSetWarmStart(SVM svm,PetscBool flg)
+PetscErrorCode SVMSetWarmStart(SVM svm, PetscBool flg)
 {
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveBool(svm,flg,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidLogicalCollectiveBool(svm, flg, 2);
   svm->warm_start = flg;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -1426,24 +1327,22 @@ PetscErrorCode SVMSetWarmStart(SVM svm,PetscBool flg)
 /*@
 
 @*/
-PetscErrorCode SVMGetInnerSVM(SVM svm,SVM *out)
+PetscErrorCode SVMGetInnerSVM(SVM svm, SVM *out)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscUseMethod(svm,"SVMGetInnerSVM_C",(SVM,SVM *),(svm,out));
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscUseMethod(svm, "SVMGetInnerSVM_C", (SVM, SVM *), (svm, out));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
 
 @*/
-PetscErrorCode SVMGetTao(SVM svm,Tao *tao)
+PetscErrorCode SVMGetTao(SVM svm, Tao *tao)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscUseMethod(svm,"SVMGetTao_C",(SVM,Tao *),(svm,tao));
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscUseMethod(svm, "SVMGetTao_C", (SVM, Tao *), (svm, tao));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -1463,9 +1362,8 @@ PetscErrorCode SVMGetTao(SVM svm,Tao *tao)
 @*/
 PetscErrorCode SVMSetUp(SVM svm)
 {
-
   PetscFunctionBeginI;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   if (svm->setupcalled) PetscFunctionReturnI(PETSC_SUCCESS);
 
   PetscCall(svm->ops->setup(svm));
@@ -1489,14 +1387,11 @@ PetscErrorCode SVMSetUp(SVM svm)
 
 .seealso PetscViewer
 @*/
-PetscErrorCode SVMView(SVM svm,PetscViewer v)
+PetscErrorCode SVMView(SVM svm, PetscViewer v)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  if (svm->ops->view) {
-    PetscCall(svm->ops->view(svm,v));
-  }
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  if (svm->ops->view) { PetscCall(svm->ops->view(svm, v)); }
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -1511,15 +1406,12 @@ PetscErrorCode SVMView(SVM svm,PetscViewer v)
 
 .seealso SVMLoadTrainingDataset, SVMPredict, PetscViewer
 @*/
-PetscErrorCode SVMViewTrainingPredictions(SVM svm,PetscViewer v)
+PetscErrorCode SVMViewTrainingPredictions(SVM svm, PetscViewer v)
 {
-
   PetscFunctionBeginI;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  if (v) PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
-  if (svm->ops->viewtrainingpredictions) {
-    PetscCall(svm->ops->viewtrainingpredictions(svm,v));
-  }
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  if (v) PetscValidHeaderSpecific(v, PETSC_VIEWER_CLASSID, 2);
+  if (svm->ops->viewtrainingpredictions) { PetscCall(svm->ops->viewtrainingpredictions(svm, v)); }
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
@@ -1534,15 +1426,12 @@ PetscErrorCode SVMViewTrainingPredictions(SVM svm,PetscViewer v)
 
 .seealso SVMLoadTestDataset, SVMPredict, PetscViewer
 @*/
-PetscErrorCode SVMViewTestPredictions(SVM svm,PetscViewer v)
+PetscErrorCode SVMViewTestPredictions(SVM svm, PetscViewer v)
 {
-
   PetscFunctionBeginI;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  if (v) {PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);}
-  if (svm->ops->viewtestpredictions) {
-    PetscCall(svm->ops->viewtestpredictions(svm,v));
-  }
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  if (v) { PetscValidHeaderSpecific(v, PETSC_VIEWER_CLASSID, 2); }
+  if (svm->ops->viewtestpredictions) { PetscCall(svm->ops->viewtestpredictions(svm, v)); }
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
@@ -1562,14 +1451,11 @@ PetscErrorCode SVMViewTestPredictions(SVM svm,PetscViewer v)
 
 .seealso PetscViewer
 @*/
-PetscErrorCode SVMViewScore(SVM svm,PetscViewer v)
+PetscErrorCode SVMViewScore(SVM svm, PetscViewer v)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  if (svm->ops->viewscore) {
-    PetscCall(svm->ops->viewscore(svm,v));
-  }
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  if (svm->ops->viewscore) { PetscCall(svm->ops->viewscore(svm, v)); }
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -1586,14 +1472,13 @@ PetscErrorCode SVMViewScore(SVM svm,PetscViewer v)
 
 .seealso SVM, SVMGetGramian(), SVMLoadGramian()
 @*/
-PetscErrorCode SVMSetGramian(SVM svm,Mat G)
+PetscErrorCode SVMSetGramian(SVM svm, Mat G)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidHeaderSpecific(G,MAT_CLASSID,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidHeaderSpecific(G, MAT_CLASSID, 2);
 
-  PetscTryMethod(svm,"SVMSetGramian_C",(SVM,Mat),(svm,G));
+  PetscTryMethod(svm, "SVMSetGramian_C", (SVM, Mat), (svm, G));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -1612,14 +1497,13 @@ PetscErrorCode SVMSetGramian(SVM svm,Mat G)
 
 .seealso SVM, SVMSetGramian(), SVMLoadGramian()
 @*/
-PetscErrorCode SVMGetGramian(SVM svm,Mat *G)
+PetscErrorCode SVMGetGramian(SVM svm, Mat *G)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscAssertPointer(G,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscAssertPointer(G, 2);
 
-  PetscUseMethod(svm,"SVMGetGramian_C",(SVM,Mat *),(svm,G));
+  PetscUseMethod(svm, "SVMGetGramian_C", (SVM, Mat *), (svm, G));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -1638,14 +1522,13 @@ PetscErrorCode SVMGetGramian(SVM svm,Mat *G)
 
 .seealso SVM, QP, SVMGetOperator()
 @*/
-PetscErrorCode SVMSetOperator(SVM svm,Mat A)
+PetscErrorCode SVMSetOperator(SVM svm, Mat A)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidHeaderSpecific(A,MAT_CLASSID,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidHeaderSpecific(A, MAT_CLASSID, 2);
 
-  PetscTryMethod(svm,"SVMSetOperator_C",(SVM,Mat),(svm,A));
+  PetscTryMethod(svm, "SVMSetOperator_C", (SVM, Mat), (svm, A));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -1666,14 +1549,13 @@ PetscErrorCode SVMSetOperator(SVM svm,Mat A)
 
 .seealso SVM, QP, SVMSetOperator()
 @*/
-PetscErrorCode SVMGetOperator(SVM svm,Mat *A)
+PetscErrorCode SVMGetOperator(SVM svm, Mat *A)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscAssertPointer(A,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscAssertPointer(A, 2);
 
-  PetscUseMethod(svm,"SVMGetOperator_C",(SVM,Mat *),(svm,A));
+  PetscUseMethod(svm, "SVMGetOperator_C", (SVM, Mat *), (svm, A));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -1694,13 +1576,12 @@ PetscErrorCode SVMGetOperator(SVM svm,Mat *A)
 
 .seealso SVM, SVMSetOperator(), SVMGetOperator(), SVMSetGramian(), SVMGetGramian()
 @*/
-PetscErrorCode SVMComputeOperator(SVM svm,Mat *A)
+PetscErrorCode SVMComputeOperator(SVM svm, Mat *A)
 {
-
   PetscFunctionBeginI;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
 
-  PetscTryMethod(svm,"SVMComputeOperator_C",(SVM,Mat *),(svm,A));
+  PetscTryMethod(svm, "SVMComputeOperator_C", (SVM, Mat *), (svm, A));
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
@@ -1720,17 +1601,16 @@ PetscErrorCode SVMComputeOperator(SVM svm,Mat *A)
 
 .seealso SVMGetTrainingDataset(), SVMSetTestDataset(), SVMGetTestDataset()
 @*/
-PetscErrorCode SVMSetTrainingDataset(SVM svm,Mat Xt_training,Vec y_training)
+PetscErrorCode SVMSetTrainingDataset(SVM svm, Mat Xt_training, Vec y_training)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidHeaderSpecific(Xt_training,MAT_CLASSID,2);
-  PetscCheckSameComm(svm,1,Xt_training,2);
-  PetscValidHeaderSpecific(y_training,VEC_CLASSID,3);
-  PetscCheckSameComm(svm,1,y_training,3);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidHeaderSpecific(Xt_training, MAT_CLASSID, 2);
+  PetscCheckSameComm(svm, 1, Xt_training, 2);
+  PetscValidHeaderSpecific(y_training, VEC_CLASSID, 3);
+  PetscCheckSameComm(svm, 1, y_training, 3);
 
-  PetscTryMethod(svm,"SVMSetTrainingDataset_C",(SVM,Mat,Vec),(svm,Xt_training,y_training));
+  PetscTryMethod(svm, "SVMSetTrainingDataset_C", (SVM, Mat, Vec), (svm, Xt_training, y_training));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -1752,13 +1632,12 @@ PetscErrorCode SVMSetTrainingDataset(SVM svm,Mat Xt_training,Vec y_training)
 
 .seealso SVMSetTrainingDataset(), SVMSetTestDataset(), SVMGetTestDataset()
 @*/
-PetscErrorCode SVMGetTrainingDataset(SVM svm,Mat *Xt_training,Vec *y_training)
+PetscErrorCode SVMGetTrainingDataset(SVM svm, Mat *Xt_training, Vec *y_training)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
 
-  PetscUseMethod(svm,"SVMGetTrainingDataset_C",(SVM,Mat *,Vec *),(svm,Xt_training,y_training));
+  PetscUseMethod(svm, "SVMGetTrainingDataset_C", (SVM, Mat *, Vec *), (svm, Xt_training, y_training));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -1776,13 +1655,12 @@ PetscErrorCode SVMGetTrainingDataset(SVM svm,Mat *Xt_training,Vec *y_training)
 
 .seealso SVMSetTrainingDataset(), SVMGetTrainingDataset(), SVMSetTestDataset(), SVMGetTestDataset()
 @*/
-PetscErrorCode SVMSetCalibrationDataset(SVM svm,Mat Xt_calib,Vec y_calib)
+PetscErrorCode SVMSetCalibrationDataset(SVM svm, Mat Xt_calib, Vec y_calib)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
 
-  PetscTryMethod(svm,"SVMSetCalibrationDataset_C",(SVM,Mat,Vec),(svm,Xt_calib,y_calib));
+  PetscTryMethod(svm, "SVMSetCalibrationDataset_C", (SVM, Mat, Vec), (svm, Xt_calib, y_calib));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -1802,13 +1680,12 @@ PetscErrorCode SVMSetCalibrationDataset(SVM svm,Mat Xt_calib,Vec y_calib)
 
 .seealso SVMSetTrainingDataset(), SVMGetTrainingDataset(), SVMSetTestDataset(), SVMGetTestDataset()
 @*/
-PetscErrorCode SVMGetCalibrationDataset(SVM svm,Mat *Xt_calib,Vec *y_calib)
+PetscErrorCode SVMGetCalibrationDataset(SVM svm, Mat *Xt_calib, Vec *y_calib)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
 
-  PetscUseMethod(svm,"SVMGetCalibrationDataset_C",(SVM,Mat *,Vec *),(svm,Xt_calib,y_calib));
+  PetscUseMethod(svm, "SVMGetCalibrationDataset_C", (SVM, Mat *, Vec *), (svm, Xt_calib, y_calib));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -1828,23 +1705,22 @@ PetscErrorCode SVMGetCalibrationDataset(SVM svm,Mat *Xt_calib,Vec *y_calib)
 
 .seealso SVMSetTrainingDataset(), SVMGetTrainingDataset(), SVMGetTestDataset()
 @*/
-PetscErrorCode SVMSetTestDataset(SVM svm,Mat Xt_test,Vec y_test)
+PetscErrorCode SVMSetTestDataset(SVM svm, Mat Xt_test, Vec y_test)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidHeaderSpecific(Xt_test,MAT_CLASSID,2);
-  PetscCheckSameComm(svm,1,Xt_test,2);
-  PetscValidHeaderSpecific(y_test,VEC_CLASSID,3);
-  PetscCheckSameComm(svm,1,y_test,3);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidHeaderSpecific(Xt_test, MAT_CLASSID, 2);
+  PetscCheckSameComm(svm, 1, Xt_test, 2);
+  PetscValidHeaderSpecific(y_test, VEC_CLASSID, 3);
+  PetscCheckSameComm(svm, 1, y_test, 3);
 
   PetscCall(MatDestroy(&svm->Xt_test));
   svm->Xt_test = Xt_test;
-  PetscCall(PetscObjectReference((PetscObject) Xt_test));
+  PetscCall(PetscObjectReference((PetscObject)Xt_test));
 
   PetscCall(VecDestroy(&svm->y_test));
   svm->y_test = y_test;
-  PetscCall(PetscObjectReference((PetscObject) y_test));
+  PetscCall(PetscObjectReference((PetscObject)y_test));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -1866,19 +1742,18 @@ PetscErrorCode SVMSetTestDataset(SVM svm,Mat Xt_test,Vec y_test)
 
 .seealso SVMSetTrainingDataset(), SVMGetTrainingDataset(), SVMSetTestDataset()
 @*/
-PetscErrorCode SVMGetTestDataset(SVM svm,Mat *Xt_test,Vec *y_test)
+PetscErrorCode SVMGetTestDataset(SVM svm, Mat *Xt_test, Vec *y_test)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
 
   if (Xt_test) {
-    PetscAssertPointer(Xt_test,2);
+    PetscAssertPointer(Xt_test, 2);
     *Xt_test = svm->Xt_test;
   }
 
   if (y_test) {
-    PetscAssertPointer(y_test,2);
+    PetscAssertPointer(y_test, 2);
     *y_test = svm->y_test;
   }
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -1897,15 +1772,13 @@ PetscErrorCode SVMGetTestDataset(SVM svm,Mat *Xt_test,Vec *y_test)
 
 .seealso SVMSetTrainingDataset, SVMGetTrainingDataset
 @*/
-PetscErrorCode SVMGetLabels(SVM svm,const PetscReal *labels[])
+PetscErrorCode SVMGetLabels(SVM svm, const PetscReal *labels[])
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscUseMethod(svm,"SVMGetLabels_C",(SVM,const PetscReal *[]),(svm,labels));
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscUseMethod(svm, "SVMGetLabels_C", (SVM, const PetscReal *[]), (svm, labels));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
-
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMSetAutoPostTrain"
@@ -1922,12 +1795,11 @@ PetscErrorCode SVMGetLabels(SVM svm,const PetscReal *labels[])
 
 .seealso SVMPostTrain()
 @*/
-PetscErrorCode SVMSetAutoPostTrain(SVM svm,PetscBool flg)
+PetscErrorCode SVMSetAutoPostTrain(SVM svm, PetscBool flg)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveBool(svm,flg,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidLogicalCollectiveBool(svm, flg, 2);
 
   svm->autoposttrain = flg;
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -1946,12 +1818,11 @@ PetscErrorCode SVMSetAutoPostTrain(SVM svm,PetscBool flg)
 
   Level: developer
 @*/
-PetscErrorCode SVMGetAutoPostTrain(SVM svm,PetscBool *flg)
+PetscErrorCode SVMGetAutoPostTrain(SVM svm, PetscBool *flg)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscAssertPointer(flg,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscAssertPointer(flg, 2);
   *flg = svm->autoposttrain;
   PetscFunctionReturn(0);
 }
@@ -1972,9 +1843,8 @@ PetscErrorCode SVMGetAutoPostTrain(SVM svm,PetscBool *flg)
 @*/
 PetscErrorCode SVMTrain(SVM svm)
 {
-
   PetscFunctionBeginI;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscCall(svm->ops->train(svm));
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
@@ -1995,26 +1865,26 @@ PetscErrorCode SVMTrain(SVM svm)
 @*/
 PetscErrorCode SVMPostTrain(SVM svm)
 {
-  PetscBool view;
-  PetscViewer v;
+  PetscBool         view;
+  PetscViewer       v;
   PetscViewerFormat format;
 
   PetscFunctionBeginI;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscCall(svm->ops->posttrain(svm));
 
-  PetscCall(PetscOptionsCreateViewer(((PetscObject) svm)->comm,NULL,((PetscObject) svm)->prefix,"-svm_view",&v,&format,&view));
+  PetscCall(PetscOptionsCreateViewer(((PetscObject)svm)->comm, NULL, ((PetscObject)svm)->prefix, "-svm_view", &v, &format, &view));
   if (view) {
-    PetscCall(PetscViewerPushFormat(v,format));
-    PetscCall(SVMView(svm,v));
+    PetscCall(PetscViewerPushFormat(v, format));
+    PetscCall(SVMView(svm, v));
     PetscCall(PetscViewerPopFormat(v));
   }
   PetscCall(PetscViewerDestroy(&v));
 
-  PetscCall(PetscOptionsCreateViewer(((PetscObject) svm)->comm,NULL,((PetscObject) svm)->prefix,"-svm_view_training_predictions",&v,&format,&view));
+  PetscCall(PetscOptionsCreateViewer(((PetscObject)svm)->comm, NULL, ((PetscObject)svm)->prefix, "-svm_view_training_predictions", &v, &format, &view));
   if (view) {
-    PetscCall(PetscViewerPushFormat(v,format));
-    PetscCall(SVMViewTrainingPredictions(svm,v));
+    PetscCall(PetscViewerPushFormat(v, format));
+    PetscCall(SVMViewTrainingPredictions(svm, v));
     PetscCall(PetscViewerPopFormat(v));
   }
   PetscCall(PetscViewerDestroy(&v));
@@ -2037,13 +1907,12 @@ PetscErrorCode SVMPostTrain(SVM svm)
 
 .seealso SVMSetBias()
 @*/
-PetscErrorCode SVMSetSeparatingHyperplane(SVM svm,Vec w,PetscReal b)
+PetscErrorCode SVMSetSeparatingHyperplane(SVM svm, Vec w, PetscReal b)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
 
-  PetscTryMethod(svm,"SVMSetSeparatingHyperplane_C",(SVM,Vec,PetscReal),(svm,w,b));
+  PetscTryMethod(svm, "SVMSetSeparatingHyperplane_C", (SVM, Vec, PetscReal), (svm, w, b));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -2065,13 +1934,12 @@ PetscErrorCode SVMSetSeparatingHyperplane(SVM svm,Vec w,PetscReal b)
 
 .seealso: SVMTrain(), SVMPredict(), SVMTest()
 @*/
-PetscErrorCode SVMGetSeparatingHyperplane(SVM svm,Vec *w,PetscReal *b)
+PetscErrorCode SVMGetSeparatingHyperplane(SVM svm, Vec *w, PetscReal *b)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
 
-  PetscUseMethod(svm,"SVMGetSeparatingHyperplane_C",(SVM,Vec *,PetscReal *),(svm,w,b));
+  PetscUseMethod(svm, "SVMGetSeparatingHyperplane_C", (SVM, Vec *, PetscReal *), (svm, w, b));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -2090,13 +1958,12 @@ PetscErrorCode SVMGetSeparatingHyperplane(SVM svm,Vec *w,PetscReal *b)
 
 .seealso SVMGetBias(), SVMSetMod()
 @*/
-PetscErrorCode SVMSetBias(SVM svm,PetscReal bias)
+PetscErrorCode SVMSetBias(SVM svm, PetscReal bias)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
 
-  PetscTryMethod(svm,"SVMSetBias_C",(SVM,PetscReal),(svm,bias));
+  PetscTryMethod(svm, "SVMSetBias_C", (SVM, PetscReal), (svm, bias));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -2117,27 +1984,26 @@ PetscErrorCode SVMSetBias(SVM svm,PetscReal bias)
 
 .seealso SVMSetBias(), SVMSetMod()
 @*/
-PetscErrorCode SVMGetBias(SVM svm,PetscReal *bias)
+PetscErrorCode SVMGetBias(SVM svm, PetscReal *bias)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
 
-  PetscUseMethod(svm,"SVMGetBias_C",(SVM,PetscReal *),(svm,bias));
+  PetscUseMethod(svm, "SVMGetBias_C", (SVM, PetscReal *), (svm, bias));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
 
 @*/
-PetscErrorCode SVMSetUserBias(SVM svm,PetscReal bias)
+PetscErrorCode SVMSetUserBias(SVM svm, PetscReal bias)
 {
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveReal(svm,bias,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidLogicalCollectiveReal(svm, bias, 2);
 
   if (svm->user_bias != bias) {
-    svm->user_bias = bias;
+    svm->user_bias   = bias;
     svm->setupcalled = PETSC_FALSE;
   }
   PetscFunctionReturn(0);
@@ -2146,10 +2012,10 @@ PetscErrorCode SVMSetUserBias(SVM svm,PetscReal bias)
 /*@
 
 @*/
-PetscErrorCode SVMGetUserBias(SVM svm,PetscReal *bias)
+PetscErrorCode SVMGetUserBias(SVM svm, PetscReal *bias)
 {
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   *bias = svm->user_bias;
   PetscFunctionReturn(0);
 }
@@ -2168,13 +2034,10 @@ PetscErrorCode SVMGetUserBias(SVM svm,PetscReal *bias)
 @*/
 PetscErrorCode SVMReconstructHyperplane(SVM svm)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
 
-  if (svm->ops->reconstructhyperplane) {
-    PetscCall(svm->ops->reconstructhyperplane(svm));
-  }
+  if (svm->ops->reconstructhyperplane) { PetscCall(svm->ops->reconstructhyperplane(svm)); }
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -2194,13 +2057,12 @@ PetscErrorCode SVMReconstructHyperplane(SVM svm)
 
 .seealso: SVMPredict()
 @*/
-PetscErrorCode SVMGetDistancesFromHyperplane(SVM svm,Mat Xt,Vec *dist)
+PetscErrorCode SVMGetDistancesFromHyperplane(SVM svm, Mat Xt, Vec *dist)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
 
-  PetscUseMethod(svm,"SVMGetDistancesFromHyperplane_C",(SVM,Mat,Vec *),(svm,Xt,dist));
+  PetscUseMethod(svm, "SVMGetDistancesFromHyperplane_C", (SVM, Mat, Vec *), (svm, Xt, dist));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -2222,12 +2084,11 @@ PetscErrorCode SVMGetDistancesFromHyperplane(SVM svm,Mat Xt,Vec *dist)
 
 .seealso: SVMTrain(), SVMTest()
 @*/
-PetscErrorCode SVMPredict(SVM svm,Mat Xt_pred,Vec *y_pred)
+PetscErrorCode SVMPredict(SVM svm, Mat Xt_pred, Vec *y_pred)
 {
-
   PetscFunctionBeginI;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscCall(svm->ops->predict(svm,Xt_pred,y_pred));
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscCall(svm->ops->predict(svm, Xt_pred, y_pred));
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
@@ -2252,21 +2113,21 @@ PetscErrorCode SVMTest(SVM svm)
   PetscBool         view;
 
   PetscFunctionBeginI;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscCall(svm->ops->test(svm));
 
-  PetscCall(PetscOptionsCreateViewer(((PetscObject)svm)->comm,NULL,((PetscObject)svm)->prefix,"-svm_view_report",&v,&format,&view));
+  PetscCall(PetscOptionsCreateViewer(((PetscObject)svm)->comm, NULL, ((PetscObject)svm)->prefix, "-svm_view_report", &v, &format, &view));
   if (view) {
-    PetscCall(PetscViewerPushFormat(v,format));
-    PetscCall(SVMViewScore(svm,v));
+    PetscCall(PetscViewerPushFormat(v, format));
+    PetscCall(SVMViewScore(svm, v));
     PetscCall(PetscViewerPopFormat(v));
   }
   PetscCall(PetscViewerDestroy(&v));
 
-  PetscCall(PetscOptionsCreateViewer(((PetscObject)svm)->comm,NULL,((PetscObject)svm)->prefix,"-svm_view_test_predictions",&v,&format,&view));
+  PetscCall(PetscOptionsCreateViewer(((PetscObject)svm)->comm, NULL, ((PetscObject)svm)->prefix, "-svm_view_test_predictions", &v, &format, &view));
   if (view) {
-    PetscCall(PetscViewerPushFormat(v,format));
-    PetscCall(SVMViewTestPredictions(svm,v));
+    PetscCall(PetscViewerPushFormat(v, format));
+    PetscCall(SVMViewTestPredictions(svm, v));
     PetscCall(PetscViewerPopFormat(v));
   }
   PetscCall(PetscViewerDestroy(&v));
@@ -2280,9 +2141,8 @@ PetscErrorCode SVMTest(SVM svm)
 @*/
 PetscErrorCode SVMConvergedSetUp(SVM svm)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   // call specific implementation of setting convergence test
   if (svm->ops->convergedsetup) PetscCall(svm->ops->convergedsetup(svm));
   PetscFunctionReturn(PETSC_SUCCESS);
@@ -2296,7 +2156,7 @@ PetscErrorCode SVMConvergedSetUp(SVM svm)
 PetscErrorCode SVMDefaultConvergedCreate(SVM svm, void **ctx)
 {
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   *ctx = svm;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -2309,7 +2169,7 @@ PetscErrorCode SVMDefaultConvergedCreate(SVM svm, void **ctx)
 PetscErrorCode SVMDefaultConvergedDestroy(void *ctx)
 {
   PetscFunctionBegin;
-  PetscCall(SVMDestroy((SVM*)&ctx));
+  PetscCall(SVMDestroy((SVM *)&ctx));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -2329,13 +2189,12 @@ PetscErrorCode SVMDefaultConvergedDestroy(void *ctx)
 
 .seealso ModelScore, SVMComputeModelScores()
 @*/
-PetscErrorCode SVMGetModelScore(SVM svm,ModelScore score_type,PetscReal *s)
+PetscErrorCode SVMGetModelScore(SVM svm, ModelScore score_type, PetscReal *s)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
 
-  PetscUseMethod(svm,"SVMGetModelScore_C",(SVM,ModelScore,PetscReal *),(svm,score_type,s));
+  PetscUseMethod(svm, "SVMGetModelScore_C", (SVM, ModelScore, PetscReal *), (svm, score_type, s));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -2353,12 +2212,11 @@ PetscErrorCode SVMGetModelScore(SVM svm,ModelScore score_type,PetscReal *s)
 
 .seealso SVMGridSearch(), SVMCrossValidation(), SVM
 @*/
-PetscErrorCode SVMSetHyperOpt(SVM svm,PetscBool flg)
+PetscErrorCode SVMSetHyperOpt(SVM svm, PetscBool flg)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveBool(svm,2,flg);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidLogicalCollectiveBool(svm, 2, flg);
   svm->hyperoptset = flg;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -2379,9 +2237,8 @@ PetscErrorCode SVMSetHyperOpt(SVM svm,PetscBool flg)
 @*/
 PetscErrorCode SVMGridSearch(SVM svm)
 {
-
   PetscFunctionBeginI;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscCall(svm->ops->gridsearch(svm));
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
@@ -2399,14 +2256,14 @@ PetscErrorCode SVMGridSearch(SVM svm)
 
 .seealso SVMGetHyperOptScoreTypes(), ModelScore
 @*/
-PetscErrorCode SVMSetHyperOptScoreTypes(SVM svm,PetscInt n,ModelScore types[])
+PetscErrorCode SVMSetHyperOptScoreTypes(SVM svm, PetscInt n, ModelScore types[])
 {
   PetscInt i;
 
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  for (i = 0; i < n; ++i) PetscValidLogicalCollectiveEnum(svm,types[i],2);
-  PetscCall(PetscMemcpy(svm->hopt_score_types,types,n * sizeof(ModelScore)));
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  for (i = 0; i < n; ++i) PetscValidLogicalCollectiveEnum(svm, types[i], 2);
+  PetscCall(PetscMemcpy(svm->hopt_score_types, types, n * sizeof(ModelScore)));
   svm->hopt_nscore_types = n;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -2426,12 +2283,11 @@ PetscErrorCode SVMSetHyperOptScoreTypes(SVM svm,PetscInt n,ModelScore types[])
 
 seealso SVMSetHyperOptScoreTypes, ModelScore
 @*/
-PetscErrorCode SVMGetHyperOptNScoreTypes(SVM svm,PetscInt *n)
+PetscErrorCode SVMGetHyperOptNScoreTypes(SVM svm, PetscInt *n)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscAssertPointer(n,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscAssertPointer(n, 2);
   *n = svm->hopt_nscore_types;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -2451,12 +2307,11 @@ PetscErrorCode SVMGetHyperOptNScoreTypes(SVM svm,PetscInt *n)
 
 .seealso SVMSetHyperOptScoreTypes(), ModelScore
 @*/
-PetscErrorCode SVMGetHyperOptScoreTypes(SVM svm,const ModelScore *types[])
+PetscErrorCode SVMGetHyperOptScoreTypes(SVM svm, const ModelScore *types[])
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscAssertPointer(types,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscAssertPointer(types, 2);
   *types = svm->hopt_score_types;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -2474,12 +2329,11 @@ PetscErrorCode SVMGetHyperOptScoreTypes(SVM svm,const ModelScore *types[])
 
 .seealso SVMGetCrossValidationType(), CrossValidationType
 @*/
-PetscErrorCode SVMSetCrossValidationType(SVM svm,CrossValidationType type)
+PetscErrorCode SVMSetCrossValidationType(SVM svm, CrossValidationType type)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidLogicalCollectiveEnum(svm,type,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidLogicalCollectiveEnum(svm, type, 2);
   svm->cv_type = type;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -2499,12 +2353,11 @@ PetscErrorCode SVMSetCrossValidationType(SVM svm,CrossValidationType type)
 
 .seealso SVMSetCrossValidationType(), CrossValidationType
 @*/
-PetscErrorCode SVMGetCrossValidationType(SVM svm,CrossValidationType *type)
+PetscErrorCode SVMGetCrossValidationType(SVM svm, CrossValidationType *type)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscAssertPointer(type,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscAssertPointer(type, 2);
   *type = svm->cv_type;
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -2528,12 +2381,11 @@ PetscErrorCode SVMGetCrossValidationType(SVM svm,CrossValidationType *type)
 
 .seealso: SVMKFoldCrossValidation(), SVMStratifiedKFoldCrossValidation(), SVMGridSearch(), SVMSetNfolds(), SVM
 @*/
-PetscErrorCode SVMCrossValidation(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal score[])
+PetscErrorCode SVMCrossValidation(SVM svm, PetscReal c_arr[], PetscInt m, PetscReal score[])
 {
-
   PetscFunctionBeginI;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscCall(svm->ops->crossvalidation(svm,c_arr,m,score));
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscCall(svm->ops->crossvalidation(svm, c_arr, m, score));
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
@@ -2556,12 +2408,11 @@ PetscErrorCode SVMCrossValidation(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal
 
 .seealso: SVMStratifiedKFoldCrossValidation(), SVMGridSearch(), SVMSetNfolds(), SVM
 @*/
-PetscErrorCode SVMKFoldCrossValidation(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal score[])
+PetscErrorCode SVMKFoldCrossValidation(SVM svm, PetscReal c_arr[], PetscInt m, PetscReal score[])
 {
-
   PetscFunctionBeginI;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscTryMethod(svm,"SVMKFoldCrossValidation_C",(SVM,PetscReal [],PetscInt, PetscReal []),(svm,c_arr,m,score));
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscTryMethod(svm, "SVMKFoldCrossValidation_C", (SVM, PetscReal[], PetscInt, PetscReal[]), (svm, c_arr, m, score));
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
@@ -2570,12 +2421,11 @@ PetscErrorCode SVMKFoldCrossValidation(SVM svm,PetscReal c_arr[],PetscInt m,Pets
 /*@
 
 @*/
-PetscErrorCode SVMStratifiedKFoldCrossValidation(SVM svm,PetscReal c_arr[],PetscInt m,PetscReal score[])
+PetscErrorCode SVMStratifiedKFoldCrossValidation(SVM svm, PetscReal c_arr[], PetscInt m, PetscReal score[])
 {
-
   PetscFunctionBeginI;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscTryMethod(svm,"SVMStratifiedKFoldCrossValidation_C",(SVM,PetscReal [],PetscInt, PetscReal []),(svm,c_arr,m,score));
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscTryMethod(svm, "SVMStratifiedKFoldCrossValidation_C", (SVM, PetscReal[], PetscInt, PetscReal[]), (svm, c_arr, m, score));
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
@@ -2595,14 +2445,11 @@ PetscErrorCode SVMStratifiedKFoldCrossValidation(SVM svm,PetscReal c_arr[],Petsc
 
 .seealso SVMTrain(), SVMTest(), SVMGetModelScores()
 @*/
-PetscErrorCode SVMComputeModelScores(SVM svm,Vec y_pred,Vec y_known)
+PetscErrorCode SVMComputeModelScores(SVM svm, Vec y_pred, Vec y_known)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  if (svm->ops->computemodelscores) {
-    PetscCall(svm->ops->computemodelscores(svm,y_pred,y_known));
-  }
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  if (svm->ops->computemodelscores) { PetscCall(svm->ops->computemodelscores(svm, y_pred, y_known)); }
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -2622,12 +2469,9 @@ PetscErrorCode SVMComputeModelScores(SVM svm,Vec y_pred,Vec y_known)
 @*/
 PetscErrorCode SVMComputeHingeLoss(SVM svm)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  if (svm->ops->computehingeloss) {
-    PetscCall(svm->ops->computehingeloss(svm));
-  }
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  if (svm->ops->computehingeloss) { PetscCall(svm->ops->computehingeloss(svm)); }
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -2647,12 +2491,9 @@ PetscErrorCode SVMComputeHingeLoss(SVM svm)
 @*/
 PetscErrorCode SVMComputeModelParams(SVM svm)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  if (svm->ops->computemodelparams) {
-    PetscCall(svm->ops->computemodelparams(svm));
-  }
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  if (svm->ops->computemodelparams) { PetscCall(svm->ops->computemodelparams(svm)); }
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -2671,26 +2512,24 @@ PetscErrorCode SVMComputeModelParams(SVM svm)
 
 .seealso SVM, SVMSetGramian(), SVMGetGramian(), SVMViewGramian(), SVMLoadTrainingDataset()
 @*/
-PetscErrorCode SVMLoadGramian(SVM svm,PetscViewer v)
+PetscErrorCode SVMLoadGramian(SVM svm, PetscViewer v)
 {
-  MPI_Comm   comm;
-  PetscBool  view_io,view_dataset;
+  MPI_Comm  comm;
+  PetscBool view_io, view_dataset;
 
   PetscFunctionBeginI;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidHeaderSpecific(v, PETSC_VIEWER_CLASSID, 2);
 
-  PetscCall(PetscLogEventBegin(SVM_LoadGramian,svm,0,0,0));
-  if (svm->ops->loadgramian) {
-    PetscCall(svm->ops->loadgramian(svm,v));
-  }
-  PetscCall(PetscLogEventEnd(SVM_LoadGramian,svm,0,0,0));
+  PetscCall(PetscLogEventBegin(SVM_LoadGramian, svm, 0, 0, 0));
+  if (svm->ops->loadgramian) { PetscCall(svm->ops->loadgramian(svm, v)); }
+  PetscCall(PetscLogEventEnd(SVM_LoadGramian, svm, 0, 0, 0));
 
-  PetscCall(PetscOptionsHasName(NULL,NULL,"-svm_view_io",&view_io));
-  PetscCall(PetscOptionsHasName(NULL,NULL,"-svm_view_gramian",&view_dataset));
+  PetscCall(PetscOptionsHasName(NULL, NULL, "-svm_view_io", &view_io));
+  PetscCall(PetscOptionsHasName(NULL, NULL, "-svm_view_gramian", &view_dataset));
   if (view_io || view_dataset) {
-    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
-    PetscCall(SVMViewGramian(svm,PETSC_VIEWER_STDOUT_(comm)));
+    PetscCall(PetscObjectGetComm((PetscObject)v, &comm));
+    PetscCall(SVMViewGramian(svm, PETSC_VIEWER_STDOUT_(comm)));
   }
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
@@ -2710,16 +2549,13 @@ PetscErrorCode SVMLoadGramian(SVM svm,PetscViewer v)
 
 .seealso SVM, SVMSetGramian(), SVMGetGramian(), SVMLoadGramian(), SVMViewTrainingDataset()
 @*/
-PetscErrorCode SVMViewGramian(SVM svm,PetscViewer v)
+PetscErrorCode SVMViewGramian(SVM svm, PetscViewer v)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidHeaderSpecific(v, PETSC_VIEWER_CLASSID, 2);
 
-  if (svm->ops->viewgramian) {
-    PetscCall(svm->ops->viewgramian(svm,v) );
-  }
+  if (svm->ops->viewgramian) { PetscCall(svm->ops->viewgramian(svm, v)); }
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -2738,38 +2574,33 @@ PetscErrorCode SVMViewGramian(SVM svm,PetscViewer v)
 
 .seealso SVM
 @*/
-PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat Xt,Vec y)
+PetscErrorCode SVMLoadDataset(SVM svm, PetscViewer v, Mat Xt, Vec y)
 {
-  MPI_Comm   comm;
   const char *type_name = NULL;
-
-  PetscBool  isascii,ishdf5,isbinary;
+  PetscBool   isascii, ishdf5, isbinary;
 
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
-  PetscValidHeaderSpecific(Xt,MAT_CLASSID,3);
-  PetscCheckSameComm(svm,1,Xt,3);
-  PetscValidHeaderSpecific(y,VEC_CLASSID,4);
-  PetscCheckSameComm(svm,1,y,4);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidHeaderSpecific(v, PETSC_VIEWER_CLASSID, 2);
+  PetscValidHeaderSpecific(Xt, MAT_CLASSID, 3);
+  PetscCheckSameComm(svm, 1, Xt, 3);
+  PetscValidHeaderSpecific(y, VEC_CLASSID, 4);
+  PetscCheckSameComm(svm, 1, y, 4);
 
-  PetscCall(PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERASCII,&isascii));
-  PetscCall(PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERHDF5,&ishdf5));
-  PetscCall(PetscObjectTypeCompare((PetscObject) v,PETSCVIEWERBINARY,&isbinary));
+  PetscCall(PetscObjectTypeCompare((PetscObject)v, PETSCVIEWERASCII, &isascii));
+  PetscCall(PetscObjectTypeCompare((PetscObject)v, PETSCVIEWERHDF5, &ishdf5));
+  PetscCall(PetscObjectTypeCompare((PetscObject)v, PETSCVIEWERBINARY, &isbinary));
 
-  PetscCall(PetscLogEventBegin(SVM_LoadDataset,svm,0,0,0));
+  PetscCall(PetscLogEventBegin(SVM_LoadDataset, svm, 0, 0, 0));
   if (isascii) {
-    PetscCall(DatasetLoad_SVMLight(Xt,y,v));
+    PetscCall(DatasetLoad_SVMLight(Xt, y, v));
   } else if (ishdf5 || isbinary) {
-    PetscCall(DatasetLoad_Binary(Xt,y,v));
+    PetscCall(DatasetLoad_Binary(Xt, y, v));
   } else {
-    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
-    PetscCall(PetscObjectGetType((PetscObject) v,&type_name));
-
-    SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMLoadDataset",type_name);
+    PetscCall(PetscObjectGetType((PetscObject)v, &type_name));
+    SETERRQ(PetscObjectComm((PetscObject)v), PETSC_ERR_SUP, "Viewer type %s not supported for SVMLoadDataset", type_name);
   }
-  PetscCall(PetscLogEventEnd(SVM_LoadDataset,svm,0,0,0));
-
+  PetscCall(PetscLogEventEnd(SVM_LoadDataset, svm, 0, 0, 0));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -2786,56 +2617,53 @@ PetscErrorCode SVMLoadDataset(SVM svm,PetscViewer v,Mat Xt,Vec y)
 
 .seealso SVMLoadCalibrationDataset(), SVMLoadTestDataset(), SVM
 @*/
-PetscErrorCode SVMLoadTrainingDataset(SVM svm,PetscViewer v)
+PetscErrorCode SVMLoadTrainingDataset(SVM svm, PetscViewer v)
 {
-  MPI_Comm  comm;
+  MPI_Comm comm;
 
-  Mat       Xt_training;
-  Mat       Xt_biased;
-  Vec       y_training;
+  Mat Xt_training;
+  Mat Xt_biased;
+  Vec y_training;
 
   PetscReal user_bias;
   PetscInt  mod;
 
-  PetscBool view_io,view_dataset;
+  PetscBool view_io, view_dataset;
 
   PetscFunctionBeginI;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidHeaderSpecific(v, PETSC_VIEWER_CLASSID, 2);
 
-  PetscCall(PetscObjectGetComm((PetscObject) svm,&comm));
+  PetscCall(PetscObjectGetComm((PetscObject)svm, &comm));
   /* Create matrix of training samples */
-  PetscCall(MatCreate(comm,&Xt_training));
-  PetscCall(PetscObjectSetName((PetscObject) Xt_training,"Xt_training"));
-  PetscCall(PetscObjectSetOptionsPrefix((PetscObject) Xt_training,"Xt_training_"));
+  PetscCall(MatCreate(comm, &Xt_training));
+  PetscCall(PetscObjectSetName((PetscObject)Xt_training, "Xt_training"));
+  PetscCall(PetscObjectSetOptionsPrefix((PetscObject)Xt_training, "Xt_training_"));
   PetscCall(MatSetFromOptions(Xt_training));
 
-  PetscCall(VecCreate(comm,&y_training));
-  PetscCall(PetscObjectSetName((PetscObject) y_training,"y_training"));
+  PetscCall(VecCreate(comm, &y_training));
+  PetscCall(PetscObjectSetName((PetscObject)y_training, "y_training"));
   PetscCall(VecSetFromOptions(y_training));
 
-  PetscCall(PetscLogEventBegin(SVM_LoadDataset,svm,0,0,0));
-  PetscCall(PetscViewerLoadSVMDataset(Xt_training,y_training,v));
-  PetscCall(PetscLogEventEnd(SVM_LoadDataset,svm,0,0,0));
+  PetscCall(PetscLogEventBegin(SVM_LoadDataset, svm, 0, 0, 0));
+  PetscCall(PetscViewerLoadSVMDataset(Xt_training, y_training, v));
+  PetscCall(PetscLogEventEnd(SVM_LoadDataset, svm, 0, 0, 0));
 
-  PetscCall(SVMGetMod(svm,&mod));
+  PetscCall(SVMGetMod(svm, &mod));
   if (mod == 2) {
-    PetscCall(SVMGetUserBias(svm,&user_bias));
-    PetscCall(MatBiasedCreate(Xt_training,user_bias,&Xt_biased));
+    PetscCall(SVMGetUserBias(svm, &user_bias));
+    PetscCall(MatBiasedCreate(Xt_training, user_bias, &Xt_biased));
     Xt_training = Xt_biased;
   }
-  PetscCall(SVMSetTrainingDataset(svm,Xt_training,y_training));
+  PetscCall(SVMSetTrainingDataset(svm, Xt_training, y_training));
 
-  PetscCall(PetscOptionsHasName(NULL,NULL,"-svm_view_io",&view_io));
-  PetscCall(PetscOptionsHasName(NULL,NULL,"-svm_view_training_dataset",&view_dataset));
-  if (view_io || view_dataset) {
-    PetscCall(SVMViewTrainingDataset(svm,PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject) v))));
-  }
+  PetscCall(PetscOptionsHasName(NULL, NULL, "-svm_view_io", &view_io));
+  PetscCall(PetscOptionsHasName(NULL, NULL, "-svm_view_training_dataset", &view_dataset));
+  if (view_io || view_dataset) { PetscCall(SVMViewTrainingDataset(svm, PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)v)))); }
 
   /* Free memory */
   PetscCall(MatDestroy(&Xt_training));
   PetscCall(VecDestroy(&y_training));
-
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
@@ -2856,36 +2684,29 @@ PetscErrorCode SVMLoadTrainingDataset(SVM svm,PetscViewer v)
 
 .seealso SVM, PetscViewer, SVMViewDataset(), SVMViewTestDataset()
 @*/
-PetscErrorCode SVMViewTrainingDataset(SVM svm,PetscViewer v)
+PetscErrorCode SVMViewTrainingDataset(SVM svm, PetscViewer v)
 {
-  MPI_Comm   comm;
+  Mat Xt;
+  Vec y;
 
-  Mat        Xt;
-  Vec        y;
-
-  PetscBool  isascii;
+  PetscBool   isascii;
   const char *type_name = NULL;
 
   PetscFunctionBegin;
-  PetscCall(SVMGetTrainingDataset(svm,&Xt,&y));
-  if (!Xt || !y) {
-    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
-    SETERRQ(comm,PETSC_ERR_ARG_NULL,"Training dataset is not set");
-  }
+  PetscCall(SVMGetTrainingDataset(svm, &Xt, &y));
+  PetscCheck(Xt && y, PetscObjectComm((PetscObject)v), PETSC_ERR_ARG_NULL, "Training dataset is not set");
 
-  PetscCall(PetscObjectTypeCompare((PetscObject)v,PETSCVIEWERASCII,&isascii));
+  PetscCall(PetscObjectTypeCompare((PetscObject)v, PETSCVIEWERASCII, &isascii));
   if (isascii) {
     /* Print info related to svm type */
-    PetscCall(PetscObjectPrintClassNamePrefixType((PetscObject) svm,v));
+    PetscCall(PetscObjectPrintClassNamePrefixType((PetscObject)svm, v));
 
     PetscCall(PetscViewerASCIIPushTab(v));
-    PetscCall(SVMViewDataset(svm,Xt,y,v));
+    PetscCall(SVMViewDataset(svm, Xt, y, v));
     PetscCall(PetscViewerASCIIPopTab(v));
   } else {
-    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
-    PetscCall(PetscObjectGetType((PetscObject) v,&type_name));
-
-    SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewTrainingDataset",type_name);
+    PetscCall(PetscObjectGetType((PetscObject)v, &type_name));
+    SETERRQ(PetscObjectComm((PetscObject)v), PETSC_ERR_SUP, "Viewer type %s not supported for SVMViewTrainingDataset", type_name);
   }
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -2903,51 +2724,51 @@ PetscErrorCode SVMViewTrainingDataset(SVM svm,PetscViewer v)
 
 .seealso SVMLoadTrainingDataset(), SVMLoadCalibrationDataset(), SVM
 @*/
-PetscErrorCode SVMLoadTestDataset(SVM svm,PetscViewer v)
+PetscErrorCode SVMLoadTestDataset(SVM svm, PetscViewer v)
 {
-  MPI_Comm    comm;
+  MPI_Comm comm;
 
-  Mat         Xt_test;
-  Mat         Xt_biased;
-  Vec         y_test;
+  Mat Xt_test;
+  Mat Xt_biased;
+  Vec y_test;
 
-  PetscReal   user_bias;
-  PetscInt    mod;
+  PetscReal user_bias;
+  PetscInt  mod;
 
-  PetscBool  view_io,view_test_dataset;
+  PetscBool view_io, view_test_dataset;
 
   PetscFunctionBeginI;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidHeaderSpecific(v, PETSC_VIEWER_CLASSID, 2);
 
-  PetscCall(PetscObjectGetComm((PetscObject) svm,&comm));
-  PetscCall(MatCreate(comm,&Xt_test));
+  PetscCall(PetscObjectGetComm((PetscObject)svm, &comm));
+  PetscCall(MatCreate(comm, &Xt_test));
   /* Create matrix of test samples */
-  PetscCall(PetscObjectSetName((PetscObject) Xt_test,"Xt_test"));
-  PetscCall(PetscObjectSetOptionsPrefix((PetscObject) Xt_test,"Xt_test_"));
+  PetscCall(PetscObjectSetName((PetscObject)Xt_test, "Xt_test"));
+  PetscCall(PetscObjectSetOptionsPrefix((PetscObject)Xt_test, "Xt_test_"));
   PetscCall(MatSetFromOptions(Xt_test));
   /* Create label vector of test samples */
-  PetscCall(VecCreate(comm,&y_test));
+  PetscCall(VecCreate(comm, &y_test));
   PetscCall(VecSetFromOptions(y_test));
-  PetscCall(PetscObjectSetName((PetscObject) y_test,"y_test"));
+  PetscCall(PetscObjectSetName((PetscObject)y_test, "y_test"));
 
-  PetscCall(PetscLogEventBegin(SVM_LoadDataset,svm,0,0,0));
-  PetscCall(PetscViewerLoadSVMDataset(Xt_test,y_test,v));
-  PetscCall(PetscLogEventEnd(SVM_LoadDataset,svm,0,0,0));
+  PetscCall(PetscLogEventBegin(SVM_LoadDataset, svm, 0, 0, 0));
+  PetscCall(PetscViewerLoadSVMDataset(Xt_test, y_test, v));
+  PetscCall(PetscLogEventEnd(SVM_LoadDataset, svm, 0, 0, 0));
 
-  PetscCall(SVMGetMod(svm,&mod));
+  PetscCall(SVMGetMod(svm, &mod));
   if (mod == 2) {
-    PetscCall(SVMGetUserBias(svm,&user_bias));
-    PetscCall(MatBiasedCreate(Xt_test,user_bias,&Xt_biased));
+    PetscCall(SVMGetUserBias(svm, &user_bias));
+    PetscCall(MatBiasedCreate(Xt_test, user_bias, &Xt_biased));
     Xt_test = Xt_biased;
   }
-  PetscCall(SVMSetTestDataset(svm,Xt_test,y_test));
+  PetscCall(SVMSetTestDataset(svm, Xt_test, y_test));
 
-  PetscCall(PetscOptionsHasName(NULL,NULL,"-svm_view_io",&view_io));
-  PetscCall(PetscOptionsHasName(NULL,NULL,"-svm_view_test_dataset",&view_test_dataset));
+  PetscCall(PetscOptionsHasName(NULL, NULL, "-svm_view_io", &view_io));
+  PetscCall(PetscOptionsHasName(NULL, NULL, "-svm_view_test_dataset", &view_test_dataset));
   if (view_io || view_test_dataset) {
-    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
-    PetscCall(SVMViewTestDataset(svm,PETSC_VIEWER_STDOUT_(comm)));
+    PetscCall(PetscObjectGetComm((PetscObject)v, &comm));
+    PetscCall(SVMViewTestDataset(svm, PETSC_VIEWER_STDOUT_(comm)));
   }
 
   /* Free memory */
@@ -2973,39 +2794,32 @@ PetscErrorCode SVMLoadTestDataset(SVM svm,PetscViewer v)
 
 .seealso SVM, PetscViewer, SVMViewDataset(), SVMViewTrainingDataset()
 @*/
-PetscErrorCode SVMViewTestDataset(SVM svm,PetscViewer v)
+PetscErrorCode SVMViewTestDataset(SVM svm, PetscViewer v)
 {
-  MPI_Comm   comm;
+  Mat Xt;
+  Vec y;
 
-  Mat        Xt;
-  Vec        y;
-
-  PetscBool  isascii;
+  PetscBool   isascii;
   const char *type_name = NULL;
 
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidHeaderSpecific(v, PETSC_VIEWER_CLASSID, 2);
 
-  PetscCall(SVMGetTestDataset(svm,&Xt,&y));
-  if (!Xt || !y) {
-    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
-    SETERRQ(comm,PETSC_ERR_ARG_NULL,"Test dataset is not set");
-  }
+  PetscCall(SVMGetTestDataset(svm, &Xt, &y));
+  PetscCheck(Xt && y, PetscObjectComm((PetscObject)v), PETSC_ERR_ARG_NULL, "Test dataset is not set");
 
-  PetscCall(PetscObjectTypeCompare((PetscObject)v,PETSCVIEWERASCII,&isascii));
+  PetscCall(PetscObjectTypeCompare((PetscObject)v, PETSCVIEWERASCII, &isascii));
   if (isascii) {
     /* Print info related to svm type */
-    PetscCall(PetscObjectPrintClassNamePrefixType((PetscObject) svm,v));
+    PetscCall(PetscObjectPrintClassNamePrefixType((PetscObject)svm, v));
 
     PetscCall(PetscViewerASCIIPushTab(v));
-    PetscCall(SVMViewDataset(svm,Xt,y,v));
+    PetscCall(SVMViewDataset(svm, Xt, y, v));
     PetscCall(PetscViewerASCIIPopTab(v));
   } else {
-    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
-    PetscCall(PetscObjectGetType((PetscObject) v,&type_name));
-
-    SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewTestDataset",type_name);
+    PetscCall(PetscObjectGetType((PetscObject)v, &type_name));
+    SETERRQ(PetscObjectComm((PetscObject)v), PETSC_ERR_SUP, "Viewer type %s not supported for SVMViewTestDataset", type_name);
   }
   PetscFunctionReturn(0);
 }
@@ -3023,21 +2837,21 @@ PetscErrorCode SVMViewTestDataset(SVM svm,PetscViewer v)
 
 .seealso SVMLoadTrainingDataset(), SVMLoadTestDataset(), SVM
 @*/
-PetscErrorCode SVMLoadCalibrationDataset(SVM svm,PetscViewer v)
+PetscErrorCode SVMLoadCalibrationDataset(SVM svm, PetscViewer v)
 {
   MPI_Comm  comm;
-  PetscBool view_io,view_calibration_dataset;
+  PetscBool view_io, view_calibration_dataset;
 
   PetscFunctionBeginI;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,2);
-  PetscTryMethod(svm,"SVMLoadCalibrationDataset_C",(SVM,PetscViewer),(svm,v));
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidHeaderSpecific(v, PETSC_VIEWER_CLASSID, 2);
+  PetscTryMethod(svm, "SVMLoadCalibrationDataset_C", (SVM, PetscViewer), (svm, v));
 
-  PetscCall(PetscOptionsHasName(NULL,NULL,"-svm_view_io",&view_io));
-  PetscCall(PetscOptionsHasName(NULL,NULL,"-svm_view_calibration_dataset",&view_calibration_dataset));
+  PetscCall(PetscOptionsHasName(NULL, NULL, "-svm_view_io", &view_io));
+  PetscCall(PetscOptionsHasName(NULL, NULL, "-svm_view_calibration_dataset", &view_calibration_dataset));
   if (view_io || view_calibration_dataset) {
-    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
-    PetscCall(SVMViewCalibrationDataset(svm,PETSC_VIEWER_STDOUT_(comm)));
+    PetscCall(PetscObjectGetComm((PetscObject)v, &comm));
+    PetscCall(SVMViewCalibrationDataset(svm, PETSC_VIEWER_STDOUT_(comm)));
   }
   PetscFunctionReturnI(0);
 }
@@ -3057,12 +2871,11 @@ PetscErrorCode SVMLoadCalibrationDataset(SVM svm,PetscViewer v)
 
 .seealso SVM, PetscViewer, SVMViewDataset(), SVMViewTrainingDataset(), SVMViewTestDataset()
 @*/
-PetscErrorCode SVMViewCalibrationDataset(SVM svm,PetscViewer v)
+PetscErrorCode SVMViewCalibrationDataset(SVM svm, PetscViewer v)
 {
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscTryMethod(svm,"SVMViewCalibrationDataset_C",(SVM,PetscViewer),(svm,v));
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscTryMethod(svm, "SVMViewCalibrationDataset_C", (SVM, PetscViewer), (svm, v));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -3079,72 +2892,72 @@ PetscErrorCode SVMViewCalibrationDataset(SVM svm,PetscViewer v)
 
 .seealso SVM, PetscViewer, SVMViewTestDataset(), SVMViewTrainingDataset()
 @*/
-PetscErrorCode SVMViewDataset(SVM svm,Mat Xt,Vec y,PetscViewer v)
+PetscErrorCode SVMViewDataset(SVM svm, Mat Xt, Vec y, PetscViewer v)
 {
-  MPI_Comm   comm;
+  MPI_Comm    comm;
   const char *type_name = NULL;
 
-  PetscInt   M,M_plus,M_minus,N;
-  PetscReal  per_plus,per_minus;
+  PetscInt  M, M_plus, M_minus, N;
+  PetscReal per_plus, per_minus;
 
-  PetscInt   svm_mod;
+  PetscInt svm_mod;
 
-  Mat        Xt_inner;
-  PetscReal  bias;
+  Mat       Xt_inner;
+  PetscReal bias;
 
-  Vec        y_max = NULL;
-  IS         is_plus = NULL;
-  PetscReal  max;
+  Vec       y_max   = NULL;
+  IS        is_plus = NULL;
+  PetscReal max;
 
-  PetscBool  isascii;
+  PetscBool isascii;
 
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(svm,SVM_CLASSID,1);
-  PetscValidHeaderSpecific(Xt,MAT_CLASSID,2);
-  PetscValidHeaderSpecific(y,VEC_CLASSID,3);
-  PetscValidHeaderSpecific(v,PETSC_VIEWER_CLASSID,4);
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  PetscValidHeaderSpecific(Xt, MAT_CLASSID, 2);
+  PetscValidHeaderSpecific(y, VEC_CLASSID, 3);
+  PetscValidHeaderSpecific(v, PETSC_VIEWER_CLASSID, 4);
 
-  PetscCall(PetscObjectTypeCompare((PetscObject)v,PETSCVIEWERASCII,&isascii));
+  PetscCall(PetscObjectTypeCompare((PetscObject)v, PETSCVIEWERASCII, &isascii));
   if (isascii) {
-    PetscCall(MatGetSize(Xt,&M,&N));
+    PetscCall(MatGetSize(Xt, &M, &N));
 
-    PetscCall(VecDuplicate(y,&y_max));
-    PetscCall(VecMax(y,NULL,&max));
-    PetscCall(VecSet(y_max,max));
+    PetscCall(VecDuplicate(y, &y_max));
+    PetscCall(VecMax(y, NULL, &max));
+    PetscCall(VecSet(y_max, max));
 
-    PetscCall(VecWhichEqual(y,y_max,&is_plus));
-    PetscCall(ISGetSize(is_plus,&M_plus));
+    PetscCall(VecWhichEqual(y, y_max, &is_plus));
+    PetscCall(ISGetSize(is_plus, &M_plus));
 
-    per_plus  = ((PetscReal) M_plus / (PetscReal) M) * 100.;
+    per_plus  = ((PetscReal)M_plus / (PetscReal)M) * 100.;
     M_minus   = M - M_plus;
     per_minus = 100. - per_plus;
 
-    PetscCall(PetscObjectPrintClassNamePrefixType((PetscObject) Xt,v));
-    PetscCall(SVMGetMod(svm,&svm_mod));
+    PetscCall(PetscObjectPrintClassNamePrefixType((PetscObject)Xt, v));
+    PetscCall(SVMGetMod(svm, &svm_mod));
     if (svm_mod == 2) {
       N -= 1;
 
-      PetscCall(MatBiasedGetInnerMat(Xt,&Xt_inner));
-      PetscCall(MatBiasedGetBias(Xt,&bias));
+      PetscCall(MatBiasedGetInnerMat(Xt, &Xt_inner));
+      PetscCall(MatBiasedGetBias(Xt, &bias));
 
       PetscCall(PetscViewerASCIIPushTab(v));
-      PetscCall(PetscViewerASCIIPrintf(v,"Samples are augmented with additional dimension by means of bias %.2f\n",bias));
-      PetscCall(PetscViewerASCIIPrintf(v,"inner"));
-      PetscCall(PetscObjectPrintClassNamePrefixType((PetscObject) Xt_inner,v));
+      PetscCall(PetscViewerASCIIPrintf(v, "Samples are augmented with additional dimension by means of bias %.2f\n", bias));
+      PetscCall(PetscViewerASCIIPrintf(v, "inner"));
+      PetscCall(PetscObjectPrintClassNamePrefixType((PetscObject)Xt_inner, v));
       PetscCall(PetscViewerASCIIPopTab(v));
 
       PetscCall(PetscViewerASCIIPushTab(v));
     }
 
     PetscCall(PetscViewerASCIIPushTab(v));
-    PetscCall(PetscViewerASCIIPrintf(v,"samples\t%5" PetscInt_FMT "\n",M));
-    PetscCall(PetscViewerASCIIPrintf(v,"samples+\t%5" PetscInt_FMT " (%.2f%%)\n",M_plus,(double)per_plus));
-    PetscCall(PetscViewerASCIIPrintf(v,"samples-\t%5" PetscInt_FMT " (%.2f%%)\n",M_minus,(double)per_minus));
+    PetscCall(PetscViewerASCIIPrintf(v, "samples\t%5" PetscInt_FMT "\n", M));
+    PetscCall(PetscViewerASCIIPrintf(v, "samples+\t%5" PetscInt_FMT " (%.2f%%)\n", M_plus, (double)per_plus));
+    PetscCall(PetscViewerASCIIPrintf(v, "samples-\t%5" PetscInt_FMT " (%.2f%%)\n", M_minus, (double)per_minus));
     if (svm_mod == 2) {
-      PetscCall(PetscViewerASCIIPrintf(v,"features\t%5" PetscInt_FMT " (%" PetscInt_FMT ")\n",N,N + 1));
+      PetscCall(PetscViewerASCIIPrintf(v, "features\t%5" PetscInt_FMT " (%" PetscInt_FMT ")\n", N, N + 1));
       PetscCall(PetscViewerASCIIPopTab(v));
     } else {
-      PetscCall(PetscViewerASCIIPrintf(v,"features\t%5" PetscInt_FMT "\n",N));
+      PetscCall(PetscViewerASCIIPrintf(v, "features\t%5" PetscInt_FMT "\n", N));
     }
     PetscCall(PetscViewerASCIIPopTab(v));
 
@@ -3152,11 +2965,10 @@ PetscErrorCode SVMViewDataset(SVM svm,Mat Xt,Vec y,PetscViewer v)
     PetscCall(VecDestroy(&y_max));
     PetscCall(ISDestroy(&is_plus));
   } else {
-    PetscCall(PetscObjectGetComm((PetscObject) v,&comm));
-    PetscCall(PetscObjectGetType((PetscObject) v,&type_name));
+    PetscCall(PetscObjectGetComm((PetscObject)v, &comm));
+    PetscCall(PetscObjectGetType((PetscObject)v, &type_name));
 
-    SETERRQ(comm,PETSC_ERR_SUP,"Viewer type %s not supported for SVMViewDataset",type_name);
+    SETERRQ(comm, PETSC_ERR_SUP, "Viewer type %s not supported for SVMViewDataset", type_name);
   }
-
   PetscFunctionReturn(PETSC_SUCCESS);
 }

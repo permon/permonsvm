@@ -1,30 +1,28 @@
-
-#if !defined(__PROBIMPL_H)
-#define	__PROBIMPL_H
+#pragma once
 
 #include <permon/private/svmimpl.h>
 
 typedef struct {
-  Mat       Xt_training;
-  Vec       y_training;
+  Mat Xt_training;
+  Vec y_training;
 
-  Mat       Xt_calib;
-  Vec       y_calib;
+  Mat Xt_calib;
+  Vec y_calib;
 
-  PetscInt  Np_calib;
-  PetscInt  Nn_calib;
+  PetscInt Np_calib;
+  PetscInt Nn_calib;
 
-  SVM       inner;
+  SVM inner;
 
-  Vec       vec_dist;
-  Vec       vec_targets;
+  Vec vec_dist;
+  Vec vec_targets;
 
   PetscBool labels_to_target_probs;
 
-  Tao       tao;
+  Tao tao;
 
-  Vec       *work_vecs;
-  Vec       work_sub[2];
+  Vec *work_vecs;
+  Vec  work_sub[2];
 
   PetscReal sigmoid_params[2];
   PetscReal threshold;
@@ -33,5 +31,3 @@ typedef struct {
   PetscReal model_scores[16];
 
 } SVM_Probability;
-
-#endif
