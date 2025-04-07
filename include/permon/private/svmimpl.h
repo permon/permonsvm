@@ -8,7 +8,7 @@ typedef struct _SVMOps *SVMOps;
 struct _SVMOps {
   PetscErrorCode (*reset)(SVM);
   PetscErrorCode (*destroy)(SVM);
-  PetscErrorCode (*setfromoptions)(PetscOptionItems *, SVM);
+  PetscErrorCode (*setfromoptions)(PetscOptionItems, SVM);
   PetscErrorCode (*setup)(SVM);
   PetscErrorCode (*convergedsetup)(SVM);
   PetscErrorCode (*train)(SVM);

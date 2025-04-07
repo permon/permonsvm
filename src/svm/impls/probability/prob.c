@@ -759,7 +759,7 @@ PetscErrorCode SVMGetOptionsPrefix_Probability(SVM svm, const char *prefix[])
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode SVMSetFromOptions_Probability(PetscOptionItems *PetscOptionsObject, SVM svm)
+PetscErrorCode SVMSetFromOptions_Probability(PetscOptionItems PetscOptionsObject, SVM svm)
 {
   SVM_Probability *svm_prob = (SVM_Probability *)svm->data;
 
