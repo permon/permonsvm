@@ -183,10 +183,10 @@ PetscErrorCode MatCreateSubMatrix_Biased(Mat A, IS isrow, IS iscol, MatReuse cll
 
   PetscCall(MatCreateShell(comm, m, n, M, N, new_ctx, &mat_inner));
   /* Set shell matrix functions */
-  PetscCall(MatShellSetOperation(mat_inner, MATOP_DESTROY, (void (*)(void))MatDestroy_Biased));
-  PetscCall(MatShellSetOperation(mat_inner, MATOP_MULT, (void (*)(void))MatMult_Biased));
-  PetscCall(MatShellSetOperation(mat_inner, MATOP_MULT_TRANSPOSE, (void (*)(void))MatMultTranspose_Biased));
-  PetscCall(MatShellSetOperation(mat_inner, MATOP_CREATE_SUBMATRIX, (void (*)(void))MatCreateSubMatrix_Biased));
+  PetscCall(MatShellSetOperation(mat_inner, MATOP_DESTROY, (PetscErrorCodeFn *)MatDestroy_Biased));
+  PetscCall(MatShellSetOperation(mat_inner, MATOP_MULT, (PetscErrorCodeFn *)MatMult_Biased));
+  PetscCall(MatShellSetOperation(mat_inner, MATOP_MULT_TRANSPOSE, (PetscErrorCodeFn *)MatMultTranspose_Biased));
+  PetscCall(MatShellSetOperation(mat_inner, MATOP_CREATE_SUBMATRIX, (PetscErrorCodeFn *)MatCreateSubMatrix_Biased));
   PetscCall(PetscObjectComposeFunction((PetscObject)mat_inner, "MatGetOwnershipIS_C", MatGetOwnershipIS_Biased));
 
   /* Set the default vector type for the shell to be the same as for the matrix A */
@@ -323,10 +323,10 @@ PetscErrorCode MatBiasedCreate(Mat A, PetscReal bias, Mat *A_biased)
 
   PetscCall(MatCreateShell(comm, m, n, M, N + 1, ctx, &A_biased_inner));
   /* Set shell matrix functions */
-  PetscCall(MatShellSetOperation(A_biased_inner, MATOP_DESTROY, (void (*)(void))MatDestroy_Biased));
-  PetscCall(MatShellSetOperation(A_biased_inner, MATOP_MULT, (void (*)(void))MatMult_Biased));
-  PetscCall(MatShellSetOperation(A_biased_inner, MATOP_MULT_TRANSPOSE, (void (*)(void))MatMultTranspose_Biased));
-  PetscCall(MatShellSetOperation(A_biased_inner, MATOP_CREATE_SUBMATRIX, (void (*)(void))MatCreateSubMatrix_Biased));
+  PetscCall(MatShellSetOperation(A_biased_inner, MATOP_DESTROY, (PetscErrorCodeFn *)MatDestroy_Biased));
+  PetscCall(MatShellSetOperation(A_biased_inner, MATOP_MULT, (PetscErrorCodeFn *)MatMult_Biased));
+  PetscCall(MatShellSetOperation(A_biased_inner, MATOP_MULT_TRANSPOSE, (PetscErrorCodeFn *)MatMultTranspose_Biased));
+  PetscCall(MatShellSetOperation(A_biased_inner, MATOP_CREATE_SUBMATRIX, (PetscErrorCodeFn *)MatCreateSubMatrix_Biased));
   PetscCall(PetscObjectComposeFunction((PetscObject)A_biased_inner, "MatGetOwnershipIS_C", MatGetOwnershipIS_Biased));
 
   /* Set the default vector type for the shell to be the same as for the matrix A */
