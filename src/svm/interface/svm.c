@@ -322,7 +322,7 @@ PetscErrorCode SVMSetType(SVM svm, const SVMType type)
   PetscCall(PetscObjectTypeCompare((PetscObject)svm, type, &issame));
   if (issame) PetscFunctionReturn(PETSC_SUCCESS);
 
-  PetscCall(PetscFunctionListFind(SVMList, type, (void (**)(void))&create_svm));
+  PetscCall(PetscFunctionListFind(SVMList, type, &create_svm));
   PetscCheck(create_svm, PETSC_COMM_SELF, PETSC_ERR_ARG_UNKNOWN_TYPE, "Unable to find requested SVM type %s", type);
 
   /* Destroy the pre-existing private SVM context */
