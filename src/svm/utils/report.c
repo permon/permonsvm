@@ -177,9 +177,9 @@ PetscErrorCode SVMViewBinaryClassificationReport(SVM svm, PetscInt *cmat, PetscR
   /* Header */
   PetscCall(PetscViewerASCIIPushTab(v));
   PetscCall(PetscViewerASCIIPrintf(v, "label\tprecision\trecall\tF1\tJaccard index\n"));
-  PetscCall(PetscViewerASCIIPrintf(v, "%.1f  \t%.4f\t\t%.4f\t%.4f\t%.4f\n", labels[0], scores[1], scores[4], scores[7], scores[10]));
-  PetscCall(PetscViewerASCIIPrintf(v, "%.1f  \t%.4f\t\t%.4f\t%.4f\t%.4f\n", labels[1], scores[2], scores[5], scores[8], scores[11]));
-  PetscCall(PetscViewerASCIIPrintf(v, "mean  \t%.4f\t\t%.4f\t%.4f\t%.4f\n", scores[3], scores[6], scores[9], scores[12]));
+  PetscCall(PetscViewerASCIIPrintf(v, "%.1f  \t%.4f\t\t%.4f\t%.4f\t%.4f\n", labels[0], (double)scores[1], (double)scores[4], (double)scores[7], (double)scores[10]));
+  PetscCall(PetscViewerASCIIPrintf(v, "%.1f  \t%.4f\t\t%.4f\t%.4f\t%.4f\n", labels[1], (double)scores[2], (double)scores[5], (double)scores[8], (double)scores[11]));
+  PetscCall(PetscViewerASCIIPrintf(v, "mean  \t%.4f\t\t%.4f\t%.4f\t%.4f\n", scores[3], (double)scores[6], (double)scores[9], (double)scores[12]));
   PetscCall(PetscViewerASCIIPrintf(v, "accuracy = %.4f\n", (double)scores[0]));
   PetscCall(PetscViewerASCIIPrintf(v, "auc_roc  = %.4f\n", (double)scores[15]));
   PetscCall(PetscViewerASCIIPopTab(v));

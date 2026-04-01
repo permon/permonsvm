@@ -2941,7 +2941,7 @@ PetscErrorCode SVMViewDataset(SVM svm, Mat Xt, Vec y, PetscViewer v)
       PetscCall(MatBiasedGetBias(Xt, &bias));
 
       PetscCall(PetscViewerASCIIPushTab(v));
-      PetscCall(PetscViewerASCIIPrintf(v, "Samples are augmented with additional dimension by means of bias %.2f\n", bias));
+      PetscCall(PetscViewerASCIIPrintf(v, "Samples are augmented with additional dimension by means of bias %.2f\n", (double)bias));
       PetscCall(PetscViewerASCIIPrintf(v, "inner"));
       PetscCall(PetscObjectPrintClassNamePrefixType((PetscObject)Xt_inner, v));
       PetscCall(PetscViewerASCIIPopTab(v));

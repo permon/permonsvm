@@ -1832,9 +1832,9 @@ PetscErrorCode SVMGridSearch_Binary(SVM svm)
   }
 
   if (m == 1) {
-    PetscCall(PetscInfo(svm, "selected best C=%.4f (score=%f)\n", grid[p], score_best));
+    PetscCall(PetscInfo(svm, "selected best C=%.4f (score=%f)\n", (double)grid[p], (double)score_best));
   } else {
-    PetscCall(PetscInfo(svm, "selected best C+=%.4f, C-=%.4f (score=%f)\n", grid[p * m], grid[p * m + 1], score_best));
+    PetscCall(PetscInfo(svm, "selected best C+=%.4f, C-=%.4f (score=%f)\n", (double)grid[p * m], (double)grid[p * m + 1], (double)score_best));
   }
 
   PetscCall(SVMSetPenalty(svm, m, &grid[p * m]));
