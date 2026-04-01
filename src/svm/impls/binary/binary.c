@@ -850,9 +850,9 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
     if (svm_mod == 1) {
       QPS qps_inner;
       PetscCall(QPSSMALXEGetInnerQPS(qps, &qps_inner));
-      PetscCall(QPSMonitorSet(qps_inner, SVMMonitorDefault_Binary, mctx, SVMMonitorDestroyCtx_Binary));
+      PetscCall(QPSMonitorSet(qps_inner, SVMMonitorDefault_Binary, mctx, (PetscCtxDestroyFn *)SVMMonitorDestroyCtx_Binary));
     } else {
-      PetscCall(QPSMonitorSet(qps, SVMMonitorDefault_Binary, mctx, SVMMonitorDestroyCtx_Binary));
+      PetscCall(QPSMonitorSet(qps, SVMMonitorDefault_Binary, mctx, (PetscCtxDestroyFn *)SVMMonitorDestroyCtx_Binary));
     }
   }
   PetscCall(PetscOptionsHasName(NULL, ((PetscObject)svm)->prefix, "-svm_monitor_obj_funcs", &svm_monitor_set));
@@ -861,9 +861,9 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
     if (svm_mod == 1) {
       QPS qps_inner;
       PetscCall(QPSSMALXEGetInnerQPS(qps, &qps_inner));
-      PetscCall(QPSMonitorSet(qps_inner, SVMMonitorObjFuncs_Binary, mctx, SVMMonitorDestroyCtx_Binary));
+      PetscCall(QPSMonitorSet(qps_inner, SVMMonitorObjFuncs_Binary, mctx, (PetscCtxDestroyFn *)SVMMonitorDestroyCtx_Binary));
     } else {
-      PetscCall(QPSMonitorSet(qps, SVMMonitorObjFuncs_Binary, mctx, SVMMonitorDestroyCtx_Binary));
+      PetscCall(QPSMonitorSet(qps, SVMMonitorObjFuncs_Binary, mctx, (PetscCtxDestroyFn *)SVMMonitorDestroyCtx_Binary));
     }
   }
   PetscCall(PetscOptionsHasName(NULL, ((PetscObject)svm)->prefix, "-svm_monitor_training_scores", &svm_monitor_set));
@@ -872,9 +872,9 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
     if (svm_mod == 1) {
       QPS qps_inner;
       PetscCall(QPSSMALXEGetInnerQPS(qps, &qps_inner));
-      PetscCall(QPSMonitorSet(qps_inner, SVMMonitorTrainingScores_Binary, mctx, SVMMonitorDestroyCtx_Binary));
+      PetscCall(QPSMonitorSet(qps_inner, SVMMonitorTrainingScores_Binary, mctx, (PetscCtxDestroyFn *)SVMMonitorDestroyCtx_Binary));
     } else {
-      PetscCall(QPSMonitorSet(qps, SVMMonitorTrainingScores_Binary, mctx, SVMMonitorDestroyCtx_Binary));
+      PetscCall(QPSMonitorSet(qps, SVMMonitorTrainingScores_Binary, mctx, (PetscCtxDestroyFn *)SVMMonitorDestroyCtx_Binary));
     }
   }
   PetscCall(PetscOptionsHasName(NULL, ((PetscObject)svm)->prefix, "-svm_monitor_scores", &svm_monitor_set));
@@ -888,9 +888,9 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
     if (svm_mod == 1) {
       QPS qps_inner;
       PetscCall(QPSSMALXEGetInnerQPS(qps, &qps_inner));
-      PetscCall(QPSMonitorSet(qps_inner, SVMMonitorScores_Binary, mctx, SVMMonitorDestroyCtx_Binary));
+      PetscCall(QPSMonitorSet(qps_inner, SVMMonitorScores_Binary, mctx, (PetscCtxDestroyFn *)SVMMonitorDestroyCtx_Binary));
     } else {
-      PetscCall(QPSMonitorSet(qps, SVMMonitorScores_Binary, mctx, SVMMonitorDestroyCtx_Binary));
+      PetscCall(QPSMonitorSet(qps, SVMMonitorScores_Binary, mctx, (PetscCtxDestroyFn *)SVMMonitorDestroyCtx_Binary));
     }
   }
 
@@ -1628,7 +1628,7 @@ PetscErrorCode SVMConvergedMaximalDualViolation_Binary(QPS qps, KSPConvergedReas
   PetscFunctionBegin;
   PetscValidHeaderSpecific(qps, QPS_CLASSID, 1);
 
-  PetscCall(QPSGetConvergenceContext(qps, (void *)&svm));
+  PetscCall(QPSGetConvergenceContext(qps, (void **)&svm));
   PetscCall(QPSGetIterationNumber(qps, &it));
   PetscCall(QPSGetTolerances(qps, NULL, &atol, NULL, &max_it));
 
@@ -1669,7 +1669,7 @@ PetscErrorCode SVMConvergedDualityGap_Binary(QPS qps, KSPConvergedReason *reason
   PetscFunctionBegin;
   PetscValidHeaderSpecific(qps, QPS_CLASSID, 1);
 
-  PetscCall(QPSGetConvergenceContext(qps, (void *)&svm));
+  PetscCall(QPSGetConvergenceContext(qps, (void **)&svm));
   PetscCall(QPSGetIterationNumber(qps, &it));
   PetscCall(QPSGetTolerances(qps, &rtol, NULL, NULL, &max_it));
 
@@ -1832,9 +1832,9 @@ PetscErrorCode SVMGridSearch_Binary(SVM svm)
   }
 
   if (m == 1) {
-    PetscCall(PetscInfo(svm, "selected best C=%.4f (score=%f)\n", grid[p], score_best));
+    PetscCall(PetscInfo(svm, "selected best C=%.4f (score=%f)\n", (double)grid[p], (double)score_best));
   } else {
-    PetscCall(PetscInfo(svm, "selected best C+=%.4f, C-=%.4f (score=%f)\n", grid[p * m], grid[p * m + 1], score_best));
+    PetscCall(PetscInfo(svm, "selected best C+=%.4f, C-=%.4f (score=%f)\n", (double)grid[p * m], (double)grid[p * m + 1], (double)score_best));
   }
 
   PetscCall(SVMSetPenalty(svm, m, &grid[p * m]));
@@ -1971,7 +1971,7 @@ PetscErrorCode SVMViewTestPredictions_Binary(SVM svm, PetscViewer v)
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMCreate_Binary"
-PetscErrorCode SVMCreate_Binary(SVM svm)
+PERMON_EXTERN PetscErrorCode SVMCreate_Binary(SVM svm)
 {
   SVM_Binary *svm_binary;
 

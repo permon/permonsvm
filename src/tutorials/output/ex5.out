@@ -46,7 +46,7 @@
     left preconditioning
     using UNPRECONDITIONED norm type for convergence test
     type: none
-    linear system matrix = precond matrix:
+    linear system matrix, which is also used to construct the preconditioner:
       type: seqdense
       rows=2, cols=2
       total: nonzeros=4, allocated nonzeros=4

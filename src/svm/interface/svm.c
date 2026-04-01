@@ -1824,7 +1824,7 @@ PetscErrorCode SVMGetAutoPostTrain(SVM svm, PetscBool *flg)
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscAssertPointer(flg, 2);
   *flg = svm->autoposttrain;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2006,7 +2006,7 @@ PetscErrorCode SVMSetUserBias(SVM svm, PetscReal bias)
     svm->user_bias   = bias;
     svm->setupcalled = PETSC_FALSE;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -2017,7 +2017,7 @@ PetscErrorCode SVMGetUserBias(SVM svm, PetscReal *bias)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   *bias = svm->user_bias;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2821,7 +2821,7 @@ PetscErrorCode SVMViewTestDataset(SVM svm, PetscViewer v)
     PetscCall(PetscObjectGetType((PetscObject)v, &type_name));
     SETERRQ(PetscObjectComm((PetscObject)v), PETSC_ERR_SUP, "Viewer type %s not supported for SVMViewTestDataset", type_name);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -2853,7 +2853,7 @@ PetscErrorCode SVMLoadCalibrationDataset(SVM svm, PetscViewer v)
     PetscCall(PetscObjectGetComm((PetscObject)v, &comm));
     PetscCall(SVMViewCalibrationDataset(svm, PETSC_VIEWER_STDOUT_(comm)));
   }
-  PetscFunctionReturnI(0);
+  PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
 /*@
@@ -2941,7 +2941,7 @@ PetscErrorCode SVMViewDataset(SVM svm, Mat Xt, Vec y, PetscViewer v)
       PetscCall(MatBiasedGetBias(Xt, &bias));
 
       PetscCall(PetscViewerASCIIPushTab(v));
-      PetscCall(PetscViewerASCIIPrintf(v, "Samples are augmented with additional dimension by means of bias %.2f\n", bias));
+      PetscCall(PetscViewerASCIIPrintf(v, "Samples are augmented with additional dimension by means of bias %.2f\n", (double)bias));
       PetscCall(PetscViewerASCIIPrintf(v, "inner"));
       PetscCall(PetscObjectPrintClassNamePrefixType((PetscObject)Xt_inner, v));
       PetscCall(PetscViewerASCIIPopTab(v));
