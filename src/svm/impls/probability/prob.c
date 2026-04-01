@@ -1090,7 +1090,7 @@ PetscErrorCode SVMViewTestPredictions_Probability(SVM svm, PetscViewer v)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode SVMCreate_Probability(SVM svm)
+PERMON_EXTERN PetscErrorCode SVMCreate_Probability(SVM svm)
 {
   SVM_Probability *svm_prob = NULL;
 

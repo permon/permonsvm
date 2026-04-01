@@ -1971,7 +1971,7 @@ PetscErrorCode SVMViewTestPredictions_Binary(SVM svm, PetscViewer v)
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMCreate_Binary"
-PetscErrorCode SVMCreate_Binary(SVM svm)
+PERMON_EXTERN PetscErrorCode SVMCreate_Binary(SVM svm)
 {
   SVM_Binary *svm_binary;
 
