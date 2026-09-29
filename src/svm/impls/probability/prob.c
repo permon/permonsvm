@@ -64,7 +64,6 @@ PetscErrorCode SVMView_Probability(SVM svm, PetscViewer v)
 
   PetscFunctionBegin;
   comm = PetscObjectComm((PetscObject)svm);
-  if (!v) v = PETSC_VIEWER_STDOUT_(comm);
   PetscCall(PetscObjectTypeCompare((PetscObject)v, PETSCVIEWERASCII, &isascii));
 
   if (isascii) {
@@ -100,7 +99,6 @@ PetscErrorCode SVMViewScore_Probability(SVM svm, PetscViewer v)
 
   PetscFunctionBegin;
   comm = PetscObjectComm((PetscObject)svm);
-  if (!v) v = PETSC_VIEWER_STDOUT_(comm);
 
   PetscCall(PetscObjectTypeCompare((PetscObject)v, PETSCVIEWERASCII, &isascii));
   if (isascii) {

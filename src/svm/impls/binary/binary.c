@@ -118,10 +118,7 @@ PetscErrorCode SVMView_Binary(SVM svm, PetscViewer v)
   PetscFunctionBegin;
   comm = PetscObjectComm((PetscObject)svm);
 
-  if (!v) v = PETSC_VIEWER_STDOUT_(comm);
-
   PetscCall(PetscObjectTypeCompare((PetscObject)v, PETSCVIEWERASCII, &isascii));
-
   if (isascii) {
     PetscCall(PetscObjectPrintClassNamePrefixType((PetscObject)svm, v));
 
@@ -185,7 +182,6 @@ PetscErrorCode SVMViewScore_Binary(SVM svm, PetscViewer v)
 
   PetscFunctionBegin;
   comm = PetscObjectComm((PetscObject)svm);
-  if (!v) v = PETSC_VIEWER_STDOUT_(comm);
 
   PetscCall(PetscObjectTypeCompare((PetscObject)v, PETSCVIEWERASCII, &isascii));
   if (isascii) {
