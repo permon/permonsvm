@@ -1377,8 +1377,8 @@ PetscErrorCode SVMSetUp(SVM svm)
   SVMView - Views classification model details.
 
   Input Parameters:
-+ svm - SVM context
-- v - visualization context
++ svm    - SVM context
+- viewer - visualization context
 
   Level: beginner
 
@@ -1387,11 +1387,14 @@ PetscErrorCode SVMSetUp(SVM svm)
 
 .seealso PetscViewer
 @*/
-PetscErrorCode SVMView(SVM svm, PetscViewer v)
+PetscErrorCode SVMView(SVM svm, PetscViewer viewer)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  if (svm->ops->view) { PetscCall(svm->ops->view(svm, v)); }
+  if (!viewer) PetscCall(PetscViewerASCIIGetStdout(PetscObjectComm((PetscObject)svm), &viewer));
+  PetscValidHeaderSpecific(viewer, PETSC_VIEWER_CLASSID, 2);
+  PetscCheckSameComm(svm, 1, viewer, 2);
+  PetscTryTypeMethod(svm, view, viewer);
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -1399,19 +1402,21 @@ PetscErrorCode SVMView(SVM svm, PetscViewer v)
   SVMViewTrainingPredictions - Views predictions on training samples using trained model.
 
   Input Parameters:
-+ svm - SVM context
-- v - visualization context
++ svm    - SVM context
+- viewer - visualization context
 
   Level: beginner
 
 .seealso SVMLoadTrainingDataset, SVMPredict, PetscViewer
 @*/
-PetscErrorCode SVMViewTrainingPredictions(SVM svm, PetscViewer v)
+PetscErrorCode SVMViewTrainingPredictions(SVM svm, PetscViewer viewer)
 {
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  if (v) PetscValidHeaderSpecific(v, PETSC_VIEWER_CLASSID, 2);
-  if (svm->ops->viewtrainingpredictions) { PetscCall(svm->ops->viewtrainingpredictions(svm, v)); }
+  if (!viewer) PetscCall(PetscViewerASCIIGetStdout(PetscObjectComm((PetscObject)svm), &viewer));
+  PetscValidHeaderSpecific(viewer, PETSC_VIEWER_CLASSID, 2);
+  PetscCheckSameComm(svm, 1, viewer, 2);
+  PetscTryTypeMethod(svm, viewtrainingpredictions, viewer);
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
@@ -1419,30 +1424,32 @@ PetscErrorCode SVMViewTrainingPredictions(SVM svm, PetscViewer v)
   SVMViewTestPredictions - Views predictions on test samples using trained model.
 
   Input Parameters:
-+ svm - SVM context
-- v - visualization context
++ svm    - SVM context
+- viewer - visualization context
 
   Level: beginner
 
 .seealso SVMLoadTestDataset, SVMPredict, PetscViewer
 @*/
-PetscErrorCode SVMViewTestPredictions(SVM svm, PetscViewer v)
+PetscErrorCode SVMViewTestPredictions(SVM svm, PetscViewer viewer)
 {
   PetscFunctionBeginI;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  if (v) { PetscValidHeaderSpecific(v, PETSC_VIEWER_CLASSID, 2); }
-  if (svm->ops->viewtestpredictions) { PetscCall(svm->ops->viewtestpredictions(svm, v)); }
+  if (!viewer) PetscCall(PetscViewerASCIIGetStdout(PetscObjectComm((PetscObject)svm), &viewer));
+  PetscValidHeaderSpecific(viewer, PETSC_VIEWER_CLASSID, 2);
+  PetscCheckSameComm(svm, 1, viewer, 2);
+  PetscTryTypeMethod(svm, viewtestpredictions, viewer);
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
 #define __FUNCT__ "SVMViewScore"
 /*@
-  SVMView - Views performance score of model.
+  SVMViewScore - Views performance score of model.
 
   Input Parameters:
-+ svm - SVM context
-- v - visualization context
++ svm    - SVM context
+- viewer - visualization context
 
   Level: beginner
 
@@ -1451,11 +1458,14 @@ PetscErrorCode SVMViewTestPredictions(SVM svm, PetscViewer v)
 
 .seealso PetscViewer
 @*/
-PetscErrorCode SVMViewScore(SVM svm, PetscViewer v)
+PetscErrorCode SVMViewScore(SVM svm, PetscViewer viewer)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  if (svm->ops->viewscore) { PetscCall(svm->ops->viewscore(svm, v)); }
+  if (!viewer) PetscCall(PetscViewerASCIIGetStdout(PetscObjectComm((PetscObject)svm), &viewer));
+  PetscValidHeaderSpecific(viewer, PETSC_VIEWER_CLASSID, 2);
+  PetscCheckSameComm(svm, 1, viewer, 2);
+  PetscTryTypeMethod(svm, viewscore, viewer);
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -2542,20 +2552,21 @@ PetscErrorCode SVMLoadGramian(SVM svm, PetscViewer v)
   Collective on PetscViewer
 
   Input Parameters:
-+ svm - SVM context
-- v - viewer
++ svm    - SVM context
+- viewer - viewer
 
   Level: intermediate
 
 .seealso SVM, SVMSetGramian(), SVMGetGramian(), SVMLoadGramian(), SVMViewTrainingDataset()
 @*/
-PetscErrorCode SVMViewGramian(SVM svm, PetscViewer v)
+PetscErrorCode SVMViewGramian(SVM svm, PetscViewer viewer)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidHeaderSpecific(v, PETSC_VIEWER_CLASSID, 2);
-
-  if (svm->ops->viewgramian) { PetscCall(svm->ops->viewgramian(svm, v)); }
+  if (!viewer) PetscCall(PetscViewerASCIIGetStdout(PetscObjectComm((PetscObject)svm), &viewer));
+  PetscValidHeaderSpecific(viewer, PETSC_VIEWER_CLASSID, 2);
+  PetscCheckSameComm(svm, 1, viewer, 2);
+  PetscTryTypeMethod(svm, viewgramian, viewer);
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -2673,18 +2684,18 @@ PetscErrorCode SVMLoadTrainingDataset(SVM svm, PetscViewer v)
   SVMViewTrainingDataset - Views details associated with training dataset such as number of positive and negative samples, features, etc.
 
   Input Parameters:
-+ svm - SVM context
-- v - visualization context
++ svm    - SVM context
+- viewer - visualization context
 
   Level: beginner
 
   Options Database Keys:
 + -svm_view_io - Prints info on training dataset (as well as test dataset) at the end of SVMLoadTrainingDataset() and/or SVMLoadTestDataset, respectively.
-- -svm_view_training_dataset - Prints info just on test dataset at the end of SVMLoadTrainingDataset().
+- -svm_view_training_dataset - Prints info just on training dataset at the end of SVMLoadTrainingDataset().
 
 .seealso SVM, PetscViewer, SVMViewDataset(), SVMViewTestDataset()
 @*/
-PetscErrorCode SVMViewTrainingDataset(SVM svm, PetscViewer v)
+PetscErrorCode SVMViewTrainingDataset(SVM svm, PetscViewer viewer)
 {
   Mat Xt;
   Vec y;
@@ -2693,20 +2704,25 @@ PetscErrorCode SVMViewTrainingDataset(SVM svm, PetscViewer v)
   const char *type_name = NULL;
 
   PetscFunctionBegin;
-  PetscCall(SVMGetTrainingDataset(svm, &Xt, &y));
-  PetscCheck(Xt && y, PetscObjectComm((PetscObject)v), PETSC_ERR_ARG_NULL, "Training dataset is not set");
+  PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
+  if (!viewer) PetscCall(PetscViewerASCIIGetStdout(PetscObjectComm((PetscObject)svm), &viewer));
+  PetscValidHeaderSpecific(viewer, PETSC_VIEWER_CLASSID, 2);
+  PetscCheckSameComm(svm, 1, viewer, 2);
 
-  PetscCall(PetscObjectTypeCompare((PetscObject)v, PETSCVIEWERASCII, &isascii));
+  PetscCall(SVMGetTrainingDataset(svm, &Xt, &y));
+  PetscCheck(Xt && y, PetscObjectComm((PetscObject)viewer), PETSC_ERR_ARG_NULL, "Training dataset is not set");
+
+  PetscCall(PetscObjectTypeCompare((PetscObject)viewer, PETSCVIEWERASCII, &isascii));
   if (isascii) {
     /* Print info related to svm type */
-    PetscCall(PetscObjectPrintClassNamePrefixType((PetscObject)svm, v));
+    PetscCall(PetscObjectPrintClassNamePrefixType((PetscObject)svm, viewer));
 
-    PetscCall(PetscViewerASCIIPushTab(v));
-    PetscCall(SVMViewDataset(svm, Xt, y, v));
-    PetscCall(PetscViewerASCIIPopTab(v));
+    PetscCall(PetscViewerASCIIPushTab(viewer));
+    PetscCall(SVMViewDataset(svm, Xt, y, viewer));
+    PetscCall(PetscViewerASCIIPopTab(viewer));
   } else {
-    PetscCall(PetscObjectGetType((PetscObject)v, &type_name));
-    SETERRQ(PetscObjectComm((PetscObject)v), PETSC_ERR_SUP, "Viewer type %s not supported for SVMViewTrainingDataset", type_name);
+    PetscCall(PetscObjectGetType((PetscObject)viewer, &type_name));
+    SETERRQ(PetscObjectComm((PetscObject)viewer), PETSC_ERR_SUP, "Viewer type %s not supported for SVMViewTrainingDataset", type_name);
   }
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -2783,8 +2799,8 @@ PetscErrorCode SVMLoadTestDataset(SVM svm, PetscViewer v)
   SVMViewTestDataset - Views details associated with test dataset such as number of positive and negative samples, features, etc.
 
   Input Parameters:
-+ svm - SVM context
-- v - visualization context
++ svm    - SVM context
+- viewer - visualization context
 
   Level: beginner
 
@@ -2794,7 +2810,7 @@ PetscErrorCode SVMLoadTestDataset(SVM svm, PetscViewer v)
 
 .seealso SVM, PetscViewer, SVMViewDataset(), SVMViewTrainingDataset()
 @*/
-PetscErrorCode SVMViewTestDataset(SVM svm, PetscViewer v)
+PetscErrorCode SVMViewTestDataset(SVM svm, PetscViewer viewer)
 {
   Mat Xt;
   Vec y;
@@ -2804,22 +2820,24 @@ PetscErrorCode SVMViewTestDataset(SVM svm, PetscViewer v)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscValidHeaderSpecific(v, PETSC_VIEWER_CLASSID, 2);
+  if (!viewer) PetscCall(PetscViewerASCIIGetStdout(PetscObjectComm((PetscObject)svm), &viewer));
+  PetscValidHeaderSpecific(viewer, PETSC_VIEWER_CLASSID, 2);
+  PetscCheckSameComm(svm, 1, viewer, 2);
 
   PetscCall(SVMGetTestDataset(svm, &Xt, &y));
-  PetscCheck(Xt && y, PetscObjectComm((PetscObject)v), PETSC_ERR_ARG_NULL, "Test dataset is not set");
+  PetscCheck(Xt && y, PetscObjectComm((PetscObject)viewer), PETSC_ERR_ARG_NULL, "Test dataset is not set");
 
-  PetscCall(PetscObjectTypeCompare((PetscObject)v, PETSCVIEWERASCII, &isascii));
+  PetscCall(PetscObjectTypeCompare((PetscObject)viewer, PETSCVIEWERASCII, &isascii));
   if (isascii) {
     /* Print info related to svm type */
-    PetscCall(PetscObjectPrintClassNamePrefixType((PetscObject)svm, v));
+    PetscCall(PetscObjectPrintClassNamePrefixType((PetscObject)svm, viewer));
 
-    PetscCall(PetscViewerASCIIPushTab(v));
-    PetscCall(SVMViewDataset(svm, Xt, y, v));
-    PetscCall(PetscViewerASCIIPopTab(v));
+    PetscCall(PetscViewerASCIIPushTab(viewer));
+    PetscCall(SVMViewDataset(svm, Xt, y, viewer));
+    PetscCall(PetscViewerASCIIPopTab(viewer));
   } else {
-    PetscCall(PetscObjectGetType((PetscObject)v, &type_name));
-    SETERRQ(PetscObjectComm((PetscObject)v), PETSC_ERR_SUP, "Viewer type %s not supported for SVMViewTestDataset", type_name);
+    PetscCall(PetscObjectGetType((PetscObject)viewer, &type_name));
+    SETERRQ(PetscObjectComm((PetscObject)viewer), PETSC_ERR_SUP, "Viewer type %s not supported for SVMViewTestDataset", type_name);
   }
   PetscFunctionReturn(PETSC_SUCCESS);
 }
@@ -2860,8 +2878,8 @@ PetscErrorCode SVMLoadCalibrationDataset(SVM svm, PetscViewer v)
   SVMViewCalibrationDataset - Views details associated with calibration dataset such as number of positive and negative samples, features, etc.
 
   Input Parameters:
-+ svm - SVM context
-- v - visualization context
++ svm    - SVM context
+- viewer - visualization context
 
   Level: beginner
 
@@ -2871,11 +2889,14 @@ PetscErrorCode SVMLoadCalibrationDataset(SVM svm, PetscViewer v)
 
 .seealso SVM, PetscViewer, SVMViewDataset(), SVMViewTrainingDataset(), SVMViewTestDataset()
 @*/
-PetscErrorCode SVMViewCalibrationDataset(SVM svm, PetscViewer v)
+PetscErrorCode SVMViewCalibrationDataset(SVM svm, PetscViewer viewer)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
-  PetscTryMethod(svm, "SVMViewCalibrationDataset_C", (SVM, PetscViewer), (svm, v));
+  if (!viewer) PetscCall(PetscViewerASCIIGetStdout(PetscObjectComm((PetscObject)svm), &viewer));
+  PetscValidHeaderSpecific(viewer, PETSC_VIEWER_CLASSID, 2);
+  PetscCheckSameComm(svm, 1, viewer, 2);
+  PetscTryMethod(svm, "SVMViewCalibrationDataset_C", (SVM, PetscViewer), (svm, viewer));
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
@@ -2885,14 +2906,14 @@ PetscErrorCode SVMViewCalibrationDataset(SVM svm, PetscViewer v)
   SVMViewDataset - Views details associated with dataset such as number of positive and negative samples, features, etc.
 
   Input Parameters:
-+ svm - SVM context
-- v - visualization context
++ svm    - SVM context
+- viewer - visualization context
 
   Level: beginner
 
 .seealso SVM, PetscViewer, SVMViewTestDataset(), SVMViewTrainingDataset()
 @*/
-PetscErrorCode SVMViewDataset(SVM svm, Mat Xt, Vec y, PetscViewer v)
+PetscErrorCode SVMViewDataset(SVM svm, Mat Xt, Vec y, PetscViewer viewer)
 {
   MPI_Comm    comm;
   const char *type_name = NULL;
@@ -2915,9 +2936,11 @@ PetscErrorCode SVMViewDataset(SVM svm, Mat Xt, Vec y, PetscViewer v)
   PetscValidHeaderSpecific(svm, SVM_CLASSID, 1);
   PetscValidHeaderSpecific(Xt, MAT_CLASSID, 2);
   PetscValidHeaderSpecific(y, VEC_CLASSID, 3);
-  PetscValidHeaderSpecific(v, PETSC_VIEWER_CLASSID, 4);
+  if (!viewer) PetscCall(PetscViewerASCIIGetStdout(PetscObjectComm((PetscObject)svm), &viewer));
+  PetscValidHeaderSpecific(viewer, PETSC_VIEWER_CLASSID, 4);
+  PetscCheckSameComm(svm, 1, viewer, 4);
 
-  PetscCall(PetscObjectTypeCompare((PetscObject)v, PETSCVIEWERASCII, &isascii));
+  PetscCall(PetscObjectTypeCompare((PetscObject)viewer, PETSCVIEWERASCII, &isascii));
   if (isascii) {
     PetscCall(MatGetSize(Xt, &M, &N));
 
@@ -2932,7 +2955,7 @@ PetscErrorCode SVMViewDataset(SVM svm, Mat Xt, Vec y, PetscViewer v)
     M_minus   = M - M_plus;
     per_minus = 100. - per_plus;
 
-    PetscCall(PetscObjectPrintClassNamePrefixType((PetscObject)Xt, v));
+    PetscCall(PetscObjectPrintClassNamePrefixType((PetscObject)Xt, viewer));
     PetscCall(SVMGetMod(svm, &svm_mod));
     if (svm_mod == 2) {
       N -= 1;
@@ -2940,33 +2963,33 @@ PetscErrorCode SVMViewDataset(SVM svm, Mat Xt, Vec y, PetscViewer v)
       PetscCall(MatBiasedGetInnerMat(Xt, &Xt_inner));
       PetscCall(MatBiasedGetBias(Xt, &bias));
 
-      PetscCall(PetscViewerASCIIPushTab(v));
-      PetscCall(PetscViewerASCIIPrintf(v, "Samples are augmented with additional dimension by means of bias %.2f\n", (double)bias));
-      PetscCall(PetscViewerASCIIPrintf(v, "inner"));
-      PetscCall(PetscObjectPrintClassNamePrefixType((PetscObject)Xt_inner, v));
-      PetscCall(PetscViewerASCIIPopTab(v));
+      PetscCall(PetscViewerASCIIPushTab(viewer));
+      PetscCall(PetscViewerASCIIPrintf(viewer, "Samples are augmented with additional dimension by means of bias %.2f\n", (double)bias));
+      PetscCall(PetscViewerASCIIPrintf(viewer, "inner"));
+      PetscCall(PetscObjectPrintClassNamePrefixType((PetscObject)Xt_inner, viewer));
+      PetscCall(PetscViewerASCIIPopTab(viewer));
 
-      PetscCall(PetscViewerASCIIPushTab(v));
+      PetscCall(PetscViewerASCIIPushTab(viewer));
     }
 
-    PetscCall(PetscViewerASCIIPushTab(v));
-    PetscCall(PetscViewerASCIIPrintf(v, "samples\t%5" PetscInt_FMT "\n", M));
-    PetscCall(PetscViewerASCIIPrintf(v, "samples+\t%5" PetscInt_FMT " (%.2f%%)\n", M_plus, (double)per_plus));
-    PetscCall(PetscViewerASCIIPrintf(v, "samples-\t%5" PetscInt_FMT " (%.2f%%)\n", M_minus, (double)per_minus));
+    PetscCall(PetscViewerASCIIPushTab(viewer));
+    PetscCall(PetscViewerASCIIPrintf(viewer, "samples\t%5" PetscInt_FMT "\n", M));
+    PetscCall(PetscViewerASCIIPrintf(viewer, "samples+\t%5" PetscInt_FMT " (%.2f%%)\n", M_plus, (double)per_plus));
+    PetscCall(PetscViewerASCIIPrintf(viewer, "samples-\t%5" PetscInt_FMT " (%.2f%%)\n", M_minus, (double)per_minus));
     if (svm_mod == 2) {
-      PetscCall(PetscViewerASCIIPrintf(v, "features\t%5" PetscInt_FMT " (%" PetscInt_FMT ")\n", N, N + 1));
-      PetscCall(PetscViewerASCIIPopTab(v));
+      PetscCall(PetscViewerASCIIPrintf(viewer, "features\t%5" PetscInt_FMT " (%" PetscInt_FMT ")\n", N, N + 1));
+      PetscCall(PetscViewerASCIIPopTab(viewer));
     } else {
-      PetscCall(PetscViewerASCIIPrintf(v, "features\t%5" PetscInt_FMT "\n", N));
+      PetscCall(PetscViewerASCIIPrintf(viewer, "features\t%5" PetscInt_FMT "\n", N));
     }
-    PetscCall(PetscViewerASCIIPopTab(v));
+    PetscCall(PetscViewerASCIIPopTab(viewer));
 
     /* Memory deallocation */
     PetscCall(VecDestroy(&y_max));
     PetscCall(ISDestroy(&is_plus));
   } else {
-    PetscCall(PetscObjectGetComm((PetscObject)v, &comm));
-    PetscCall(PetscObjectGetType((PetscObject)v, &type_name));
+    PetscCall(PetscObjectGetComm((PetscObject)viewer, &comm));
+    PetscCall(PetscObjectGetType((PetscObject)viewer, &type_name));
 
     SETERRQ(comm, PETSC_ERR_SUP, "Viewer type %s not supported for SVMViewDataset", type_name);
   }
