@@ -9,8 +9,6 @@ PERMON_EXTERN PetscErrorCode SVMCreate_Probability(SVM);
 PetscFunctionList SVMList              = 0;
 PetscBool         SVMRegisterAllCalled = PETSC_FALSE;
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMRegisterAll"
 PetscErrorCode SVMRegisterAll()
 {
   PetscFunctionBegin;
@@ -22,8 +20,6 @@ PetscErrorCode SVMRegisterAll()
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMRegister"
 PetscErrorCode SVMRegister(const char sname[], PetscErrorCode (*function)(SVM))
 {
   PetscFunctionBegin;

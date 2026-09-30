@@ -6,8 +6,6 @@ static MPI_Comm comm;
 #define bin      "bin"
 #define SVMLight "svmlight"
 
-#undef __FUNCT__
-#define __FUNCT__ "GetFilenameExtension"
 PetscErrorCode GetFilenameExtension(const char *filename, char **extension)
 {
   char *extension_inner;
@@ -18,8 +16,6 @@ PetscErrorCode GetFilenameExtension(const char *filename, char **extension)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMRunBinaryClassification"
 PetscErrorCode SVMRunBinaryClassification()
 {
   SVM svm;
@@ -157,8 +153,6 @@ PetscErrorCode SVMRunBinaryClassification()
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "main"
 int main(int argc, char **argv)
 {
   PetscFunctionBegin;

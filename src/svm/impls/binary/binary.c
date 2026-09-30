@@ -16,8 +16,6 @@ static PetscErrorCode SVMMonitorObjFuncs_Binary(QPS, PetscInt, PetscReal, void *
 static PetscErrorCode SVMMonitorScores_Binary(QPS, PetscInt, PetscReal, void *);
 static PetscErrorCode SVMMonitorTrainingScores_Binary(QPS, PetscInt, PetscReal, void *);
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMReset_Binary"
 PetscErrorCode SVMReset_Binary(SVM svm)
 {
   SVM_Binary *svm_binary;
@@ -68,8 +66,6 @@ PetscErrorCode SVMReset_Binary(SVM svm)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMDestroy_Binary"
 PetscErrorCode SVMDestroy_Binary(SVM svm)
 {
   SVM_Binary *svm_binary = (SVM_Binary *)svm->data;
@@ -104,8 +100,6 @@ PetscErrorCode SVMDestroy_Binary(SVM svm)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMView_Binary"
 PetscErrorCode SVMView_Binary(SVM svm, PetscViewer v)
 {
   SVM_Binary *svm_binary = (SVM_Binary *)svm->data;
@@ -166,8 +160,6 @@ PetscErrorCode SVMView_Binary(SVM svm, PetscViewer v)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMViewScore_Binary"
 PetscErrorCode SVMViewScore_Binary(SVM svm, PetscViewer v)
 {
   MPI_Comm comm;
@@ -210,8 +202,6 @@ PetscErrorCode SVMViewScore_Binary(SVM svm, PetscViewer v)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetGramian_Binary"
 PetscErrorCode SVMSetGramian_Binary(SVM svm, Mat G)
 {
   SVM_Binary *svm_binary = (SVM_Binary *)svm->data;
@@ -233,8 +223,6 @@ PetscErrorCode SVMSetGramian_Binary(SVM svm, Mat G)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetGramian_Binary"
 PetscErrorCode SVMGetGramian_Binary(SVM svm, Mat *G)
 {
   SVM_Binary *svm_binary = (SVM_Binary *)svm->data;
@@ -244,8 +232,6 @@ PetscErrorCode SVMGetGramian_Binary(SVM svm, Mat *G)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetOperator_Binary"
 PetscErrorCode SVMSetOperator_Binary(SVM svm, Mat A)
 {
   QP qp;
@@ -269,8 +255,6 @@ PetscErrorCode SVMSetOperator_Binary(SVM svm, Mat A)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetOperator_Binary"
 PetscErrorCode SVMGetOperator_Binary(SVM svm, Mat *A)
 {
   QP qp;
@@ -281,8 +265,6 @@ PetscErrorCode SVMGetOperator_Binary(SVM svm, Mat *A)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetTrainingDataset"
 PetscErrorCode SVMSetTrainingDataset_Binary(SVM svm, Mat Xt_training, Vec y_training)
 {
   SVM_Binary *svm_binary = (SVM_Binary *)svm->data;
@@ -333,8 +315,6 @@ PetscErrorCode SVMSetTrainingDataset_Binary(SVM svm, Mat Xt_training, Vec y_trai
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetTrainingDataset_Binary"
 PetscErrorCode SVMGetTrainingDataset_Binary(SVM svm, Mat *Xt_training, Vec *y_training)
 {
   SVM_Binary *svm_binary = (SVM_Binary *)svm->data;
@@ -361,8 +341,6 @@ PetscErrorCode SVMGetLabels_Binary(SVM svm, const PetscReal *labels[])
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetUp_Remapy_Binary_Private"
 static PetscErrorCode SVMSetUp_Remapy_Binary_Private(SVM svm)
 {
   SVM_Binary *svm_binary = (SVM_Binary *)svm->data;
@@ -405,8 +383,6 @@ static PetscErrorCode SVMSetUp_Remapy_Binary_Private(SVM svm)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMCreateQPS_Binary_Private"
 PetscErrorCode SVMCreateQPS_Binary_Private(SVM svm, QPS *qps)
 {
   SVM_Binary *svm_binary = (SVM_Binary *)svm->data;
@@ -448,8 +424,6 @@ PetscErrorCode SVMCreateQPS_Binary_Private(SVM svm, QPS *qps)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetQPS_Binary"
 PetscErrorCode SVMGetQPS_Binary(SVM svm, QPS *qps)
 {
   SVM_Binary *svm_binary = (SVM_Binary *)svm->data;
@@ -464,8 +438,6 @@ PetscErrorCode SVMGetQPS_Binary(SVM svm, QPS *qps)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetQPS_Binary"
 PetscErrorCode SVMSetQPS_Binary(SVM svm, QPS qps)
 {
   SVM_Binary *svm_binary = (SVM_Binary *)svm->data;
@@ -481,8 +453,6 @@ PetscErrorCode SVMSetQPS_Binary(SVM svm, QPS qps)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetQP_Binary"
 PetscErrorCode SVMGetQP_Binary(SVM svm, QP *qp)
 {
   QPS qps;
@@ -493,8 +463,6 @@ PetscErrorCode SVMGetQP_Binary(SVM svm, QP *qp)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMUpdateOperator_Binary_Private"
 PetscErrorCode SVMUpdateOperator_Binary_Private(SVM svm)
 {
   SVM_Binary *svm_binary = (SVM_Binary *)svm->data;
@@ -534,8 +502,6 @@ PetscErrorCode SVMUpdateOperator_Binary_Private(SVM svm)
 
 /* TODO implement SVMUpdateInitialVector_Binary_Private */
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMUpdate_Binary_Private"
 PetscErrorCode SVMUpdate_Binary_Private(SVM svm)
 {
   SVM_Binary *svm_binary = (SVM_Binary *)svm->data;
@@ -617,8 +583,6 @@ PetscErrorCode SVMUpdate_Binary_Private(SVM svm)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMComputeOperator_Binary"
 PetscErrorCode SVMComputeOperator_Binary(SVM svm, Mat *A)
 {
   MPI_Comm    comm;
@@ -722,8 +686,6 @@ PetscErrorCode SVMComputeOperator_Binary(SVM svm, Mat *A)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetUp_Binary"
 PetscErrorCode SVMSetUp_Binary(SVM svm)
 {
   SVM_Binary *svm_binary = (SVM_Binary *)svm->data;
@@ -919,8 +881,6 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetOptionsPrefix_Binary"
 PetscErrorCode SVMSetOptionsPrefix_Binary(SVM svm, const char prefix[])
 {
   QPS qps;
@@ -932,8 +892,6 @@ PetscErrorCode SVMSetOptionsPrefix_Binary(SVM svm, const char prefix[])
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMAppendOptionsPrefix_Binary"
 PetscErrorCode SVMAppendOptionsPrefix_Binary(SVM svm, const char prefix[])
 {
   QPS qps;
@@ -945,8 +903,6 @@ PetscErrorCode SVMAppendOptionsPrefix_Binary(SVM svm, const char prefix[])
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetOptionsPrefix_Binary"
 PetscErrorCode SVMGetOptionsPrefix_Binary(SVM svm, const char *prefix[])
 {
   PetscFunctionBegin;
@@ -954,8 +910,6 @@ PetscErrorCode SVMGetOptionsPrefix_Binary(SVM svm, const char *prefix[])
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMTrain_Binary"
 PetscErrorCode SVMTrain_Binary(SVM svm)
 {
   SVM_Binary *svm_binary = (SVM_Binary *)svm->data;
@@ -968,8 +922,6 @@ PetscErrorCode SVMTrain_Binary(SVM svm)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMReconstructHyperplane_Binary"
 PetscErrorCode SVMReconstructHyperplane_Binary(SVM svm)
 {
   SVM_Binary *svm_binary = (SVM_Binary *)svm->data;
@@ -1038,8 +990,6 @@ PetscErrorCode SVMReconstructHyperplane_Binary(SVM svm)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetSeparatingHyperplane_Binary"
 PetscErrorCode SVMSetSeparatingHyperplane_Binary(SVM svm, Vec w, PetscReal b)
 {
   SVM_Binary *svm_binary = (SVM_Binary *)svm->data;
@@ -1054,8 +1004,6 @@ PetscErrorCode SVMSetSeparatingHyperplane_Binary(SVM svm, Vec w, PetscReal b)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetSeparatingHyperplane_Binary"
 PetscErrorCode SVMGetSeparatingHyperplane_Binary(SVM svm, Vec *w, PetscReal *b)
 {
   SVM_Binary *svm_binary = (SVM_Binary *)svm->data;
@@ -1072,8 +1020,6 @@ PetscErrorCode SVMGetSeparatingHyperplane_Binary(SVM svm, Vec *w, PetscReal *b)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetBias_Binary"
 PetscErrorCode SVMSetBias_Binary(SVM svm, PetscReal b)
 {
   SVM_Binary *svm_binary = (SVM_Binary *)svm->data;
@@ -1088,8 +1034,6 @@ PetscErrorCode SVMSetBias_Binary(SVM svm, PetscReal b)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetBias_Binary"
 PetscErrorCode SVMGetBias_Binary(SVM svm, PetscReal *b)
 {
   SVM_Binary *svm_binary = (SVM_Binary *)svm->data;
@@ -1099,8 +1043,6 @@ PetscErrorCode SVMGetBias_Binary(SVM svm, PetscReal *b)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMComputeModelParams_Binary"
 PetscErrorCode SVMComputeModelParams_Binary(SVM svm)
 {
   SVM_Binary *svm_binary = (SVM_Binary *)svm->data;
@@ -1142,8 +1084,6 @@ PetscErrorCode SVMComputeModelParams_Binary(SVM svm)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMComputeHingeLoss_Binary"
 PetscErrorCode SVMComputeHingeLoss_Binary(SVM svm)
 {
   SVM_Binary *svm_binary = (SVM_Binary *)svm->data;
@@ -1215,8 +1155,6 @@ PetscErrorCode SVMComputeHingeLoss_Binary(SVM svm)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMComputeObjFuncValues_Binary_Private"
 PetscErrorCode SVMComputeObjFuncValues_Binary_Private(SVM svm)
 {
   SVM_Binary *svm_binary = (SVM_Binary *)svm->data;
@@ -1269,8 +1207,6 @@ PetscErrorCode SVMComputeObjFuncValues_Binary_Private(SVM svm)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMPostTrain_Binary"
 PetscErrorCode SVMPostTrain_Binary(SVM svm)
 {
   QPS qps;
@@ -1289,8 +1225,6 @@ PetscErrorCode SVMPostTrain_Binary(SVM svm)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetFromOptions_Binary"
 PetscErrorCode SVMSetFromOptions_Binary(PetscOptionItems PetscOptionsObject, SVM svm)
 {
   /* SVM_Binary *svm_binary = (SVM_Binary *) svm->data;
@@ -1308,8 +1242,6 @@ PetscErrorCode SVMSetFromOptions_Binary(PetscOptionItems PetscOptionsObject, SVM
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetHyperplaneSubNormal_Binary_Private"
 PetscErrorCode SVMGetHyperplaneSubNormal_Binary_Private(SVM svm, Mat Xt_predict, IS *is_sub, Vec *w_sub)
 {
   MPI_Comm comm;
@@ -1361,8 +1293,6 @@ PetscErrorCode SVMGetHyperplaneSubNormal_Binary_Private(SVM svm, Mat Xt_predict,
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMCreateSubPredictDataset_Binary_Private"
 PetscErrorCode SVMCreateSubPredictDataset_Binary_Private(SVM svm, Mat Xt_predict, Mat *Xt_out)
 {
   MPI_Comm comm;
@@ -1403,8 +1333,6 @@ PetscErrorCode SVMCreateSubPredictDataset_Binary_Private(SVM svm, Mat Xt_predict
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetDistancesFromHyperplane_Binary"
 PetscErrorCode SVMGetDistancesFromHyperplane_Binary(SVM svm, Mat Xt_pred, Vec *dist_out)
 {
   /* Hyperplane */
@@ -1456,8 +1384,6 @@ PetscErrorCode SVMGetDistancesFromHyperplane_Binary(SVM svm, Mat Xt_pred, Vec *d
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMPredict_Binary"
 PetscErrorCode SVMPredict_Binary(SVM svm, Mat Xt_pred, Vec *y_out)
 {
   SVM_Binary *svm_binary = (SVM_Binary *)svm->data;
@@ -1501,8 +1427,6 @@ PetscErrorCode SVMPredict_Binary(SVM svm, Mat Xt_pred, Vec *y_out)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMComputeModelScores_Binary"
 PetscErrorCode SVMComputeModelScores_Binary(SVM svm, Vec y, Vec y_known)
 {
   SVM_Binary *svm_binary = (SVM_Binary *)svm->data;
@@ -1512,8 +1436,6 @@ PetscErrorCode SVMComputeModelScores_Binary(SVM svm, Vec y, Vec y_known)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMTest_Binary"
 PetscErrorCode SVMTest_Binary(SVM svm)
 {
   Mat Xt_test;
@@ -1530,8 +1452,6 @@ PetscErrorCode SVMTest_Binary(SVM svm)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMComputePGmaxPGmin_Binary_Private"
 PetscErrorCode SVMComputePGminPGmax_Binary_Private(SVM svm, PetscReal *PG_min, PetscReal *PG_max)
 {
   // https://www.jmlr.org/papers/volume8/loosli07a/loosli07a.pdf
@@ -1609,8 +1529,6 @@ PetscErrorCode SVMComputePGminPGmax_Binary_Private(SVM svm, PetscReal *PG_min, P
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMConvergedMaximalDualViolation_Binary"
 PetscErrorCode SVMConvergedMaximalDualViolation_Binary(QPS qps, KSPConvergedReason *reason)
 {
   SVM svm;
@@ -1647,8 +1565,6 @@ PetscErrorCode SVMConvergedMaximalDualViolation_Binary(QPS qps, KSPConvergedReas
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMConvergedDualityGap_Binary"
 PetscErrorCode SVMConvergedDualityGap_Binary(QPS qps, KSPConvergedReason *reason)
 {
   SVM_Binary *svm_binary;
@@ -1696,8 +1612,6 @@ PetscErrorCode SVMConvergedDualityGap_Binary(QPS qps, KSPConvergedReason *reason
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMConvergedSetUp_Binary"
 PetscErrorCode SVMConvergedSetUp_Binary(SVM svm)
 {
   SVMConvergedType type_stop_criteria;
@@ -1734,8 +1648,6 @@ PetscErrorCode SVMConvergedSetUp_Binary(SVM svm)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetModelScore_Binary"
 PetscErrorCode SVMGetModelScore_Binary(SVM svm, ModelScore score_type, PetscReal *s)
 {
   SVM_Binary *svm_binary = (SVM_Binary *)svm->data;
@@ -1747,8 +1659,6 @@ PetscErrorCode SVMGetModelScore_Binary(SVM svm, ModelScore score_type, PetscReal
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMInitGridSearch_Binary_Private"
 PetscErrorCode SVMInitGridSearch_Binary_Private(SVM svm, PetscInt *n_out, PetscReal *grid_out[])
 {
   PetscInt penalty_type;
@@ -1800,8 +1710,6 @@ PetscErrorCode SVMInitGridSearch_Binary_Private(SVM svm, PetscInt *n_out, PetscR
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGridSearch_Binary"
 PetscErrorCode SVMGridSearch_Binary(SVM svm)
 {
   PetscReal *grid;
@@ -1840,8 +1748,6 @@ PetscErrorCode SVMGridSearch_Binary(SVM svm)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMLoadGramian_Binary"
 PetscErrorCode SVMLoadGramian_Binary(SVM svm, PetscViewer v)
 {
   Mat G;
@@ -1862,8 +1768,6 @@ PetscErrorCode SVMLoadGramian_Binary(SVM svm, PetscViewer v)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMViewGramian_Binary"
 PetscErrorCode SVMViewGramian_Binary(SVM svm, PetscViewer v)
 {
   const char *type_name = NULL;
@@ -1898,8 +1802,6 @@ PetscErrorCode SVMViewGramian_Binary(SVM svm, PetscViewer v)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMViewTrainingDataset_Binary"
 PetscErrorCode SVMViewTrainingDataset_Binary(SVM svm, PetscViewer v)
 {
   Mat Xt;
@@ -1965,8 +1867,6 @@ PetscErrorCode SVMViewTestPredictions_Binary(SVM svm, PetscViewer v)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMCreate_Binary"
 PERMON_EXTERN PetscErrorCode SVMCreate_Binary(SVM svm)
 {
   SVM_Binary *svm_binary;
@@ -2053,8 +1953,6 @@ PERMON_EXTERN PetscErrorCode SVMCreate_Binary(SVM svm)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMMonitorCreateMCtx_Binary"
 PetscErrorCode SVMMonitorCreateCtx_Binary(void **mctx, SVM svm)
 {
   SVM_Binary_mctx *mctx_inner;
@@ -2069,8 +1967,6 @@ PetscErrorCode SVMMonitorCreateCtx_Binary(void **mctx, SVM svm)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMMonitorDestroyMCtx_Binary"
 PetscErrorCode SVMMonitorDestroyCtx_Binary(void **mctx)
 {
   SVM_Binary_mctx *mctx_inner = (SVM_Binary_mctx *)*mctx;
@@ -2081,8 +1977,6 @@ PetscErrorCode SVMMonitorDestroyCtx_Binary(void **mctx)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMMonitorDefault_Binary"
 PetscErrorCode SVMMonitorDefault_Binary(QPS qps, PetscInt it, PetscReal rnorm, void *mctx)
 {
   MPI_Comm comm;
@@ -2109,8 +2003,7 @@ PetscErrorCode SVMMonitorDefault_Binary(QPS qps, PetscInt it, PetscReal rnorm, v
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__
+
 PetscErrorCode SVMMonitorObjFuncs_Binary(QPS qps, PetscInt it, PetscReal rnorm, void *mctx)
 {
   MPI_Comm comm;
@@ -2149,8 +2042,6 @@ PetscErrorCode SVMMonitorObjFuncs_Binary(QPS qps, PetscInt it, PetscReal rnorm, 
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMMonitorScores_Binary"
 PetscErrorCode SVMMonitorScores_Binary(QPS qps, PetscInt it, PetscReal rnorm, void *mctx)
 {
   MPI_Comm    comm;
@@ -2193,8 +2084,6 @@ PetscErrorCode SVMMonitorScores_Binary(QPS qps, PetscInt it, PetscReal rnorm, vo
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMMonitorTrainingScores_Binary"
 PetscErrorCode SVMMonitorTrainingScores_Binary(QPS qps, PetscInt it, PetscReal rnorm, void *mctx)
 {
   MPI_Comm comm;

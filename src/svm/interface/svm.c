@@ -7,8 +7,6 @@ PetscLogEvent SVM_LoadDataset, SVM_LoadGramian;
 const char *const ModelScores[]          = {"accuracy", "precision", "recall", "F1", "jaccard", "aucroc", "ModelScore", "model_", 0};
 const char *const CrossValidationTypes[] = {"kfold", "stratified_kfold", "CrossValidationType", "cv_", 0};
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMCreate"
 /*@
   SVMCreate - Creates instance of Support Vector Machine classifier.
 
@@ -82,8 +80,6 @@ PetscErrorCode SVMCreate(MPI_Comm comm, SVM *svm_out)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMReset"
 /*@
   SVMReset - Resets a SVM context to the setupcalled = 0.
 
@@ -113,8 +109,6 @@ PetscErrorCode SVMReset(SVM svm)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMDestroyDefault"
 /*@
   SVMDestroyDefault - Destroys SVM context.
 
@@ -135,8 +129,6 @@ PetscErrorCode SVMDestroyDefault(SVM svm)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMDestroy"
 /*@
   SVMDestroy - Destroys SVM context.
 
@@ -180,8 +172,6 @@ PetscErrorCode SVMDestroy(SVM *svm)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetFromOptions"
 /*@
   SVMSetFromOptions - Sets SVM options from the options database.
 
@@ -295,8 +285,6 @@ PetscErrorCode SVMSetFromOptions(SVM svm)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetType"
 /*@
   SVMSetType - Sets the type of SVM classifier.
 
@@ -335,8 +323,6 @@ PetscErrorCode SVMSetType(SVM svm, const SVMType type)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetQPS"
 /*@
   SVMSetQPS - Sets the QPS.
 
@@ -360,8 +346,6 @@ PetscErrorCode SVMSetQPS(SVM svm, QPS qps)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetQPS"
 /*@
   SVMGetQPS - Returns the QPS.
 
@@ -387,8 +371,6 @@ PetscErrorCode SVMGetQPS(SVM svm, QPS *qps)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetQP"
 /*@
   SVMGetQP - Returns QP context.
 
@@ -414,8 +396,6 @@ PetscErrorCode SVMGetQP(SVM svm, QP *qp)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetNfolds"
 /*@
   SVMSetNfolds - Sets the number of folds.
 
@@ -441,8 +421,6 @@ PetscErrorCode SVMSetNfolds(SVM svm, PetscInt nfolds)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetNfolds"
 /*@
   SVMGetNfolds - Returns the number of folds.
 
@@ -467,8 +445,6 @@ PetscErrorCode SVMGetNfolds(SVM svm, PetscInt *nfolds)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetPenaltyType"
 /*@
   SVMSetPenaltyType - Sets type of penalty that penalizes misclassification error.
 
@@ -494,8 +470,6 @@ PetscErrorCode SVMSetPenaltyType(SVM svm, PetscInt type)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetPenaltyType"
 /*@
   SVMGetPenaltyType - Returns type of penalty that penalizes misclassification error.
 
@@ -518,8 +492,6 @@ PetscErrorCode SVMGetPenaltyType(SVM svm, PetscInt *type)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetC"
 /*@
   SVMSetC - Sets the value of penalty C.
 
@@ -552,8 +524,6 @@ PetscErrorCode SVMSetC(SVM svm, PetscReal C)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetC"
 /*@
   SVMGetC - Returns the value of penalty C.
 
@@ -578,8 +548,6 @@ PetscErrorCode SVMGetC(SVM svm, PetscReal *C)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetCp"
 /*@
   SVMSetCp - Sets the value of penalty C for positive samples.
 
@@ -612,8 +580,6 @@ PetscErrorCode SVMSetCp(SVM svm, PetscReal Cp)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetCp"
 /*@
   SVMGetCp - Returns the value of penalty C for positive samples.
 
@@ -638,8 +604,6 @@ PetscErrorCode SVMGetCp(SVM svm, PetscReal *Cp)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetCn"
 /*@
   SVMSetCn - Sets the value of penalty C for negative samples.
 
@@ -672,8 +636,6 @@ PetscErrorCode SVMSetCn(SVM svm, PetscReal Cn)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetCn"
 /*@
   SVMGetCn - Returns the value of penalty C for negative samples.
 
@@ -698,8 +660,6 @@ PetscErrorCode SVMGetCn(SVM svm, PetscReal *Cn)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetPenalty"
 /*@
   SVMSetPenalty - Sets C or Cp and Cn values.
 
@@ -745,8 +705,6 @@ PetscErrorCode SVMSetPenalty(SVM svm, PetscInt m, PetscReal p[])
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGridSearchSetBaseLogC"
 /*@
   SVMGridSearchSetBaseLogC - Sets the base of log of C values that specify grid (penalty type 1).
 
@@ -773,8 +731,6 @@ PetscErrorCode SVMGridSearchSetBaseLogC(SVM svm, PetscReal logC_base)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGridSearchGetBaseLogC"
 /*@
   SVMGridSearchGetBaseLogC - Returns the base of log of C values that specify grid (penalty type 1).
 
@@ -800,8 +756,6 @@ PetscErrorCode SVMGridSearchGetBaseLogC(SVM svm, PetscReal *logC_base)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGridSearchSetStrideLogC"
 /*@
   SVMGridSearchSetStrideLogC - Sets stride of log C values that specify grid used in hyperparameter optimization based on grid-searching (penalty type 1).
 
@@ -837,8 +791,6 @@ PetscErrorCode SVMGridSearchSetStrideLogC(SVM svm, PetscReal logC_start, PetscRe
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGridSearchGetStrideLogC"
 /*@
   SVMGridSearchGetStrideLogC - Returns stride of log C values used for specifying grid in hyperparameter optimization based on grid-searching (penalty type 1).
 
@@ -870,8 +822,6 @@ PetscErrorCode SVMGridSearchGetStrideLogC(SVM svm, PetscReal *logC_start, PetscR
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGridSearchSetPositiveBaseLogC"
 /*@
   SVMGridSearchSetPositiveBaseLogC - Returns the base of log of C+ values that specify grid (penalty type 2).
 
@@ -898,8 +848,6 @@ PetscErrorCode SVMGridSearchSetPositiveBaseLogC(SVM svm, PetscReal logCp_base)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGridSearchGetPositiveBaseLogC"
 /*@
   SVMGridSearchGetPosBaseLogC - Returns the base of log of C+ values that specify grid (penalty type 2).
 
@@ -925,8 +873,6 @@ PetscErrorCode SVMGridSearchGetPositiveBaseLogC(SVM svm, PetscReal *logCp_base)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGridSearchSetPositiveStrideLogC"
 /*@
   SVMGridSearchSetPositiveStrideLogC - Sets stride of log C+ values that specify grid used in hyperparameter optimization based on grid-searching (penalty type 2).
 
@@ -962,8 +908,6 @@ PetscErrorCode SVMGridSearchSetPositiveStrideLogC(SVM svm, PetscReal logC_start,
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGridSearchGetPositiveStrideLogC"
 /*@
   SVMGridSearchGetStrideLogC - Returns stride of log C+ values used for specifying grid in hyperparameter optimization based on grid-searching (penalty type 2).
 
@@ -995,8 +939,6 @@ PetscErrorCode SVMGridSearchGetPositiveStrideLogC(SVM svm, PetscReal *logC_start
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGridSearchSetNegativeBaseLogC"
 /*@
   SVMGridSearchSetNegativeBaseLogC - Sets the base of log of C- values that specify grid (penalty type 2).
 
@@ -1023,8 +965,6 @@ PetscErrorCode SVMGridSearchSetNegativeBaseLogC(SVM svm, PetscReal logCn_base)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGridSearchGetNegativeBaseLogC"
 /*@
   SVMGridSearchGetNegativeBaseLogC - Returns base of log of C- values that specify grid (penalty type 2).
 
@@ -1050,8 +990,6 @@ PetscErrorCode SVMGridSearchGetNegativeBaseLogC(SVM svm, PetscReal *logCn_base)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGridSearchSetNegativeStrideLogC"
 /*@
   SVMGridSearchSetNegativeStrideLogC - Sets stride of log C- values that specify grid used in hyperparameter optimization based on grid-searching (penalty type 2).
 
@@ -1087,8 +1025,6 @@ PetscErrorCode SVMGridSearchSetNegativeStrideLogC(SVM svm, PetscReal logC_start,
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGridSearchGetNegativeStrideLogC"
 /*@
   SVMGridSearchGetStrideLogC - Gets stride of log C- values used for specifying grid in hyperparameter optimization based on grid-searching (penalty type 2).
 
@@ -1120,8 +1056,6 @@ PetscErrorCode SVMGridSearchGetNegativeStrideLogC(SVM svm, PetscReal *logC_start
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetLossType"
 /*@
    SVMSetLossType - Sets the type of the hinge loss function.
 
@@ -1147,8 +1081,6 @@ PetscErrorCode SVMSetLossType(SVM svm, SVMLossType type)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetLossType"
 /*@
   SVMGetLossType - Returns the type of the loss function.
 
@@ -1173,8 +1105,6 @@ PetscErrorCode SVMGetLossType(SVM svm, SVMLossType *type)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetMod"
 /*@
   SVMSetMod - Sets type of SVM formulation.
 
@@ -1200,8 +1130,6 @@ PetscErrorCode SVMSetMod(SVM svm, PetscInt mod)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetMod"
 /*@
   SVMGetMod - Returns type of SVM formulation.
 
@@ -1225,8 +1153,6 @@ PetscErrorCode SVMGetMod(SVM svm, PetscInt *mod)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetOptionsPrefix"
 /*@
   SVMSetOptionsPrefix - Sets the prefix used for searching for all options of the SVM classifier and the QPS solver in the database.
 
@@ -1248,8 +1174,6 @@ PetscErrorCode SVMSetOptionsPrefix(SVM svm, const char prefix[])
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMAppendOptionsPrefix"
 /*@
   SVMAppendOptionsPrefix - Appends the prefix used for searching for all options of the SVM classifier and the QPS solver in the database.
 
@@ -1271,8 +1195,6 @@ PetscErrorCode SVMAppendOptionsPrefix(SVM svm, const char prefix[])
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetOptionsPrefix"
 /*@
   SVMGetOptionsPrefix - Returns the prefix of SVM classifier and QPS solver.
 
@@ -1296,8 +1218,6 @@ PetscErrorCode SVMGetOptionsPrefix(SVM svm, const char *prefix[])
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetWarmStart"
 /*@
   SVMSetWarmStart - Set flag specifying whether warm start is used in cross-validation.
   It is set to PETSC_TRUE by default.
@@ -1346,8 +1266,6 @@ PetscErrorCode SVMGetTao(SVM svm, Tao *tao)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetUp"
 /*@
   SVMSetUp - Sets up the internal data structures for the SVM.
 
@@ -1371,8 +1289,6 @@ PetscErrorCode SVMSetUp(SVM svm)
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMView"
 /*@
   SVMView - Views classification model details.
 
@@ -1442,8 +1358,6 @@ PetscErrorCode SVMViewTestPredictions(SVM svm, PetscViewer viewer)
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMViewScore"
 /*@
   SVMViewScore - Views performance score of model.
 
@@ -1469,8 +1383,6 @@ PetscErrorCode SVMViewScore(SVM svm, PetscViewer viewer)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetGramian"
 /*@
   SVMSetGramian - Set precomputed Gramian (kernel) matrix.
 
@@ -1492,8 +1404,6 @@ PetscErrorCode SVMSetGramian(SVM svm, Mat G)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetGramian"
 /*@
   SVMGetGramian - Get precomputed Gramian (kernel) matrix.
 
@@ -1517,8 +1427,6 @@ PetscErrorCode SVMGetGramian(SVM svm, Mat *G)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetOperator"
 /*@
   SVMSetOperator - Sets the Hessian matrix associated with underlying QP.
 
@@ -1542,8 +1450,6 @@ PetscErrorCode SVMSetOperator(SVM svm, Mat A)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetOperator"
 /*@
   SVMSetOperator - Gets the Hessian matrix associated with underlying QP.
 
@@ -1569,8 +1475,6 @@ PetscErrorCode SVMGetOperator(SVM svm, Mat *A)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMComputeOperator"
 /*@
   SVMComputeOperator - Computes implicit Hessian matrix associated with underlying QP problem.
 
@@ -1595,8 +1499,6 @@ PetscErrorCode SVMComputeOperator(SVM svm, Mat *A)
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetTrainingDataset"
 /*@
   SVMSetTrainingDataset - Sets the training samples and labels.
 
@@ -1624,8 +1526,6 @@ PetscErrorCode SVMSetTrainingDataset(SVM svm, Mat Xt_training, Vec y_training)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetTrainingDataset"
 /*@
   SVMGetTrainingDataset - Returns the training samples and labels.
 
@@ -1699,8 +1599,6 @@ PetscErrorCode SVMGetCalibrationDataset(SVM svm, Mat *Xt_calib, Vec *y_calib)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetTestDataset"
 /*@
   SVMSetTrainingDataset - Sets the test samples and labels.
 
@@ -1734,8 +1632,6 @@ PetscErrorCode SVMSetTestDataset(SVM svm, Mat Xt_test, Vec y_test)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetTestDataset"
 /*@
   SVMGetTestDataset - Returns the test samples and labels.
 
@@ -1790,8 +1686,6 @@ PetscErrorCode SVMGetLabels(SVM svm, const PetscReal *labels[])
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetAutoPostTrain"
 /*@
   SVMSetAutoPostTrain - Sets auto post train flag.
 
@@ -1837,8 +1731,6 @@ PetscErrorCode SVMGetAutoPostTrain(SVM svm, PetscBool *flg)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMTrain"
 /*@
   SVMTrain - Trains a classification model on the basis of training samples.
 
@@ -1859,8 +1751,6 @@ PetscErrorCode SVMTrain(SVM svm)
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMPostTrain"
 /*@
   SVMPostTrain - Applies post train function.
 
@@ -1901,8 +1791,6 @@ PetscErrorCode SVMPostTrain(SVM svm)
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetSeparatingHyperplane"
 /*@
   SVMSetSeparatingHyperplane - Sets the classifier (separator) <w,x> + b = 0.
 
@@ -1926,8 +1814,6 @@ PetscErrorCode SVMSetSeparatingHyperplane(SVM svm, Vec w, PetscReal b)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetSeparatingHyperplane"
 /*@
   SVMGetSeparatingHyperplane - Returns the linear classification model, i.e. <w,x> + b = 0, computed by PermonSVMTrain().
 
@@ -1953,8 +1839,6 @@ PetscErrorCode SVMGetSeparatingHyperplane(SVM svm, Vec *w, PetscReal *b)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetBias"
 /*@
   SVMSetBias - Sets the bias (b) of the linear classification model, i.e. <w,x> + b.
 
@@ -1977,8 +1861,7 @@ PetscErrorCode SVMSetBias(SVM svm, PetscReal bias)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__
+
 /*@
   SVMSetBias - Returns the bias (b) of the linear classification model, i.e. <w,x> + b.
 
@@ -2030,8 +1913,6 @@ PetscErrorCode SVMGetUserBias(SVM svm, PetscReal *bias)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMReconstructHyperplane"
 /*@
   SVMReconstructHyperplane - Performs reconstruction from dual to primal for normal vector and bias.
 
@@ -2076,8 +1957,6 @@ PetscErrorCode SVMGetDistancesFromHyperplane(SVM svm, Mat Xt, Vec *dist)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMPredict"
 /*@
   SVMPredict - Predicts labels of tested samples.
 
@@ -2102,8 +1981,6 @@ PetscErrorCode SVMPredict(SVM svm, Mat Xt_pred, Vec *y_pred)
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMTest"
 /*@
   SVMTest - Tests quality of classification model.
 
@@ -2144,8 +2021,6 @@ PetscErrorCode SVMTest(SVM svm)
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMConvergedSetUp"
 /*@
 
 @*/
@@ -2158,8 +2033,6 @@ PetscErrorCode SVMConvergedSetUp(SVM svm)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMDefaultConvergedCreate"
 /*@
 
 @*/
@@ -2171,8 +2044,6 @@ PetscErrorCode SVMDefaultConvergedCreate(SVM svm, void **ctx)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMDefaultConvergedDestroy"
 /*@
 
 @*/
@@ -2183,8 +2054,6 @@ PetscErrorCode SVMDefaultConvergedDestroy(void *ctx)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetModelScore"
 /*@
   SVMGetModelScore - Returns the model performance score of specified score_type.
 
@@ -2208,8 +2077,6 @@ PetscErrorCode SVMGetModelScore(SVM svm, ModelScore score_type, PetscReal *s)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetHyperOpt"
 /*@
   SVMSetHyperOpt - Set flag specifying whether optimization of hyperparameter will be performed.
   It is set to PETSC_FALSE by default.
@@ -2231,8 +2098,6 @@ PetscErrorCode SVMSetHyperOpt(SVM svm, PetscBool flg)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGridSearch"
 /*@
   SVMGridSearch - Chooses the best value of penalty C from manually specified set.
 
@@ -2253,8 +2118,6 @@ PetscErrorCode SVMGridSearch(SVM svm)
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetCrossValidationScoreType"
 /*@
   SVMSetHyperOptScoreTypes - Sets score types for evaluating performance of model during hyperparameter optimization.
 
@@ -2278,8 +2141,6 @@ PetscErrorCode SVMSetHyperOptScoreTypes(SVM svm, PetscInt n, ModelScore types[])
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetHyperOptNScoreTypes"
 /*@
   SVMGetHyperOptNScoreTypes - Returns count of score types specified for hyperparameter optimization.
 
@@ -2302,8 +2163,6 @@ PetscErrorCode SVMGetHyperOptNScoreTypes(SVM svm, PetscInt *n)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetHyperOptScoreTypes"
 /*@
   SVMGetHyperOptScoreTypes - Returns array of score types specified for evaluating performance of model during hyperparameter optimization.
 
@@ -2326,8 +2185,6 @@ PetscErrorCode SVMGetHyperOptScoreTypes(SVM svm, const ModelScore *types[])
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMSetCrossValidationType"
 /*@
   SVMSetCrossValidationType - Sets type of cross validation.
 
@@ -2348,8 +2205,6 @@ PetscErrorCode SVMSetCrossValidationType(SVM svm, CrossValidationType type)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMGetCrossValidationType"
 /*@
   SVMGetCrossValidationType - Returns type of cross validation.
 
@@ -2372,8 +2227,6 @@ PetscErrorCode SVMGetCrossValidationType(SVM svm, CrossValidationType *type)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMCrossValidation"
 /*@
   SVMKFoldCrossValidation - Performs cross validation.
 
@@ -2399,8 +2252,6 @@ PetscErrorCode SVMCrossValidation(SVM svm, PetscReal c_arr[], PetscInt m, PetscR
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMKFoldCrossValidation"
 /*@
   SVMKFoldCrossValidation - Performs k-folds cross validation.
 
@@ -2426,8 +2277,6 @@ PetscErrorCode SVMKFoldCrossValidation(SVM svm, PetscReal c_arr[], PetscInt m, P
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMStratifiedKFoldCrossValidation"
 /*@
 
 @*/
@@ -2439,8 +2288,6 @@ PetscErrorCode SVMStratifiedKFoldCrossValidation(SVM svm, PetscReal c_arr[], Pet
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMComputeModelScores"
 /*@
   SVMComputeModelScores - Evaluates performance scores of model.
 
@@ -2463,8 +2310,6 @@ PetscErrorCode SVMComputeModelScores(SVM svm, Vec y_pred, Vec y_known)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMComputeHingeLoss"
 /*@
   SVMComputeHingeLoss - Computes hinge loss function.
 
@@ -2485,8 +2330,6 @@ PetscErrorCode SVMComputeHingeLoss(SVM svm)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMComputeModelParams"
 /*@
  SVMComputeModelParams - Computes parameters of model
 
@@ -2507,8 +2350,6 @@ PetscErrorCode SVMComputeModelParams(SVM svm)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMLoadGramian"
 /*@
   SVMLoadGramian - Loads precomputed Gramian (kernel) matrix.
 
@@ -2544,8 +2385,6 @@ PetscErrorCode SVMLoadGramian(SVM svm, PetscViewer v)
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMViewGramian"
 /*@
   SVMViewGramian - Visualizes (precomputed) Gramian matrix.
 
@@ -2570,8 +2409,6 @@ PetscErrorCode SVMViewGramian(SVM svm, PetscViewer viewer)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMLoadDataset"
 /*@
   SVMLoadDataset - Loads dataset.
 
@@ -2615,8 +2452,6 @@ PetscErrorCode SVMLoadDataset(SVM svm, PetscViewer v, Mat Xt, Vec y)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMLoadTrainingDataset"
 /*@
   SVMLoadTrainingDataset - Loads training dataset.
 
@@ -2678,8 +2513,6 @@ PetscErrorCode SVMLoadTrainingDataset(SVM svm, PetscViewer v)
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMViewTrainingDataset"
 /*@
   SVMViewTrainingDataset - Views details associated with training dataset such as number of positive and negative samples, features, etc.
 
@@ -2727,8 +2560,6 @@ PetscErrorCode SVMViewTrainingDataset(SVM svm, PetscViewer viewer)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMLoadTestDataset"
 /*@
   SVMLoadTestDataset - Loads test dataset.
 
@@ -2793,8 +2624,6 @@ PetscErrorCode SVMLoadTestDataset(SVM svm, PetscViewer v)
   PetscFunctionReturnI(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMViewTestDataset"
 /*@
   SVMViewTestDataset - Views details associated with test dataset such as number of positive and negative samples, features, etc.
 
@@ -2842,8 +2671,6 @@ PetscErrorCode SVMViewTestDataset(SVM svm, PetscViewer viewer)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMLoadCalibrationDataset"
 /*@
   SVMLoadCalibrationDataset - Loads calibration dataset.
 
@@ -2900,8 +2727,6 @@ PetscErrorCode SVMViewCalibrationDataset(SVM svm, PetscViewer viewer)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMViewDataset"
 /*@
   SVMViewDataset - Views details associated with dataset such as number of positive and negative samples, features, etc.
 

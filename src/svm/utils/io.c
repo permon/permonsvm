@@ -47,8 +47,6 @@
 struct ArrInt  DynamicArray_(PetscInt);
 struct ArrReal DynamicArray_(PetscReal);
 
-#undef __FUNCT__
-#define __FUNCT__ "IOReadBuffer_SVMLight_Private"
 static PetscErrorCode IOReadBuffer_SVMLight_Private(MPI_Comm comm, const char *filename, char **chunk_buff)
 {
   PetscMPIInt comm_size, comm_rank, chunk_size_reduced;
@@ -160,8 +158,6 @@ static PetscErrorCode IOReadBuffer_SVMLight_Private(MPI_Comm comm, const char *f
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "IOParseBuffer_SVMLight_Private"
 static PetscErrorCode IOParseBuffer_SVMLight_Private(MPI_Comm comm, char *buff, struct ArrInt *i, struct ArrInt *j, struct ArrReal *a, struct ArrInt *k, struct ArrReal *y, PetscInt *N)
 {
   struct ArrInt  i_in, j_in, k_in;
@@ -284,8 +280,6 @@ static PetscErrorCode IOParseBuffer_SVMLight_Private(MPI_Comm comm, char *buff, 
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "DatasetAssembly_SVMLight_Private"
 static PetscErrorCode DatasetAssembly_SVMLight_Private(Mat Xt, Vec labels, char *buff)
 {
   MPI_Comm comm;
@@ -334,8 +328,6 @@ static PetscErrorCode DatasetAssembly_SVMLight_Private(Mat Xt, Vec labels, char 
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "DatasetLoad_SVMLight"
 PetscErrorCode DatasetLoad_SVMLight(Mat Xt, Vec y, PetscViewer v)
 {
   MPI_Comm comm;
@@ -354,8 +346,6 @@ PetscErrorCode DatasetLoad_SVMLight(Mat Xt, Vec y, PetscViewer v)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "PetscViewerSVMLightOpen"
 PetscErrorCode PetscViewerSVMLightOpen(MPI_Comm comm, const char name[], PetscViewer *v)
 {
   PetscViewer v_inner;
@@ -370,8 +360,6 @@ PetscErrorCode PetscViewerSVMLightOpen(MPI_Comm comm, const char name[], PetscVi
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "DatasetLoad_Binary"
 PetscErrorCode DatasetLoad_Binary(Mat Xt, Vec y, PetscViewer v)
 {
   char        Xt_name[256];
@@ -398,8 +386,6 @@ PetscErrorCode DatasetLoad_Binary(Mat Xt, Vec y, PetscViewer v)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "PetscViewerLoadSVMDataset"
 /*@
   PetscViewerLoadDataset - Loads dataset.
 

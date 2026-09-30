@@ -2,8 +2,6 @@
 
 static PetscBool SVMPackageInitialized = PETSC_FALSE;
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMInitializePackage"
 PetscErrorCode SVMInitializePackage()
 {
   PetscFunctionBegin;
@@ -22,8 +20,6 @@ PetscErrorCode SVMInitializePackage()
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMFinalizePackage"
 PetscErrorCode SVMFinalizePackage()
 {
   PetscFunctionBegin;

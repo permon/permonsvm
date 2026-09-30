@@ -1,7 +1,5 @@
 #include "binaryimpl.h"
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMCrossValidation_Binary"
 PetscErrorCode SVMCrossValidation_Binary(SVM svm, PetscReal c_arr[], PetscInt m, PetscReal score[])
 {
   CrossValidationType cv_type;
@@ -16,8 +14,6 @@ PetscErrorCode SVMCrossValidation_Binary(SVM svm, PetscReal c_arr[], PetscInt m,
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMKFoldCrossValidation_Binary"
 PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm, PetscReal c_arr[], PetscInt m, PetscReal score[])
 {
   MPI_Comm comm;
@@ -127,8 +123,6 @@ PetscErrorCode SVMKFoldCrossValidation_Binary(SVM svm, PetscReal c_arr[], PetscI
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMFoldVecIdx_Binary_Private"
 static PetscErrorCode SVMFoldVecIdx_Binary_Private(Vec idx, PetscInt nfolds, PetscInt i, IS *is_training, IS *is_test)
 {
   PetscInt lo, hi;
@@ -164,8 +158,6 @@ static PetscErrorCode SVMFoldVecIdx_Binary_Private(Vec idx, PetscInt nfolds, Pet
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "SVMStratifiedKFoldCrossValidation_Binary"
 PetscErrorCode SVMStratifiedKFoldCrossValidation_Binary(SVM svm, PetscReal c_arr[], PetscInt m, PetscReal score[])
 {
   SVM_Binary *svm_binary = (SVM_Binary *)svm->data;
