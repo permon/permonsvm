@@ -6,8 +6,6 @@ typedef struct {
   PetscReal bias;
 } MatCtx;
 
-#undef __FUNCT__
-#define __FUNCT__ "MatDestroy_Biased"
 PetscErrorCode MatDestroy_Biased(Mat A)
 {
   void   *ptr = NULL;
@@ -23,8 +21,6 @@ PetscErrorCode MatDestroy_Biased(Mat A)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "MatMult_Biased"
 PetscErrorCode MatMult_Biased(Mat A, Vec x, Vec y)
 {
   MPI_Comm    comm;
@@ -75,8 +71,6 @@ PetscErrorCode MatMult_Biased(Mat A, Vec x, Vec y)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "MatMultTranspose_Biased"
 PetscErrorCode MatMultTranspose_Biased(Mat A, Vec x, Vec y)
 {
   MPI_Comm    comm;
@@ -121,8 +115,6 @@ PetscErrorCode MatMultTranspose_Biased(Mat A, Vec x, Vec y)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "MatGetOwnershipIS_Biased"
 PetscErrorCode MatGetOwnershipIS_Biased(Mat mat, IS *rows, IS *cols)
 {
   void   *ptr;
@@ -145,8 +137,6 @@ PetscErrorCode MatGetOwnershipIS_Biased(Mat mat, IS *rows, IS *cols)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "MatCreateSubMatrix_Biased"
 PetscErrorCode MatCreateSubMatrix_Biased(Mat A, IS isrow, IS iscol, MatReuse cll, Mat *out)
 {
   MPI_Comm    comm;
@@ -197,8 +187,6 @@ PetscErrorCode MatCreateSubMatrix_Biased(Mat A, IS isrow, IS iscol, MatReuse cll
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "MatBiasedGetInnerMat"
 /*
   MatBiasedGetInnerMat - Get inner (original) matrix
 
@@ -235,8 +223,6 @@ PetscErrorCode MatBiasedGetInnerMat(Mat A, Mat *inner)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "MatBiasedGetBias"
 /*@
   MatBiasedGetBias - Gets a real value of bias.
 
@@ -268,8 +254,6 @@ PetscErrorCode MatBiasedGetBias(Mat A, PetscReal *bias)
   PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "MatBiasedCreate"
 /*@
   MatBiasedCreate - Creates biased matrix, x_i <- [x_i, bias].
 
