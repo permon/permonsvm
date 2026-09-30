@@ -841,7 +841,7 @@ PetscErrorCode SVMSetUp_Binary(SVM svm)
     Vec y_test;
 
     PetscCall(SVMGetTestDataset(svm, &Xt_test, &y_test));
-    PetscCheck(Xt_test || y_test, PetscObjectComm((PetscObject)svm), PETSC_ERR_ARG_NULL, "Test dataset must be set for using -svm_monitor_scores.");
+    PetscCheck(Xt_test && y_test, PetscObjectComm((PetscObject)svm), PETSC_ERR_ARG_NULL, "Test dataset must be set for using -svm_monitor_scores.");
     PetscCall(SVMMonitorCreateCtx_Binary(&mctx, svm));
     if (svm_mod == 1) {
       QPS qps_inner;
